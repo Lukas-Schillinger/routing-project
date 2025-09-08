@@ -1,0 +1,120 @@
+import { db } from '$lib/server/db';
+import * as table from '$lib/server/db/schema';
+import { sha256 } from '@oslojs/crypto/sha2';
+import { encodeBase64url, encodeHexLowerCase } from '@oslojs/encoding';
+import type { RequestEvent } from '@sveltejs/kit';
+import { redirect } from '@sveltejs/kit';
+import { eq } from 'drizzle-orm';
+
+const DAY_IN_MS = 1000 * 60 * 60 * 24;
+
+export const sessionCookieName = 'auth-session';
+
+export function generateSessionToken() {
+	const bytes = crypto.getRandomValues(new Uint8Array(18));
+	const token = encodeBase64url(bytes);
+	return token;
+}
+
+export async function createSession(token: string, userId: string) {
+	const sessionId = encodeHexLowerCase(sha256(new TextEncoder().encode(token)));
+	const session = {
+		id: sessionId,
+		user_id: userId,
+		expires_at: new Date(Date.now() + DAY_IN_MS * 30)
+	};
+	await db.insert(table.session).values(session);
+	return session;
+}
+
+export async function validateSessionToken(token: string) {
+	const sessionId = encodeHexLowerCase(sha256(new TextEncoder().encode(token)));
+	const [result] = await db
+		.select({
+			// Adjust user table here to tweak returned data
+			user: { id: table.users.id, email: table.users.email },
+			session: table.session
+		})
+		.from(table.session)
+		.innerJoin(table.users, eq(table.session.user_id, table.users.id))
+		.where(eq(table.session.id, sessionId));
+
+	if (!result) {
+		return { session: null, user: null };
+	}
+	const { session, user } = result;
+
+	const sessionExpired = Date.now() >= session.expires_at.getTime();
+	if (sessionExpired) {
+		await db.delete(table.session).where(eq(table.session.id, session.id));
+		return { session: null, user: null };
+	}
+
+	const renewSession = Date.now() >= session.expires_at.getTime() - DAY_IN_MS * 15;
+	if (renewSession) {
+		session.expires_at = new Date(Date.now() + DAY_IN_MS * 30);
+		await db
+			.update(table.session)
+			.set({ expires_at: session.expires_at })
+			.where(eq(table.session.id, session.id));
+	}
+
+	return { session, user };
+}
+
+export type SessionValidationResult = Awaited<ReturnType<typeof validateSessionToken>>;
+
+export async function invalidateSession(sessionId: string) {
+	await db.delete(table.session).where(eq(table.session.id, sessionId));
+}
+
+export function setSessionTokenCookie(event: RequestEvent, token: string, expiresAt: Date) {
+	event.cookies.set(sessionCookieName, token, {
+		expires: expiresAt,
+		path: '/'
+	});
+}
+
+export function deleteSessionTokenCookie(event: RequestEvent) {
+	event.cookies.delete(sessionCookieName, {
+		path: '/'
+	});
+}
+
+export async function createUser(email: string, passwordHash: string, organizationId?: string) {
+	// If no organization ID provided, create a new organization with a random name
+	let orgId = organizationId;
+
+	if (!orgId) {
+		// Generate a random organization name
+		const timestamp = Date.now();
+		const randomSuffix = Math.random().toString(36).substring(2, 8);
+		const orgName = `Organization-${timestamp}-${randomSuffix}`;
+
+		// Create a new organization
+		const orgResult = await db
+			.insert(table.organizations)
+			.values({ name: orgName })
+			.returning({ id: table.organizations.id });
+		orgId = orgResult[0].id;
+	}
+
+	// Create the user with the organization ID
+	const result = await db
+		.insert(table.users)
+		.values({
+			email,
+			passwordHash,
+			organization_id: orgId
+		})
+		.returning({ id: table.users.id });
+
+	return result[0];
+}
+
+export function requireLogin(event: RequestEvent) {
+	if (!event.locals.user) {
+		throw redirect(302, '/demo/lucia/login');
+	}
+	return event.locals.user;
+}
