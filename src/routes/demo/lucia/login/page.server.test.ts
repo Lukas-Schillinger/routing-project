@@ -1,4 +1,5 @@
-import { validateEmail, validatePassword } from '$lib/validation';
+import { loginSchema, registerSchema } from '$lib/schemas/auth';
+import { emailSchema, passwordSchema } from '$lib/schemas/common';
 import { fail, redirect } from '@sveltejs/kit';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -36,8 +37,8 @@ describe('Authentication Server Actions', () => {
 		vi.resetAllMocks();
 	});
 
-	describe('Validation Functions', () => {
-		describe('validateEmail', () => {
+	describe('Validation Schemas', () => {
+		describe('emailSchema', () => {
 			it('should accept valid email formats', () => {
 				const validEmails = [
 					'test@example.com',
@@ -49,7 +50,7 @@ describe('Authentication Server Actions', () => {
 				];
 
 				validEmails.forEach((email) => {
-					expect(validateEmail(email)).toBe(true);
+					expect(emailSchema.safeParse(email).success).toBe(true);
 				});
 			});
 
@@ -70,22 +71,22 @@ describe('Authentication Server Actions', () => {
 				];
 
 				invalidEmails.forEach((email) => {
-					expect(validateEmail(email)).toBe(false);
+					expect(emailSchema.safeParse(email).success).toBe(false);
 				});
 			});
 
 			it('should reject emails that are too short', () => {
-				expect(validateEmail('a@')).toBe(false);
-				expect(validateEmail('ab')).toBe(false);
+				expect(emailSchema.safeParse('a@').success).toBe(false);
+				expect(emailSchema.safeParse('ab').success).toBe(false);
 			});
 
 			it('should reject emails that are too long', () => {
 				const longEmail = 'a'.repeat(250) + '@example.com';
-				expect(validateEmail(longEmail)).toBe(false);
+				expect(emailSchema.safeParse(longEmail).success).toBe(false);
 			});
 		});
 
-		describe('validatePassword', () => {
+		describe('passwordSchema', () => {
 			it('should accept valid password lengths', () => {
 				const validPasswords = [
 					'123456', // minimum length
@@ -95,7 +96,7 @@ describe('Authentication Server Actions', () => {
 				];
 
 				validPasswords.forEach((password) => {
-					expect(validatePassword(password)).toBe(true);
+					expect(passwordSchema.safeParse(password).success).toBe(true);
 				});
 			});
 
@@ -111,7 +112,55 @@ describe('Authentication Server Actions', () => {
 				];
 
 				invalidPasswords.forEach((password) => {
-					expect(validatePassword(password)).toBe(false);
+					expect(passwordSchema.safeParse(password).success).toBe(false);
+				});
+			});
+		});
+
+		describe('loginSchema', () => {
+			it('should validate complete login input', () => {
+				const validInput = {
+					email: 'test@example.com',
+					password: 'password123'
+				};
+				expect(loginSchema.safeParse(validInput).success).toBe(true);
+			});
+
+			it('should reject invalid login input', () => {
+				const invalidInputs = [
+					{ email: 'invalid', password: 'password123' },
+					{ email: 'test@example.com', password: '123' },
+					{ email: '', password: '' },
+					{ email: 'test@example.com' }, // missing password
+					{ password: 'password123' } // missing email
+				];
+
+				invalidInputs.forEach((input) => {
+					expect(loginSchema.safeParse(input).success).toBe(false);
+				});
+			});
+		});
+
+		describe('registerSchema', () => {
+			it('should validate complete registration input', () => {
+				const validInput = {
+					email: 'test@example.com',
+					password: 'password123'
+				};
+				expect(registerSchema.safeParse(validInput).success).toBe(true);
+			});
+
+			it('should reject invalid registration input', () => {
+				const invalidInputs = [
+					{ email: 'invalid', password: 'password123' },
+					{ email: 'test@example.com', password: '123' },
+					{ email: '', password: '' },
+					{ email: 'test@example.com' }, // missing password
+					{ password: 'password123' } // missing email
+				];
+
+				invalidInputs.forEach((input) => {
+					expect(registerSchema.safeParse(input).success).toBe(false);
 				});
 			});
 		});

@@ -1,7 +1,7 @@
+import { loginSchema, registerSchema } from '$lib/schemas/auth';
 import * as auth from '$lib/server/auth';
 import { db } from '$lib/server/db';
 import * as table from '$lib/server/db/schema';
-import { validateAuthInput, validateRegistrationInput } from '$lib/validation';
 import { hash, verify } from '@node-rs/argon2';
 import { fail, redirect } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
@@ -21,7 +21,7 @@ export const actions: Actions = {
 		const password = formData.get('password');
 
 		// Validate input using Zod
-		const validation = validateAuthInput({ email, password });
+		const validation = loginSchema.safeParse({ email, password });
 		if (!validation.success) {
 			const errors = validation.error.issues;
 			const firstError = errors[0];
@@ -61,7 +61,7 @@ export const actions: Actions = {
 		const password = formData.get('password');
 
 		// Validate input using Zod
-		const validation = validateRegistrationInput({ email, password });
+		const validation = registerSchema.safeParse({ email, password });
 		if (!validation.success) {
 			const errors = validation.error.issues;
 			const firstError = errors[0];
