@@ -1,96 +1,258 @@
 <script lang="ts">
-	import type { ActionData, PageData } from './$types.ts';
+	import { page } from '$app/state';
+	import * as Alert from '$lib/components/ui/alert';
+	import { Button } from '$lib/components/ui/button';
+	import {
+		Card,
+		CardContent,
+		CardDescription,
+		CardHeader,
+		CardTitle
+	} from '$lib/components/ui/card';
+	import { Input } from '$lib/components/ui/input';
 
-	export let data: PageData;
-	export let form: ActionData;
+	import * as Form from '$lib/components/ui/form/index.js';
+	import type { GeocodingResponse } from '$lib/services/mapbox-geocoding.js';
+	import {
+		Check,
+		CircleAlert,
+		CircleCheck,
+		LucideChartNoAxesColumnDecreasing,
+		Mail,
+		MapPin
+	} from 'lucide-svelte';
+	import { superForm } from 'sveltekit-superforms';
+	import { zodClient } from 'sveltekit-superforms/adapters';
+	import { z } from 'zod';
+	import type { PageProps } from './$types.ts';
+
+	let { data }: PageProps = $props();
+
+	// Client-side schema matching the server
+	const addressSchema = z.object({
+		address: z
+			.string()
+			.min(1, 'Address is required')
+			.max(500, 'Address is too long')
+			.refine((val) => val.trim().length > 0, 'Address cannot be empty')
+	});
+
+	const form = superForm(data.form, {
+		validators: zodClient(addressSchema),
+		onUpdate(event) {
+			if (event.result.type == 'success') {
+				results = event.result.data.response;
+			}
+		}
+	});
+	const { form: formData, enhance } = form;
+
+	// Mock results for styling purposes - "5106 Tari" query
+	const mockResults: GeocodingResponse = {
+		type: 'FeatureCollection',
+		query: ['5106', 'tari'],
+		features: [
+			{
+				id: 'address.1234567890',
+				type: 'Feature',
+				place_type: ['address'],
+				relevance: 0.99,
+				properties: {},
+				text: 'Tari Dr',
+				place_name: '5106 Tari Dr, Austin, Texas 78723, United States',
+				center: [-97.689, 30.3201],
+				geometry: {
+					type: 'Point',
+					coordinates: [-97.689, 30.3201]
+				},
+				address: '5106'
+			},
+			{
+				id: 'address.0987654321',
+				type: 'Feature',
+				place_type: ['address'],
+				relevance: 0.95,
+				properties: {},
+				text: 'Tari Ln',
+				place_name: '5106 Tari Ln, Houston, Texas 77088, United States',
+				center: [-95.4235, 29.8654],
+				geometry: {
+					type: 'Point',
+					coordinates: [-95.4235, 29.8654]
+				},
+				address: '5106'
+			},
+			{
+				id: 'address.1122334455',
+				type: 'Feature',
+				place_type: ['address'],
+				relevance: 0.92,
+				properties: {},
+				text: 'Tari St',
+				place_name: '5106 Tari St, Dallas, Texas 75243, United States',
+				center: [-96.7804, 32.7157],
+				geometry: {
+					type: 'Point',
+					coordinates: [-96.7804, 32.7157]
+				},
+				address: '5106'
+			}
+		],
+		attribution: 'NOTICE: © 2023 Mapbox and its suppliers. All rights reserved.'
+	};
+
+	// 🎨 STYLING MODE: Set to true to show mock results, false for live API calls
+	const SHOW_MOCK_RESULTS = true;
+
+	// Set to mock results for styling (change SHOW_MOCK_RESULTS to false for production)
+	let results: GeocodingResponse | null = $state(SHOW_MOCK_RESULTS ? mockResults : null);
 </script>
 
 <svelte:head>
 	<title>{data.title}</title>
 </svelte:head>
 
-<div class="container mx-auto max-w-2xl p-6">
-	<h1 class="mb-6 text-3xl font-bold">Mapbox Geocoding Demo</h1>
+<div class="bg-gradient-to-br from-sand-50 via-sand-100 to-sand-200 p-6">
+	<div class="container mx-auto max-w-4xl">
+		<div class="mb-8 text-center">
+			<h1 class="headline-large mb-4">Mapbox Geocoding Demo</h1>
+			<p class="body-large text-forest-700">Convert addresses to coordinates with precision</p>
+		</div>
 
-	<div class="rounded-lg bg-white p-6 shadow-md">
-		<form method="POST" action="?/geocode" class="space-y-4" novalidate>
-			<div>
-				<label for="address" class="mb-2 block text-sm font-medium text-gray-700">
-					Enter an address to geocode:
-				</label>
-				<input
-					type="text"
-					id="address"
-					name="address"
-					value={form?.address || ''}
-					placeholder="e.g., 1600 Pennsylvania Avenue, Washington, DC"
-					class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-					class:border-red-300={form?.errors?.address}
-					required
-				/>
-				{#if form?.errors?.address}
-					<p class="mt-1 text-sm text-red-600">{form.errors.address[0]}</p>
-				{/if}
-			</div>
+		<Card class="mb-8 border-sand-300 bg-sand-50 shadow-lg">
+			<CardHeader>
+				<CardTitle class="headline-card text-forest-800">Address Geocoding</CardTitle>
+				<CardDescription class="body-medium text-forest-600">
+					Enter any address to get precise coordinates and location details
+				</CardDescription>
+			</CardHeader>
+			<CardContent>
+				<form method="POST" action="?/geocode" use:enhance class="space-y-6" novalidate>
+					<Form.Field {form} name="address">
+						<Form.Control>
+							{#snippet children({ props })}
+								<Form.Label class="body-medium text-forest-700">Address</Form.Label>
+								<Input
+									{...props}
+									type="text"
+									placeholder="e.g., 1600 Pennsylvania Avenue, Washington, DC"
+									bind:value={$formData.address}
+									class="border-sand-300 bg-white focus:border-forest-500 focus:ring-forest-500"
+								/>
+							{/snippet}
+						</Form.Control>
+						<Form.Description class="body-small text-forest-600"
+							>Enter any US address for geocoding.</Form.Description
+						>
+						<Form.FieldErrors />
+					</Form.Field>
 
-			<button
-				type="submit"
-				class="w-full rounded-md bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
-			>
-				Geocode Address
-			</button>
+					<Button
+						type="submit"
+						class="w-full bg-forest-600 text-white hover:bg-forest-700"
+						size="lg"
+					>
+						<MapPin class="mr-2 h-4 w-4" />
+						Geocode Address
+					</Button>
 
-			{#if form?.errors?.general}
-				<div class="mt-4 rounded-md border border-red-200 bg-red-50 p-4">
-					<p class="text-sm text-red-600">{form.errors.general[0]}</p>
-				</div>
-			{/if}
-		</form>
+					{#if form.message && page.status >= 400}
+						<Alert.Root variant="destructive" class="border-red-200 bg-red-50">
+							<CircleAlert class="h-4 w-4 text-red-600" />
+							<Alert.Title class="text-red-800">Error</Alert.Title>
+							<Alert.Description class="text-red-700">{form.message}</Alert.Description>
+						</Alert.Root>
+					{/if}
+				</form>
+			</CardContent>
+		</Card>
 
-		{#if form?.success && form?.response}
-			<div class="mt-6 rounded-md border border-green-200 bg-green-50 p-4">
-				<h3 class="mb-3 text-lg font-medium text-green-800">Geocoding Results</h3>
-				<p class="mb-4 text-sm text-green-700">
-					Found {form.response.features.length} result(s) for "{form.address}"
-				</p>
+		{#if results}
+			<Card class="border-sand-300 bg-sand-50 shadow-lg">
+				<CardHeader>
+					<CardTitle class="headline-card flex items-center text-forest-700">
+						<CircleCheck class="mr-2 h-5 w-5" />
+						Geocoding Results
+					</CardTitle>
+					<CardDescription class="body-medium text-forest-600">
+						Found {results.features.length} result(s) for "{$formData.address}"
+					</CardDescription>
+				</CardHeader>
+				<CardContent>
+					<div class="grid gap-4">
+						{#each results.features as feature, index}
+							<Card class="border-l-4 border-sand-200 border-l-forest-500 bg-white">
+								<CardContent class="">
+									<div class="mb-3 flex items-start justify-between">
+										<h4 class="headline-small text-forest-800">
+											#{index + 1}: {feature.place_name}
+										</h4>
+										<div class="flex flex-wrap gap-1">
+											{#each feature.place_type as type}
+												<span
+													class="body-small rounded-full bg-forest-100 px-2 py-1 font-medium text-forest-800"
+												>
+													{type}
+												</span>
+											{/each}
+										</div>
+									</div>
 
-				<div class="space-y-3">
-					{#each form.response.features as feature, index}
-						<div class="rounded border bg-white p-3">
-							<div class="mb-2 flex items-start justify-between">
-								<h4 class="font-medium text-gray-900">#{index + 1}: {feature.place_name}</h4>
-								<span class="rounded bg-gray-100 px-2 py-1 text-xs text-gray-500">
-									{feature.place_type.join(', ')}
-								</span>
-							</div>
-							<div class="text-sm text-gray-600">
-								<p><strong>Coordinates:</strong> {feature.center[1]}, {feature.center[0]}</p>
-								<p><strong>Relevance:</strong> {(feature.relevance * 100).toFixed(1)}%</p>
-								{#if feature.address}
-									<p><strong>Address:</strong> {feature.address}</p>
-								{/if}
-							</div>
-						</div>
-					{/each}
-				</div>
-			</div>
+									<div class="body-small grid gap-2 text-forest-600">
+										<div class="flex items-center">
+											<MapPin class="mr-2 h-4 w-4 text-forest-400" />
+											<span
+												><strong>Coordinates:</strong>
+												{feature.center[1].toFixed(6)}, {feature.center[0].toFixed(6)}</span
+											>
+										</div>
+
+										<div class="flex items-center">
+											<LucideChartNoAxesColumnDecreasing class="mr-2 h-4 w-4 text-forest-400" />
+											<span
+												><strong>Relevance:</strong> {(feature.relevance * 100).toFixed(1)}%</span
+											>
+										</div>
+
+										{#if feature.address}
+											<div class="flex items-center">
+												<Mail class="mr-2 h-4 w-4 text-forest-400" />
+												<span><strong>Address:</strong> {feature.address}</span>
+											</div>
+										{/if}
+									</div>
+								</CardContent>
+							</Card>
+						{/each}
+					</div>
+				</CardContent>
+			</Card>
 		{/if}
-	</div>
 
-	<div class="mt-8 text-sm text-gray-600">
-		<h3 class="mb-2 font-medium">About this demo:</h3>
-		<ul class="list-inside list-disc space-y-1">
-			<li>Uses the Mapbox Geocoding API to convert addresses to coordinates</li>
-			<li>Limited to US addresses for this demo</li>
-			<li>Returns up to 5 results ordered by relevance</li>
-			<li>Built with type-safe Zod validation and error handling</li>
-		</ul>
+		<Card class="border-sand-300 bg-sand-100 shadow-lg">
+			<CardHeader>
+				<CardTitle class="headline text-forest-800">About this demo</CardTitle>
+			</CardHeader>
+			<CardContent>
+				<ul class="body-medium space-y-2 text-forest-700">
+					<li class="flex items-start">
+						<Check class="mt-0.5 mr-2 h-4 w-4 text-forest-500" />
+						Uses the Mapbox Geocoding API to convert addresses to coordinates
+					</li>
+					<li class="flex items-start">
+						<Check class="mt-0.5 mr-2 h-4 w-4 text-forest-500" />
+						Limited to US addresses for this demo
+					</li>
+					<li class="flex items-start">
+						<Check class="mt-0.5 mr-2 h-4 w-4 text-forest-500" />
+						Returns up to 5 results ordered by relevance
+					</li>
+					<li class="flex items-start">
+						<Check class="mt-0.5 mr-2 h-4 w-4 text-forest-500" />
+						Built with type-safe Zod validation and error handling
+					</li>
+				</ul>
+			</CardContent>
+		</Card>
 	</div>
 </div>
-
-<style>
-	.container {
-		min-height: 100vh;
-		background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-	}
-</style>

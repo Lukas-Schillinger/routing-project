@@ -1,56 +1,64 @@
 import { MapboxApiError } from '$lib/services/mapbox-client.js';
 import { geocodingService } from '$lib/services/mapbox-geocoding.js';
 import { fail } from '@sveltejs/kit';
+import { superValidate } from 'sveltekit-superforms';
+import { zod } from 'sveltekit-superforms/adapters';
 import { z } from 'zod';
 
 const addressSchema = z.object({
-	address: z.string().min(1, 'Address is required')
+	address: z
+		.string()
+		.min(1, 'Address is required')
+		.max(500, 'Address is too long')
+		.refine((val) => val.trim().length > 0, 'Address cannot be empty')
 });
 
 export const load = async () => {
+	const form = await superValidate(zod(addressSchema));
+
+	// Set default address for styling purposes
+	form.data.address = '5106 Tari';
+
 	return {
-		title: 'Mapbox Geocoding Demo'
+		title: 'Mapbox Geocoding Demo',
+		form: form
 	};
 };
 
 export const actions = {
-	geocode: async ({ request }: { request: Request }) => {
-		const formData = await request.formData();
-		const result = addressSchema.safeParse({
-			address: formData.get('address')
-		});
+	geocode: async ({ request }) => {
+		const form = await superValidate(request, zod(addressSchema));
 
-		if (!result.success) {
+		if (!form.valid) {
 			return fail(400, {
-				errors: result.error.flatten().fieldErrors,
-				address: formData.get('address')?.toString()
+				form
 			});
 		}
 
 		try {
-			const response = await geocodingService.geocode(result.data.address, {
+			const response = await geocodingService.geocode(form.data.address, {
 				limit: 5,
 				country: 'us'
 			});
 
 			return {
+				form,
 				success: true,
-				response,
-				address: result.data.address
+				response
 			};
 		} catch (error) {
 			console.error('Geocoding error:', error);
 
 			if (error instanceof MapboxApiError) {
 				return fail(400, {
-					errors: { general: [error.message] },
-					address: result.data.address
+					form,
+					message: error.message
 				});
 			}
 
 			return fail(500, {
-				errors: { general: ['An unexpected error occurred'] },
-				address: result.data.address
+				form,
+				message: 'An unexpected error occurred'
 			});
 		}
 	}
