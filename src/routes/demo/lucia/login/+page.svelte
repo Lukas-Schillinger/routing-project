@@ -22,21 +22,21 @@
 </svelte:head>
 
 <div
-	class="flex min-h-[calc(100vh-4rem)] items-center justify-center bg-gradient-to-br from-sand-50 via-sand-100 to-sand-200 p-6"
+	class="flex min-h-[calc(100vh-4rem)] items-center justify-center bg-gradient-to-br from-background via-muted to-secondary p-6"
 >
 	<div class="w-full max-w-md">
 		<div class="mb-8 text-center">
 			<h1 class="headline-medium mb-2">Welcome Back</h1>
-			<p class="body-medium text-forest-600">Sign in to your account or create a new one</p>
+			<p class="body-medium">Sign in to your account or create a new one</p>
 		</div>
 
-		<Card class="border-sand-300 bg-sand-50 shadow-xl">
+		<Card class="border-border bg-card shadow-xl">
 			<CardHeader class="space-y-1">
-				<CardTitle class="headline-card text-center text-forest-800">
-					<User class="mx-auto mb-2 h-8 w-8 text-forest-600" />
+				<CardTitle class="headline-card text-center text-foreground">
+					<User class="mx-auto mb-2 h-8 w-8 " />
 					Authentication
 				</CardTitle>
-				<CardDescription class="body-medium text-center text-forest-600">
+				<CardDescription class="body-medium text-center ">
 					Enter your email and password to continue
 				</CardDescription>
 			</CardHeader>
@@ -51,53 +51,47 @@
 
 				<form method="post" action="?/login" use:enhance class="space-y-4" novalidate>
 					<div class="space-y-2">
-						<Label for="email" class="body-medium text-forest-700">Email</Label>
+						<Label for="email" class="body-medium text-foreground">Email</Label>
 						<div class="relative">
-							<Mail class="absolute top-3 left-3 h-4 w-4 text-forest-400" />
+							<Mail class="absolute top-2.5 left-3 h-4 w-4 " />
 							<Input
 								id="email"
 								type="email"
 								name="email"
 								placeholder="Enter your email"
-								class="border-sand-300 bg-white pl-10 focus:border-forest-500 focus:ring-forest-500"
+								class="pl-10"
 								required
 							/>
 						</div>
 					</div>
 
 					<div class="space-y-2">
-						<Label for="password" class="body-medium text-forest-700">Password</Label>
+						<Label for="password" class="body-medium text-foreground">Password</Label>
 						<div class="relative">
-							<Lock class="absolute top-3 left-3 h-4 w-4 text-forest-400" />
+							<Lock class="absolute top-2.5 left-3 h-4 w-4 " />
 							<Input
 								id="password"
 								type="password"
 								name="password"
 								placeholder="Enter your password"
-								class="border-sand-300 bg-white pl-10 focus:border-forest-500 focus:ring-forest-500"
+								class="pl-10"
 								required
 							/>
 						</div>
 					</div>
 
 					<div class="grid grid-cols-2 gap-3 pt-2">
-						<Button type="submit" class="bg-forest-600 text-white hover:bg-forest-700">
-							Sign In
-						</Button>
-						<Button
-							formaction="?/register"
-							variant="outline"
-							class="border-forest-300 text-forest-700 hover:bg-forest-50 hover:text-forest-800"
-						>
-							Register
-						</Button>
+						<Button type="submit">Sign In</Button>
+						<Button formaction="?/register" variant="outline">Register</Button>
 					</div>
 				</form>
 
 				<div class="text-center">
-					<p class="body-small text-forest-600">
+					<p class="body-small text-muted-foreground">
 						Don't have an account?
-						<button class="body-small font-medium text-forest-700 underline hover:text-forest-800">
+						<button
+							class="body-small font-medium text-foreground underline hover:text-accent-foreground"
+						>
 							Contact support
 						</button>
 					</p>
@@ -106,7 +100,7 @@
 		</Card>
 
 		<div class="mt-8 text-center">
-			<p class="body-small text-forest-500">
+			<p class="body-small text-muted-foreground">
 				By signing in, you agree to our terms of service and privacy policy.
 			</p>
 		</div>

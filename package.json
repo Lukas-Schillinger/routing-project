@@ -67,9 +67,10 @@
 	},
 	"dependencies": {
 		"@fontsource/geist-sans": "^5.2.5",
-		"@fontsource/merriweather": "^5.2.10",
+		"@fontsource/neuton": "^5.2.6",
 		"@node-rs/argon2": "^2.0.2",
 		"lucide-svelte": "^0.543.0",
+		"mode-watcher": "^1.1.0",
 		"postgres": "^3.4.5",
 		"zod": "^3.25.76"
 	}

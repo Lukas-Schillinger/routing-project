@@ -1,6 +1,8 @@
 <script lang="ts">
 	import favicon from '$lib/assets/favicon.svg';
+	import Footer from '$lib/components/Footer.svelte';
 	import Header from '$lib/components/Header.svelte';
+	import { ModeWatcher } from 'mode-watcher';
 	import '../app.css';
 
 	let { children } = $props();
@@ -10,9 +12,11 @@
 	<link rel="icon" href={favicon} />
 </svelte:head>
 
-<div class="min-h-screen bg-sand-50">
+<ModeWatcher />
+<div class="bg-background flex min-h-screen flex-col">
 	<Header />
-	<main>
+	<main class="flex-1">
 		{@render children?.()}
 	</main>
+	<Footer />
 </div>

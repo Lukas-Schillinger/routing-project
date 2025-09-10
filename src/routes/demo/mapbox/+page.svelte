@@ -112,17 +112,19 @@
 	<title>{data.title}</title>
 </svelte:head>
 
-<div class="bg-gradient-to-br from-sand-50 via-sand-100 to-sand-200 p-6">
+<div class="bg-gradient-to-br from-background via-muted to-secondary p-6">
 	<div class="container mx-auto max-w-4xl">
 		<div class="mb-8 text-center">
 			<h1 class="headline-large mb-4">Mapbox Geocoding Demo</h1>
-			<p class="body-large text-forest-700">Convert addresses to coordinates with precision</p>
+			<p class="body-large text-muted-foreground">
+				Convert addresses to coordinates with precision
+			</p>
 		</div>
 
-		<Card class="mb-8 border-sand-300 bg-sand-50 shadow-lg">
+		<Card class="mb-8 shadow-lg">
 			<CardHeader>
-				<CardTitle class="headline-card text-forest-800">Address Geocoding</CardTitle>
-				<CardDescription class="body-medium text-forest-600">
+				<CardTitle class="headline-card">Address Geocoding</CardTitle>
+				<CardDescription class="body-medium">
 					Enter any address to get precise coordinates and location details
 				</CardDescription>
 			</CardHeader>
@@ -131,27 +133,22 @@
 					<Form.Field {form} name="address">
 						<Form.Control>
 							{#snippet children({ props })}
-								<Form.Label class="body-medium text-forest-700">Address</Form.Label>
+								<Form.Label class="body-medium">Address</Form.Label>
 								<Input
 									{...props}
 									type="text"
 									placeholder="e.g., 1600 Pennsylvania Avenue, Washington, DC"
 									bind:value={$formData.address}
-									class="border-sand-300 bg-white focus:border-forest-500 focus:ring-forest-500"
 								/>
 							{/snippet}
 						</Form.Control>
-						<Form.Description class="body-small text-forest-600"
+						<Form.Description class="body-small text-muted-foreground"
 							>Enter any US address for geocoding.</Form.Description
 						>
 						<Form.FieldErrors />
 					</Form.Field>
 
-					<Button
-						type="submit"
-						class="w-full bg-forest-600 text-white hover:bg-forest-700"
-						size="lg"
-					>
+					<Button type="submit" class="w-full" size="lg">
 						<MapPin class="mr-2 h-4 w-4" />
 						Geocode Address
 					</Button>
@@ -168,29 +165,29 @@
 		</Card>
 
 		{#if results}
-			<Card class="border-sand-300 bg-sand-50 shadow-lg">
+			<Card class="shadow-lg">
 				<CardHeader>
-					<CardTitle class="headline-card flex items-center text-forest-700">
-						<CircleCheck class="mr-2 h-5 w-5" />
+					<CardTitle class="headline-card flex items-center">
+						<CircleCheck class="mr-2 h-5 w-5 text-primary" />
 						Geocoding Results
 					</CardTitle>
-					<CardDescription class="body-medium text-forest-600">
+					<CardDescription class="body-medium">
 						Found {results.features.length} result(s) for "{$formData.address}"
 					</CardDescription>
 				</CardHeader>
 				<CardContent>
 					<div class="grid gap-4">
 						{#each results.features as feature, index}
-							<Card class="border-l-4 border-sand-200 border-l-forest-500 bg-white">
+							<Card class="border-l-4 border-l-primary">
 								<CardContent class="">
 									<div class="mb-3 flex items-start justify-between">
-										<h4 class="headline-small text-forest-800">
+										<h4 class="headline-small">
 											#{index + 1}: {feature.place_name}
 										</h4>
 										<div class="flex flex-wrap gap-1">
 											{#each feature.place_type as type}
 												<span
-													class="body-small rounded-full bg-forest-100 px-2 py-1 font-medium text-forest-800"
+													class="body-small rounded-full bg-secondary px-2 py-1 font-medium text-secondary-foreground"
 												>
 													{type}
 												</span>
@@ -198,9 +195,9 @@
 										</div>
 									</div>
 
-									<div class="body-small grid gap-2 text-forest-600">
+									<div class="body-small grid gap-2 text-muted-foreground">
 										<div class="flex items-center">
-											<MapPin class="mr-2 h-4 w-4 text-forest-400" />
+											<MapPin class="mr-2 h-4 w-4 text-primary" />
 											<span
 												><strong>Coordinates:</strong>
 												{feature.center[1].toFixed(6)}, {feature.center[0].toFixed(6)}</span
@@ -208,7 +205,7 @@
 										</div>
 
 										<div class="flex items-center">
-											<LucideChartNoAxesColumnDecreasing class="mr-2 h-4 w-4 text-forest-400" />
+											<LucideChartNoAxesColumnDecreasing class="mr-2 h-4 w-4 text-primary" />
 											<span
 												><strong>Relevance:</strong> {(feature.relevance * 100).toFixed(1)}%</span
 											>
@@ -216,7 +213,7 @@
 
 										{#if feature.address}
 											<div class="flex items-center">
-												<Mail class="mr-2 h-4 w-4 text-forest-400" />
+												<Mail class="mr-2 h-4 w-4 text-primary" />
 												<span><strong>Address:</strong> {feature.address}</span>
 											</div>
 										{/if}
@@ -229,26 +226,26 @@
 			</Card>
 		{/if}
 
-		<Card class="border-sand-300 bg-sand-100 shadow-lg">
+		<Card class="shadow-lg">
 			<CardHeader>
-				<CardTitle class="headline text-forest-800">About this demo</CardTitle>
+				<CardTitle class="headline">About this demo</CardTitle>
 			</CardHeader>
 			<CardContent>
-				<ul class="body-medium space-y-2 text-forest-700">
+				<ul class="body-medium space-y-2">
 					<li class="flex items-start">
-						<Check class="mt-0.5 mr-2 h-4 w-4 text-forest-500" />
+						<Check class="mt-0.5 mr-2 h-4 w-4 text-primary" />
 						Uses the Mapbox Geocoding API to convert addresses to coordinates
 					</li>
 					<li class="flex items-start">
-						<Check class="mt-0.5 mr-2 h-4 w-4 text-forest-500" />
+						<Check class="mt-0.5 mr-2 h-4 w-4 text-primary" />
 						Limited to US addresses for this demo
 					</li>
 					<li class="flex items-start">
-						<Check class="mt-0.5 mr-2 h-4 w-4 text-forest-500" />
+						<Check class="mt-0.5 mr-2 h-4 w-4 text-primary" />
 						Returns up to 5 results ordered by relevance
 					</li>
 					<li class="flex items-start">
-						<Check class="mt-0.5 mr-2 h-4 w-4 text-forest-500" />
+						<Check class="mt-0.5 mr-2 h-4 w-4 text-primary" />
 						Built with type-safe Zod validation and error handling
 					</li>
 				</ul>

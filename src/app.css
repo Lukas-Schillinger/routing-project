@@ -1,7 +1,7 @@
 @import 'tailwindcss';
-@import '@fontsource/merriweather/400.css';
-@import '@fontsource/merriweather/700.css';
-@import '@fontsource/merriweather/900.css';
+@import '@fontsource/neuton/300.css';
+@import '@fontsource/neuton/400.css';
+@import '@fontsource/neuton/700.css';
 @import '@fontsource/geist-sans/400.css';
 @import '@fontsource/geist-sans/500.css';
 @import '@fontsource/geist-sans/600.css';
@@ -22,6 +22,7 @@
 	--color-sand-700: #8b7055;
 	--color-sand-800: #6d5640;
 	--color-sand-900: #4f3d2c;
+	--color-sand-950: #312619;
 
 	--color-forest-50: #e5f2ef;
 	--color-forest-100: #cce4de;
@@ -33,75 +34,108 @@
 	--color-forest-700: #0b3b34;
 	--color-forest-800: #062723;
 	--color-forest-900: #013328; /* base */
+	--color-forest-950: #001f1a;
 }
 
 :root {
 	--radius: 0.625rem;
-	--background: oklch(1 0 0);
-	--foreground: oklch(0.145 0 0);
-	--card: oklch(1 0 0);
-	--card-foreground: oklch(0.145 0 0);
-	--popover: oklch(1 0 0);
-	--popover-foreground: oklch(0.145 0 0);
-	--primary: oklch(0.205 0 0);
-	--primary-foreground: oklch(0.985 0 0);
-	--secondary: oklch(0.97 0 0);
-	--secondary-foreground: oklch(0.205 0 0);
-	--muted: oklch(0.97 0 0);
-	--muted-foreground: oklch(0.556 0 0);
-	--accent: oklch(0.97 0 0);
-	--accent-foreground: oklch(0.205 0 0);
-	--destructive: oklch(0.577 0.245 27.325);
-	--border: oklch(0.922 0 0);
-	--input: oklch(0.922 0 0);
-	--ring: oklch(0.708 0 0);
-	--chart-1: oklch(0.646 0.222 41.116);
-	--chart-2: oklch(0.6 0.118 184.704);
-	--chart-3: oklch(0.398 0.07 227.392);
-	--chart-4: oklch(0.828 0.189 84.429);
-	--chart-5: oklch(0.769 0.188 70.08);
-	--sidebar: oklch(0.985 0 0);
-	--sidebar-foreground: oklch(0.145 0 0);
-	--sidebar-primary: oklch(0.205 0 0);
-	--sidebar-primary-foreground: oklch(0.985 0 0);
-	--sidebar-accent: oklch(0.97 0 0);
-	--sidebar-accent-foreground: oklch(0.205 0 0);
-	--sidebar-border: oklch(0.922 0 0);
-	--sidebar-ring: oklch(0.708 0 0);
+
+	/* Surfaces & text (light) */
+	--background: var(--color-sand-50);
+	--foreground: var(--color-black);
+
+	--card: var(--color-sand-50);
+	--card-foreground: var(--color-sand-900);
+
+	--popover: var(--color-sand-50);
+	--popover-foreground: var(--color-sand-900);
+
+	/* Primary (Forest) */
+	--primary: var(--color-forest-600);
+	--primary-foreground: var(--color-sand-50);
+
+	/* Secondary / subtle UI */
+	--secondary: var(--color-sand-200);
+	--secondary-foreground: var(--color-sand-900);
+
+	/* Muted / subdued text & fills */
+	--muted: var(--color-sand-100);
+	--muted-foreground: #6b7280; /* neutral gray-500 */
+
+	/* Accent (links, highlights) */
+	--accent: var(--color-sand-100);
+	--accent-foreground: var(--color-forest-700);
+
+	/* Destructive: keep a dedicated red so it’s unambiguous */
+	--destructive: oklch(0.62 0.25 25); /* clear red; keep your existing if preferred */
+	--destructive-foreground: oklch(0.98 0 0);
+
+	/* Borders / inputs / focus */
+	--border: var(--color-sand-200);
+	--input: var(--color-sand-200);
+	--ring: var(--color-forest-400);
+
+	/* Charts (optional: tuned to your scheme) */
+	--chart-1: var(--color-forest-600);
+	--chart-2: var(--color-forest-400);
+	--chart-3: var(--color-forest-800);
+	--chart-4: var(--color-sand-700);
+	--chart-5: var(--color-sand-500);
+
+	/* Sidebar */
+	--sidebar: var(--color-sand-100);
+	--sidebar-foreground: var(--color-sand-900);
+	--sidebar-primary: var(--color-forest-600);
+	--sidebar-primary-foreground: var(--color-sand-50);
+	--sidebar-accent: var(--color-sand-200);
+	--sidebar-accent-foreground: var(--color-sand-900);
+	--sidebar-border: var(--color-sand-200);
+	--sidebar-ring: var(--color-forest-400);
 }
 
 .dark {
-	--background: oklch(0.145 0 0);
-	--foreground: oklch(0.985 0 0);
-	--card: oklch(0.205 0 0);
-	--card-foreground: oklch(0.985 0 0);
-	--popover: oklch(0.205 0 0);
-	--popover-foreground: oklch(0.985 0 0);
-	--primary: oklch(0.922 0 0);
-	--primary-foreground: oklch(0.205 0 0);
-	--secondary: oklch(0.269 0 0);
-	--secondary-foreground: oklch(0.985 0 0);
-	--muted: oklch(0.269 0 0);
-	--muted-foreground: oklch(0.708 0 0);
-	--accent: oklch(0.269 0 0);
-	--accent-foreground: oklch(0.985 0 0);
-	--destructive: oklch(0.704 0.191 22.216);
-	--border: oklch(1 0 0 / 10%);
-	--input: oklch(1 0 0 / 15%);
-	--ring: oklch(0.556 0 0);
-	--chart-1: oklch(0.488 0.243 264.376);
-	--chart-2: oklch(0.696 0.17 162.48);
-	--chart-3: oklch(0.769 0.188 70.08);
-	--chart-4: oklch(0.627 0.265 303.9);
-	--chart-5: oklch(0.645 0.246 16.439);
-	--sidebar: oklch(0.205 0 0);
-	--sidebar-foreground: oklch(0.985 0 0);
-	--sidebar-primary: oklch(0.488 0.243 264.376);
-	--sidebar-primary-foreground: oklch(0.985 0 0);
-	--sidebar-accent: oklch(0.269 0 0);
-	--sidebar-accent-foreground: oklch(0.985 0 0);
-	--sidebar-border: oklch(1 0 0 / 10%);
-	--sidebar-ring: oklch(0.556 0 0);
+	--background: #000000; /* pure black background */
+	--foreground: var(--color-sand-100);
+
+	--card: #0a0a0a; /* very dark gray for cards */
+	--card-foreground: var(--color-sand-100);
+
+	--popover: #0a0a0a;
+	--popover-foreground: var(--color-sand-100);
+
+	--primary: var(--color-forest-300); /* much lighter green for better contrast on black */
+	--primary-foreground: #000000; /* black text on green */
+
+	--secondary: #1a1a1a; /* dark gray */
+	--secondary-foreground: var(--color-sand-100);
+
+	--muted: #0f0f0f; /* very dark gray */
+	--muted-foreground: #9ca3af; /* neutral gray-400 for dark mode */
+
+	--accent: #1a1a1a;
+	--accent-foreground: var(--color-forest-200); /* lighter green for accent */
+
+	--destructive: oklch(0.64 0.22 25); /* darker red for dark bg */
+	--destructive-foreground: oklch(0.98 0 0);
+
+	--border: #1a1a1a; /* dark gray border */
+	--input: #1a1a1a; /* dark gray input background */
+	--ring: var(--color-forest-200); /* lighter green for focus rings */
+
+	--chart-1: var(--color-forest-300);
+	--chart-2: var(--color-forest-200);
+	--chart-3: var(--color-forest-400);
+	--chart-4: var(--color-sand-400);
+	--chart-5: var(--color-sand-500);
+
+	--sidebar: #0a0a0a;
+	--sidebar-foreground: var(--color-sand-100);
+	--sidebar-primary: var(--color-forest-300);
+	--sidebar-primary-foreground: #000000;
+	--sidebar-accent: #1a1a1a;
+	--sidebar-accent-foreground: var(--color-sand-100);
+	--sidebar-border: #1a1a1a;
+	--sidebar-ring: var(--color-forest-200);
 }
 
 @theme inline {
@@ -158,40 +192,40 @@
 
 /* Typography System */
 @layer components {
-	/* Headlines using Merriweather */
+	/* Headlines using Neuton */
 	.headline-large {
-		@apply text-4xl leading-tight font-bold text-forest-900 md:text-5xl;
-		font-family: 'Merriweather', serif;
+		@apply text-4xl leading-tight font-semibold text-forest-950 md:text-5xl dark:text-forest-50;
+		font-family: 'Neuton', serif;
 	}
 
 	.headline-medium {
-		@apply text-3xl leading-tight font-bold text-forest-900 md:text-4xl;
-		font-family: 'Merriweather', serif;
+		@apply text-3xl leading-tight font-semibold text-forest-950 md:text-4xl dark:text-forest-50;
+		font-family: 'Neuton', serif;
 	}
 
 	.headline-small {
-		@apply text-xl leading-snug font-bold text-forest-800 md:text-2xl;
-		font-family: 'Merriweather', serif;
+		@apply text-xl leading-snug font-semibold text-forest-950 md:text-2xl dark:text-forest-50;
+		font-family: 'Neuton', serif;
 	}
 
 	.headline-card {
-		@apply leading-snug font-bold text-forest-800;
-		font-family: 'Merriweather', serif;
+		@apply text-2xl leading-snug font-semibold text-forest-950 dark:text-forest-50;
+		font-family: 'Neuton', serif;
 	}
 
 	/* Body text using Geist Sans */
 	.body-large {
-		@apply text-lg leading-relaxed text-forest-700;
+		@apply text-lg leading-relaxed text-forest-950 dark:text-forest-50;
 		font-family: 'Geist Sans', system-ui, sans-serif;
 	}
 
 	.body-medium {
-		@apply text-base leading-relaxed text-forest-700;
+		@apply text-base leading-relaxed text-forest-950 dark:text-forest-50;
 		font-family: 'Geist Sans', system-ui, sans-serif;
 	}
 
 	.body-small {
-		@apply text-sm leading-relaxed text-forest-600;
+		@apply text-sm leading-relaxed text-forest-950 dark:text-forest-50;
 		font-family: 'Geist Sans', system-ui, sans-serif;
 	}
 }
