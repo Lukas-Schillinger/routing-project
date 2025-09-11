@@ -1,7 +1,7 @@
 @import 'tailwindcss';
-@import '@fontsource/neuton/300.css';
-@import '@fontsource/neuton/400.css';
-@import '@fontsource/neuton/700.css';
+@import '@fontsource/eb-garamond/400.css';
+@import '@fontsource/eb-garamond/500.css';
+@import '@fontsource/eb-garamond/600.css';
 @import '@fontsource/geist-sans/400.css';
 @import '@fontsource/geist-sans/500.css';
 @import '@fontsource/geist-sans/600.css';
@@ -192,25 +192,25 @@
 
 /* Typography System */
 @layer components {
-	/* Headlines using Neuton */
+	/* Headlines using EB Garamond */
 	.headline-large {
 		@apply text-4xl leading-tight font-semibold text-forest-950 md:text-5xl dark:text-forest-50;
-		font-family: 'Neuton', serif;
+		font-family: 'EB Garamond', serif;
 	}
 
 	.headline-medium {
 		@apply text-3xl leading-tight font-semibold text-forest-950 md:text-4xl dark:text-forest-50;
-		font-family: 'Neuton', serif;
+		font-family: 'EB Garamond', serif;
 	}
 
 	.headline-small {
 		@apply text-xl leading-snug font-semibold text-forest-950 md:text-2xl dark:text-forest-50;
-		font-family: 'Neuton', serif;
+		font-family: 'EB Garamond', serif;
 	}
 
 	.headline-card {
 		@apply text-2xl leading-snug font-semibold text-forest-950 dark:text-forest-50;
-		font-family: 'Neuton', serif;
+		font-family: 'EB Garamond', serif;
 	}
 
 	/* Body text using Geist Sans */

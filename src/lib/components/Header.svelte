@@ -2,13 +2,14 @@
 	import { page } from '$app/state';
 	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
 	import { Button } from '$lib/components/ui/button';
-	import { House, MapPin, Menu, User, X } from 'lucide-svelte';
+	import { FileText, House, MapPin, Menu, User, X } from 'lucide-svelte';
 
 	let mobileMenuOpen = $state(false);
 
 	const navigation = [
 		{ name: 'Home', href: '/', icon: House },
 		{ name: 'Mapbox Demo', href: '/demo/mapbox', icon: MapPin },
+		{ name: 'CSV Demo', href: '/demo/csv', icon: FileText },
 		{ name: 'Auth Demo', href: '/demo/lucia/login', icon: User }
 	];
 
