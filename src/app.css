@@ -180,6 +180,12 @@
 	* {
 		@apply border-border outline-ring/50;
 	}
+
+	:root {
+		/* Override Tailwind's default serif font */
+		--font-serif: 'EB Garamond', serif;
+	}
+
 	body {
 		@apply bg-background text-foreground;
 		font-family:

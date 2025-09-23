@@ -8,9 +8,9 @@
 
 	const navigation = [
 		{ name: 'Home', href: '/', icon: House },
-		{ name: 'Mapbox Demo', href: '/demo/mapbox', icon: MapPin },
-		{ name: 'CSV Demo', href: '/demo/csv', icon: FileText },
-		{ name: 'Auth Demo', href: '/demo/lucia/login', icon: User }
+		{ name: 'Geocoding', href: '/demo/mapbox', icon: MapPin },
+		{ name: 'CSV', href: '/demo/csv', icon: FileText },
+		{ name: 'Auth', href: '/demo/lucia/login', icon: User }
 	];
 
 	function toggleMobileMenu() {
@@ -31,7 +31,7 @@
 					<div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
 						<MapPin class="h-5 w-5 text-primary-foreground" />
 					</div>
-					<span class="text-xl font-bold text-foreground">Routing Project</span>
+					<span class="text-xl font-bold text-foreground">wend</span>
 				</a>
 			</div>
 
