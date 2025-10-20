@@ -25,15 +25,15 @@
 		<!-- Hero Section -->
 		<div class="mb-16 text-center">
 			<!-- Hero Image Frame -->
-			<div class="relative mb-8 max-h-[75vh] w-full overflow-hidden">
-				<div class="h-96" id="hero-image-container">
+			<div class="hero-timeline-subject relative mb-8 max-h-[75vh] w-full overflow-visible">
+				<div class="z-10">
 					<CloudflareImage
 						src="https://media.fun.schillingertools.com/routing-project-hero-alt.jpg"
 						alt="Winding Road"
 						class="hero-image h-full max-h-[75vh] w-full rounded-4xl object-cover brightness-75"
 					/>
 				</div>
-				<div class="absolute inset-0 flex flex-col items-center justify-center">
+				<div class="hero-text absolute inset-0 flex flex-col items-center justify-center">
 					<div
 						class="text-[12rem] leading-none font-bold tracking-tighter text-white drop-shadow-2xl md:text-[14rem] lg:text-[18rem]"
 					>
@@ -45,7 +45,7 @@
 				</div>
 			</div>
 
-			<div class="flex flex-col justify-center gap-4 sm:flex-row">
+			<div class="relative z-50 flex flex-col justify-center gap-4 sm:flex-row">
 				<Button href="/demo/mapbox" size="lg">
 					<MapPin class="mr-2 h-5 w-5" />
 					Try Mapbox Demo
@@ -59,7 +59,7 @@
 		</div>
 
 		<!-- Features Grid -->
-		<div class="mb-16 grid gap-8 md:grid-cols-2">
+		<div class="slide-up mb-16 grid gap-8 md:grid-cols-2">
 			<Card class="shadow-lg transition-shadow hover:shadow-xl">
 				<CardHeader>
 					<CardTitle class="headline-card flex items-center">
@@ -104,7 +104,7 @@
 		</div>
 
 		<!-- Photo Gallery Section -->
-		<div class="mb-16">
+		<div class="slider mb-16">
 			<div class="mb-8 text-center">
 				<h2 class="headline-medium mb-4">Gallery</h2>
 				<p class="body-large text-muted-foreground">Showcase your application in action</p>
@@ -172,7 +172,7 @@
 		</div>
 
 		<!-- Technology Stack -->
-		<Card class="shadow-lg">
+		<Card class=" shadow-lg">
 			<CardHeader>
 				<CardTitle class="headline-small text-center">Built With Modern Technologies</CardTitle>
 				<CardDescription class="body-medium text-center">
@@ -204,19 +204,57 @@
 </div>
 
 <style>
-	.hero-image {
-		animation-name: expandAnimation;
+	/* Define scroll timeline for the root element */
+	/* Create a scroll timeline that tracks the root scrolling */
+	:global(html) {
+		scroll-timeline: --page-scroll block;
 	}
 
-	@keyframes expandAnimation {
-		from {
-			/* transform: rotate(0deg); */
-			scale: 100;
-		}
+	/* Hero image expansion animation */
+	:global(.hero-image) {
+		animation: expand-hero linear forwards;
+		animation-timeline: scroll();
+		animation-range: 0% 50%;
+	}
 
+	/* Hero text fade out animation */
+	.hero-text {
+		animation: fade-text linear forwards;
+		animation-timeline: scroll();
+		animation-range: 0% 25%;
+	}
+
+	/* Slide-up animation for content that should slide up from below */
+	:global(.slider) {
+		animation: slide-up linear both;
+		animation-timeline: view();
+		animation-range: 10% 50%;
+	}
+
+	@keyframes expand-hero {
+		from {
+			transform: scale(1);
+		}
 		to {
-			/* transform: rotate(360deg); */
-			scale: 150;
+			transform: scale(1.33);
+		}
+	}
+
+	@keyframes fade-text {
+		from {
+			opacity: 1;
+		}
+		to {
+			opacity: 0;
+		}
+	}
+
+	@keyframes slide-up {
+		from {
+			transform: translateY(100px);
+		}
+		to {
+			transform: translateY(0);
 		}
 	}
 </style>
