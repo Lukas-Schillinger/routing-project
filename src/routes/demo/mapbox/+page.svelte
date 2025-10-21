@@ -10,6 +10,7 @@
 		CardTitle
 	} from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input';
+	import * as Table from '$lib/components/ui/table';
 
 	import * as Form from '$lib/components/ui/form/index.js';
 	import type { GeocodingResponse } from '$lib/services/mapbox-geocoding.js';
@@ -18,7 +19,6 @@
 		CircleAlert,
 		CircleCheck,
 		LucideChartNoAxesColumnDecreasing,
-		Mail,
 		MapPin
 	} from 'lucide-svelte';
 	import { superForm } from 'sveltekit-superforms';
@@ -165,7 +165,7 @@
 		</Card>
 
 		{#if results}
-			<Card class="shadow-lg">
+			<Card class="mb-8 shadow-lg">
 				<CardHeader>
 					<CardTitle class="headline-card flex items-center">
 						<CircleCheck class="mr-2 h-5 w-5 text-primary" />
@@ -176,51 +176,51 @@
 					</CardDescription>
 				</CardHeader>
 				<CardContent>
-					<div class="grid gap-4">
-						{#each results.features as feature, index}
-							<Card class="border-l-4 border-l-primary">
-								<CardContent class="">
-									<div class="mb-3 flex items-start justify-between">
-										<h4 class="headline-small">
-											#{index + 1}: {feature.place_name}
-										</h4>
-										<div class="flex flex-wrap gap-1">
-											{#each feature.place_type as type}
-												<span
-													class="body-small rounded-full bg-secondary px-2 py-1 font-medium text-secondary-foreground"
-												>
-													{type}
-												</span>
-											{/each}
-										</div>
-									</div>
-
-									<div class="body-small grid gap-2 text-muted-foreground">
-										<div class="flex items-center">
-											<MapPin class="mr-2 h-4 w-4 text-primary" />
-											<span
-												><strong>Coordinates:</strong>
-												{feature.center[1].toFixed(6)}, {feature.center[0].toFixed(6)}</span
-											>
-										</div>
-
-										<div class="flex items-center">
-											<LucideChartNoAxesColumnDecreasing class="mr-2 h-4 w-4 text-primary" />
-											<span
-												><strong>Relevance:</strong> {(feature.relevance * 100).toFixed(1)}%</span
-											>
-										</div>
-
-										{#if feature.address}
-											<div class="flex items-center">
-												<Mail class="mr-2 h-4 w-4 text-primary" />
-												<span><strong>Address:</strong> {feature.address}</span>
+					<div class="rounded-md border">
+						<Table.Root>
+							<Table.Header>
+								<Table.Row>
+									<Table.Head class="w-12">#</Table.Head>
+									<Table.Head>Address</Table.Head>
+									<Table.Head>Coordinates</Table.Head>
+									<Table.Head>Type</Table.Head>
+									<Table.Head class="text-right">Relevance</Table.Head>
+								</Table.Row>
+							</Table.Header>
+							<Table.Body>
+								{#each results.features as feature, index}
+									<Table.Row>
+										<Table.Cell class="font-medium">{index + 1}</Table.Cell>
+										<Table.Cell>
+											<div class="flex items-start">
+												<MapPin class="mt-0.5 mr-2 h-4 w-4 flex-shrink-0 text-primary" />
+												<span>{feature.place_name}</span>
 											</div>
-										{/if}
-									</div>
-								</CardContent>
-							</Card>
-						{/each}
+										</Table.Cell>
+										<Table.Cell class="font-mono text-sm">
+											{feature.center[1].toFixed(6)}, {feature.center[0].toFixed(6)}
+										</Table.Cell>
+										<Table.Cell>
+											<div class="flex flex-wrap gap-1">
+												{#each feature.place_type as type}
+													<span
+														class="body-small rounded-full bg-secondary px-2 py-1 font-medium text-secondary-foreground"
+													>
+														{type}
+													</span>
+												{/each}
+											</div>
+										</Table.Cell>
+										<Table.Cell class="text-right">
+											<div class="flex items-center justify-end">
+												<LucideChartNoAxesColumnDecreasing class="mr-2 h-4 w-4 text-primary" />
+												<span>{(feature.relevance * 100).toFixed(1)}%</span>
+											</div>
+										</Table.Cell>
+									</Table.Row>
+								{/each}
+							</Table.Body>
+						</Table.Root>
 					</div>
 				</CardContent>
 			</Card>

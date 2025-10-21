@@ -2,14 +2,14 @@
 	import { page } from '$app/state';
 	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
 	import { Button } from '$lib/components/ui/button';
-	import { FileText, House, MapPin, Menu, User, X } from 'lucide-svelte';
+	import { House, Map, MapPin, Menu, User, X } from 'lucide-svelte';
 
 	let mobileMenuOpen = $state(false);
 
 	const navigation = [
 		{ name: 'Home', href: '/', icon: House },
+		{ name: 'Maps', href: '/maps', icon: Map },
 		{ name: 'Geocoding', href: '/demo/mapbox', icon: MapPin },
-		{ name: 'CSV', href: '/demo/csv', icon: FileText },
 		{ name: 'Auth', href: '/demo/lucia/login', icon: User }
 	];
 
@@ -23,8 +23,8 @@
 </script>
 
 <header class="border-b border-border bg-background shadow-sm">
-	<div class="container mx-auto px-4 sm:px-6 lg:px-8">
-		<div class="flex h-16 items-center justify-between">
+	<div class="mx-auto px-4 sm:px-6 lg:px-8">
+		<div class="flex h-12 items-center justify-between">
 			<!-- Logo/Brand -->
 			<div class="flex items-center">
 				<a href="/" class="flex items-center space-x-2">

@@ -13,7 +13,7 @@
 </svelte:head>
 
 <ModeWatcher />
-<div class="bg-background flex min-h-screen flex-col">
+<div class="flex min-h-screen flex-col bg-background">
 	<Header />
 	<main class="flex-1">
 		{@render children?.()}

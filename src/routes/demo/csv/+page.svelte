@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
 	import * as Alert from '$lib/components/ui/alert';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
@@ -11,45 +10,199 @@
 		CardTitle
 	} from '$lib/components/ui/card';
 	import { Label } from '$lib/components/ui/label';
-	import {
-		CircleAlert,
-		CircleCheck,
-		Download,
-		FileEdit,
-		FileText,
-		MapPin,
-		Phone,
-		Upload,
-		User
-	} from 'lucide-svelte';
-	import type { ActionData } from './$types';
+	import * as Table from '$lib/components/ui/table';
+	import { CircleAlert, Download, Loader2, MapPin, Upload, User } from 'lucide-svelte';
 
-	let { form }: { form: ActionData } = $props();
 	let uploading = $state(false);
+	let geocoding = $state(false);
 	let fileInput: HTMLInputElement;
+
+	let uploadResult = $state<{
+		success: boolean;
+		error?: string;
+		mapId?: string;
+		uploadId?: string;
+		recordCount?: number;
+		records?: Array<{
+			name: string;
+			address: string;
+			phone: string | null;
+			notes: string | null;
+		}>;
+		fileName?: string;
+	} | null>(null);
+
+	let geocodeResult = $state<{
+		success: boolean;
+		error?: string;
+		geocoded?: number;
+		failed?: number;
+		results?: Array<{
+			record: {
+				name: string;
+				address: string;
+				phone: string | null;
+				notes: string | null;
+			};
+			location: any;
+			stop: any;
+		}>;
+		errors?: Array<{
+			record: any;
+			error: string;
+		}>;
+	} | null>(null);
+
+	async function handleUpload(event: Event) {
+		event.preventDefault();
+		uploading = true;
+		uploadResult = null;
+		geocodeResult = null;
+
+		const form = event.target as HTMLFormElement;
+		const formData = new FormData(form);
+
+		try {
+			// Step 1: Upload CSV
+			const response = await fetch('/api/maps/upload', {
+				method: 'POST',
+				body: formData
+			});
+
+			const data = await response.json();
+
+			if (!response.ok) {
+				uploadResult = {
+					success: false,
+					error: data.error || 'Upload failed'
+				};
+				return;
+			}
+
+			uploadResult = {
+				success: true,
+				mapId: data.mapId,
+				uploadId: data.uploadId,
+				recordCount: data.recordCount,
+				records: data.records,
+				fileName: fileInput.files?.[0]?.name || 'uploaded-file.csv'
+			};
+
+			// Step 2: Automatically geocode the addresses
+			await geocodeAddresses(data.mapId, data.records);
+		} catch (error) {
+			uploadResult = {
+				success: false,
+				error: error instanceof Error ? error.message : 'Network error'
+			};
+		} finally {
+			uploading = false;
+		}
+	}
+
+	async function geocodeAddresses(mapId: string, records: any[]) {
+		geocoding = true;
+		geocodeResult = null;
+
+		try {
+			const response = await fetch(`/api/maps/${mapId}/geocode`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({ records })
+			});
+
+			const data = await response.json();
+
+			if (!response.ok) {
+				geocodeResult = {
+					success: false,
+					error: data.error || 'Geocoding failed'
+				};
+				return;
+			}
+
+			geocodeResult = {
+				success: true,
+				geocoded: data.geocoded,
+				failed: data.failed,
+				results: data.results,
+				errors: data.errors
+			};
+		} catch (error) {
+			geocodeResult = {
+				success: false,
+				error: error instanceof Error ? error.message : 'Network error'
+			};
+		} finally {
+			geocoding = false;
+		}
+	}
 
 	// Sample data for download
 	const sampleData = [
 		{
-			name: 'John Doe',
-			address: '123 Main St, Austin, TX 78701',
-			'phone number': '(555) 123-4567',
-			notes: 'Prefers morning appointments'
+			name: 'Laura Perez',
+			address: '215 N Kentucky Ave, Lakeland, FL 33801',
+			'phone number': '(863) 555-0193',
+			notes: ''
 		},
 		{
-			name: 'Jane Smith',
-			address: '456 Oak Ave, Houston, TX 77002',
-			'phone number': '555-987-6543',
-			notes: 'VIP customer'
+			name: 'Marcus Allen',
+			address: '930 E Lemon St, Lakeland, FL 33801',
+			'phone number': '863-555-4472',
+			notes: ''
 		},
 		{
-			name: 'Bob Johnson',
-			address: '789 Pine Rd, Dallas, TX 75201',
-			'phone number': '(555) 456-7890',
-			notes: 'Needs wheelchair access'
+			name: 'Stephanie Wong',
+			address: '420 Bartow Rd, Lakeland, FL 33803',
+			'phone number': '(863) 555-8230',
+			notes: ''
+		},
+		{
+			name: 'David Simmons',
+			address: '100 Lake Morton Dr, Lakeland, FL 33801',
+			'phone number': '(863) 555-3002',
+			notes: ''
+		},
+		{
+			name: 'Rachel Green',
+			address: '3700 Cleveland Heights Blvd, Lakeland, FL 33803',
+			'phone number': '863-555-7625',
+			notes: ''
+		},
+		{
+			name: 'Chris Martinez',
+			address: '640 E Main St, Lakeland, FL 33801',
+			'phone number': '(863) 555-2259',
+			notes: ''
+		},
+		{
+			name: 'Sandra Patel',
+			address: '1500 S Florida Ave, Lakeland, FL 33803',
+			'phone number': '863-555-0086',
+			notes: ''
+		},
+		{
+			name: 'Anthony Roberts',
+			address: '1000 E Edgewood Dr, Lakeland, FL 33803',
+			'phone number': '(863) 555-3910',
+			notes: ''
+		},
+		{
+			name: 'Emma Johnson',
+			address: '920 E Memorial Blvd, Lakeland, FL 33801',
+			'phone number': '863-555-5721',
+			notes: ''
+		},
+		{
+			name: 'Tyler Brooks',
+			address: '701 W Lime St, Lakeland, FL 33815',
+			'phone number': '(863) 555-6345',
+			notes: ''
 		}
 	];
-
 	function downloadSample() {
 		const headers = ['name', 'address', 'phone number', 'notes'];
 		const csvContent = [
@@ -69,43 +222,18 @@
 		a.click();
 		URL.revokeObjectURL(url);
 	}
-
-	function downloadResults() {
-		if (!form?.data) return;
-
-		const headers = ['name', 'address', 'phoneNumber', 'notes'];
-		const csvContent = [
-			headers.join(','),
-			...form.data.map((row: any) =>
-				[`"${row.name}"`, `"${row.address}"`, `"${row.phoneNumber}"`, `"${row.notes}"`].join(',')
-			)
-		].join('\n');
-
-		const blob = new Blob([csvContent], { type: 'text/csv' });
-		const url = URL.createObjectURL(blob);
-		const a = document.createElement('a');
-		a.href = url;
-		a.download = 'processed-contacts.csv';
-		a.click();
-		URL.revokeObjectURL(url);
-	}
-
-	function copyJsonToClipboard() {
-		if (!form?.data) return;
-		navigator.clipboard.writeText(JSON.stringify(form.data, null, 2));
-	}
 </script>
 
 <svelte:head>
-	<title>CSV Upload Demo - Routing Project</title>
+	<title>New Map - Routing Project</title>
 </svelte:head>
 
 <div class="bg-gradient-to-br from-background via-muted to-secondary p-6">
 	<div class="container mx-auto max-w-4xl">
 		<div class="mb-8 text-center">
-			<h1 class="headline-large mb-4">CSV Upload & Parser</h1>
+			<h1 class="headline-large mb-4">Create New Map</h1>
 			<p class="body-large text-muted-foreground">
-				Upload a CSV file with contact information and get a parsed JSON array
+				Upload a CSV file with your stops and we'll automatically geocode all addresses
 			</p>
 		</div>
 
@@ -121,19 +249,7 @@
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
-				<form
-					method="POST"
-					action="?/upload"
-					use:enhance={() => {
-						uploading = true;
-						return async ({ update }) => {
-							uploading = false;
-							await update();
-						};
-					}}
-					enctype="multipart/form-data"
-					class="space-y-6"
-				>
+				<form onsubmit={handleUpload} enctype="multipart/form-data" class="space-y-6">
 					<div class="space-y-2">
 						<Label for="csvFile" class="body-medium">CSV File</Label>
 						<input
@@ -149,13 +265,16 @@
 					</div>
 
 					<div class="flex flex-col gap-4 sm:flex-row">
-						<Button type="submit" disabled={uploading} class="flex-1">
+						<Button type="submit" disabled={uploading || geocoding} class="flex-1">
 							{#if uploading}
-								<FileText class="mr-2 h-4 w-4 animate-spin" />
-								Processing...
+								<Upload class="mr-2 h-4 w-4 animate-spin" />
+								Uploading CSV...
+							{:else if geocoding}
+								<Loader2 class="mr-2 h-4 w-4 animate-spin" />
+								Geocoding Addresses...
 							{:else}
 								<Upload class="mr-2 h-4 w-4" />
-								Upload & Parse CSV
+								Upload & Geocode CSV
 							{/if}
 						</Button>
 
@@ -165,141 +284,154 @@
 						</Button>
 					</div>
 
-					{#if form?.error}
+					{#if uploadResult?.error}
 						<Alert.Root variant="destructive">
 							<CircleAlert class="h-4 w-4" />
-							<Alert.Title>Error</Alert.Title>
-							<Alert.Description>{form.error}</Alert.Description>
+							<Alert.Title>Upload Error</Alert.Title>
+							<Alert.Description>{uploadResult.error}</Alert.Description>
+						</Alert.Root>
+					{/if}
+
+					{#if geocodeResult?.error}
+						<Alert.Root variant="destructive">
+							<CircleAlert class="h-4 w-4" />
+							<Alert.Title>Geocoding Error</Alert.Title>
+							<Alert.Description>{geocodeResult.error}</Alert.Description>
+						</Alert.Root>
+					{/if}
+
+					{#if geocoding}
+						<Alert.Root>
+							<Loader2 class="h-4 w-4 animate-spin" />
+							<Alert.Title>Geocoding in Progress</Alert.Title>
+							<Alert.Description>
+								Please wait while we geocode the addresses using Mapbox...
+							</Alert.Description>
 						</Alert.Root>
 					{/if}
 				</form>
 			</CardContent>
 		</Card>
 
-		<!-- Results Section -->
-		{#if form?.success && form?.data}
+		<!-- Geocoding Results Section -->
+		{#if geocodeResult?.success && geocodeResult?.results}
 			<Card class="mb-8 shadow-lg">
 				<CardHeader>
 					<CardTitle class="headline-card flex items-center">
-						<CircleCheck class="mr-2 h-5 w-5 text-primary" />
-						Parsing Results
+						<MapPin class="mr-2 h-5 w-5 text-primary" />
+						Geocoding Results
 					</CardTitle>
 					<CardDescription class="body-medium">
-						Successfully processed {form.count} records from "{form.fileName}"
+						Successfully geocoded {geocodeResult.geocoded} of {uploadResult?.recordCount} addresses
+						{#if geocodeResult.failed && geocodeResult.failed > 0}
+							<span class="text-destructive">({geocodeResult.failed} failed)</span>
+						{/if}
 					</CardDescription>
 				</CardHeader>
 				<CardContent class="space-y-6">
 					<!-- Summary -->
-					<div class="flex flex-wrap gap-2">
-						<Badge variant="secondary">
-							<FileText class="mr-1 h-3 w-3" />
-							{form.count} Records
-						</Badge>
-						<Badge variant="secondary">
-							<CircleCheck class="mr-1 h-3 w-3" />
-							Validated
-						</Badge>
-					</div>
-
-					<!-- Action Buttons -->
-					<div class="flex flex-col gap-2 sm:flex-row">
-						<Button onclick={copyJsonToClipboard} variant="outline">
-							<FileEdit class="mr-2 h-4 w-4" />
-							Copy JSON to Clipboard
-						</Button>
-						<Button onclick={downloadResults} variant="outline">
-							<Download class="mr-2 h-4 w-4" />
-							Download Processed CSV
-						</Button>
-					</div>
-
-					<!-- Data Preview -->
-					<div class="space-y-4">
-						<h3 class="headline-small">Data Preview</h3>
-						<div class="max-h-96 space-y-4 overflow-y-auto">
-							{#each form.data.slice(0, 5) as record, index}
-								<Card class="border-l-4 border-l-primary">
-									<CardContent class="pt-4">
-										<div class="grid gap-3">
-											<div class="flex items-center">
-												<User class="mr-2 h-4 w-4 text-primary" />
-												<span class="body-medium font-semibold">{record.name}</span>
-											</div>
-											{#if record.address}
-												<div class="flex items-start">
-													<MapPin class="mt-0.5 mr-2 h-4 w-4 text-primary" />
-													<span class="body-small text-muted-foreground">{record.address}</span>
-												</div>
-											{/if}
-											{#if record.phoneNumber}
-												<div class="flex items-center">
-													<Phone class="mr-2 h-4 w-4 text-primary" />
-													<span class="body-small text-muted-foreground">{record.phoneNumber}</span>
-												</div>
-											{/if}
-											{#if record.notes}
-												<div class="flex items-start">
-													<FileEdit class="mt-0.5 mr-2 h-4 w-4 text-primary" />
-													<span class="body-small text-muted-foreground">{record.notes}</span>
-												</div>
-											{/if}
-										</div>
-									</CardContent>
-								</Card>
-							{/each}
-
-							{#if form.data.length > 5}
-								<p class="body-small text-center text-muted-foreground">
-									... and {form.data.length - 5} more records
-								</p>
+					<div class="flex flex-wrap items-center justify-between gap-2">
+						<div class="flex flex-wrap gap-2">
+							<Badge variant="secondary">
+								<MapPin class="mr-1 h-3 w-3" />
+								{geocodeResult.geocoded} Geocoded
+							</Badge>
+							{#if geocodeResult.failed && geocodeResult.failed > 0}
+								<Badge variant="destructive">
+									<CircleAlert class="mr-1 h-3 w-3" />
+									{geocodeResult.failed} Failed
+								</Badge>
 							{/if}
+						</div>
+						{#if uploadResult?.mapId}
+							<Button href="/maps/{uploadResult.mapId}">
+								<MapPin class="mr-2 h-4 w-4" />
+								View Map Details
+							</Button>
+						{/if}
+					</div>
+
+					<!-- Geocoded Locations Table -->
+					<div class="space-y-4">
+						<h3 class="headline-small">Geocoded Locations</h3>
+						<div class="rounded-md border">
+							<Table.Root>
+								<Table.Header>
+									<Table.Row>
+										<Table.Head class="w-12">#</Table.Head>
+										<Table.Head>Name</Table.Head>
+										<Table.Head>Address</Table.Head>
+										<Table.Head>Coordinates</Table.Head>
+										<Table.Head>Confidence</Table.Head>
+									</Table.Row>
+								</Table.Header>
+								<Table.Body>
+									{#each geocodeResult.results as result, index}
+										<Table.Row>
+											<Table.Cell class="font-medium">{index + 1}</Table.Cell>
+											<Table.Cell>
+												<div class="flex items-center">
+													<User class="mr-2 h-4 w-4 flex-shrink-0 text-primary" />
+													<span class="font-semibold">{result.record.name}</span>
+												</div>
+											</Table.Cell>
+											<Table.Cell>
+												<div class="flex items-start">
+													<MapPin class="mt-0.5 mr-2 h-4 w-4 flex-shrink-0 text-primary" />
+													<div class="text-sm">
+														<div class="font-medium">{result.location.address_line1}</div>
+														<div class="text-muted-foreground">
+															{result.location.city}, {result.location.region}
+															{result.location.postal_code}
+														</div>
+													</div>
+												</div>
+											</Table.Cell>
+											<Table.Cell class="font-mono text-sm">
+												{parseFloat(result.location.lat).toFixed(6)}, {parseFloat(
+													result.location.lon
+												).toFixed(6)}
+											</Table.Cell>
+											<Table.Cell>
+												<Badge variant="outline">
+													{parseFloat(result.location.geocode_confidence).toFixed(1)}%
+												</Badge>
+											</Table.Cell>
+										</Table.Row>
+									{/each}
+								</Table.Body>
+							</Table.Root>
 						</div>
 					</div>
 
+					<!-- Failed Geocoding Errors -->
+					{#if geocodeResult.errors && geocodeResult.errors.length > 0}
+						<div class="space-y-4">
+							<h3 class="headline-small text-destructive">Failed Addresses</h3>
+							<div class="space-y-2">
+								{#each geocodeResult.errors as error}
+									<Alert.Root variant="destructive">
+										<CircleAlert class="h-4 w-4" />
+										<Alert.Title>{error.record.name}</Alert.Title>
+										<Alert.Description>
+											Address: {error.record.address}<br />
+											Error: {error.error}
+										</Alert.Description>
+									</Alert.Root>
+								{/each}
+							</div>
+						</div>
+					{/if}
+
 					<!-- JSON Output -->
 					<details class="space-y-2">
-						<summary class="headline-small cursor-pointer">JSON Output</summary>
+						<summary class="headline-small cursor-pointer">Geocoded Data JSON</summary>
 						<pre class="body-small overflow-x-auto rounded bg-muted p-4 text-muted-foreground"><code
-								>{JSON.stringify(form.data, null, 2)}</code
+								>{JSON.stringify(geocodeResult.results, null, 2)}</code
 							></pre>
 					</details>
 				</CardContent>
 			</Card>
 		{/if}
-
-		<!-- Instructions -->
-		<Card class="shadow-lg">
-			<CardHeader>
-				<CardTitle class="headline-small">Instructions</CardTitle>
-			</CardHeader>
-			<CardContent>
-				<div class="space-y-4">
-					<div>
-						<h4 class="body-medium mb-2 font-semibold">Required CSV Format:</h4>
-						<ul class="body-small space-y-1 text-muted-foreground">
-							<li>
-								• Column headers: <code class="rounded bg-muted px-1"
-									>name, address, phone number, notes</code
-								>
-							</li>
-							<li>• Headers are case-insensitive and whitespace is trimmed</li>
-							<li>• Name field is required, others are optional</li>
-							<li>• Phone numbers are validated for basic format</li>
-						</ul>
-					</div>
-
-					<div>
-						<h4 class="body-medium mb-2 font-semibold">Features:</h4>
-						<ul class="body-small space-y-1 text-muted-foreground">
-							<li>• Validates CSV structure and required columns</li>
-							<li>• Cleans and normalizes data</li>
-							<li>• Returns validated JSON array</li>
-							<li>• Provides detailed error messages</li>
-							<li>• Maximum file size: 5MB</li>
-						</ul>
-					</div>
-				</div>
-			</CardContent>
-		</Card>
 	</div>
 </div>

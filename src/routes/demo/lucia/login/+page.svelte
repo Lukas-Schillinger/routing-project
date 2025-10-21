@@ -82,7 +82,7 @@
 
 					<div class="grid grid-cols-2 gap-3 pt-2">
 						<Button type="submit">Sign In</Button>
-						<Button formaction="?/register" variant="outline">Register</Button>
+						<Button type="submit" formaction="?/register" variant="outline">Register</Button>
 					</div>
 				</form>
 
