@@ -5,6 +5,7 @@ export * from './driver.js';
 export * from './location.js';
 export * from './organization.js';
 export * from './route.js';
+export * from './routeStop.js';
 export * from './stop.js';
 export * from './user.js';
 
