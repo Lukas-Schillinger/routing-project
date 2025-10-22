@@ -59,6 +59,7 @@ export const drivers = pgTable(
 		phone: varchar('phone', { length: 32 }),
 		notes: text('notes'),
 		active: boolean('active').default(true).notNull(),
+		temporary: boolean('temporary').default(false).notNull(),
 		created_at: ts('created_at'),
 		updated_at: ts('updated_at')
 	},
@@ -128,54 +129,6 @@ export const stops = pgTable(
 		index('stops_org_idx').on(t.organization_id),
 		index('stops_map_idx').on(t.map_id),
 		index('stops_location_idx').on(t.location_id)
-	]
-);
-
-export const distanceMatrices = pgTable(
-	'distance_matrices',
-	{
-		id,
-		organization_id: orgId.references(() => organizations.id, { onDelete: 'cascade' }),
-		map_id: uuid('map_id')
-			.references(() => maps.id, { onDelete: 'cascade' })
-			.notNull(),
-		profile: varchar('profile', { length: 32 }).default('driving').notNull(),
-		units: varchar('units', { length: 16 }).default('metric').notNull(),
-		provider: varchar('provider', { length: 32 }).default('geoapify').notNull(),
-		request_hash: varchar('request_hash', { length: 64 }).notNull(),
-		status: varchar('status', { length: 32 }).default('complete').notNull(),
-		error: text('error'),
-		created_at: ts('created_at'),
-		updated_at: ts('updated_at')
-	},
-	(t) => [
-		uniqueIndex('distance_matrices_request_uidx').on(t.organization_id, t.request_hash),
-		index('distance_matrices_map_idx').on(t.map_id)
-	]
-);
-
-export const distanceMatrixEntries = pgTable(
-	'distance_matrix_entries',
-	{
-		id,
-		organization_id: orgId.references(() => organizations.id, { onDelete: 'cascade' }),
-		matrix_id: uuid('matrix_id')
-			.references(() => distanceMatrices.id, { onDelete: 'cascade' })
-			.notNull(),
-		origin_stop_id: uuid('origin_stop_id')
-			.references(() => stops.id, { onDelete: 'cascade' })
-			.notNull(),
-		dest_stop_id: uuid('dest_stop_id')
-			.references(() => stops.id, { onDelete: 'cascade' })
-			.notNull(),
-		distance_meters: integer('distance_meters').notNull(),
-		duration_seconds: integer('duration_seconds').notNull(),
-		created_at: ts('created_at'),
-		updated_at: ts('updated_at')
-	},
-	(t) => [
-		uniqueIndex('matrix_cell_uidx').on(t.matrix_id, t.origin_stop_id, t.dest_stop_id),
-		index('matrix_entries_matrix_idx').on(t.matrix_id)
 	]
 );
 
@@ -253,7 +206,6 @@ export const organizationsRelations = relations(organizations, ({ many }) => ({
 	maps: many(maps),
 	locations: many(locations),
 	stops: many(stops),
-	distanceMatrices: many(distanceMatrices),
 	routes: many(routes),
 	routeStops: many(routeStops),
 	fileUploads: many(fileUploads)
@@ -280,7 +232,6 @@ export const mapsRelations = relations(maps, ({ one, many }) => ({
 		references: [organizations.id]
 	}),
 	stops: many(stops),
-	distanceMatrices: many(distanceMatrices),
 	routes: many(routes),
 	fileUploads: many(fileUploads)
 }));
@@ -306,42 +257,7 @@ export const stopsRelations = relations(stops, ({ one, many }) => ({
 		fields: [stops.location_id],
 		references: [locations.id]
 	}),
-	routeStops: many(routeStops),
-	asOriginMatrixCells: many(distanceMatrixEntries, { relationName: 'origin' }),
-	asDestMatrixCells: many(distanceMatrixEntries, { relationName: 'dest' })
-}));
-
-export const distanceMatricesRelations = relations(distanceMatrices, ({ one, many }) => ({
-	organization: one(organizations, {
-		fields: [distanceMatrices.organization_id],
-		references: [organizations.id]
-	}),
-	map: one(maps, {
-		fields: [distanceMatrices.map_id],
-		references: [maps.id]
-	}),
-	entries: many(distanceMatrixEntries)
-}));
-
-export const distanceMatrixEntriesRelations = relations(distanceMatrixEntries, ({ one }) => ({
-	matrix: one(distanceMatrices, {
-		fields: [distanceMatrixEntries.matrix_id],
-		references: [distanceMatrices.id]
-	}),
-	originStop: one(stops, {
-		fields: [distanceMatrixEntries.origin_stop_id],
-		references: [stops.id],
-		relationName: 'origin'
-	}),
-	destStop: one(stops, {
-		fields: [distanceMatrixEntries.dest_stop_id],
-		references: [stops.id],
-		relationName: 'dest'
-	}),
-	organization: one(organizations, {
-		fields: [distanceMatrixEntries.organization_id],
-		references: [organizations.id]
-	})
+	routeStops: many(routeStops)
 }));
 
 export const routesRelations = relations(routes, ({ one, many }) => ({

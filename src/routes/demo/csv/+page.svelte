@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import * as Alert from '$lib/components/ui/alert';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
@@ -130,6 +131,14 @@
 				results: data.results,
 				errors: data.errors
 			};
+
+			// Redirect to map detail page after successful geocoding
+			if (data.geocoded && data.geocoded > 0) {
+				// Wait a moment to show success state
+				setTimeout(() => {
+					goto(`/maps/${mapId}`);
+				}, 1500);
+			}
 		} catch (error) {
 			geocodeResult = {
 				success: false,
@@ -315,6 +324,17 @@
 
 		<!-- Geocoding Results Section -->
 		{#if geocodeResult?.success && geocodeResult?.results}
+			<!-- Redirect Alert -->
+			{#if geocodeResult.geocoded && geocodeResult.geocoded > 0}
+				<Alert.Root class="mb-8 border-blue-500 bg-blue-50 dark:bg-blue-950">
+					<Loader2 class="h-4 w-4 animate-spin text-blue-600 dark:text-blue-400" />
+					<Alert.Title class="text-blue-800 dark:text-blue-200">Redirecting to Map...</Alert.Title>
+					<Alert.Description class="text-blue-700 dark:text-blue-300">
+						Taking you to the map detail page in a moment...
+					</Alert.Description>
+				</Alert.Root>
+			{/if}
+
 			<Card class="mb-8 shadow-lg">
 				<CardHeader>
 					<CardTitle class="headline-card flex items-center">

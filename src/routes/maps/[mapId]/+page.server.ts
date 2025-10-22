@@ -1,5 +1,5 @@
 import { db } from '$lib/server/db';
-import { locations, maps, stops } from '$lib/server/db/schema';
+import { drivers, locations, maps, routes, stops } from '$lib/server/db/schema';
 import { error, redirect } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
 import type { PageServerLoad } from './$types';
@@ -35,8 +35,26 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		.innerJoin(locations, eq(stops.location_id, locations.id))
 		.where(eq(stops.map_id, mapId));
 
+	// Fetch all drivers for this organization
+	const orgDrivers = await db
+		.select()
+		.from(drivers)
+		.where(eq(drivers.organization_id, user.organization_id));
+
+	// Fetch routes for this map to see which drivers are assigned
+	const mapRoutes = await db
+		.select({
+			route: routes,
+			driver: drivers
+		})
+		.from(routes)
+		.leftJoin(drivers, eq(routes.driver_id, drivers.id))
+		.where(eq(routes.map_id, mapId));
+
 	return {
 		map,
-		stops: mapStops
+		stops: mapStops,
+		allDrivers: orgDrivers,
+		assignedDrivers: mapRoutes
 	};
 };
