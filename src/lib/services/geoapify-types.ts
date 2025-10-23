@@ -62,7 +62,74 @@ export const geoapifyStepSchema = z.object({
 	waiting_time: z.number().optional() // waiting time before service
 });
 
-// Route schema (optimized route for one agent)
+// Action schema in the GeoJSON response
+export const geoapifyActionSchema = z.object({
+	index: z.number(),
+	type: z.enum(['start', 'job', 'end', 'break']),
+	start_time: z.number(),
+	duration: z.number(),
+	job_index: z.number().optional(),
+	job_id: z.string().optional(),
+	waypoint_index: z.number().optional() // optional because 'end' actions may not have this
+});
+
+// Waypoint schema in the GeoJSON response
+export const geoapifyWaypointSchema = z.object({
+	original_location: geoapifyCoordinateSchema,
+	location: geoapifyCoordinateSchema,
+	start_time: z.number(),
+	duration: z.number(),
+	actions: z.array(geoapifyActionSchema),
+	prev_leg_index: z.number().optional(),
+	next_leg_index: z.number().optional()
+});
+
+// Leg schema in the GeoJSON response
+export const geoapifyLegSchema = z.object({
+	time: z.number(),
+	distance: z.number(),
+	from_waypoint_index: z.number(),
+	to_waypoint_index: z.number(),
+	steps: z.array(
+		z.object({
+			from_index: z.number(),
+			to_index: z.number(),
+			time: z.number(),
+			distance: z.number()
+		})
+	)
+});
+
+// Feature properties for each route in GeoJSON response
+export const geoapifyFeaturePropertiesSchema = z.object({
+	agent_index: z.number(),
+	agent_id: z.string(),
+	time: z.number(), // total duration in seconds
+	start_time: z.number(),
+	end_time: z.number(),
+	distance: z.number(), // total distance in meters
+	legs: z.array(geoapifyLegSchema),
+	mode: z.string(),
+	actions: z.array(geoapifyActionSchema),
+	waypoints: z.array(geoapifyWaypointSchema),
+	service: z.number().optional(),
+	waiting_time: z.number().optional(),
+	priority: z.number().optional(),
+	delivery: z.array(z.number()).optional(),
+	pickup: z.array(z.number()).optional()
+});
+
+// GeoJSON Feature for a route
+export const geoapifyFeatureSchema = z.object({
+	type: z.literal('Feature'),
+	geometry: z.object({
+		type: z.literal('MultiLineString'),
+		coordinates: z.array(z.array(geoapifyCoordinateSchema))
+	}),
+	properties: geoapifyFeaturePropertiesSchema
+});
+
+// Route schema (optimized route for one agent) - simplified for internal use
 export const geoapifyRouteSchema = z.object({
 	agent_id: z.string(),
 	steps: z.array(geoapifyStepSchema),
@@ -82,25 +149,19 @@ export const geoapifyUnassignedSchema = z.object({
 	reason: z.string().optional()
 });
 
-// Optimization response schema
+// Optimization response schema - GeoJSON FeatureCollection format
 export const geoapifyOptimizationResponseSchema = z.object({
-	routes: z.array(geoapifyRouteSchema),
-	unassigned: z.array(geoapifyUnassignedSchema).optional(),
-	summary: z
-		.object({
-			total_distance: z.number(),
-			total_duration: z.number(),
-			total_service: z.number().optional(),
-			total_waiting_time: z.number().optional(),
-			computing_times: z
-				.object({
-					loading: z.number().optional(),
-					solving: z.number().optional(),
-					routing: z.number().optional()
-				})
-				.optional()
+	type: z.literal('FeatureCollection'),
+	properties: z.object({
+		mode: z.string(),
+		params: z.object({
+			agents: z.array(z.any()),
+			jobs: z.array(z.any()),
+			mode: z.string(),
+			traffic: z.string().optional()
 		})
-		.optional()
+	}),
+	features: z.array(geoapifyFeatureSchema)
 });
 
 // Optimization request schema

@@ -1,4 +1,4 @@
-import { env } from '$env/dynamic/private';
+import { env } from '$env/dynamic/public';
 import type { MapboxError } from './mapbox-types.js';
 
 /**
@@ -43,7 +43,7 @@ export class MapboxApiClient {
 
 	constructor(config?: Partial<MapboxConfig>) {
 		this.config = {
-			accessToken: config?.accessToken || env.MAPBOX_ACCESS_TOKEN || '',
+			accessToken: config?.accessToken || env.PUBLIC_MAPBOX_ACCESS_TOKEN || '',
 			baseUrl: config?.baseUrl || 'https://api.mapbox.com',
 			timeout: config?.timeout || 30000
 		};

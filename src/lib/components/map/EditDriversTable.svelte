@@ -1,0 +1,78 @@
+<script lang="ts">
+	import { Badge } from '$lib/components/ui/badge';
+	import { Button } from '$lib/components/ui/button';
+	import * as Table from '$lib/components/ui/table';
+	import type { Driver } from '$lib/schemas/driver';
+	import { Phone, Trash2, Truck } from 'lucide-svelte';
+
+	interface Props {
+		assignedDrivers: Driver[];
+		isLoading?: boolean;
+		onRemoveDriver: (driverId: string) => void;
+	}
+
+	let { assignedDrivers, isLoading = false, onRemoveDriver }: Props = $props();
+</script>
+
+{#if assignedDrivers.length > 0}
+	<div class="rounded-md border">
+		<Table.Root>
+			<Table.Header>
+				<Table.Row>
+					<Table.Head>Driver</Table.Head>
+					<Table.Head>Phone</Table.Head>
+					<Table.Head>Type</Table.Head>
+					<Table.Head>Stops</Table.Head>
+					<Table.Head class="text-right">Actions</Table.Head>
+				</Table.Row>
+			</Table.Header>
+			<Table.Body>
+				{#each assignedDrivers as driver}
+					<Table.Row>
+						<Table.Cell>
+							<div class="flex items-center">
+								<Truck class="mr-2 h-4 w-4 flex-shrink-0 text-primary" />
+								<span class="font-semibold">{driver.name || 'Unassigned'}</span>
+							</div>
+						</Table.Cell>
+						<Table.Cell>
+							{#if driver.phone}
+								<div class="flex items-center text-sm">
+									<Phone class="mr-2 h-3 w-3 text-primary" />
+									{driver.phone}
+								</div>
+							{:else}
+								<span class="text-sm text-muted-foreground">—</span>
+							{/if}
+						</Table.Cell>
+						<Table.Cell>
+							{#if driver.temporary}
+								<Badge variant="secondary">Temporary</Badge>
+							{:else}
+								<Badge variant="outline">Permanent</Badge>
+							{/if}
+						</Table.Cell>
+						<Table.Cell>
+							<span class="text-sm text-muted-foreground"> 0 stops </span>
+						</Table.Cell>
+						<Table.Cell class="text-right">
+							<Button
+								variant="ghost"
+								size="sm"
+								onclick={() => onRemoveDriver(driver.id)}
+								disabled={isLoading}
+							>
+								<Trash2 class="h-4 w-4 text-destructive" />
+							</Button>
+						</Table.Cell>
+					</Table.Row>
+				{/each}
+			</Table.Body>
+		</Table.Root>
+	</div>
+{:else}
+	<div class="flex flex-col items-center justify-center py-8 text-center">
+		<Truck class="mb-2 h-12 w-12 text-muted-foreground" />
+		<p class="text-sm text-muted-foreground">No drivers assigned yet</p>
+	</div>
+{/if}

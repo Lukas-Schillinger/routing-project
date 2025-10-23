@@ -12,12 +12,14 @@ export const locationSchema = z.object({
 	city: z.string().max(120).nullable(),
 	region: z.string().max(120).nullable(),
 	postal_code: z.string().max(40).nullable(),
-	country: z.string().max(2).nullable(),
+	country: z.string().max(2).default('US'),
 	lat: z.string().nullable(),
 	lon: z.string().nullable(),
-	address_hash: z.string().max(64).nullable(),
+	geocode_provider: z.string().max(40).nullable(),
 	geocode_confidence: z.string().nullable(),
-	geocode_source: z.string().max(32).nullable(),
+	geocode_place_id: z.string().max(120).nullable(),
+	geocode_raw: z.any().nullable(),
+	address_hash: z.string().max(64).nullable(),
 	created_at: z.date(),
 	updated_at: z.date()
 });
@@ -52,12 +54,18 @@ export const locationDisplaySchema = z.object({
 	id: z.string().uuid(),
 	name: z.string().nullable(),
 	address_line1: z.string(),
+	address_line2: z.string().nullable(),
 	city: z.string().nullable(),
 	region: z.string().nullable(),
 	postal_code: z.string().nullable(),
+	country: z.string(),
 	lat: z.string().nullable(),
 	lon: z.string().nullable(),
-	geocode_confidence: z.string().nullable()
+	geocode_provider: z.string().nullable(),
+	geocode_confidence: z.string().nullable(),
+	geocode_place_id: z.string().nullable(),
+	geocode_raw: z.any().nullable(),
+	address_hash: z.string().nullable()
 });
 
 export type LocationDisplay = z.infer<typeof locationDisplaySchema>;

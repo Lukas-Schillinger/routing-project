@@ -1,5 +1,5 @@
 import { db } from '$lib/server/db';
-import { fileUploads, maps } from '$lib/server/db/schema';
+import { maps } from '$lib/server/db/schema';
 import { json } from '@sveltejs/kit';
 import Papa from 'papaparse';
 import type { RequestHandler } from './$types';
@@ -61,27 +61,9 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			})
 			.returning();
 
-		// Create file upload record
-		const [upload] = await db
-			.insert(fileUploads)
-			.values({
-				organization_id: user.organization_id,
-				map_id: map.id,
-				filename: file.name,
-				byte_size: file.size,
-				column_map: {
-					name: 'name',
-					address: 'address',
-					phone: 'phone',
-					notes: 'notes'
-				}
-			})
-			.returning();
-
 		return json({
 			success: true,
 			mapId: map.id,
-			uploadId: upload.id,
 			recordCount: records.length,
 			records: records.map((r: Record<string, string>) => ({
 				name: r.name,

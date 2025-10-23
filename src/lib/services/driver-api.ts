@@ -8,6 +8,26 @@ export type DeleteDriverResponse = {
 	message: string;
 };
 
+export type DriverMapMembershipResponse = {
+	id: string;
+	organization_id: string;
+	driver_id: string;
+	map_id: string;
+	created_at: Date;
+	updated_at: Date;
+};
+
+export type MapDriverMembership = DriverMapMembershipResponse & {
+	driver: {
+		id: string;
+		name: string;
+		phone: string | null;
+		notes: string | null;
+		active: boolean;
+		temporary: boolean;
+	};
+};
+
 /**
  * Fetch all drivers for the current organization
  */
@@ -81,6 +101,61 @@ export async function deleteDriver(driverId: string): Promise<DeleteDriverRespon
 	if (!response.ok) {
 		const error = await response.json().catch(() => ({ message: response.statusText }));
 		throw new Error(error.message || 'Failed to delete driver');
+	}
+
+	return response.json();
+}
+
+/**
+ * Assign a driver to a map
+ */
+export async function assignDriverToMap(
+	mapId: string,
+	driverId: string
+): Promise<DriverMapMembershipResponse> {
+	const response = await fetch(`/api/maps/${mapId}/driver-memberships`, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json'
+		},
+		body: JSON.stringify({ driver_id: driverId })
+	});
+
+	if (!response.ok) {
+		const error = await response.json().catch(() => ({ message: response.statusText }));
+		throw new Error(error.message || 'Failed to assign driver to map');
+	}
+
+	return response.json();
+}
+
+/**
+ * Remove a driver from a map
+ */
+export async function removeDriverFromMap(
+	mapId: string,
+	driverId: string
+): Promise<DeleteDriverResponse> {
+	const response = await fetch(`/api/maps/${mapId}/driver-memberships/${driverId}`, {
+		method: 'DELETE'
+	});
+
+	if (!response.ok) {
+		const error = await response.json().catch(() => ({ message: response.statusText }));
+		throw new Error(error.message || 'Failed to remove driver from map');
+	}
+
+	return response.json();
+}
+
+/**
+ * Get all drivers assigned to a map
+ */
+export async function getMapDrivers(mapId: string): Promise<MapDriverMembership[]> {
+	const response = await fetch(`/api/maps/${mapId}/driver-memberships`);
+
+	if (!response.ok) {
+		throw new Error(`Failed to fetch map drivers: ${response.statusText}`);
 	}
 
 	return response.json();

@@ -1,5 +1,5 @@
 // src/lib/server/db/schema.ts
-import { relations } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
 import {
 	boolean,
 	index,
@@ -107,90 +107,68 @@ export const locations = pgTable(
 	]
 );
 
-export const stops = pgTable(
-	'stops',
+export const stops = pgTable('stops', {
+	id: uuid('id').primaryKey().defaultRandom(),
+	organization_id: uuid('organization_id')
+		.notNull()
+		.references(() => organizations.id, { onDelete: 'cascade' }),
+	map_id: uuid('map_id')
+		.notNull()
+		.references(() => maps.id, { onDelete: 'cascade' }),
+	location_id: uuid('location_id')
+		.notNull()
+		.references(() => locations.id, { onDelete: 'cascade' }),
+	driver_id: uuid('driver_id').references(() => drivers.id, { onDelete: 'set null' }),
+	delivery_index: integer('delivery_index'),
+	contact_name: varchar('contact_name', { length: 200 }),
+	contact_phone: varchar('contact_phone', { length: 32 }),
+	notes: text('notes'),
+	created_at: timestamp('created_at').defaultNow().notNull(),
+	updated_at: timestamp('updated_at').defaultNow().notNull()
+});
+
+export const depots = pgTable(
+	'depots',
 	{
 		id,
 		organization_id: orgId.references(() => organizations.id, { onDelete: 'cascade' }),
-		map_id: uuid('map_id')
-			.references(() => maps.id, { onDelete: 'cascade' })
-			.notNull(),
 		location_id: uuid('location_id')
-			.references(() => locations.id, { onDelete: 'restrict' })
-			.notNull(),
-		external_ref: varchar('external_ref', { length: 120 }),
-		contact_name: varchar('contact_name', { length: 200 }),
-		contact_phone: varchar('contact_phone', { length: 32 }),
-		notes: text('notes'),
+			.notNull()
+			.references(() => locations.id, { onDelete: 'cascade' }),
+		name: varchar('name', { length: 200 }).notNull(),
+		default_depot: boolean('default_depot').default(false).notNull(),
 		created_at: ts('created_at'),
 		updated_at: ts('updated_at')
 	},
 	(t) => [
-		index('stops_org_idx').on(t.organization_id),
-		index('stops_map_idx').on(t.map_id),
-		index('stops_location_idx').on(t.location_id)
+		index('depots_org_idx').on(t.organization_id),
+		index('depots_location_idx').on(t.location_id),
+		// Partial unique index to ensure only one default depot per organization
+		uniqueIndex('depots_org_default_uidx')
+			.on(t.organization_id)
+			.where(sql`${t.default_depot} = true`)
 	]
 );
 
-export const routes = pgTable(
-	'routes',
+export const driverMapMemberships = pgTable(
+	'driver_map_memberships',
 	{
 		id,
 		organization_id: orgId.references(() => organizations.id, { onDelete: 'cascade' }),
+		driver_id: uuid('driver_id')
+			.notNull()
+			.references(() => drivers.id, { onDelete: 'cascade' }),
 		map_id: uuid('map_id')
-			.references(() => maps.id, { onDelete: 'cascade' })
-			.notNull(),
-		driver_id: uuid('driver_id').references(() => drivers.id, { onDelete: 'set null' }),
-		total_distance_m: integer('total_distance_m').default(0).notNull(),
-		total_duration_s: integer('total_duration_s').default(0).notNull(),
+			.notNull()
+			.references(() => maps.id, { onDelete: 'cascade' }),
 		created_at: ts('created_at'),
 		updated_at: ts('updated_at')
 	},
 	(t) => [
-		index('routes_org_idx').on(t.organization_id),
-		index('routes_map_idx').on(t.map_id),
-		index('routes_driver_idx').on(t.driver_id)
-	]
-);
-
-export const routeStops = pgTable(
-	'route_stops',
-	{
-		id,
-		organization_id: orgId.references(() => organizations.id, { onDelete: 'cascade' }),
-		route_id: uuid('route_id')
-			.references(() => routes.id, { onDelete: 'cascade' })
-			.notNull(),
-		stop_id: uuid('stop_id')
-			.references(() => stops.id, { onDelete: 'cascade' })
-			.notNull(),
-		sequence: integer('sequence').notNull(),
-		created_at: ts('created_at'),
-		updated_at: ts('updated_at')
-	},
-	(t) => [
-		uniqueIndex('route_stops_route_seq_uidx').on(t.route_id, t.sequence),
-		uniqueIndex('route_stops_route_stop_uidx').on(t.route_id, t.stop_id),
-		index('route_stops_route_idx').on(t.route_id)
-	]
-);
-
-export const fileUploads = pgTable(
-	'file_uploads',
-	{
-		id,
-		organization_id: orgId.references(() => organizations.id, { onDelete: 'cascade' }),
-		map_id: uuid('map_id').references(() => maps.id, { onDelete: 'cascade' }),
-		filename: varchar('filename', { length: 240 }).notNull(),
-		byte_size: integer('byte_size').notNull(),
-		column_map: jsonb('column_map').$type<Record<string, string>>().default({}),
-		storage_path: varchar('storage_path', { length: 400 }),
-		created_at: ts('created_at'),
-		updated_at: ts('updated_at')
-	},
-	(t) => [
-		index('file_uploads_org_idx').on(t.organization_id),
-		index('file_uploads_map_idx').on(t.map_id)
+		uniqueIndex('driver_map_membership_uidx').on(t.driver_id, t.map_id),
+		index('driver_map_memberships_driver_idx').on(t.driver_id),
+		index('driver_map_memberships_map_idx').on(t.map_id),
+		index('driver_map_memberships_org_idx').on(t.organization_id)
 	]
 );
 
@@ -206,9 +184,8 @@ export const organizationsRelations = relations(organizations, ({ many }) => ({
 	maps: many(maps),
 	locations: many(locations),
 	stops: many(stops),
-	routes: many(routes),
-	routeStops: many(routeStops),
-	fileUploads: many(fileUploads)
+	driverMapMemberships: many(driverMapMemberships),
+	depots: many(depots)
 }));
 
 export const profilesRelations = relations(users, ({ one }) => ({
@@ -223,7 +200,8 @@ export const driversRelations = relations(drivers, ({ one, many }) => ({
 		fields: [drivers.organization_id],
 		references: [organizations.id]
 	}),
-	routes: many(routes)
+	mapMemberships: many(driverMapMemberships),
+	stops: many(stops)
 }));
 
 export const mapsRelations = relations(maps, ({ one, many }) => ({
@@ -232,8 +210,7 @@ export const mapsRelations = relations(maps, ({ one, many }) => ({
 		references: [organizations.id]
 	}),
 	stops: many(stops),
-	routes: many(routes),
-	fileUploads: many(fileUploads)
+	driverMemberships: many(driverMapMemberships)
 }));
 
 export const locationsRelations = relations(locations, ({ one, many }) => ({
@@ -241,10 +218,11 @@ export const locationsRelations = relations(locations, ({ one, many }) => ({
 		fields: [locations.organization_id],
 		references: [organizations.id]
 	}),
-	stops: many(stops)
+	stops: many(stops),
+	depots: many(depots)
 }));
 
-export const stopsRelations = relations(stops, ({ one, many }) => ({
+export const stopsRelations = relations(stops, ({ one }) => ({
 	organization: one(organizations, {
 		fields: [stops.organization_id],
 		references: [organizations.id]
@@ -257,47 +235,34 @@ export const stopsRelations = relations(stops, ({ one, many }) => ({
 		fields: [stops.location_id],
 		references: [locations.id]
 	}),
-	routeStops: many(routeStops)
-}));
-
-export const routesRelations = relations(routes, ({ one, many }) => ({
-	organization: one(organizations, {
-		fields: [routes.organization_id],
-		references: [organizations.id]
-	}),
-	map: one(maps, {
-		fields: [routes.map_id],
-		references: [maps.id]
-	}),
 	driver: one(drivers, {
-		fields: [routes.driver_id],
+		fields: [stops.driver_id],
 		references: [drivers.id]
-	}),
-	routeStops: many(routeStops)
-}));
-
-export const routeStopsRelations = relations(routeStops, ({ one }) => ({
-	organization: one(organizations, {
-		fields: [routeStops.organization_id],
-		references: [organizations.id]
-	}),
-	route: one(routes, {
-		fields: [routeStops.route_id],
-		references: [routes.id]
-	}),
-	stop: one(stops, {
-		fields: [routeStops.stop_id],
-		references: [stops.id]
 	})
 }));
 
-export const fileUploadsRelations = relations(fileUploads, ({ one }) => ({
+export const driverMapMembershipsRelations = relations(driverMapMemberships, ({ one }) => ({
 	organization: one(organizations, {
-		fields: [fileUploads.organization_id],
+		fields: [driverMapMemberships.organization_id],
 		references: [organizations.id]
 	}),
+	driver: one(drivers, {
+		fields: [driverMapMemberships.driver_id],
+		references: [drivers.id]
+	}),
 	map: one(maps, {
-		fields: [fileUploads.map_id],
+		fields: [driverMapMemberships.map_id],
 		references: [maps.id]
+	})
+}));
+
+export const depotsRelations = relations(depots, ({ one }) => ({
+	organization: one(organizations, {
+		fields: [depots.organization_id],
+		references: [organizations.id]
+	}),
+	location: one(locations, {
+		fields: [depots.location_id],
+		references: [locations.id]
 	})
 }));

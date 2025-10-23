@@ -4,9 +4,9 @@
 
 import { driverUpdateSchema } from '$lib/schemas/driver';
 import { db } from '$lib/server/db';
-import { drivers, routes } from '$lib/server/db/schema';
+import { drivers, stops } from '$lib/server/db/schema';
 import { error, json } from '@sveltejs/kit';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, isNotNull } from 'drizzle-orm';
 import { ZodError } from 'zod';
 import type { RequestHandler } from './$types';
 
@@ -123,17 +123,23 @@ export const DELETE: RequestHandler = async ({ params, locals }) => {
 			error(404, 'Driver not found');
 		}
 
-		// Check if driver is assigned to any routes
-		const assignedRoutes = await db
-			.select({ id: routes.id })
-			.from(routes)
-			.where(and(eq(routes.driver_id, driverId), eq(routes.organization_id, user.organization_id)))
+		// Check if driver is assigned to any stops
+		const assignedStops = await db
+			.select({ id: stops.id })
+			.from(stops)
+			.where(
+				and(
+					eq(stops.driver_id, driverId),
+					eq(stops.organization_id, user.organization_id),
+					isNotNull(stops.driver_id)
+				)
+			)
 			.limit(1);
 
-		if (assignedRoutes.length > 0) {
+		if (assignedStops.length > 0) {
 			error(
 				409,
-				'Cannot delete driver that is assigned to routes. Please remove the driver from all routes first.'
+				'Cannot delete driver that is assigned to stops. Please remove the driver from all stops first.'
 			);
 		}
 

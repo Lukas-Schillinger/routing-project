@@ -1,6 +1,7 @@
 import type { Driver } from '$lib/schemas/driver.js';
-import type { RouteStopCreate } from '$lib/schemas/routeStop.js';
-import type { StopWithLocation } from '$lib/schemas/stop.js';
+import { db } from '$lib/server/db/index.js';
+import { drivers, locations, stops } from '$lib/server/db/schema.js';
+import { and, eq, isNotNull } from 'drizzle-orm';
 import { geoapifyClient, type GeoApifyApiClient } from './geoapify-client.js';
 import {
 	geoapifyOptimizationRequestSchema,
@@ -10,62 +11,6 @@ import {
 	type GeoApifyOptimizationRequest,
 	type GeoApifyOptimizationResponse
 } from './geoapify-types.js';
-
-/**
- * Waypoint for map visualization
- */
-export interface Waypoint {
-	/** Coordinates [longitude, latitude] */
-	location: [number, number];
-	/** Type of waypoint */
-	type: 'start' | 'stop' | 'end';
-	/** Stop ID if this is a delivery stop */
-	stopId?: string;
-	/** Arrival time in seconds since start of route */
-	arrival?: number;
-	/** Service/waiting time in seconds */
-	service?: number;
-}
-
-/**
- * Optimized route result for a single driver
- */
-export interface OptimizedDriverRoute {
-	/** Driver ID from database */
-	driverId: string;
-	/** Ordered list of stops ready to insert into route_stops table */
-	routeStops: Omit<RouteStopCreate, 'route_id' | 'organization_id'>[];
-	/** All waypoints for map visualization (includes start/end) */
-	waypoints: Waypoint[];
-	/** Total route distance in meters */
-	totalDistance: number;
-	/** Total route duration in seconds */
-	totalDuration: number;
-	/** Total service time in seconds */
-	totalServiceTime: number;
-}
-
-/**
- * Complete optimization result
- */
-export interface OptimizationResult {
-	/** Optimized routes for each driver */
-	routes: OptimizedDriverRoute[];
-	/** Stops that couldn't be assigned */
-	unassigned: Array<{
-		stopId: string;
-		reason?: string;
-		location: [number, number];
-	}>;
-	/** Summary statistics */
-	summary: {
-		totalDistance: number;
-		totalDuration: number;
-		totalServiceTime: number;
-		totalStops: number;
-		totalDrivers: number;
-	};
-}
 
 /**
  * Depot configuration for driver start/end locations
@@ -136,193 +81,172 @@ export interface OptimizationOptions {
 /**
  * GeoApify Route Optimization Service
  *
- * This service provides route optimization capabilities using the GeoApify Route Planner API.
- * It can solve Vehicle Routing Problems (VRP) with multiple drivers/vehicles and stops.
+ * Provides route optimization using the GeoApify Route Planner API for solving
+ * Vehicle Routing Problems (VRP) with multiple drivers and stops.
  *
- * Features:
- * - Multi-vehicle route optimization
- * - Time windows for drivers and stops
- * - Capacity constraints (weight, volume, etc.)
- * - Service time at each stop
- * - Skills matching (driver skills required for specific stops)
- * - Priority-based stop assignment
- * - Pickup and delivery constraints
+ * Features: time windows, capacity constraints, service time, skills matching,
+ * priority-based assignment, and pickup/delivery constraints.
  */
 export class GeoApifyOptimizationService {
 	constructor(private client: GeoApifyApiClient = geoapifyClient) {}
 
 	/**
-	 * Optimize routes using app's Driver and Stop models
-	 * This is the main method to use when integrating with your database
+	 * Optimize routes for a map by creating routes for all drivers and stops
 	 *
-	 * @param drivers - Array of drivers from your database
-	 * @param stops - Array of stops with location data
-	 * @param options - Optimization configuration
-	 * @returns Optimized routes with driver IDs matching your database
-	 *
-	 * @example
-	 * ```typescript
-	 * const drivers = await db.select().from(drivers).where(eq(routes.map_id, mapId));
-	 * const stops = await db.select()
-	 *   .from(stops)
-	 *   .innerJoin(locations, eq(stops.location_id, locations.id))
-	 *   .where(eq(stops.map_id, mapId));
-	 *
-	 * const result = await optimizationService.optimizeWithDrivers(drivers, stops, {
-	 *   mode: 'drive',
-	 *   optimize: 'time',
-	 *   depot: {
-	 *     location: [-122.4194, 37.7749],
-	 *     endBehavior: 'depot' // drivers return to depot
-	 *   },
-	 *   globalStopConfig: {
-	 *     serviceTime: 300 // 5 minutes per stop
-	 *   }
-	 * });
-	 * ```
+	 * Workflow:
+	 * 1. Query database for map, drivers, and stops
+	 * 2. Transform to GeoApify format (agents and jobs)
+	 * 3. Call optimization API
+	 * 4. Update stops with driver assignments and delivery indices
+	 * 5. Return updated stops
 	 */
 	async optimizeWithDrivers(
-		drivers: Driver[],
-		stops: StopWithLocation[],
+		mapId: string,
 		options: OptimizationOptions = {}
-	): Promise<OptimizationResult> {
-		// Transform drivers to agents
-		const agents = drivers.map((driver) => this.driverToAgent(driver, options));
+	): Promise<Array<typeof stops.$inferSelect>> {
+		// Fetch stops for this map
+		const stopsData = await db
+			.select({
+				stop: stops,
+				location: locations
+			})
+			.from(stops)
+			.innerJoin(locations, eq(stops.location_id, locations.id))
+			.where(eq(stops.map_id, mapId));
 
-		// Transform stops to jobs
-		const jobs = stops.map((stop) => this.stopToJob(stop, options));
+		if (stopsData.length === 0) {
+			throw new Error('No stops found for this map');
+		}
 
-		// Call the underlying API
-		const apiResponse = await this.optimizeRoutes(agents, jobs, options);
+		// Fetch drivers assigned to this map
+		const driversData = await db
+			.select({
+				driver: drivers
+			})
+			.from(stops)
+			.innerJoin(drivers, eq(stops.driver_id, drivers.id))
+			.where(and(eq(stops.map_id, mapId), isNotNull(stops.driver_id)))
+			.groupBy(drivers.id);
 
-		// Transform API response to our structured format
-		return this.transformToOptimizationResult(apiResponse);
-	}
+		if (driversData.length === 0) {
+			throw new Error('No drivers assigned to this map. At least one driver must be assigned.');
+		}
 
-	/**
-	 * Transform GeoApify API response to our structured format
-	 */
-	private transformToOptimizationResult(
-		apiResponse: GeoApifyOptimizationResponse
-	): OptimizationResult {
-		const routes: OptimizedDriverRoute[] = apiResponse.routes.map((route) => {
-			// Extract stops (exclude start/end depot steps)
-			const stopSteps = route.steps.filter((step) => step.type === 'job');
+		// Convert stops to jobs
+		const jobs: GeoApifyJob[] = stopsData.map((s) => this.stopToJob(s, options));
 
-			// Build route stops - ready to insert into route_stops table
-			// (caller will add route_id and organization_id)
-			const routeStops: Omit<RouteStopCreate, 'route_id' | 'organization_id'>[] = stopSteps.map(
-				(step, index) => ({
-					stop_id: step.id!,
-					sequence: index + 1
-				})
-			);
-
-			// Build waypoints for map visualization
-			const waypoints: Waypoint[] = route.steps.map((step) => ({
-				location: step.location,
-				type: step.type === 'start' ? 'start' : step.type === 'end' ? 'end' : 'stop',
-				stopId: step.type === 'job' ? step.id : undefined,
-				arrival: step.arrival,
-				service: step.service
-			}));
+		// Create agents from drivers
+		const agents: GeoApifyAgent[] = driversData.map((d) => {
+			const firstStopLat = stopsData[0].location.lat ? parseFloat(stopsData[0].location.lat) : 0;
+			const firstStopLon = stopsData[0].location.lon ? parseFloat(stopsData[0].location.lon) : 0;
 
 			return {
-				driverId: route.agent_id,
-				routeStops,
-				waypoints,
-				totalDistance: route.distance,
-				totalDuration: route.duration,
-				totalServiceTime: route.service || 0
+				id: d.driver.id,
+				start_location: options.depot?.location || [firstStopLon, firstStopLat],
+				end_location: this.getEndLocation(options.depot, options.driverConfig?.[d.driver.id] || {}),
+				...options.driverConfig?.[d.driver.id],
+				...options.globalDriverConfig
 			};
 		});
 
-		// Transform unassigned stops
-		const unassigned =
-			apiResponse.unassigned?.map((u) => ({
-				stopId: u.id,
-				reason: u.reason,
-				location: u.location
-			})) || [];
+		// Call GeoApify optimization
+		const response = await this.optimizeRoutes(agents, jobs, options);
 
-		// Calculate summary
-		const totalStops = routes.reduce((sum, route) => sum + route.routeStops.length, 0);
-		const totalDistance = routes.reduce((sum, route) => sum + route.totalDistance, 0);
-		const totalDuration = routes.reduce((sum, route) => sum + route.totalDuration, 0);
-		const totalServiceTime = routes.reduce((sum, route) => sum + route.totalServiceTime, 0);
+		// Transform response
+		const optimizedRoutes = response.features.map((feature) => ({
+			driver_id: feature.properties.agent_id,
+			stops: feature.properties.actions
+				.filter((action) => action.type === 'job' && action.waypoint_index !== undefined)
+				.map((action, index) => ({
+					stop_id: action.job_id!,
+					delivery_index: index
+				}))
+		}));
 
-		return {
-			routes,
-			unassigned,
-			summary: {
-				totalDistance,
-				totalDuration,
-				totalServiceTime,
-				totalStops,
-				totalDrivers: routes.length
+		// Update stops with driver assignments and delivery order
+		const updatedStops: Array<typeof stops.$inferSelect> = [];
+		for (const route of optimizedRoutes) {
+			for (const stop of route.stops) {
+				const [updatedStop] = await db
+					.update(stops)
+					.set({
+						driver_id: route.driver_id,
+						delivery_index: stop.delivery_index,
+						updated_at: new Date()
+					})
+					.where(eq(stops.id, stop.stop_id))
+					.returning();
+
+				if (updatedStop) {
+					updatedStops.push(updatedStop);
+				}
 			}
-		};
+		}
+
+		return updatedStops;
 	}
 
 	/**
 	 * Transform a Driver to a GeoApify Agent
 	 */
 	private driverToAgent(driver: Driver, options: OptimizationOptions): GeoApifyAgent {
-		const driverConfig = options.driverConfig?.[driver.id] || options.globalDriverConfig || {};
-		const depot = options.depot;
+		const config = options.driverConfig?.[driver.id] || options.globalDriverConfig || {};
+		const { depot } = options;
 
-		// Determine start location
-		let startLocation: [number, number];
-		if (depot) {
-			// Use depot as start location
-			startLocation = depot.location;
-		} else if (driverConfig.homeLocation) {
-			// Use driver's home location
-			startLocation = driverConfig.homeLocation;
-		} else {
-			// Default to a placeholder (should be configured by user)
-			throw new Error(
-				`Driver ${driver.name} (${driver.id}) has no start location. Configure depot or driverConfig.`
-			);
-		}
-
-		// Determine end location
-		let endLocation: [number, number] | undefined;
-		if (depot) {
-			switch (depot.endBehavior) {
-				case 'depot':
-					endLocation = depot.location;
-					break;
-				case 'driver-address':
-					endLocation = driverConfig.homeLocation || depot.location;
-					break;
-				case 'last-stop':
-					endLocation = undefined; // Let driver end at last stop
-					break;
-			}
-		} else if (driverConfig.homeLocation) {
-			// If no depot, default to returning to home
-			endLocation = driverConfig.homeLocation;
-		}
+		const startLocation = this.getStartLocation(depot, config, driver);
+		const endLocation = this.getEndLocation(depot, config);
 
 		return {
-			id: driver.id, // Use database driver ID
+			id: driver.id,
 			start_location: startLocation,
 			end_location: endLocation,
-			time_window: driverConfig.timeWindow,
-			capacity: driverConfig.capacity,
-			skills: driverConfig.skills,
-			speed_factor: driverConfig.speedFactor
+			time_window: config.timeWindow,
+			capacity: config.capacity,
+			skills: config.skills,
+			speed_factor: config.speedFactor
 		};
+	}
+
+	private getStartLocation(
+		depot: DepotConfig | undefined,
+		config: DriverConfig,
+		driver: Driver
+	): [number, number] {
+		if (depot) return depot.location;
+		if (config.homeLocation) return config.homeLocation;
+		throw new Error(
+			`Driver ${driver.name} (${driver.id}) has no start location. Configure depot or driverConfig.`
+		);
+	}
+
+	private getEndLocation(
+		depot: DepotConfig | undefined,
+		config: DriverConfig
+	): [number, number] | undefined {
+		if (!depot) return config.homeLocation;
+
+		switch (depot.endBehavior) {
+			case 'depot':
+				return depot.location;
+			case 'driver-address':
+				return config.homeLocation || depot.location;
+			case 'last-stop':
+				return undefined;
+		}
 	}
 
 	/**
 	 * Transform a Stop to a GeoApify Job
 	 */
-	private stopToJob(stop: StopWithLocation, options: OptimizationOptions): GeoApifyJob {
-		const stopConfig = options.stopConfig?.[stop.stop.id] || options.globalStopConfig || {};
+	private stopToJob(
+		stop: {
+			stop: { id: string };
+			location: { lat: string | null; lon: string | null; name: string | null };
+		},
+		options: OptimizationOptions
+	): GeoApifyJob {
+		const config = options.stopConfig?.[stop.stop.id] || options.globalStopConfig || {};
 
-		// Get coordinates
 		const lat = stop.location.lat ? parseFloat(stop.location.lat) : null;
 		const lon = stop.location.lon ? parseFloat(stop.location.lon) : null;
 
@@ -333,54 +257,32 @@ export class GeoApifyOptimizationService {
 		}
 
 		return {
-			id: stop.stop.id, // Use database stop ID
-			location: [lon, lat], // GeoJSON format: [longitude, latitude]
-			service: stopConfig.serviceTime,
-			delivery: stopConfig.delivery,
-			pickup: stopConfig.pickup,
-			skills: stopConfig.skills,
-			priority: stopConfig.priority,
-			time_windows: stopConfig.timeWindows
+			id: stop.stop.id,
+			location: [lon, lat],
+			service: config.serviceTime,
+			delivery: config.delivery,
+			pickup: config.pickup,
+			skills: config.skills,
+			priority: config.priority,
+			time_windows: config.timeWindows
 		};
 	}
 
 	/**
-	 * Optimize routes for multiple agents (drivers/vehicles) and jobs (stops)
-	 *
-	 * @param agents - Array of agents (drivers/vehicles) with their constraints
-	 * @param jobs - Array of jobs (stops/deliveries) to be assigned
-	 * @param options - Additional optimization options
-	 * @returns Optimized routes for each agent
-	 *
-	 * @example
-	 * ```typescript
-	 * const agents = [{
-	 *   id: 'driver-1',
-	 *   start_location: [-122.4194, 37.7749], // San Francisco
-	 *   end_location: [-122.4194, 37.7749],
-	 *   time_window: [28800, 64800], // 8am to 6pm in seconds
-	 *   capacity: [100] // can carry 100 units
-	 * }];
-	 *
-	 * const jobs = [{
-	 *   id: 'stop-1',
-	 *   location: [-122.4084, 37.7849],
-	 *   service: 300, // 5 minutes
-	 *   delivery: [10] // deliver 10 units
-	 * }];
-	 *
-	 * const result = await service.optimizeRoutes(agents, jobs, {
-	 *   mode: 'drive',
-	 *   optimize: 'time'
-	 * });
-	 * ```
+	 * Optimize routes for multiple agents and jobs
 	 */
 	async optimizeRoutes(
 		agents: GeoApifyAgent[],
 		jobs: GeoApifyJob[],
 		options: OptimizationOptions = {}
 	): Promise<GeoApifyOptimizationResponse> {
-		// Validate and build request
+		if (agents.length === 0) {
+			throw new Error('At least one agent (driver) is required for optimization');
+		}
+		if (jobs.length === 0) {
+			throw new Error('At least one job (stop) is required for optimization');
+		}
+
 		const request: GeoApifyOptimizationRequest = {
 			agents,
 			jobs,
@@ -389,18 +291,42 @@ export class GeoApifyOptimizationService {
 			optimize: options.optimize || 'time'
 		};
 
-		// Validate request schema
+		console.log('Optimization request:', JSON.stringify(request, null, 2));
+
 		const validatedRequest = geoapifyOptimizationRequestSchema.parse(request);
 
-		// Make API request
-		const endpoint = '/v1/routeplanner';
-		const response = await this.client.request<unknown>(endpoint, {
-			method: 'POST',
-			body: JSON.stringify(validatedRequest)
-		});
+		let response: unknown;
+		try {
+			response = await this.client.request<unknown>('/v1/routeplanner', {
+				method: 'POST',
+				body: JSON.stringify(validatedRequest)
+			});
+		} catch (error) {
+			console.error('GeoApify API request failed:', error);
+			if (error instanceof Error) {
+				throw new Error(`GeoApify API error: ${error.message}`);
+			}
+			throw error;
+		}
 
-		// Validate and return response
-		return geoapifyOptimizationResponseSchema.parse(response);
+		console.log('GeoApify API response:', JSON.stringify(response, null, 2));
+
+		try {
+			return geoapifyOptimizationResponseSchema.parse(response);
+		} catch (error) {
+			console.error('Failed to parse GeoApify response:', error);
+			console.error('Raw response:', JSON.stringify(response, null, 2));
+
+			// Check if the response is an error object
+			const responseObj = response as Record<string, unknown>;
+			if (responseObj?.message || responseObj?.error) {
+				throw new Error(`GeoApify returned an error: ${responseObj.message || responseObj.error}`);
+			}
+
+			throw new Error(
+				`Invalid response from GeoApify API: ${error instanceof Error ? error.message : 'Unknown error'}`
+			);
+		}
 	}
 }
 

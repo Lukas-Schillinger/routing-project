@@ -1,9 +1,169 @@
 {
-  "id": "2b964ead-10b2-4129-ad2b-a3986df27a3b",
-  "prevId": "47ecc7f8-eaf6-4227-83ad-c9ed1642b668",
+  "id": "6f47bd49-d365-4ccb-8caf-2999fc49308d",
+  "prevId": "e55706f0-5f72-488b-8f74-95d264de5657",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
+    "public.driver_map_memberships": {
+      "name": "driver_map_memberships",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "driver_id": {
+          "name": "driver_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "map_id": {
+          "name": "map_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "driver_map_membership_uidx": {
+          "name": "driver_map_membership_uidx",
+          "columns": [
+            {
+              "expression": "driver_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "map_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "driver_map_memberships_driver_idx": {
+          "name": "driver_map_memberships_driver_idx",
+          "columns": [
+            {
+              "expression": "driver_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "driver_map_memberships_map_idx": {
+          "name": "driver_map_memberships_map_idx",
+          "columns": [
+            {
+              "expression": "map_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "driver_map_memberships_org_idx": {
+          "name": "driver_map_memberships_org_idx",
+          "columns": [
+            {
+              "expression": "organization_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "driver_map_memberships_organization_id_organizations_id_fk": {
+          "name": "driver_map_memberships_organization_id_organizations_id_fk",
+          "tableFrom": "driver_map_memberships",
+          "tableTo": "organizations",
+          "columnsFrom": [
+            "organization_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "driver_map_memberships_driver_id_drivers_id_fk": {
+          "name": "driver_map_memberships_driver_id_drivers_id_fk",
+          "tableFrom": "driver_map_memberships",
+          "tableTo": "drivers",
+          "columnsFrom": [
+            "driver_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "driver_map_memberships_map_id_maps_id_fk": {
+          "name": "driver_map_memberships_map_id_maps_id_fk",
+          "tableFrom": "driver_map_memberships",
+          "tableTo": "maps",
+          "columnsFrom": [
+            "map_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.drivers": {
       "name": "drivers",
       "schema": "",
@@ -47,6 +207,13 @@
           "notNull": true,
           "default": true
         },
+        "temporary": {
+          "name": "temporary",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -86,136 +253,6 @@
           "tableTo": "organizations",
           "columnsFrom": [
             "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.file_uploads": {
-      "name": "file_uploads",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "organization_id": {
-          "name": "organization_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "map_id": {
-          "name": "map_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "filename": {
-          "name": "filename",
-          "type": "varchar(240)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "byte_size": {
-          "name": "byte_size",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "column_map": {
-          "name": "column_map",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "'{}'::jsonb"
-        },
-        "storage_path": {
-          "name": "storage_path",
-          "type": "varchar(400)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "file_uploads_org_idx": {
-          "name": "file_uploads_org_idx",
-          "columns": [
-            {
-              "expression": "organization_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "file_uploads_map_idx": {
-          "name": "file_uploads_map_idx",
-          "columns": [
-            {
-              "expression": "map_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "file_uploads_organization_id_organizations_id_fk": {
-          "name": "file_uploads_organization_id_organizations_id_fk",
-          "tableFrom": "file_uploads",
-          "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "file_uploads_map_id_maps_id_fk": {
-          "name": "file_uploads_map_id_maps_id_fk",
-          "tableFrom": "file_uploads",
-          "tableTo": "maps",
-          "columnsFrom": [
-            "map_id"
           ],
           "columnsTo": [
             "id"
@@ -545,316 +582,6 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.route_stops": {
-      "name": "route_stops",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "organization_id": {
-          "name": "organization_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "route_id": {
-          "name": "route_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "stop_id": {
-          "name": "stop_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "sequence": {
-          "name": "sequence",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "route_stops_route_seq_uidx": {
-          "name": "route_stops_route_seq_uidx",
-          "columns": [
-            {
-              "expression": "route_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "sequence",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "route_stops_route_stop_uidx": {
-          "name": "route_stops_route_stop_uidx",
-          "columns": [
-            {
-              "expression": "route_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "stop_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "route_stops_route_idx": {
-          "name": "route_stops_route_idx",
-          "columns": [
-            {
-              "expression": "route_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "route_stops_organization_id_organizations_id_fk": {
-          "name": "route_stops_organization_id_organizations_id_fk",
-          "tableFrom": "route_stops",
-          "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "route_stops_route_id_routes_id_fk": {
-          "name": "route_stops_route_id_routes_id_fk",
-          "tableFrom": "route_stops",
-          "tableTo": "routes",
-          "columnsFrom": [
-            "route_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "route_stops_stop_id_stops_id_fk": {
-          "name": "route_stops_stop_id_stops_id_fk",
-          "tableFrom": "route_stops",
-          "tableTo": "stops",
-          "columnsFrom": [
-            "stop_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.routes": {
-      "name": "routes",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "organization_id": {
-          "name": "organization_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "map_id": {
-          "name": "map_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "driver_id": {
-          "name": "driver_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "total_distance_m": {
-          "name": "total_distance_m",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "total_duration_s": {
-          "name": "total_duration_s",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "routes_org_idx": {
-          "name": "routes_org_idx",
-          "columns": [
-            {
-              "expression": "organization_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "routes_map_idx": {
-          "name": "routes_map_idx",
-          "columns": [
-            {
-              "expression": "map_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "routes_driver_idx": {
-          "name": "routes_driver_idx",
-          "columns": [
-            {
-              "expression": "driver_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "routes_organization_id_organizations_id_fk": {
-          "name": "routes_organization_id_organizations_id_fk",
-          "tableFrom": "routes",
-          "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "routes_map_id_maps_id_fk": {
-          "name": "routes_map_id_maps_id_fk",
-          "tableFrom": "routes",
-          "tableTo": "maps",
-          "columnsFrom": [
-            "map_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "routes_driver_id_drivers_id_fk": {
-          "name": "routes_driver_id_drivers_id_fk",
-          "tableFrom": "routes",
-          "tableTo": "drivers",
-          "columnsFrom": [
-            "driver_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
     "public.session": {
       "name": "session",
       "schema": "",
@@ -929,8 +656,7 @@
           "name": "organization_id",
           "type": "uuid",
           "primaryKey": false,
-          "notNull": true,
-          "default": "gen_random_uuid()"
+          "notNull": true
         },
         "map_id": {
           "name": "map_id",
@@ -944,9 +670,15 @@
           "primaryKey": false,
           "notNull": true
         },
-        "external_ref": {
-          "name": "external_ref",
-          "type": "varchar(120)",
+        "driver_id": {
+          "name": "driver_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delivery_index": {
+          "name": "delivery_index",
+          "type": "integer",
           "primaryKey": false,
           "notNull": false
         },
@@ -970,66 +702,20 @@
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp with time zone",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
         "updated_at": {
           "name": "updated_at",
-          "type": "timestamp with time zone",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         }
       },
-      "indexes": {
-        "stops_org_idx": {
-          "name": "stops_org_idx",
-          "columns": [
-            {
-              "expression": "organization_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "stops_map_idx": {
-          "name": "stops_map_idx",
-          "columns": [
-            {
-              "expression": "map_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "stops_location_idx": {
-          "name": "stops_location_idx",
-          "columns": [
-            {
-              "expression": "location_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
+      "indexes": {},
       "foreignKeys": {
         "stops_organization_id_organizations_id_fk": {
           "name": "stops_organization_id_organizations_id_fk",
@@ -1067,7 +753,20 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "restrict",
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "stops_driver_id_drivers_id_fk": {
+          "name": "stops_driver_id_drivers_id_fk",
+          "tableFrom": "stops",
+          "tableTo": "drivers",
+          "columnsFrom": [
+            "driver_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
           "onUpdate": "no action"
         }
       },

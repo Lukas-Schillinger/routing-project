@@ -1,8 +1,8 @@
 import { db } from '$lib/server/db';
-import { drivers, locations, maps, routes, stops } from '$lib/server/db/schema';
+import { driverMapMemberships, drivers, locations, maps, stops } from '$lib/server/db/schema';
 import { error, redirect } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
-import type { PageServerLoad } from './$types';
+import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
 	const user = locals.user;
@@ -41,20 +41,51 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		.from(drivers)
 		.where(eq(drivers.organization_id, user.organization_id));
 
-	// Fetch routes for this map to see which drivers are assigned
-	const mapRoutes = await db
+	// Fetch assigned drivers (drivers assigned to this map via DriverMapMembership)
+	const assignedDrivers = await db
 		.select({
-			route: routes,
 			driver: drivers
 		})
-		.from(routes)
-		.leftJoin(drivers, eq(routes.driver_id, drivers.id))
-		.where(eq(routes.map_id, mapId));
+		.from(driverMapMemberships)
+		.innerJoin(drivers, eq(driverMapMemberships.driver_id, drivers.id))
+		.where(eq(driverMapMemberships.map_id, mapId));
+
+	// Determine if map is optimized (has stops with delivery_index set)
+	const optimizedStops = mapStops.filter((s) => s.stop.delivery_index !== null);
+	const isViewMode = optimizedStops.length > 0 && optimizedStops.length === mapStops.length;
 
 	return {
 		map,
 		stops: mapStops,
 		allDrivers: orgDrivers,
-		assignedDrivers: mapRoutes
+		assignedDrivers: assignedDrivers.map((d) => d.driver),
+		isViewMode
 	};
+};
+
+export const actions: Actions = {
+	resetOptimization: async ({ params, locals }) => {
+		const user = locals.user;
+
+		if (!user) {
+			throw redirect(302, '/demo/lucia/login');
+		}
+
+		const { mapId } = params;
+
+		// Verify map belongs to user's organization
+		const [map] = await db.select().from(maps).where(eq(maps.id, mapId)).limit(1);
+
+		if (!map || map.organization_id !== user.organization_id) {
+			throw error(403, 'Access denied');
+		}
+
+		// Reset all stops to unoptimized state
+		await db
+			.update(stops)
+			.set({ driver_id: null, delivery_index: null, updated_at: new Date() })
+			.where(eq(stops.map_id, mapId));
+
+		return { success: true };
+	}
 };
