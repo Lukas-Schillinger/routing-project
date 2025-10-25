@@ -64,11 +64,9 @@
 								: 'N/A'}
 						</Table.Cell>
 						<Table.Cell>
-							<Badge variant="outline">
-								{location.geocode_confidence
-									? parseFloat(location.geocode_confidence).toFixed(1)
-									: 'N/A'}%
-							</Badge>
+							<Badge class="w-16 text-center" variant="outline">
+								<div class="w-full text-center">{location.geocode_confidence}</div></Badge
+							>
 						</Table.Cell>
 						<Table.Cell>
 							{#if stop.contact_phone}

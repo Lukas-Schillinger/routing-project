@@ -1,6 +1,11 @@
 import { z } from 'zod';
 
 /**
+ * Mapbox Geocoding v6 confidence levels
+ */
+export const geocodeConfidenceSchema = z.enum(['exact', 'high', 'medium', 'low']).nullable();
+
+/**
  * Location schema - represents a geocoded physical address
  */
 export const locationSchema = z.object({
@@ -16,7 +21,7 @@ export const locationSchema = z.object({
 	lat: z.string().nullable(),
 	lon: z.string().nullable(),
 	geocode_provider: z.string().max(40).nullable(),
-	geocode_confidence: z.string().nullable(),
+	geocode_confidence: geocodeConfidenceSchema,
 	geocode_place_id: z.string().max(120).nullable(),
 	geocode_raw: z.any().nullable(),
 	address_hash: z.string().max(64).nullable(),
@@ -39,11 +44,28 @@ export type LocationUpdate = z.infer<typeof locationUpdateSchema>;
 /**
  * Location creation schema (without id and timestamps)
  */
-export const locationCreateSchema = locationSchema.omit({
-	id: true,
-	created_at: true,
-	updated_at: true
-});
+export const locationCreateSchema = locationSchema
+	.omit({
+		id: true,
+		organization_id: true,
+		created_at: true,
+		updated_at: true
+	})
+	.extend({
+		// Make optional fields explicitly optional for creation
+		name: z.string().max(200).nullable().optional(),
+		address_line2: z.string().max(240).nullable().optional(),
+		city: z.string().max(120).nullable().optional(),
+		region: z.string().max(120).nullable().optional(),
+		postal_code: z.string().max(40).nullable().optional(),
+		lat: z.string().nullable().optional(),
+		lon: z.string().nullable().optional(),
+		geocode_provider: z.string().max(40).nullable().optional(),
+		geocode_confidence: geocodeConfidenceSchema.optional(),
+		geocode_place_id: z.string().nullable().optional(),
+		geocode_raw: z.any().nullable().optional(),
+		address_hash: z.string().max(64).nullable().optional()
+	});
 
 export type LocationCreate = z.infer<typeof locationCreateSchema>;
 
@@ -62,7 +84,7 @@ export const locationDisplaySchema = z.object({
 	lat: z.string().nullable(),
 	lon: z.string().nullable(),
 	geocode_provider: z.string().nullable(),
-	geocode_confidence: z.string().nullable(),
+	geocode_confidence: geocodeConfidenceSchema,
 	geocode_place_id: z.string().nullable(),
 	geocode_raw: z.any().nullable(),
 	address_hash: z.string().nullable()

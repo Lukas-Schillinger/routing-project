@@ -1,5 +1,5 @@
-// GET /api/driver-map-memberships - List all driver-map memberships for the organization
-// POST /api/driver-map-memberships - Create a new driver-map membership
+// GET /api/maps/[mapId]/drivers - Get all drivers assigned to a map
+// POST /api/maps/[mapId]/drivers - Assign a driver to a map
 
 import { createDriverMapMembershipSchema } from '$lib/schemas/driverMapMembership';
 import { db } from '$lib/server/db';
@@ -9,17 +9,28 @@ import { and, eq } from 'drizzle-orm';
 import { ZodError } from 'zod';
 import type { RequestHandler } from './$types';
 
-export const GET: RequestHandler = async ({ locals, url }) => {
+export const GET: RequestHandler = async ({ params, locals }) => {
 	const user = locals.user;
 	if (!user) {
 		error(401, 'Unauthorized');
 	}
 
-	try {
-		const mapId = url.searchParams.get('mapId');
-		const driverId = url.searchParams.get('driverId');
+	const { mapId } = params;
 
-		const query = db
+	try {
+		// Verify map belongs to organization
+		const [map] = await db
+			.select()
+			.from(maps)
+			.where(and(eq(maps.id, mapId), eq(maps.organization_id, user.organization_id)))
+			.limit(1);
+
+		if (!map) {
+			error(404, 'Map not found');
+		}
+
+		// Get all driver memberships for this map
+		const memberships = await db
 			.select({
 				id: driverMapMemberships.id,
 				organization_id: driverMapMemberships.organization_id,
@@ -34,73 +45,60 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 					notes: drivers.notes,
 					active: drivers.active,
 					temporary: drivers.temporary
-				},
-				map: {
-					id: maps.id,
-					title: maps.title
 				}
 			})
 			.from(driverMapMemberships)
 			.leftJoin(drivers, eq(driverMapMemberships.driver_id, drivers.id))
-			.leftJoin(maps, eq(driverMapMemberships.map_id, maps.id))
-			.$dynamic();
-
-		const conditions = [eq(driverMapMemberships.organization_id, user.organization_id)];
-
-		if (mapId) {
-			conditions.push(eq(driverMapMemberships.map_id, mapId));
-		}
-
-		if (driverId) {
-			conditions.push(eq(driverMapMemberships.driver_id, driverId));
-		}
-
-		const memberships = await query.where(and(...conditions));
+			.where(eq(driverMapMemberships.map_id, mapId))
+			.orderBy(drivers.name);
 
 		return json(memberships);
 	} catch (err) {
-		console.error('Error fetching driver-map memberships:', err);
-		error(500, 'Failed to fetch driver-map memberships');
+		console.error('Error fetching driver memberships for map:', err);
+		error(500, 'Failed to fetch driver memberships');
 	}
 };
 
-export const POST: RequestHandler = async ({ request, locals }) => {
+export const POST: RequestHandler = async ({ params, request, locals }) => {
 	const user = locals.user;
 	if (!user) {
 		error(401, 'Unauthorized');
 	}
 
+	const { mapId } = params;
+
 	try {
+		// Verify map belongs to organization
+		const [map] = await db
+			.select()
+			.from(maps)
+			.where(and(eq(maps.id, mapId), eq(maps.organization_id, user.organization_id)))
+			.limit(1);
+
+		if (!map) {
+			error(404, 'Map not found');
+		}
+
 		const body = await request.json();
 
-		// Validate request body with Zod schema
-		const validatedData = createDriverMapMembershipSchema.parse(body);
+		// Validate - allow either full schema or just driver_id
+		let driverId: string;
+		if (typeof body.driver_id === 'string') {
+			driverId = body.driver_id;
+		} else {
+			const validatedData = createDriverMapMembershipSchema.parse(body);
+			driverId = validatedData.driver_id;
+		}
 
 		// Verify driver belongs to organization
 		const [driver] = await db
 			.select()
 			.from(drivers)
-			.where(
-				and(
-					eq(drivers.id, validatedData.driver_id),
-					eq(drivers.organization_id, user.organization_id)
-				)
-			)
+			.where(and(eq(drivers.id, driverId), eq(drivers.organization_id, user.organization_id)))
 			.limit(1);
 
 		if (!driver) {
 			error(404, 'Driver not found');
-		}
-
-		// Verify map belongs to organization
-		const [map] = await db
-			.select()
-			.from(maps)
-			.where(and(eq(maps.id, validatedData.map_id), eq(maps.organization_id, user.organization_id)))
-			.limit(1);
-
-		if (!map) {
-			error(404, 'Map not found');
 		}
 
 		// Check if membership already exists
@@ -108,10 +106,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			.select()
 			.from(driverMapMemberships)
 			.where(
-				and(
-					eq(driverMapMemberships.driver_id, validatedData.driver_id),
-					eq(driverMapMemberships.map_id, validatedData.map_id)
-				)
+				and(eq(driverMapMemberships.driver_id, driverId), eq(driverMapMemberships.map_id, mapId))
 			)
 			.limit(1);
 
@@ -123,8 +118,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			.insert(driverMapMemberships)
 			.values({
 				organization_id: user.organization_id,
-				driver_id: validatedData.driver_id,
-				map_id: validatedData.map_id
+				driver_id: driverId,
+				map_id: mapId
 			})
 			.returning();
 
@@ -134,7 +129,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			const errorMessages = err.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ');
 			error(400, `Validation error: ${errorMessages}`);
 		}
-		console.error('Error creating driver-map membership:', err);
-		error(500, 'Failed to create driver-map membership');
+		console.error('Error creating driver membership for map:', err);
+		error(500, 'Failed to create driver membership');
 	}
 };

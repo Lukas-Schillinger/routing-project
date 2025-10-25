@@ -1,6 +1,7 @@
 import { db } from '$lib/server/db';
 import { locations, maps, stops } from '$lib/server/db/schema';
 import { geocodingService } from '$lib/services/mapbox-geocoding';
+import { geocodingFeatureToLocation } from '$lib/utils';
 import { json } from '@sveltejs/kit';
 import { createHash } from 'crypto';
 import { eq } from 'drizzle-orm';
@@ -65,28 +66,17 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 				}
 
 				const feature = geocodeResult.features[0];
-				const [lon, lat] = feature.center;
 
-				// Parse address components
-				const addressParts = feature.place_name.split(', ');
+				// Convert geocoding feature to location data
+				const locationData = geocodingFeatureToLocation(feature);
 
-				// Create new location
+				// Create new location with additional fields from the record
 				[location] = await db
 					.insert(locations)
 					.values({
 						organization_id: user.organization_id,
 						name: record.name,
-						address_line1: addressParts[0] || record.address,
-						city: addressParts[1] || null,
-						region: addressParts[2]?.split(' ')[0] || null,
-						postal_code: addressParts[2]?.split(' ')[1] || null,
-						country: 'US',
-						lat: lat.toString(),
-						lon: lon.toString(),
-						geocode_provider: 'mapbox',
-						geocode_confidence: (feature.relevance * 100).toString(),
-						geocode_place_id: feature.id,
-						geocode_raw: feature,
+						...locationData,
 						address_hash: addressHash
 					})
 					.returning();

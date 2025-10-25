@@ -184,9 +184,9 @@
 	}
 
 	:global(.marker-content) {
-		width: 36px;
-		height: 36px;
-		background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.8) 100%);
+		width: 28px;
+		height: 28px;
+		background: #0f4f44; /* forest-600 */
 		border: 3px solid white;
 		border-radius: 50%;
 		display: flex;
@@ -194,22 +194,40 @@
 		justify-content: center;
 		box-shadow:
 			0 2px 8px rgba(0, 0, 0, 0.3),
-			0 0 0 2px hsl(var(--primary) / 0.2);
+			0 0 0 2px rgba(15, 79, 68, 0.3); /* forest-600 with opacity */
 		transition: all 0.2s ease;
+		position: relative;
+	}
+
+	/* Outer ring effect similar to Google Maps */
+	:global(.marker-content::before) {
+		content: '';
+		position: absolute;
+		inset: -6px;
+		border-radius: 50%;
+		border: 2px solid rgba(15, 79, 68, 0.4); /* forest-600 with opacity */
+		pointer-events: none;
 	}
 
 	:global(.custom-marker:hover .marker-content) {
 		transform: scale(1.15);
 		box-shadow:
 			0 4px 12px rgba(0, 0, 0, 0.4),
-			0 0 0 4px hsl(var(--primary) / 0.3);
+			0 0 0 3px rgba(15, 79, 68, 0.4); /* forest-600 with opacity */
+	}
+
+	:global(.custom-marker:hover .marker-content::before) {
+		border-color: rgba(15, 79, 68, 0.6); /* forest-600 with opacity */
+		border-width: 2.5px;
 	}
 
 	:global(.marker-number) {
 		color: white;
-		font-weight: 700;
-		font-size: 13px;
+		font-weight: 500;
+		font-size: 10px;
 		text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+		position: relative;
+		z-index: 1;
 	}
 
 	:global(.map-popup) {

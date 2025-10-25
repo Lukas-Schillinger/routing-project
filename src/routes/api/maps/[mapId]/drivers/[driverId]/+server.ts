@@ -1,4 +1,4 @@
-// DELETE /api/maps/[mapId]/driver-memberships/[driverId] - Remove a driver from a map
+// DELETE /api/maps/[mapId]/drivers/[driverId] - Remove a driver from a map
 
 import { db } from '$lib/server/db';
 import { driverMapMemberships, maps } from '$lib/server/db/schema';

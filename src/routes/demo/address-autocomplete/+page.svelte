@@ -8,23 +8,50 @@
 		CardTitle
 	} from '$lib/components/ui/card';
 	import type { GeocodingFeature } from '$lib/services/mapbox-geocoding';
+	import CreateDepot from '../../../lib/components/CreateDepotPopover.svelte';
 
 	let selectedAddress = $state('');
 	let selectedFeature = $state<GeocodingFeature | null>(null);
+	let createdDepots = $state<any[]>([]);
 
 	function handleAddressSelect(feature: GeocodingFeature) {
 		selectedFeature = feature;
 		console.log('Selected address:', feature);
 	}
+
+	function handleDepotCreated(depot: any) {
+		createdDepots = [...createdDepots, depot];
+		console.log('Depot created:', depot);
+	}
 </script>
 
-<div class="container mx-auto p-8">
-	<div class="mb-8">
-		<h1 class="mb-2 text-3xl font-bold">Address Autocomplete Demo</h1>
-		<p class="text-muted-foreground">Try typing an address to see the autocomplete in action</p>
+<svelte:head>
+	<title>Address Autocomplete Demo</title>
+</svelte:head>
+
+{#if navigator.geolocation}
+	<div class="border-b bg-muted/50 px-8 py-2 text-sm">
+		<span class="text-muted-foreground">
+			Geolocation: <span class="font-medium text-foreground">available</span>
+		</span>
+	</div>
+{:else}
+	<div class="border-b bg-destructive/10 px-8 py-2 text-sm">
+		<span class="text-muted-foreground">
+			Geolocation: <span class="font-medium text-destructive">Not Available</span>
+		</span>
+	</div>
+{/if}
+<div class="container p-8">
+	<div class="mb-8 flex items-center justify-between">
+		<div>
+			<h1 class="mb-2 text-3xl font-bold">Address Autocomplete Demo</h1>
+			<p class="text-muted-foreground">Try typing an address to see the autocomplete in action</p>
+		</div>
+		<CreateDepot onSuccess={handleDepotCreated} />
 	</div>
 
-	<div class="grid max-w-2xl gap-6">
+	<div class="grid gap-6">
 		<!-- Basic Usage -->
 		<Card>
 			<CardHeader>
@@ -78,6 +105,44 @@
 								</ul>
 							</div>
 						{/if}
+					</div>
+				</CardContent>
+			</Card>
+		{/if}
+
+		<!-- Created Depots -->
+		{#if createdDepots.length > 0}
+			<Card>
+				<CardHeader>
+					<CardTitle>Created Depots ({createdDepots.length})</CardTitle>
+					<CardDescription>Depots created during this session</CardDescription>
+				</CardHeader>
+				<CardContent>
+					<div class="space-y-4">
+						{#each createdDepots as depot}
+							<div class="rounded-lg border p-4">
+								<div class="mb-2 flex items-start justify-between">
+									<div>
+										<h4 class="font-semibold">{depot.name}</h4>
+										{#if depot.default_depot}
+											<span
+												class="mt-1 inline-block rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary"
+											>
+												Default Depot
+											</span>
+										{/if}
+									</div>
+								</div>
+								<div class="text-sm text-muted-foreground">
+									<p>{depot.location.place_name}</p>
+									<p class="mt-1">
+										Coordinates: {depot.location.center[0].toFixed(6)}, {depot.location.center[1].toFixed(
+											6
+										)}
+									</p>
+								</div>
+							</div>
+						{/each}
 					</div>
 				</CardContent>
 			</Card>

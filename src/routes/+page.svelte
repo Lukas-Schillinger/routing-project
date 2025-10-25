@@ -23,7 +23,17 @@
 <div class="bg-gradient-to-br from-background via-muted to-secondary py-12">
 	<div class="container mx-auto max-w-6xl px-6">
 		<!-- Hero Section -->
-		<div class="mb-16 text-center">
+		<div class="mb-16">
+			<div class="hero-text mb-8 flex w-full flex-col">
+				<div
+					class="track text-[12rem] leading-[0.8] font-black tracking-[-0.09em] text-black drop-shadow-2xl md:text-[14rem] lg:text-[18rem]"
+				>
+					wend
+				</div>
+				<div class="pl-2 text-2xl font-semibold text-black sm:text-4xl">
+					Multi-stop route optimization
+				</div>
+			</div>
 			<!-- Hero Image Frame -->
 			<div class="hero-timeline-subject relative mb-8 max-h-[75vh] w-full overflow-visible">
 				<div class="z-10">
@@ -32,16 +42,6 @@
 						alt="Winding Road"
 						class="hero-image h-full max-h-[75vh] w-full rounded-4xl object-cover brightness-75"
 					/>
-				</div>
-				<div class="hero-text absolute inset-0 flex flex-col items-center justify-center">
-					<div
-						class="text-[12rem] leading-none font-bold tracking-tighter text-white drop-shadow-2xl md:text-[14rem] lg:text-[18rem]"
-					>
-						wend
-					</div>
-					<div class="text-2xl font-semibold text-white sm:text-4xl">
-						Multi-stop route optimization
-					</div>
 				</div>
 			</div>
 

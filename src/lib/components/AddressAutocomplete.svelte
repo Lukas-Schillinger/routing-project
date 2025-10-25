@@ -11,12 +11,14 @@
 		placeholder = 'Search for an address...',
 		country = 'US',
 		onSelect = (feature: GeocodingFeature) => {},
+		onClear = () => {}, // signal clear to parent
 		disabled = false
 	}: {
 		value?: string;
 		placeholder?: string;
 		country?: string;
 		onSelect?: (feature: GeocodingFeature) => void;
+		onClear?: () => void;
 		disabled?: boolean;
 	} = $props();
 
@@ -118,8 +120,12 @@
 	// Handle selection
 	function selectAddress(feature: GeocodingFeature) {
 		selectedFeature = feature;
-		value = feature.place_name;
-		searchQuery = feature.place_name;
+		// v6 API: use full_address or construct from name + place_formatted
+		const fullAddress =
+			feature.properties.full_address ||
+			`${feature.properties.name}${feature.properties.place_formatted ? ', ' + feature.properties.place_formatted : ''}`;
+		value = fullAddress;
+		searchQuery = fullAddress;
 		open = false;
 
 		// Call the onSelect callback
@@ -132,6 +138,8 @@
 		value = '';
 		searchQuery = '';
 		suggestions = [];
+
+		onClear();
 	}
 
 	// Close and reset
@@ -166,7 +174,7 @@
 		</div>
 		<ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
 	</Popover.Trigger>
-	<Popover.Content class="w-[400px] p-0">
+	<Popover.Content align="start" class="w-[var(--bits-popover-anchor-width)] p-0">
 		<Command.Root shouldFilter={false}>
 			<Command.Input
 				{placeholder}
@@ -180,24 +188,29 @@
 						<span>Searching...</span>
 					</div>
 				{:else if searchQuery.length < 2}
-					<div class="py-6 text-center text-sm">Type at least 2 characters to search</div>
+					<div class="py-6 text-center text-sm text-muted-foreground">
+						Start typing to search...
+					</div>
 				{:else}
 					<div class="py-6 text-center text-sm">No addresses found</div>
 				{/if}
 			</Command.Empty>
 			<Command.Group>
 				{#each suggestions as feature (feature.id)}
+					{@const fullAddress =
+						feature.properties.full_address ||
+						`${feature.properties.name}${feature.properties.place_formatted ? ', ' + feature.properties.place_formatted : ''}`}
 					<Command.Item
-						value={feature.place_name}
+						value={fullAddress}
 						onSelect={() => selectAddress(feature)}
 						class="cursor-pointer"
 					>
 						<div class="flex items-start gap-2">
 							<MapPin class="mt-0.5 h-4 w-4 shrink-0 opacity-50" />
 							<div class="min-w-0 flex-1">
-								<div class="truncate font-medium">{feature.text}</div>
+								<div class="truncate font-medium">{feature.properties.name}</div>
 								<div class="truncate text-sm text-muted-foreground">
-									{feature.place_name}
+									{fullAddress}
 								</div>
 							</div>
 							{#if selectedFeature?.id === feature.id}

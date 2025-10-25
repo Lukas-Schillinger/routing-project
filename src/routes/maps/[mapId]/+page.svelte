@@ -1,10 +1,6 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
 	import MapView from '$lib/components/MapView.svelte';
-	import EditDriversTable from '$lib/components/map/EditDriversTable.svelte';
-	import EditStopsTable from '$lib/components/map/EditStopsTable.svelte';
-	import ViewDriversTable from '$lib/components/map/ViewDriversTable.svelte';
-	import ViewStopsTable from '$lib/components/map/ViewStopsTable.svelte';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import {
@@ -33,6 +29,10 @@
 		UserPlus
 	} from 'lucide-svelte';
 	import type { PageData } from './$types';
+	import EditDriversTable from './map/EditDriversTable.svelte';
+	import EditStopsTable from './map/EditStopsTable.svelte';
+	import ViewDriversTable from './map/ViewDriversTable.svelte';
+	import ViewStopsTable from './map/ViewStopsTable.svelte';
 
 	let { data }: { data: PageData } = $props();
 

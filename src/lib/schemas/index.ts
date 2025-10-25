@@ -1,6 +1,7 @@
 // Re-export all schemas for easy importing
 export * from './auth.js';
 export * from './common.js';
+export * from './depot.js';
 export * from './driver.js';
 export * from './driverMapMembership.js';
 export * from './location.js';

@@ -113,7 +113,7 @@ export async function assignDriverToMap(
 	mapId: string,
 	driverId: string
 ): Promise<DriverMapMembershipResponse> {
-	const response = await fetch(`/api/maps/${mapId}/driver-memberships`, {
+	const response = await fetch(`/api/maps/${mapId}/drivers`, {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json'
@@ -136,7 +136,7 @@ export async function removeDriverFromMap(
 	mapId: string,
 	driverId: string
 ): Promise<DeleteDriverResponse> {
-	const response = await fetch(`/api/maps/${mapId}/driver-memberships/${driverId}`, {
+	const response = await fetch(`/api/maps/${mapId}/drivers/${driverId}`, {
 		method: 'DELETE'
 	});
 
@@ -152,7 +152,7 @@ export async function removeDriverFromMap(
  * Get all drivers assigned to a map
  */
 export async function getMapDrivers(mapId: string): Promise<MapDriverMembership[]> {
-	const response = await fetch(`/api/maps/${mapId}/driver-memberships`);
+	const response = await fetch(`/api/maps/${mapId}/drivers`);
 
 	if (!response.ok) {
 		throw new Error(`Failed to fetch map drivers: ${response.statusText}`);
