@@ -2,31 +2,27 @@
 	import { gsap } from 'gsap';
 	import { ScrollTrigger } from 'gsap/ScrollTrigger';
 	import { onMount } from 'svelte';
-	import type { PageProps } from './$types';
+	gsap.registerPlugin(ScrollTrigger);
 
-	let { data }: PageProps = $props();
+	let section: HTMLElement;
+	let box: HTMLDivElement;
 
 	onMount(() => {
-		gsap.registerPlugin(ScrollTrigger);
-
-		gsap.to('.box', {
+		gsap.to(box, {
+			rotation: 720,
+			ease: 'none',
 			scrollTrigger: {
-				trigger: '.box',
-				start: '20px 30%',
-				end: 'bottom 100px',
+				trigger: section,
+				start: 'top top',
+				end: 'bottom top', // finish when section's bottom hits viewport bottom
+				pin: true,
 				scrub: true,
 				markers: true
-			}, // start animation when ".box" enters the viewport
-			x: 100,
-			rotation: 360
+			}
 		});
 	});
 </script>
 
-<div class="h-[200dvh]">
-	Lorem ipsum dolor sit amet consectetur adipisicing elit. Commodi repellendus enim, explicabo
-	ducimus nesciunt sapiente temporibus magni sequi consequuntur consequatur aliquid? Eaque omnis
-	incidunt recusandae explicabo. Atque unde officiis quibusdam!
-	<div class="h-96">space!</div>
-	<div id="box" class="box size-16 bg-blue-500">Box</div>
-</div>
+<section bind:this={section} class="flex h-[150vh] items-center justify-center">
+	<div bind:this={box} class="size-24 bg-red-600"></div>
+</section>

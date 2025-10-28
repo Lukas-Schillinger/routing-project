@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
 	import MapView from '$lib/components/MapView.svelte';
-	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import {
 		Card,
@@ -16,19 +15,8 @@
 	import * as Popover from '$lib/components/ui/popover';
 	import type { Driver } from '$lib/schemas';
 	import { ApiError, driverApi, mapApi } from '$lib/services/api';
-	import { formatDate } from '$lib/utils';
-	import {
-		ArrowLeft,
-		Calendar,
-		Check,
-		ChevronsUpDown,
-		Edit,
-		MapPin,
-		Navigation,
-		Plus,
-		Truck,
-		UserPlus
-	} from 'lucide-svelte';
+	import { ChevronsUpDown, Plus, Truck, UserPlus } from 'lucide-svelte';
+	import { getContext } from 'svelte';
 	import type { PageData } from './$types';
 	import EditDriversTable from './map/EditDriversTable.svelte';
 	import EditStopsTable from './map/EditStopsTable.svelte';
@@ -36,6 +24,19 @@
 	import ViewStopsTable from './map/ViewStopsTable.svelte';
 
 	let { data }: { data: PageData } = $props();
+
+	// Set page header in layout context
+	const pageHeaderContext = getContext<{ set: (header: any) => void }>('pageHeader');
+
+	if (pageHeaderContext) {
+		pageHeaderContext.set({
+			title: data.map.title,
+			breadcrumbs: [
+				{ name: 'Maps', href: '/maps' },
+				{ name: data.map.title, href: `/maps/${data.map.id}` }
+			]
+		});
+	}
 
 	let open = $state(false);
 	let openNewDriver = $state(false);
@@ -46,6 +47,8 @@
 	let optimizationResult = $state<any>(null);
 	let optimizationError = $state('');
 	let isViewMode = $state((data as any).isViewMode ?? false);
+
+	let mapExpanded = $state(false);
 
 	// Update view mode when data changes
 	$effect(() => {
@@ -235,298 +238,234 @@
 	<title>{data.map.title} - Routing Project</title>
 </svelte:head>
 
-<!-- Fixed Map Container -->
-<div class="fixed top-0 left-0 z-0 h-[calc(100vh-50px)] w-screen">
+<div class="space-y-6">
+	<!-- Map -->
 	{#if data.stops.length > 0}
-		<MapView stops={data.stops} />
+		<div class="h-[500px]">
+			<MapView stops={data.stops} />
+		</div>
 	{/if}
 
-	<!-- Map Overlay for controls -->
-	<div
-		class="pointer-events-none absolute top-0 right-0 left-0 z-10 p-6 max-md:p-4 md:p-6 [&>*]:pointer-events-auto"
-	>
-		<Button href="/maps" variant="ghost" size="sm" class="mb-4 bg-background shadow-md">
-			<ArrowLeft class="mr-2 h-4 w-4" />
-			Back to Maps
-		</Button>
-
-		<Card class="bg-background/95 shadow-lg backdrop-blur-md">
-			<CardHeader class="pb-3">
-				<div class="flex items-start justify-between gap-4">
-					<div class="min-w-0 flex-1">
-						<CardTitle class="mb-2 text-2xl">{data.map.title}</CardTitle>
-						<div class="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-							<div class="flex items-center">
-								<Calendar class="mr-1.5 h-4 w-4" />
-								{formatDate(data.map.created_at)}
-							</div>
-							<Badge variant="secondary">
-								<MapPin class="mr-1 h-3 w-3" />
-								{data.stops.length}
-								{data.stops.length === 1 ? 'Stop' : 'Stops'}
-							</Badge>
-							{#if isViewMode}
-								<Badge variant="default" class="bg-green-600">
-									<Check class="mr-1 h-3 w-3" />
-									Optimized
-								</Badge>
-							{:else}
-								<Badge variant="outline">Edit Mode</Badge>
-							{/if}
-						</div>
-					</div>
-					<div class="flex flex-shrink-0 gap-2">
-						{#if isViewMode}
-							<Button variant="outline" onclick={switchToEditMode} disabled={isLoading}>
-								<Edit class="mr-2 h-4 w-4" />
-								Edit Routes
-							</Button>
-						{:else}
-							<Button variant="default" onclick={optimizeRoutes} disabled={isOptimizing}>
-								<Navigation class="mr-2 h-4 w-4" />
-								{isOptimizing ? 'Optimizing...' : 'Optimize Routes'}
-							</Button>
-						{/if}
-					</div>
-				</div>
-			</CardHeader>
-		</Card>
-	</div>
-</div>
-
-<!-- Scrollable Content Container -->
-<div
-	class="relative z-5 mt-[calc(100vh-100px)] min-h-screen rounded-t-2xl bg-background shadow-[0_-8px_32px_rgba(0,0,0,0.15)]"
->
-	<div class="mx-auto max-w-[1400px] p-12 max-md:p-8 max-sm:p-4">
-		<!-- Optimization Results -->
-		{#if optimizationResult}
-			<Card class="mb-6 border-green-500">
-				<CardHeader>
-					<CardTitle class="text-green-600">✓ Optimization Complete</CardTitle>
-					<CardDescription>Route optimization results</CardDescription>
-				</CardHeader>
-				<CardContent>
-					<div class="space-y-4">
-						<!-- Summary Stats -->
-						<div class="grid grid-cols-2 gap-4 md:grid-cols-5">
-							<div class="rounded-lg border bg-card p-4">
-								<div class="text-2xl font-bold">{optimizationResult.summary.totalDrivers}</div>
-								<div class="text-sm text-muted-foreground">Drivers</div>
-							</div>
-							<div class="rounded-lg border bg-card p-4">
-								<div class="text-2xl font-bold">{optimizationResult.summary.totalStops}</div>
-								<div class="text-sm text-muted-foreground">Stops</div>
-							</div>
-							<div class="rounded-lg border bg-card p-4">
-								<div class="text-2xl font-bold">
-									{(optimizationResult.summary.totalDistance / 1000).toFixed(1)}km
-								</div>
-								<div class="text-sm text-muted-foreground">Total Distance</div>
-							</div>
-							<div class="rounded-lg border bg-card p-4">
-								<div class="text-2xl font-bold">
-									{Math.round(optimizationResult.summary.totalDuration / 60)}min
-								</div>
-								<div class="text-sm text-muted-foreground">Total Duration</div>
-							</div>
-							<div class="rounded-lg border bg-card p-4">
-								<div class="text-2xl font-bold">
-									{Math.round(optimizationResult.summary.totalServiceTime / 60)}min
-								</div>
-								<div class="text-sm text-muted-foreground">Service Time</div>
-							</div>
-						</div>
-
-						<!-- Unassigned Stops -->
-						{#if optimizationResult.unassigned.length > 0}
-							<div class="rounded-lg border border-amber-500 bg-amber-50 p-4">
-								<h4 class="mb-2 font-semibold text-amber-800">
-									⚠️ Unassigned Stops ({optimizationResult.unassigned.length})
-								</h4>
-								<ul class="space-y-1 text-sm text-amber-700">
-									{#each optimizationResult.unassigned as stop}
-										<li>• Stop {stop.stopId}: {stop.reason || 'Unknown reason'}</li>
-									{/each}
-								</ul>
-							</div>
-						{/if}
-
-						<!-- Full JSON Result -->
-						<details class="rounded-lg border bg-muted p-4">
-							<summary class="cursor-pointer font-semibold">View Full JSON Result</summary>
-							<pre
-								class="mt-4 overflow-auto rounded bg-black p-4 text-xs text-green-400">{JSON.stringify(
-									optimizationResult,
-									null,
-									2
-								)}</pre>
-						</details>
-					</div>
-				</CardContent>
-			</Card>
-		{/if}
-
-		<!-- Optimization Error -->
-		{#if optimizationError}
-			<Card class="mb-6 border-destructive">
-				<CardContent class="pt-6">
-					<div class="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-						<strong>Optimization Error:</strong>
-						{optimizationError}
-					</div>
-				</CardContent>
-			</Card>
-		{/if}
-
-		<!-- Drivers Section -->
-		<Card class="mb-6">
+	<!-- Optimization Results -->
+	{#if optimizationResult}
+		<Card class="border-green-500 shadow-lg">
 			<CardHeader>
-				<div class="flex items-center justify-between">
-					<div>
-						<CardTitle class="flex items-center gap-2">
-							<Truck class="h-5 w-5 text-primary" />
-							Drivers
-						</CardTitle>
-						<CardDescription>
-							{#if isViewMode}
-								Drivers assigned to this optimized map
-							{:else}
-								Assign drivers to this map for route optimization
-							{/if}
-						</CardDescription>
+				<CardTitle class="text-green-600">✓ Optimization Complete</CardTitle>
+				<CardDescription>Route optimization results</CardDescription>
+			</CardHeader>
+			<CardContent>
+				<div class="space-y-4">
+					<!-- Summary Stats -->
+					<div class="grid grid-cols-2 gap-4 md:grid-cols-5">
+						<div class="rounded-lg border bg-card p-4">
+							<div class="text-2xl font-bold">{optimizationResult.summary.totalDrivers}</div>
+							<div class="text-sm text-muted-foreground">Drivers</div>
+						</div>
+						<div class="rounded-lg border bg-card p-4">
+							<div class="text-2xl font-bold">{optimizationResult.summary.totalStops}</div>
+							<div class="text-sm text-muted-foreground">Stops</div>
+						</div>
+						<div class="rounded-lg border bg-card p-4">
+							<div class="text-2xl font-bold">
+								{(optimizationResult.summary.totalDistance / 1000).toFixed(1)}km
+							</div>
+							<div class="text-sm text-muted-foreground">Total Distance</div>
+						</div>
+						<div class="rounded-lg border bg-card p-4">
+							<div class="text-2xl font-bold">
+								{Math.round(optimizationResult.summary.totalDuration / 60)}min
+							</div>
+							<div class="text-sm text-muted-foreground">Total Duration</div>
+						</div>
+						<div class="rounded-lg border bg-card p-4">
+							<div class="text-2xl font-bold">
+								{Math.round(optimizationResult.summary.totalServiceTime / 60)}min
+							</div>
+							<div class="text-sm text-muted-foreground">Service Time</div>
+						</div>
 					</div>
-					{#if !isViewMode}
-						<div class="flex gap-2">
-							<!-- Combobox for selecting existing driver -->
-							<Popover.Root bind:open>
-								<Popover.Trigger
-									disabled={isLoading}
-									class="flex h-9 w-40 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground hover:bg-accent hover:text-accent-foreground focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-									>Add driver...
-									<ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
-								</Popover.Trigger>
-								<Popover.Content class="w-[280px] p-0">
-									<Command.Root>
-										<Command.Input placeholder="Search drivers..." />
-										<Command.Empty>No driver found.</Command.Empty>
-										<Command.Group>
-											{#each availableDrivers as driver}
-												<Command.Item
-													value={driver.name}
-													onSelect={() => {
-														addExistingDriver(driver.id);
-													}}
-												>
-													<div class="flex flex-col">
-														<span>{driver.name}</span>
-														{#if driver.phone}
-															<span class="text-xs text-muted-foreground">{driver.phone}</span>
-														{/if}
-													</div>
-												</Command.Item>
-											{/each}
-										</Command.Group>
-									</Command.Root>
-								</Popover.Content>
-							</Popover.Root>
 
-							<!-- Popover to create temporary driver -->
-							<Popover.Root bind:open={openNewDriver}>
-								<Popover.Trigger>
-									<Button variant="outline" disabled={isLoading}>
-										<UserPlus class="mr-2 h-4 w-4" />
-										Temporary Driver
-									</Button>
-								</Popover.Trigger>
-								<Popover.Content class="w-80">
-									<div class="space-y-4">
-										<div class="space-y-2">
-											<h4 class="leading-none font-medium">Create Temporary Driver</h4>
-											<p class="text-sm text-muted-foreground">
-												Add a one-time driver with an auto-generated name
-											</p>
-										</div>
-										<div class="space-y-3">
-											<div class="space-y-2">
-												<Label for="temp-driver-name">Driver Name</Label>
-												<Input
-													id="temp-driver-name"
-													type="text"
-													bind:value={newDriverName}
-													placeholder="driver-123456"
-													disabled={isLoading}
-												/>
-											</div>
-											<div class="space-y-2">
-												<Label for="temp-driver-phone">Phone Number (optional)</Label>
-												<Input
-													id="temp-driver-phone"
-													type="tel"
-													placeholder="Enter phone number"
-													bind:value={newDriverPhone}
-													disabled={isLoading}
-												/>
-											</div>
-											<Button
-												class="w-full"
-												onclick={addTemporaryDriver}
-												disabled={!newDriverName.trim() || isLoading}
-											>
-												<Plus class="mr-2 h-4 w-4" />
-												{isLoading ? 'Creating...' : 'Create and Add'}
-											</Button>
-										</div>
-									</div>
-								</Popover.Content>
-							</Popover.Root>
+					<!-- Unassigned Stops -->
+					{#if optimizationResult.unassigned.length > 0}
+						<div class="rounded-lg border border-amber-500 bg-amber-50 p-4">
+							<h4 class="mb-2 font-semibold text-amber-800">
+								⚠️ Unassigned Stops ({optimizationResult.unassigned.length})
+							</h4>
+							<ul class="space-y-1 text-sm text-amber-700">
+								{#each optimizationResult.unassigned as stop}
+									<li>• Stop {stop.stopId}: {stop.reason || 'Unknown reason'}</li>
+								{/each}
+							</ul>
 						</div>
 					{/if}
+
+					<!-- Full JSON Result -->
+					<details class="rounded-lg border bg-muted p-4">
+						<summary class="cursor-pointer font-semibold">View Full JSON Result</summary>
+						<pre
+							class="mt-4 overflow-auto rounded bg-black p-4 text-xs text-green-400">{JSON.stringify(
+								optimizationResult,
+								null,
+								2
+							)}</pre>
+					</details>
 				</div>
-			</CardHeader>
-			<CardContent class="space-y-4">
-				<!-- View Mode Info -->
-				{#if isViewMode}
-					<div class="rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
-						<strong>View Mode:</strong> Routes have been optimized. Switch to Edit Mode to make changes
-						to drivers or stops.
-					</div>
-				{/if}
-
-				<!-- Error Message -->
-				{#if errorMessage}
-					<div
-						class="rounded-md border border-destructive bg-destructive/10 p-3 text-sm text-destructive"
-					>
-						{errorMessage}
-					</div>
-				{/if}
-
-				<!-- Drivers Table -->
-				{#if isViewMode}
-					<ViewDriversTable assignedDrivers={data.assignedDrivers} isOptimized={data.isViewMode} />
-				{:else}
-					<EditDriversTable
-						assignedDrivers={data.assignedDrivers}
-						{isLoading}
-						onRemoveDriver={removeDriver}
-					/>
-				{/if}
 			</CardContent>
 		</Card>
+	{/if}
 
-		<!-- Stops Table -->
-		{#if isViewMode}
-			<ViewStopsTable stops={data.stops} />
-		{:else}
-			<EditStopsTable stops={data.stops} />
-		{/if}
-	</div>
+	<!-- Optimization Error -->
+	{#if optimizationError}
+		<Card class="border-destructive shadow-lg">
+			<CardContent class="pt-6">
+				<div class="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+					<strong>Optimization Error:</strong>
+					{optimizationError}
+				</div>
+			</CardContent>
+		</Card>
+	{/if}
+
+	<!-- Drivers Section -->
+	<Card class="shadow-lg">
+		<CardHeader>
+			<div class="grid grid-cols-1 gap-2 md:grid-cols-2">
+				<div>
+					<CardTitle class="flex items-center gap-2">
+						<Truck class="h-5 w-5 text-primary" />
+						Drivers
+					</CardTitle>
+					<CardDescription>
+						{#if isViewMode}
+							Drivers assigned to this optimized map
+						{:else}
+							Assign drivers to this map for route optimization
+						{/if}
+					</CardDescription>
+				</div>
+				{#if !isViewMode}
+					<div class="flex items-center justify-start gap-2 md:justify-end">
+						<!-- Combobox for selecting existing driver -->
+						<Popover.Root bind:open>
+							<Popover.Trigger
+								disabled={isLoading}
+								class="flex w-40 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground hover:bg-accent hover:text-accent-foreground focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+								>Add driver...
+								<ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
+							</Popover.Trigger>
+							<Popover.Content class="w-[280px] p-0">
+								<Command.Root>
+									<Command.Input placeholder="Search drivers..." />
+									<Command.Empty>No driver found.</Command.Empty>
+									<Command.Group>
+										{#each availableDrivers as driver}
+											<Command.Item
+												value={driver.name}
+												onSelect={() => {
+													addExistingDriver(driver.id);
+												}}
+											>
+												<div class="flex flex-col">
+													<span>{driver.name}</span>
+													{#if driver.phone}
+														<span class="text-xs text-muted-foreground">{driver.phone}</span>
+													{/if}
+												</div>
+											</Command.Item>
+										{/each}
+									</Command.Group>
+								</Command.Root>
+							</Popover.Content>
+						</Popover.Root>
+
+						<!-- Popover to create temporary driver -->
+						<Popover.Root bind:open={openNewDriver}>
+							<Popover.Trigger>
+								<Button variant="outline" disabled={isLoading}>
+									<UserPlus class="mr-2 h-4 w-4" />
+									Temporary Driver
+								</Button>
+							</Popover.Trigger>
+							<Popover.Content class="w-80">
+								<div class="space-y-4">
+									<div class="space-y-2">
+										<h4 class="leading-none font-medium">Create Temporary Driver</h4>
+										<p class="text-sm text-muted-foreground">
+											Add a one-time driver with an auto-generated name
+										</p>
+									</div>
+									<div class="space-y-3">
+										<div class="space-y-2">
+											<Label for="temp-driver-name">Driver Name</Label>
+											<Input
+												id="temp-driver-name"
+												type="text"
+												bind:value={newDriverName}
+												placeholder="driver-123456"
+												disabled={isLoading}
+											/>
+										</div>
+										<div class="space-y-2">
+											<Label for="temp-driver-phone">Phone Number (optional)</Label>
+											<Input
+												id="temp-driver-phone"
+												type="tel"
+												placeholder="Enter phone number"
+												bind:value={newDriverPhone}
+												disabled={isLoading}
+											/>
+										</div>
+										<Button
+											class="w-full"
+											onclick={addTemporaryDriver}
+											disabled={!newDriverName.trim() || isLoading}
+										>
+											<Plus class="mr-2 h-4 w-4" />
+											{isLoading ? 'Creating...' : 'Create and Add'}
+										</Button>
+									</div>
+								</div>
+							</Popover.Content>
+						</Popover.Root>
+					</div>
+				{/if}
+			</div>
+		</CardHeader>
+		<CardContent class="space-y-4">
+			<!-- View Mode Info -->
+			{#if isViewMode}
+				<div class="rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
+					<strong>View Mode:</strong> Routes have been optimized. Switch to Edit Mode to make changes
+					to drivers or stops.
+				</div>
+			{/if}
+
+			<!-- Error Message -->
+			{#if errorMessage}
+				<div
+					class="rounded-md border border-destructive bg-destructive/10 p-3 text-sm text-destructive"
+				>
+					{errorMessage}
+				</div>
+			{/if}
+
+			<!-- Drivers Table -->
+			{#if isViewMode}
+				<ViewDriversTable assignedDrivers={data.assignedDrivers} isOptimized={data.isViewMode} />
+			{:else}
+				<EditDriversTable
+					assignedDrivers={data.assignedDrivers}
+					{isLoading}
+					onRemoveDriver={removeDriver}
+				/>
+			{/if}
+		</CardContent>
+	</Card>
+
+	<!-- Stops Table -->
+	{#if isViewMode}
+		<ViewStopsTable stops={data.stops} />
+	{:else}
+		<EditStopsTable stops={data.stops} />
+	{/if}
 </div>
-
-<style>
-	:global(body) {
-		background: hsl(var(--background));
-		min-height: 100vh;
-	}
-</style>

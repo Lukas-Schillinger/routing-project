@@ -2,13 +2,17 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Moon, Sun } from 'lucide-svelte';
 	import { mode, toggleMode } from 'mode-watcher';
+
+	let { variant = 'default' }: { variant?: 'default' | 'inverse' } = $props();
 </script>
 
 <Button
 	variant="ghost"
 	size="sm"
 	onclick={toggleMode}
-	class="h-9 w-9 p-0"
+	class="h-9 w-9 p-0 {variant === 'inverse'
+		? 'text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground'
+		: ''}"
 	aria-label="Toggle theme"
 >
 	{#if mode.current === 'dark'}

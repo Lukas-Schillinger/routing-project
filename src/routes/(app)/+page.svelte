@@ -10,6 +10,10 @@
 		CardTitle
 	} from '$lib/components/ui/card';
 	import { ArrowRight, Image, MapPin, User } from 'lucide-svelte';
+	import { getContext } from 'svelte';
+
+	const pageHeaderContext = getContext<{ set: (header: any) => void }>('pageHeader');
+	pageHeaderContext.set({});
 </script>
 
 <svelte:head>

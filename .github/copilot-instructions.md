@@ -168,3 +168,4 @@ Never allow cross-tenant access - validate ownership before any mutation.
 - Import order: external deps → `$lib` → relative imports
 - Prefer named exports over default exports
 - Service singletons: `export const fooService = new FooService()`
+- Keep code functional and avoid side effects where appropriate

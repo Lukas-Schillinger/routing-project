@@ -1,6 +1,5 @@
 <script lang="ts">
 	import AddressAutocomplete from '$lib/components/AddressAutocomplete.svelte';
-	import CreateDepot from '$lib/components/CreateDepotPopover.svelte';
 	import {
 		Card,
 		CardContent,
@@ -43,14 +42,6 @@
 	</div>
 {/if}
 <div class="container p-8">
-	<div class="mb-8 flex items-center justify-between">
-		<div>
-			<h1 class="mb-2 text-3xl font-bold">Address Autocomplete Demo</h1>
-			<p class="text-muted-foreground">Try typing an address to see the autocomplete in action</p>
-		</div>
-		<CreateDepot onSuccess={handleDepotCreated} />
-	</div>
-
 	<div class="grid gap-6">
 		<!-- Basic Usage -->
 		<Card>

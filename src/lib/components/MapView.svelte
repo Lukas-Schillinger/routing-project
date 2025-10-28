@@ -172,16 +172,9 @@
 	}
 </script>
 
-<div bind:this={mapContainer} class="map-container"></div>
+<div bind:this={mapContainer} class="h-full w-full rounded-xl"></div>
 
 <style>
-	.map-container {
-		width: 100%;
-		height: 100%;
-		border-radius: 0;
-		overflow: hidden;
-	}
-
 	:global(.custom-marker) {
 		cursor: pointer;
 	}
