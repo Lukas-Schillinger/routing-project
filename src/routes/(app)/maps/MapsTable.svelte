@@ -1,7 +1,10 @@
 <script lang="ts">
+	import * as Actions from '$lib/components/TableActionsDropdown.Items';
+	import TableActionsDropdown from '$lib/components/TableActionsDropdown.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import * as Table from '$lib/components/ui/table';
+	import { mapApi } from '$lib/services/api';
 	import { formatDate } from '$lib/utils';
 	import { Calendar, Map, Plus } from 'lucide-svelte';
 
@@ -14,10 +17,29 @@
 	};
 
 	let {
-		maps
+		maps = $bindable()
 	}: {
 		maps: MapWithStops[];
 	} = $props();
+
+	const handleDelete = async (id: string) => {
+		if (!confirm('Are you sure you want to delete this map?')) {
+			return;
+		}
+
+		try {
+			await mapApi.delete(id);
+			// Remove from local array
+			maps = maps.filter((map) => map.id !== id);
+		} catch (error) {
+			console.error('Failed to delete map:', error);
+			alert('Failed to delete map. Please try again.');
+		}
+	};
+
+	const handleCopyId = (id: string) => {
+		navigator.clipboard.writeText(id);
+	};
 </script>
 
 {#if maps.length === 0}
@@ -43,6 +65,7 @@
 					<Table.Head># Stops</Table.Head>
 					<Table.Head>Created</Table.Head>
 					<Table.Head>Updated</Table.Head>
+					<Table.Head class="w-[50px]"></Table.Head>
 				</Table.Row>
 			</Table.Header>
 			<Table.Body>
@@ -69,6 +92,13 @@
 							<div class="text-sm text-muted-foreground">
 								{formatDate(map.updated_at)}
 							</div>
+						</Table.Cell>
+						<Table.Cell>
+							<TableActionsDropdown>
+								<Actions.Copy onclick={() => handleCopyId(map.id)} label="Copy ID" />
+								<Actions.Delete onclick={() => handleDelete(map.id)} />
+								<Actions.MetadataLabel item={map} />
+							</TableActionsDropdown>
 						</Table.Cell>
 					</Table.Row>
 				{/each}

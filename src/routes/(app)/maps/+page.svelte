@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
-	import CreateDepotPopover from '$lib/components/CreateDepotPopover.svelte';
 	import CreateDriverPopover from '$lib/components/CreateDriverPopover.svelte';
+	import EditOrCreateDepotPopover from '$lib/components/EditOrCreateDepotPopover.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Plus } from 'lucide-svelte';
@@ -57,7 +57,7 @@
 						<DepotsTable depots={data.depots} />
 					</Card.Content>
 					<Card.Footer>
-						<CreateDepotPopover onSuccess={handleDepotCreated} />
+						<EditOrCreateDepotPopover mode="create" onSuccess={handleDepotCreated} />
 					</Card.Footer>
 				</Card.Root>
 			</section>
@@ -70,7 +70,11 @@
 						<Card.Description>Manage your delivery drivers</Card.Description>
 					</Card.Header>
 					<Card.Content>
-						<DriversTable drivers={data.drivers} />
+						<DriversTable
+							drivers={data.drivers.filter((e) => {
+								return !e.temporary;
+							})}
+						/>
 					</Card.Content>
 					<Card.Footer>
 						<CreateDriverPopover onSuccess={handleDriverCreated} />

@@ -3,7 +3,8 @@
 	import type { StopWithLocation } from '$lib/schemas';
 	import mapboxgl from 'mapbox-gl';
 	import 'mapbox-gl/dist/mapbox-gl.css';
-	import { onMount } from 'svelte';
+	import { mount, onMount, unmount } from 'svelte';
+	import StopMapPopup from './StopMapPopup.svelte';
 
 	interface Route {
 		id: string;
@@ -15,16 +16,21 @@
 		stops = [],
 		routes = [],
 		center = [-98.5795, 39.8283],
-		zoom = 4
+		zoom = 4,
+		onGoToStop = (stopId: string) => {}
 	}: {
 		stops?: StopWithLocation[];
 		routes?: Route[];
 		center?: [number, number];
 		zoom?: number;
+		onGoToStop?: (stopId: string) => void;
 	} = $props();
 
 	let mapContainer: HTMLDivElement;
 	let map: mapboxgl.Map;
+
+	// Track mounted popup components for cleanup
+	let mountedPopups = new Map<string, { component: any; container: HTMLElement }>();
 
 	onMount(() => {
 		// Initialize map
@@ -37,8 +43,8 @@
 		});
 
 		// Add navigation controls
-		map.addControl(new mapboxgl.NavigationControl(), 'top-right');
-		map.addControl(new mapboxgl.FullscreenControl(), 'top-right');
+		// map.addControl(new mapboxgl.NavigationControl(), 'top-right');
+		// map.addControl(new mapboxgl.FullscreenControl(), 'top-right');
 
 		map.on('load', () => {
 			// Add stops as markers
@@ -54,10 +60,17 @@
 		});
 
 		return () => {
+			// Clean up all mounted popups
+			mountedPopups.forEach(({ component, container }) => {
+				unmount(component);
+			});
+			mountedPopups.clear();
+
 			map.remove();
 		};
 	});
 
+	/** I don't like that I can't understand this! I tried to use https://github.com/beyonk-group/svelte-mapbox to implement */
 	function addStopMarkers() {
 		stops.forEach((item, index) => {
 			const { stop, location } = item;
@@ -80,27 +93,55 @@
 			const el = document.createElement('div');
 			el.className = 'custom-marker';
 			el.innerHTML = `
-				<div class="marker-content">
-					<span class="marker-number">${index + 1}</span>
-				</div>
-			`;
+                <div class="marker-content">
+                    <span class="marker-number">${index + 1}</span>
+                </div>
+            `;
 
-			// Create popup content
-			const popupContent = `
-				<div class="map-popup">
-					<h3 class="font-semibold text-sm mb-1">${stop.contact_name || 'Unknown'}</h3>
-					<p class="text-xs text-gray-600 mb-1">${location.address_line1}</p>
-					${location.city ? `<p class="text-xs text-gray-600 mb-1">${location.city}, ${location.region || ''} ${location.postal_code || ''}</p>` : ''}
-					${stop.contact_phone ? `<p class="text-xs mt-2">📞 ${stop.contact_phone}</p>` : ''}
-					${stop.notes ? `<p class="text-xs mt-2 italic text-gray-500">${stop.notes}</p>` : ''}
-				</div>
-			`;
+			const popupId = `popup-${stop.id}`;
 
-			// Create popup
+			// Create popup (will mount component on open)
 			const popup = new mapboxgl.Popup({
 				offset: 25,
 				maxWidth: '300px'
-			}).setHTML(popupContent);
+			});
+
+			// Mount component when popup opens
+			popup.on('open', () => {
+				// Create new container each time
+				const popupContainer = document.createElement('div');
+
+				// Mount Svelte component
+				const component = mount(StopMapPopup, {
+					target: popupContainer,
+					props: {
+						stop,
+						location,
+						index,
+						onGoToStop: (stopId: string) => {
+							// Close the popup
+							popup.remove();
+							// Call parent handler
+							onGoToStop(stopId);
+						}
+					}
+				});
+
+				// Set the content
+				popup.setDOMContent(popupContainer);
+
+				// Store reference for cleanup
+				mountedPopups.set(popupId, { component, container: popupContainer });
+			});
+
+			// Clean up on popup close
+			popup.on('close', () => {
+				const mounted = mountedPopups.get(popupId);
+				if (mounted) {
+					unmount(mounted.component);
+					mountedPopups.delete(popupId);
+				}
+			});
 
 			// Add marker to map
 			new mapboxgl.Marker(el).setLngLat([lon, lat]).setPopup(popup).addTo(map);
@@ -169,8 +210,8 @@
 <style>
 	.map-container {
 		width: 100%;
-		height: 600px;
-		border-radius: 8px;
+		height: 100%;
+		border-radius: 0;
 		overflow: hidden;
 	}
 
@@ -223,17 +264,11 @@
 
 	:global(.marker-number) {
 		color: white;
-		font-weight: 500;
+		font-weight: 700;
 		font-size: 10px;
 		text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 		position: relative;
 		z-index: 1;
-	}
-
-	:global(.map-popup) {
-		padding: 8px;
-		min-width: 180px;
-		max-width: 280px;
 	}
 
 	:global(.mapboxgl-popup-content) {

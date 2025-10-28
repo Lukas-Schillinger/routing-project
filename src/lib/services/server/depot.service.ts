@@ -21,19 +21,12 @@ export class DepotService {
 	 * Handles location creation, default depot management, and permissions
 	 */
 	async createDepot(data: DepotCreate, organizationId: string): Promise<DepotWithLocationJoin> {
-		let locationId = data.location_id;
-
 		// Create or verify location
-		if (data.location && !locationId) {
-			// Create new location
-			const newLocation = await locationService.createLocation(data.location, organizationId);
-			locationId = newLocation.id;
-		} else if (locationId) {
-			// Verify existing location
-			await locationService.verifyLocationOwnership(locationId, organizationId);
-		} else {
-			throw ServiceError.validation('Either location_id or location data must be provided');
-		}
+		const locationId = await locationService.createOrVerifyLocation(
+			data.location_id,
+			data.location,
+			organizationId
+		);
 
 		// Handle default depot logic
 		if (data.default_depot) {
@@ -45,7 +38,7 @@ export class DepotService {
 			.insert(depots)
 			.values({
 				organization_id: organizationId,
-				location_id: locationId!,
+				location_id: locationId,
 				name: data.name.trim(),
 				default_depot: data.default_depot
 			})
@@ -113,7 +106,17 @@ export class DepotService {
 		organizationId: string
 	): Promise<DepotWithLocationJoin> {
 		// Verify depot ownership
-		await this.getDepotById(depotId, organizationId);
+		const existingDepot = await this.getDepotById(depotId, organizationId);
+
+		// Handle location update if provided
+		let locationId = existingDepot.depot.location_id;
+		if (data.location_id || data.location) {
+			locationId = await locationService.createOrVerifyLocation(
+				data.location_id,
+				data.location,
+				organizationId
+			);
+		}
 
 		// Handle default depot logic
 		if (data.default_depot === true) {
@@ -125,6 +128,7 @@ export class DepotService {
 			.update(depots)
 			.set({
 				name: data.name?.trim(),
+				location_id: locationId,
 				default_depot: data.default_depot,
 				updated_at: new Date()
 			})

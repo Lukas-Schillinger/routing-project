@@ -73,6 +73,30 @@ export class LocationService {
 	}
 
 	/**
+	 * Create or verify a location
+	 * If location data is provided, creates a new location
+	 * If location_id is provided, verifies it belongs to the organization
+	 * Returns the location ID
+	 */
+	async createOrVerifyLocation(
+		locationId: string | undefined,
+		locationData: LocationCreate | undefined,
+		organizationId: string
+	): Promise<string> {
+		if (locationData && !locationId) {
+			// Create new location
+			const newLocation = await this.createLocation(locationData, organizationId);
+			return newLocation.id;
+		} else if (locationId) {
+			// Verify existing location
+			await this.verifyLocationOwnership(locationId, organizationId);
+			return locationId;
+		} else {
+			throw ServiceError.validation('Either location_id or location data must be provided');
+		}
+	}
+
+	/**
 	 * Update a location
 	 */
 	async updateLocation(

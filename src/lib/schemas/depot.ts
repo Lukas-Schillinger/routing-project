@@ -44,6 +44,7 @@ export type DepotCreate = z.infer<typeof depotCreateSchema>;
 export const depotUpdateSchema = z
 	.object({
 		location_id: z.string().uuid().optional(),
+		location: locationCreateSchema.optional(),
 		name: z.string().min(1, 'Name cannot be empty').max(200).optional(),
 		default_depot: z.boolean().optional()
 	})

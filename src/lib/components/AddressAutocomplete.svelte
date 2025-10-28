@@ -1,8 +1,10 @@
 <script lang="ts">
 	import * as Command from '$lib/components/ui/command';
 	import * as Popover from '$lib/components/ui/popover';
+	import type { LocationCreate } from '$lib/schemas/location';
 	import { geocodingApi } from '$lib/services/api';
 	import type { GeocodingFeature } from '$lib/services/external/mapbox/types';
+	import { geocodingFeatureToLocation } from '$lib/utils';
 	import { Check, ChevronsUpDown, LoaderCircle, MapPin } from 'lucide-svelte';
 	import { onMount } from 'svelte';
 
@@ -11,14 +13,14 @@
 		value = $bindable(''),
 		placeholder = 'Search for an address...',
 		country = 'US',
-		onSelect = (feature: GeocodingFeature) => {},
+		onSelect = (location: LocationCreate) => {},
 		onClear = () => {}, // signal clear to parent
 		disabled = false
 	}: {
 		value?: string;
 		placeholder?: string;
 		country?: string;
-		onSelect?: (feature: GeocodingFeature) => void;
+		onSelect?: (location: LocationCreate) => void;
 		onClear?: () => void;
 		disabled?: boolean;
 	} = $props();
@@ -128,8 +130,9 @@
 		searchQuery = fullAddress;
 		open = false;
 
-		// Call the onSelect callback
-		onSelect(feature);
+		// Convert to LocationCreate and call the onSelect callback
+		const location = geocodingFeatureToLocation(feature);
+		onSelect(location);
 	}
 
 	// Clear selection
