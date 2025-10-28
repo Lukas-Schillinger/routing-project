@@ -51,7 +51,6 @@
 			addStopMarkers();
 
 			// Add routes as lines
-			addRoutes();
 
 			// Fit map to show all points
 			if (stops.length > 0) {
@@ -145,38 +144,6 @@
 
 			// Add marker to map
 			new mapboxgl.Marker(el).setLngLat([lon, lat]).setPopup(popup).addTo(map);
-		});
-	}
-
-	function addRoutes() {
-		routes.forEach((route) => {
-			// Add route line
-			map.addSource(`route-${route.id}`, {
-				type: 'geojson',
-				data: {
-					type: 'Feature',
-					properties: {},
-					geometry: {
-						type: 'LineString',
-						coordinates: route.coordinates
-					}
-				}
-			});
-
-			map.addLayer({
-				id: `route-${route.id}`,
-				type: 'line',
-				source: `route-${route.id}`,
-				layout: {
-					'line-join': 'round',
-					'line-cap': 'round'
-				},
-				paint: {
-					'line-color': route.color,
-					'line-width': 4,
-					'line-opacity': 0.75
-				}
-			});
 		});
 	}
 
