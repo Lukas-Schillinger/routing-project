@@ -1,7 +1,8 @@
 <script lang="ts">
 	import * as Command from '$lib/components/ui/command';
 	import * as Popover from '$lib/components/ui/popover';
-	import { geocodingService, type GeocodingFeature } from '$lib/services/mapbox-geocoding';
+	import { geocodingApi } from '$lib/services/api';
+	import type { GeocodingFeature } from '$lib/services/external/mapbox/types';
 	import { Check, ChevronsUpDown, LoaderCircle, MapPin } from 'lucide-svelte';
 	import { onMount } from 'svelte';
 
@@ -88,12 +89,11 @@
 		isSearching = true;
 
 		try {
-			const response = await geocodingService.autocomplete(query, {
+			suggestions = await geocodingApi.autocomplete(query, {
 				country,
 				limit: 8,
 				proximity: userProximity || undefined
 			});
-			suggestions = response.features;
 		} catch (error) {
 			console.error('Address search error:', error);
 			suggestions = [];

@@ -2,45 +2,14 @@
 	import { invalidateAll } from '$app/navigation';
 	import { Badge } from '$lib/components/ui/badge';
 	import * as Table from '$lib/components/ui/table';
+	import type { DepotWithLocationJoin } from '$lib/schemas/depot';
 	import { formatDate } from '$lib/utils';
 	import { Building2, MapPin } from 'lucide-svelte';
-
-	type DepotWithLocation = {
-		depots: {
-			id: string;
-			organization_id: string;
-			location_id: string;
-			name: string;
-			default_depot: boolean;
-			created_at: Date;
-			updated_at: Date;
-		};
-		locations: {
-			id: string;
-			organization_id: string;
-			name: string | null;
-			address_line1: string;
-			address_line2: string | null;
-			city: string | null;
-			region: string | null;
-			postal_code: string | null;
-			country: string;
-			lat: string | null;
-			lon: string | null;
-			geocode_provider: string | null;
-			geocode_confidence: string | null;
-			geocode_place_id: string | null;
-			geocode_raw: unknown;
-			address_hash: string | null;
-			created_at: Date;
-			updated_at: Date;
-		};
-	};
 
 	let {
 		depots
 	}: {
-		depots: DepotWithLocation[];
+		depots: DepotWithLocationJoin[];
 	} = $props();
 
 	async function handleDepotCreated() {
@@ -70,17 +39,17 @@
 						<Table.Cell>
 							<div class="flex items-center">
 								<Building2 class="mr-2 h-4 w-4 text-primary" />
-								<span class="font-semibold">{depot.depots.name}</span>
+								<span class="font-semibold">{depot.depot.name}</span>
 							</div>
 						</Table.Cell>
 						<Table.Cell>
 							<div class="flex items-start text-sm text-muted-foreground">
 								<MapPin class="mt-0.5 mr-2 h-3 w-3 shrink-0" />
 								<div>
-									<div>{depot.locations.address_line1}</div>
-									{#if depot.locations.city || depot.locations.region}
+									<div>{depot.location.address_line1}</div>
+									{#if depot.location.city || depot.location.region}
 										<div>
-											{[depot.locations.city, depot.locations.region, depot.locations.postal_code]
+											{[depot.location.city, depot.location.region, depot.location.postal_code]
 												.filter(Boolean)
 												.join(', ')}
 										</div>
@@ -89,7 +58,7 @@
 							</div>
 						</Table.Cell>
 						<Table.Cell>
-							{#if depot.depots.default_depot}
+							{#if depot.depot.default_depot}
 								<Badge variant="default">Default</Badge>
 							{:else}
 								<Badge variant="outline">Active</Badge>
@@ -97,7 +66,7 @@
 						</Table.Cell>
 						<Table.Cell>
 							<div class="text-sm text-muted-foreground">
-								{formatDate(depot.depots.created_at)}
+								{formatDate(depot.depot.created_at)}
 							</div>
 						</Table.Cell>
 					</Table.Row>

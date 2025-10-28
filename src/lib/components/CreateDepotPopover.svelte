@@ -5,7 +5,10 @@
 	import { Label } from '$lib/components/ui/label';
 	import * as Popover from '$lib/components/ui/popover';
 	import { Switch } from '$lib/components/ui/switch';
-	import type { GeocodingFeature } from '$lib/services/mapbox-geocoding';
+	import type { DepotWithLocationJoin } from '$lib/schemas/depot';
+	import { ApiError } from '$lib/services/api/base';
+	import { depotApi } from '$lib/services/api/depots';
+	import type { GeocodingFeature } from '$lib/services/external/mapbox/types';
 	import { geocodingFeatureToLocation } from '$lib/utils';
 	import { Building2, Check, LoaderCircle } from 'lucide-svelte';
 
@@ -13,7 +16,7 @@
 	let {
 		onSuccess = () => {}
 	}: {
-		onSuccess?: (depot: any) => void;
+		onSuccess?: (depot: DepotWithLocationJoin) => void;
 	} = $props();
 
 	// State
@@ -49,31 +52,6 @@
 		selectedLocation = null;
 	}
 
-	// Create depot with location
-	async function createDepot(feature: GeocodingFeature) {
-		console.log(feature);
-		const depotData = {
-			name: depotName.trim(),
-			default_depot: isDefault,
-			location: geocodingFeatureToLocation(feature)
-		};
-
-		const response = await fetch('/api/depots', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify(depotData)
-		});
-
-		if (!response.ok) {
-			const errorData = await response.json().catch(() => ({}));
-			throw new Error(errorData.message || `Failed to create depot: ${response.statusText}`);
-		}
-
-		return await response.json();
-	}
-
 	// Submit handler
 	async function handleSubmit(e: Event) {
 		e.preventDefault();
@@ -92,8 +70,12 @@
 		isSubmitting = true;
 
 		try {
-			// Create the depot with location in one API call
-			const newDepot = await createDepot(selectedLocation.feature);
+			// Create the depot with location using the API service
+			const newDepot = await depotApi.create({
+				name: depotName.trim(),
+				default_depot: isDefault,
+				location: geocodingFeatureToLocation(selectedLocation.feature)
+			});
 
 			// Call success callback
 			onSuccess(newDepot);
@@ -103,7 +85,19 @@
 			resetForm();
 		} catch (err) {
 			console.error('Error creating depot:', err);
-			error = err instanceof Error ? err.message : 'Failed to create depot';
+
+			if (err instanceof ApiError) {
+				// Handle API errors with status codes
+				if (err.status === 409) {
+					error = 'A depot with this name already exists';
+				} else if (err.status === 403) {
+					error = 'You do not have permission to create depots';
+				} else {
+					error = err.message;
+				}
+			} else {
+				error = 'An unexpected error occurred';
+			}
 		} finally {
 			isSubmitting = false;
 		}

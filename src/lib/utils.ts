@@ -3,7 +3,7 @@ import TimeAgo from 'javascript-time-ago';
 import en from 'javascript-time-ago/locale/en';
 import { twMerge } from 'tailwind-merge';
 import type { LocationCreate } from './schemas/location';
-import type { GeocodingFeature } from './services/mapbox-geocoding';
+import type { GeocodingFeature } from './services/external/mapbox/types';
 
 TimeAgo.addLocale(en);
 const timeAgo = new TimeAgo('en-US');

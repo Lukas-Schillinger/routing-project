@@ -1,0 +1,51 @@
+import { createMapSchema } from '$lib/schemas/map';
+import { mapService, ServiceError } from '$lib/services/server';
+import { json, type RequestHandler } from '@sveltejs/kit';
+
+export const GET: RequestHandler = async ({ locals, url }) => {
+	const user = locals.user;
+	if (!user) {
+		return json({ error: 'Unauthorized' }, { status: 401 });
+	}
+
+	try {
+		// Parse query parameters
+		const includeStats = url.searchParams.get('includeStats') === 'true';
+
+		const maps = await mapService.getMaps(user.organization_id);
+
+		return json({ maps, includeStats });
+	} catch (error) {
+		console.error('Get maps error:', error);
+
+		if (error instanceof ServiceError) {
+			return json({ error: error.message }, { status: error.statusCode });
+		}
+
+		return json({ error: 'Failed to fetch maps' }, { status: 500 });
+	}
+};
+
+export const POST: RequestHandler = async ({ request, locals }) => {
+	const user = locals.user;
+	if (!user) {
+		return json({ error: 'Unauthorized' }, { status: 401 });
+	}
+
+	try {
+		const body = await request.json();
+		const data = createMapSchema.parse(body);
+
+		const map = await mapService.createMap(data, user.organization_id);
+
+		return json({ map }, { status: 201 });
+	} catch (error) {
+		console.error('Create map error:', error);
+
+		if (error instanceof ServiceError) {
+			return json({ error: error.message }, { status: error.statusCode });
+		}
+
+		return json({ error: 'Failed to create map' }, { status: 500 });
+	}
+};

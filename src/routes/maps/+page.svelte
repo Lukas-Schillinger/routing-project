@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
 	import CreateDepotPopover from '$lib/components/CreateDepotPopover.svelte';
+	import CreateDriverPopover from '$lib/components/CreateDriverPopover.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Plus } from 'lucide-svelte';
@@ -12,6 +13,11 @@
 	let { data }: { data: PageData } = $props();
 
 	async function handleDepotCreated() {
+		// Invalidate all data to refetch depots from server
+		await invalidateAll();
+	}
+
+	async function handleDriverCreated() {
 		// Invalidate all data to refetch depots from server
 		await invalidateAll();
 	}
@@ -36,47 +42,42 @@
 	<div class="space-y-8">
 		<!-- Maps Section -->
 		<section>
-			<div class="mb-4">
-				<h2 class="headline-medium mb-1">Maps</h2>
-				<p class="body-medium text-muted-foreground">Your routing maps and delivery schedules</p>
-			</div>
 			<MapsTable maps={data.maps} />
 		</section>
 
 		<!-- Depots Section -->
-		<section>
-			<Card.Root>
-				<Card.Header>
-					<Card.Title>Depots</Card.Title>
-					<Card.Description>Starting locations for your delivery routes</Card.Description>
-				</Card.Header>
-				<Card.Content>
-					<DepotsTable depots={data.depots} />
-				</Card.Content>
-				<Card.Footer>
-					<CreateDepotPopover onSuccess={handleDepotCreated} />
-				</Card.Footer>
-			</Card.Root>
-		</section>
+		<div class="grid grid-cols-1 gap-8 md:grid-cols-2">
+			<section>
+				<Card.Root>
+					<Card.Header>
+						<Card.Title>Depots</Card.Title>
+						<Card.Description>Starting locations for your delivery routes</Card.Description>
+					</Card.Header>
+					<Card.Content>
+						<DepotsTable depots={data.depots} />
+					</Card.Content>
+					<Card.Footer>
+						<CreateDepotPopover onSuccess={handleDepotCreated} />
+					</Card.Footer>
+				</Card.Root>
+			</section>
 
-		<!-- Drivers Section -->
-		<section>
-			<Card.Root>
-				<Card.Header>
-					<Card.Title>Drivers</Card.Title>
-					<Card.Description>Manage your delivery drivers</Card.Description>
-				</Card.Header>
-				<Card.Content>
-					<DriversTable drivers={data.drivers} />
-				</Card.Content>
-				<Card.Footer>
-					<Button variant="outline" href="/drivers">
-						<Plus class="mr-2 h-4 w-4" />
-						Add Driver
-					</Button>
-				</Card.Footer>
-			</Card.Root>
-		</section>
+			<!-- Drivers Section -->
+			<section>
+				<Card.Root>
+					<Card.Header>
+						<Card.Title>Drivers</Card.Title>
+						<Card.Description>Manage your delivery drivers</Card.Description>
+					</Card.Header>
+					<Card.Content>
+						<DriversTable drivers={data.drivers} />
+					</Card.Content>
+					<Card.Footer>
+						<CreateDriverPopover onSuccess={handleDriverCreated} />
+					</Card.Footer>
+				</Card.Root>
+			</section>
+		</div>
 	</div>
 </div>
 

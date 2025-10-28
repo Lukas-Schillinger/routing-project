@@ -19,7 +19,7 @@ A Svelte 5 address autocomplete component using shadcn-svelte UI components and 
 ```svelte
 <script lang="ts">
 	import AddressAutocomplete from '$lib/components/AddressAutocomplete.svelte';
-	import type { GeocodingFeature } from '$lib/services/mapbox-geocoding';
+	import type { GeocodingFeature } from '$lib/services/external/mapbox/types';
 
 	let address = $state('');
 

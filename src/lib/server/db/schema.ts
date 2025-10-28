@@ -59,7 +59,7 @@ export const drivers = pgTable(
 		phone: varchar('phone', { length: 32 }),
 		notes: text('notes'),
 		active: boolean('active').default(true).notNull(),
-		temporary: boolean('temporary').default(false).notNull(),
+		temporary: boolean('temporary').default(false).notNull(), // Temporary drivers are deleted when removed from a map
 		created_at: ts('created_at'),
 		updated_at: ts('updated_at')
 	},
@@ -93,7 +93,9 @@ export const locations = pgTable(
 		lat: numeric('lat', { precision: 10, scale: 6 }),
 		lon: numeric('lon', { precision: 10, scale: 6 }),
 		geocode_provider: varchar('geocode_provider', { length: 40 }),
-		geocode_confidence: varchar('geocode_confidence', { length: 20 }), // Mapbox v6: 'exact', 'high', 'medium', 'low'
+		geocode_confidence: varchar('geocode_confidence', { length: 20 }).$type<
+			'exact' | 'high' | 'medium' | 'low' | null
+		>(), // Mapbox v6: 'exact', 'high', 'medium', 'low'
 		geocode_place_id: varchar('geocode_place_id'),
 		geocode_raw: jsonb('geocode_raw'),
 		address_hash: varchar('address_hash', { length: 64 }),

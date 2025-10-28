@@ -7,7 +7,7 @@
 		CardHeader,
 		CardTitle
 	} from '$lib/components/ui/card';
-	import type { GeocodingFeature } from '$lib/services/mapbox-geocoding';
+	import type { GeocodingFeature } from '$lib/services/external/mapbox/types';
 	import CreateDepot from '../../../lib/components/CreateDepotPopover.svelte';
 
 	let selectedAddress = $state('');
@@ -77,31 +77,55 @@
 					<div class="space-y-2 text-sm">
 						<div>
 							<span class="font-semibold">Full Address:</span>
-							<p class="text-muted-foreground">{selectedFeature.place_name}</p>
+							<p class="text-muted-foreground">
+								{selectedFeature.properties.full_address ||
+									selectedFeature.properties.place_formatted ||
+									selectedFeature.properties.name}
+							</p>
 						</div>
 						<div>
 							<span class="font-semibold">Coordinates:</span>
 							<p class="text-muted-foreground">
-								Longitude: {selectedFeature.center[0].toFixed(6)}, Latitude: {selectedFeature.center[1].toFixed(
+								Longitude: {selectedFeature.geometry.coordinates[0].toFixed(6)}, Latitude: {selectedFeature.geometry.coordinates[1].toFixed(
 									6
 								)}
 							</p>
 						</div>
 						<div>
-							<span class="font-semibold">Place Type:</span>
-							<p class="text-muted-foreground">{selectedFeature.place_type.join(', ')}</p>
+							<span class="font-semibold">Feature Type:</span>
+							<p class="text-muted-foreground">{selectedFeature.properties.feature_type}</p>
 						</div>
 						<div>
-							<span class="font-semibold">Relevance:</span>
-							<p class="text-muted-foreground">{(selectedFeature.relevance * 100).toFixed(0)}%</p>
+							<span class="font-semibold">Mapbox ID:</span>
+							<p class="font-mono text-xs text-muted-foreground">
+								{selectedFeature.properties.mapbox_id}
+							</p>
 						</div>
-						{#if selectedFeature.context}
+						{#if selectedFeature.properties.context}
 							<div>
 								<span class="font-semibold">Context:</span>
 								<ul class="list-inside list-disc text-muted-foreground">
-									{#each selectedFeature.context as ctx}
-										<li>{ctx.text}</li>
-									{/each}
+									{#if selectedFeature.properties.context.address}
+										<li>Address: {selectedFeature.properties.context.address.name}</li>
+									{/if}
+									{#if selectedFeature.properties.context.street}
+										<li>Street: {selectedFeature.properties.context.street.name}</li>
+									{/if}
+									{#if selectedFeature.properties.context.neighborhood}
+										<li>Neighborhood: {selectedFeature.properties.context.neighborhood.name}</li>
+									{/if}
+									{#if selectedFeature.properties.context.postcode}
+										<li>Postcode: {selectedFeature.properties.context.postcode.name}</li>
+									{/if}
+									{#if selectedFeature.properties.context.place}
+										<li>Place: {selectedFeature.properties.context.place.name}</li>
+									{/if}
+									{#if selectedFeature.properties.context.region}
+										<li>Region: {selectedFeature.properties.context.region.name}</li>
+									{/if}
+									{#if selectedFeature.properties.context.country}
+										<li>Country: {selectedFeature.properties.context.country.name}</li>
+									{/if}
 								</ul>
 							</div>
 						{/if}
@@ -134,9 +158,14 @@
 									</div>
 								</div>
 								<div class="text-sm text-muted-foreground">
-									<p>{depot.location.place_name}</p>
+									<p>
+										{depot.location.properties?.full_address ||
+											depot.location.properties?.place_formatted ||
+											depot.location.properties?.name ||
+											'Unknown address'}
+									</p>
 									<p class="mt-1">
-										Coordinates: {depot.location.center[0].toFixed(6)}, {depot.location.center[1].toFixed(
+										Coordinates: {depot.location.geometry.coordinates[0].toFixed(6)}, {depot.location.geometry.coordinates[1].toFixed(
 											6
 										)}
 									</p>
@@ -157,13 +186,14 @@
 				<pre class="overflow-x-auto rounded-md bg-muted p-4 text-sm"><code
 						>{`<script lang="ts">
   import AddressAutocomplete from '$lib/components/AddressAutocomplete.svelte';
-  import type { GeocodingFeature } from '$lib/services/mapbox-geocoding';
+  import type { GeocodingFeature } from '$lib/services/external/mapbox/types';
 
   let address = $state('');
 
   function handleSelect(feature: GeocodingFeature) {
-    console.log('Selected:', feature.place_name);
-    console.log('Coordinates:', feature.center);
+    console.log('Selected:', feature.properties.full_address);
+    console.log('Coordinates:', feature.geometry.coordinates);
+    console.log('Feature type:', feature.properties.feature_type);
   }
 <\/script>
 

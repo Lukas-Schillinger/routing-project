@@ -10,22 +10,6 @@ export const geoapifyErrorSchema = z.object({
 // Coordinate schema [longitude, latitude]
 export const geoapifyCoordinateSchema = z.tuple([z.number(), z.number()]);
 
-// Location schema for waypoints
-export const geoapifyLocationSchema = z.object({
-	location: geoapifyCoordinateSchema,
-	id: z.string().optional(),
-	// For agents (vehicles/drivers)
-	start_location: geoapifyCoordinateSchema.optional(),
-	end_location: geoapifyCoordinateSchema.optional(),
-	time_windows: z.array(z.tuple([z.number(), z.number()])).optional(), // [[start, end]] in seconds
-	skills: z.array(z.string()).optional(),
-	// For jobs (stops)
-	service: z.number().optional(), // service duration in seconds
-	delivery: z.array(z.number()).optional(), // delivery amounts
-	pickup: z.array(z.number()).optional(), // pickup amounts
-	priority: z.number().optional() // 0-100
-});
-
 // Agent (vehicle/driver) schema
 export const geoapifyAgentSchema = z.object({
 	id: z.string(),
@@ -49,19 +33,6 @@ export const geoapifyJobSchema = z.object({
 	time_windows: z.array(z.tuple([z.number(), z.number()])).optional() // [[start, end]] in seconds
 });
 
-// Route step schema (individual stop in optimized route)
-export const geoapifyStepSchema = z.object({
-	type: z.enum(['start', 'job', 'end']),
-	id: z.string().optional(),
-	location: geoapifyCoordinateSchema,
-	arrival: z.number().optional(), // arrival time in seconds
-	duration: z.number().optional(), // cumulative duration
-	distance: z.number().optional(), // cumulative distance in meters
-	load: z.array(z.number()).optional(), // current load
-	service: z.number().optional(), // service time at this stop
-	waiting_time: z.number().optional() // waiting time before service
-});
-
 // Action schema in the GeoJSON response
 export const geoapifyActionSchema = z.object({
 	index: z.number(),
@@ -70,7 +41,7 @@ export const geoapifyActionSchema = z.object({
 	duration: z.number(),
 	job_index: z.number().optional(),
 	job_id: z.string().optional(),
-	waypoint_index: z.number().optional() // optional because 'end' actions may not have this
+	waypoint_index: z.number().optional()
 });
 
 // Waypoint schema in the GeoJSON response
@@ -129,34 +100,14 @@ export const geoapifyFeatureSchema = z.object({
 	properties: geoapifyFeaturePropertiesSchema
 });
 
-// Route schema (optimized route for one agent) - simplified for internal use
-export const geoapifyRouteSchema = z.object({
-	agent_id: z.string(),
-	steps: z.array(geoapifyStepSchema),
-	distance: z.number(), // total distance in meters
-	duration: z.number(), // total duration in seconds
-	service: z.number().optional(), // total service time in seconds
-	waiting_time: z.number().optional(), // total waiting time in seconds
-	priority: z.number().optional(),
-	delivery: z.array(z.number()).optional(),
-	pickup: z.array(z.number()).optional()
-});
-
-// Unassigned job schema (jobs that couldn't be assigned)
-export const geoapifyUnassignedSchema = z.object({
-	id: z.string(),
-	location: geoapifyCoordinateSchema,
-	reason: z.string().optional()
-});
-
 // Optimization response schema - GeoJSON FeatureCollection format
 export const geoapifyOptimizationResponseSchema = z.object({
 	type: z.literal('FeatureCollection'),
 	properties: z.object({
 		mode: z.string(),
 		params: z.object({
-			agents: z.array(z.any()),
-			jobs: z.array(z.any()),
+			agents: z.array(z.unknown()),
+			jobs: z.array(z.unknown()),
 			mode: z.string(),
 			traffic: z.string().optional()
 		})
@@ -176,11 +127,12 @@ export const geoapifyOptimizationRequestSchema = z.object({
 // Type exports
 export type GeoApifyError = z.infer<typeof geoapifyErrorSchema>;
 export type GeoApifyCoordinate = z.infer<typeof geoapifyCoordinateSchema>;
-export type GeoApifyLocation = z.infer<typeof geoapifyLocationSchema>;
 export type GeoApifyAgent = z.infer<typeof geoapifyAgentSchema>;
 export type GeoApifyJob = z.infer<typeof geoapifyJobSchema>;
-export type GeoApifyStep = z.infer<typeof geoapifyStepSchema>;
-export type GeoApifyRoute = z.infer<typeof geoapifyRouteSchema>;
-export type GeoApifyUnassigned = z.infer<typeof geoapifyUnassignedSchema>;
+export type GeoApifyAction = z.infer<typeof geoapifyActionSchema>;
+export type GeoApifyWaypoint = z.infer<typeof geoapifyWaypointSchema>;
+export type GeoApifyLeg = z.infer<typeof geoapifyLegSchema>;
+export type GeoApifyFeatureProperties = z.infer<typeof geoapifyFeaturePropertiesSchema>;
+export type GeoApifyFeature = z.infer<typeof geoapifyFeatureSchema>;
 export type GeoApifyOptimizationResponse = z.infer<typeof geoapifyOptimizationResponseSchema>;
 export type GeoApifyOptimizationRequest = z.infer<typeof geoapifyOptimizationRequestSchema>;

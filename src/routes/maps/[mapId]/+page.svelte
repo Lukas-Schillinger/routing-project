@@ -14,7 +14,7 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import * as Popover from '$lib/components/ui/popover';
-	import { assignDriverToMap, createDriver, removeDriverFromMap } from '$lib/services/driver-api';
+	import { ApiError, driverApi, mapApi } from '$lib/services/api';
 	import { formatDate } from '$lib/utils';
 	import {
 		ArrowLeft,
@@ -78,13 +78,13 @@
 
 		try {
 			// Assign the driver to this map
-			await assignDriverToMap(data.map.id, value);
+			await mapApi.addDriver(data.map.id, value);
 
 			// Refresh the page data
 			await invalidateAll();
 			closeAndReset();
 		} catch (err) {
-			errorMessage = err instanceof Error ? err.message : 'Failed to assign driver';
+			errorMessage = err instanceof ApiError ? err.message : 'Failed to assign driver';
 			console.error('Error assigning driver:', err);
 		} finally {
 			isLoading = false;
@@ -99,7 +99,7 @@
 
 		try {
 			// First, create the temporary driver
-			const newDriver = await createDriver({
+			const newDriver = await driverApi.create({
 				name: newDriverName.trim(),
 				phone: newDriverPhone.trim() || null,
 				temporary: true,
@@ -107,7 +107,7 @@
 			});
 
 			// Then assign the driver to this map
-			await assignDriverToMap(data.map.id, newDriver.id);
+			await mapApi.addDriver(data.map.id, newDriver.id);
 
 			// Refresh the page data
 			await invalidateAll();
@@ -118,7 +118,7 @@
 			openNewDriver = false;
 			errorMessage = '';
 		} catch (err) {
-			errorMessage = err instanceof Error ? err.message : 'Failed to create temporary driver';
+			errorMessage = err instanceof ApiError ? err.message : 'Failed to create temporary driver';
 			console.error('Error creating temporary driver:', err);
 		} finally {
 			isLoading = false;
@@ -136,12 +136,12 @@
 		errorMessage = '';
 
 		try {
-			await removeDriverFromMap(data.map.id, routeId);
+			await mapApi.removeDriver(data.map.id, routeId);
 
 			// Refresh the page data
 			await invalidateAll();
 		} catch (err) {
-			errorMessage = err instanceof Error ? err.message : 'Failed to remove driver';
+			errorMessage = err instanceof ApiError ? err.message : 'Failed to remove driver';
 			console.error('Error removing driver:', err);
 		} finally {
 			isLoading = false;
@@ -168,27 +168,15 @@
 		optimizationResult = null;
 
 		try {
-			const response = await fetch(`/api/maps/${data.map.id}/optimize`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({
-					mode: 'drive',
-					optimize: 'time',
-					traffic: 'approximated',
-					globalStopConfig: {
-						serviceTime: 300 // 5 minutes per stop
-					}
-				})
+			const res = await mapApi.optimize(data.map.id, {
+				mode: 'drive',
+				optimize: 'time',
+				traffic: 'approximated',
+				globalStopConfig: {
+					serviceTime: 300 // 5 minutes per stop
+				}
 			});
 
-			if (!response.ok) {
-				const error = await response.json();
-				throw new Error(error.message || 'Optimization failed');
-			}
-
-			const res = await response.json();
 			optimizationResult = res.result;
 
 			// Switch to view mode after successful optimization
@@ -219,15 +207,7 @@
 		errorMessage = '';
 
 		try {
-			const formData = new FormData();
-			const response = await fetch(`/maps/${data.map.id}?/resetOptimization`, {
-				method: 'POST',
-				body: formData
-			});
-
-			if (!response.ok) {
-				throw new Error('Failed to reset optimization');
-			}
+			await mapApi.resetOptimization(data.map.id);
 
 			// Switch to edit mode
 			isViewMode = false;
@@ -242,6 +222,8 @@
 			isLoading = false;
 		}
 	}
+
+	console.log(data);
 </script>
 
 <svelte:head>

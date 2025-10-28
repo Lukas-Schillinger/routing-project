@@ -1,5 +1,4 @@
-import { MapboxApiError } from '$lib/services/mapbox-client.js';
-import { geocodingService } from '$lib/services/mapbox-geocoding.js';
+import { MapboxApiError, mapboxGeocoding } from '$lib/services/external/mapbox';
 import { fail } from '@sveltejs/kit';
 import { superValidate } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';
@@ -36,15 +35,19 @@ export const actions = {
 		}
 
 		try {
-			const response = await geocodingService.geocode(form.data.address, {
+			const features = await mapboxGeocoding.forward(form.data.address, {
 				limit: 5,
-				country: 'us'
+				country: 'US'
 			});
 
 			return {
 				form,
 				success: true,
-				response
+				response: {
+					type: 'FeatureCollection' as const,
+					features,
+					attribution: 'Mapbox'
+				}
 			};
 		} catch (error) {
 			console.error('Geocoding error:', error);

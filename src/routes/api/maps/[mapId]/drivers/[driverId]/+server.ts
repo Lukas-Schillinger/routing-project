@@ -1,61 +1,33 @@
 // DELETE /api/maps/[mapId]/drivers/[driverId] - Remove a driver from a map
 
-import { db } from '$lib/server/db';
-import { driverMapMemberships, maps } from '$lib/server/db/schema';
-import { error, json } from '@sveltejs/kit';
-import { and, eq } from 'drizzle-orm';
+import { mapService, ServiceError } from '$lib/services/server';
+import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
 export const DELETE: RequestHandler = async ({ params, locals }) => {
 	const user = locals.user;
 	if (!user) {
-		error(401, 'Unauthorized');
+		return json({ error: 'Unauthorized' }, { status: 401 });
 	}
 
-	const { mapId, driverId } = params;
+	const mapId = params.mapId;
+	const driverId = params.driverId;
+
+	if (!mapId || !driverId) {
+		return json({ error: 'Map ID and Driver ID are required' }, { status: 400 });
+	}
 
 	try {
-		// Verify map belongs to organization
-		const [map] = await db
-			.select()
-			.from(maps)
-			.where(and(eq(maps.id, mapId), eq(maps.organization_id, user.organization_id)))
-			.limit(1);
-
-		if (!map) {
-			error(404, 'Map not found');
-		}
-
-		// Verify membership exists
-		const [membership] = await db
-			.select()
-			.from(driverMapMemberships)
-			.where(
-				and(
-					eq(driverMapMemberships.driver_id, driverId),
-					eq(driverMapMemberships.map_id, mapId),
-					eq(driverMapMemberships.organization_id, user.organization_id)
-				)
-			)
-			.limit(1);
-
-		if (!membership) {
-			error(404, 'Driver is not assigned to this map');
-		}
-
-		await db
-			.delete(driverMapMemberships)
-			.where(
-				and(
-					eq(driverMapMemberships.driver_id, driverId),
-					eq(driverMapMemberships.map_id, mapId),
-					eq(driverMapMemberships.organization_id, user.organization_id)
-				)
-			);
+		await mapService.removeDriverFromMap(driverId, mapId, user.organization_id);
 
 		return json({ success: true, message: 'Driver removed from map successfully' });
-	} catch (err) {
-		console.error('Error removing driver from map:', err);
-		error(500, 'Failed to remove driver from map');
+	} catch (error) {
+		console.error('Error removing driver from map:', error);
+
+		if (error instanceof ServiceError) {
+			return json({ error: error.message }, { status: error.statusCode });
+		}
+
+		return json({ error: 'Failed to remove driver from map' }, { status: 500 });
 	}
 };

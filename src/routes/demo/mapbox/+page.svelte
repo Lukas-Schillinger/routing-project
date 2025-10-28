@@ -13,7 +13,7 @@
 	import * as Table from '$lib/components/ui/table';
 
 	import * as Form from '$lib/components/ui/form/index.js';
-	import type { GeocodingResponse } from '$lib/services/mapbox-geocoding.js';
+	import type { GeocodingResponse } from '$lib/services/external/mapbox/types';
 	import {
 		Check,
 		CircleAlert,

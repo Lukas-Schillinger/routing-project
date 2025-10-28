@@ -1,20 +1,9 @@
 <script lang="ts">
 	import { Badge } from '$lib/components/ui/badge';
 	import * as Table from '$lib/components/ui/table';
+	import type { Driver } from '$lib/schemas/driver';
 	import { formatDate } from '$lib/utils';
 	import { Phone, Truck, User } from 'lucide-svelte';
-
-	type Driver = {
-		id: string;
-		organization_id: string;
-		name: string;
-		phone: string | null;
-		notes: string | null;
-		active: boolean;
-		temporary: boolean;
-		created_at: Date;
-		updated_at: Date;
-	};
 
 	let {
 		drivers
