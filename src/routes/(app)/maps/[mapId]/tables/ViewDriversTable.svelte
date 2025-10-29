@@ -2,7 +2,7 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import * as Table from '$lib/components/ui/table';
 	import type { Driver } from '$lib/schemas/driver';
-	import { Check, Phone, Truck } from 'lucide-svelte';
+	import { Check, Truck } from 'lucide-svelte';
 
 	interface Props {
 		assignedDrivers: Driver[];
@@ -13,7 +13,7 @@
 </script>
 
 {#if assignedDrivers.length > 0}
-	<div class="rounded-md border">
+	<div class="">
 		<Table.Root>
 			<Table.Header>
 				<Table.Row>
@@ -28,14 +28,12 @@
 					<Table.Row>
 						<Table.Cell>
 							<div class="flex items-center">
-								<Truck class="mr-2 h-4 w-4 flex-shrink-0 text-primary" />
 								<span class="font-semibold">{driver.name || 'Unassigned'}</span>
 							</div>
 						</Table.Cell>
 						<Table.Cell>
 							{#if driver.phone}
 								<div class="flex items-center text-sm">
-									<Phone class="mr-2 h-3 w-3 text-primary" />
 									{driver.phone}
 								</div>
 							{:else}

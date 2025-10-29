@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
 	import MapView from '$lib/components/MapView.svelte';
+	import { Button } from '$lib/components/ui/button';
 	import {
 		Card,
 		CardContent,
@@ -9,12 +10,13 @@
 		CardTitle
 	} from '$lib/components/ui/card';
 	import { ApiError, mapApi } from '$lib/services/api';
-	import { MapPin, Truck } from 'lucide-svelte';
+	import { MapPin, Route, Sparkles, Truck } from 'lucide-svelte';
 	import { getContext } from 'svelte';
 	import type { PageData } from './$types';
-	import EditDriversTable from './map/EditDriversTable.svelte';
-	import EditStopsDataTable from './map/EditStopsDataTable';
-	import ViewDriversTable from './map/ViewDriversTable.svelte';
+	import EditDriversTable from './tables/EditDriversTable.svelte';
+	import EditStopsDataTable from './tables/EditStopsDataTable';
+	import ViewDriversTable from './tables/ViewDriversTable.svelte';
+	import ViewRoutesTable from './tables/ViewRoutesTable.svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -251,23 +253,47 @@
 		</Card>
 	{/if}
 
-	<Card>
-		<CardHeader>
-			<CardTitle class="flex items-center gap-2">
-				<MapPin class="h-5 w-5 text-primary" />
-				Stops
-			</CardTitle>
-			<CardDescription>Where you're going.</CardDescription>
-		</CardHeader>
-		<CardContent>
-			<EditStopsDataTable
-				stops={data.stops}
-				mapId={data.map.id}
-				onUpdate={() => invalidateAll()}
-				onCreate={() => invalidateAll()}
-			/>
-		</CardContent>
-	</Card>
+	<!-- Routes Section (View Mode Only) -->
+	{#if isViewMode}
+		<Card>
+			<CardHeader>
+				<CardTitle class="flex items-center gap-2">
+					<Route class="h-5 w-5 text-primary" />
+					Optimized Routes
+				</CardTitle>
+				<CardDescription>
+					Stops organized by driver in optimal delivery order
+				</CardDescription>
+			</CardHeader>
+			<CardContent>
+				<ViewRoutesTable
+					stops={data.stops}
+					assignedDrivers={data.assignedDrivers}
+				/>
+			</CardContent>
+		</Card>
+	{/if}
+
+	<!-- Stops Section (Edit Mode Only) -->
+	{#if !isViewMode}
+		<Card>
+			<CardHeader>
+				<CardTitle class="flex items-center gap-2">
+					<MapPin class="h-5 w-5 text-primary" />
+					Stops
+				</CardTitle>
+				<CardDescription>Where you're going.</CardDescription>
+			</CardHeader>
+			<CardContent>
+				<EditStopsDataTable
+					stops={data.stops}
+					mapId={data.map.id}
+					onUpdate={() => invalidateAll()}
+					onCreate={() => invalidateAll()}
+				/>
+			</CardContent>
+		</Card>
+	{/if}
 
 	<!-- Drivers Section -->
 	<Card class="shadow-lg">
@@ -321,4 +347,37 @@
 			{/if}
 		</CardContent>
 	</Card>
+
+	<!-- Optimize Route Button -->
+	{#if !isViewMode}
+		<div class="flex justify-center">
+			<Button
+				size="lg"
+				onclick={optimizeRoutes}
+				disabled={isOptimizing ||
+					data.assignedDrivers.length === 0 ||
+					data.stops.length === 0}
+				class="gap-2"
+			>
+				{#if isOptimizing}
+					<Sparkles class="h-5 w-5 animate-spin" />
+					Optimizing Routes...
+				{:else}
+					<Sparkles class="h-5 w-5" />
+					Optimize Routes
+				{/if}
+			</Button>
+		</div>
+	{:else}
+		<div class="flex justify-center">
+			<Button
+				size="lg"
+				onclick={switchToEditMode}
+				disabled={isLoading}
+				variant="outline"
+			>
+				Switch to Edit Mode
+			</Button>
+		</div>
+	{/if}
 </div>

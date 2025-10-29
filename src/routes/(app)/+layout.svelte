@@ -28,7 +28,7 @@
 	<Header {pageHeader} />
 	<main
 		style="padding-top: var(--header-height, 64px);"
-		class="mx-auto max-w-7xl px-4 py-36 sm:px-6 lg:px-8"
+		class="mx-auto max-w-7xl px-4 pt-36 pb-12 sm:px-6 lg:px-8"
 	>
 		<div class="pt-6">{@render children?.()}</div>
 	</main>
