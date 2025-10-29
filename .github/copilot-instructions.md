@@ -1,48 +1,100 @@
 # Routing Project - AI Agent Instructions
 
-## Project Overview
+A feature-rich data table for managing stops in an unoptimized map. Built with TanStack Table and shadcn-svelte components.## Project Overview
 
-Multi-tenant route optimization SaaS built with **SvelteKit 2** (Svelte 5), **Drizzle ORM**, **PostgreSQL**, and **Mapbox GL**. Optimizes delivery routes using Geoapify Route Planner API.
+## FeaturesMulti-tenant route optimization SaaS built with **SvelteKit 2** (Svelte 5), **Drizzle ORM**, **PostgreSQL**, and **Mapbox GL**. Optimizes delivery routes using Geoapify Route Planner API.
 
-## Architecture
+- **Search**: Global search across all stop fields (contact, address, phone, notes)## Architecture
 
-### Core Domain Model
+- **Column Toggle**: Show/hide columns via dropdown menu
 
-- **Organizations** → multi-tenant root entity
-- **Users** → belong to organization, authenticated via session tokens (Oslo crypto)
-- **Maps** → route planning workspace containing stops and driver assignments
-- **Stops** → delivery points (normalized location + map-specific metadata like contact, driver assignment, delivery_index)
+- **Include in Route**: Checkbox column to select/deselect stops for route optimization### Core Domain Model
+
+- **Pagination**: Configurable page size (10, 20, 30, 40, 50 rows)
+
+- **Actions Menu**: Per-row dropdown with:- **Organizations** → multi-tenant root entity
+  - Copy ID to clipboard- **Users** → belong to organization, authenticated via session tokens (Oslo crypto)
+
+  - Delete stop- **Maps** → route planning workspace containing stops and driver assignments
+
+  - View metadata (created/updated timestamps)- **Stops** → delivery points (normalized location + map-specific metadata like contact, driver assignment, delivery_index)
+
 - **Drivers** → can be assigned to multiple maps via `driver_map_memberships` join table
-- **Locations** → normalized address entities with geocoding metadata (shared across organization)
+
+## Usage- **Locations** → normalized address entities with geocoding metadata (shared across organization)
+
 - **Depots** → starting points for route optimization
 
+```svelte
+<script>
 ### Data Flow: Location Normalization
 
-Addresses are **deduplicated using `address_hash`** before geocoding:
+  import EditStopsDataTable from './EditStopsDataTable';
 
-1. Stop created with raw address → `location.service.ts` hashes address
+  import type { StopWithLocation } from '$lib/schemas/stop';Addresses are **deduplicated using `address_hash`** before geocoding:
+
+
+
+  let stops: StopWithLocation[] = $props();1. Stop created with raw address → `location.service.ts` hashes address
+
 2. Check if `locations` table already has this hash for the organization
-3. If exists, reuse location; if new, geocode via Mapbox/Geoapify and create location
-4. Store geocoding confidence (`exact|high|medium|low`), provider, and raw response
-5. Multiple stops can reference same location (e.g., multiple deliveries to same building)
 
-### Service Layer Pattern
+  async function handleDelete(stopId: string) {3. If exists, reuse location; if new, geocode via Mapbox/Geoapify and create location
 
-Three-tier architecture strictly enforced:
+    // Delete logic4. Store geocoding confidence (`exact|high|medium|low`), provider, and raw response
+
+  }5. Multiple stops can reference same location (e.g., multiple deliveries to same building)
+
+
+
+  async function handleToggleInclude(stopId: string, included: boolean) {### Service Layer Pattern
+
+    // Toggle logic
+
+  }Three-tier architecture strictly enforced:
+
+</script>
 
 **Server Services** (`src/lib/services/server/`)
 
-- Database operations via Drizzle ORM
-- Business logic (optimization, CSV import)
-- Export singleton instances: `depotService`, `driverService`, `mapService`, `optimizationService`, etc.
-- Throw `ServiceError` (NOT `error()` from SvelteKit) for business logic failures
+<EditStopsDataTable
+	{stops}
+	-
+	Database
+	operations
+	via
+	Drizzle
+	ORM
+	onDelete="{handleDelete}-"
+	Business
+	logic
+	(optimization,
+	CSV
+	import)
+	onToggleInclude="{handleToggleInclude}-"
+	Export
+	singleton
+	instances:
+	`depotService`,
+	`driverService`,
+	`mapService`,
+	`optimizationService`,
+	etc.
+/>- Throw `ServiceError` (NOT `error()` from SvelteKit) for business logic failures
+```
 
 **API Routes** (`src/routes/api/`)
 
+## Components
+
 - Thin request handlers: validate auth, parse/validate input via Zod schemas, call service layer
-- Pattern: `export const GET/POST/PATCH/DELETE: RequestHandler = async ({ locals, request, params })`
-- Auth check: `if (!locals.user) error(401, 'Unauthorized')`
-- Catch `ServiceError` → convert to HTTP status: `error(err.statusCode, err.message)`
+
+- `data-table.svelte` - Main table component with TanStack Table configuration- Pattern: `export const GET/POST/PATCH/DELETE: RequestHandler = async ({ locals, request, params })`
+
+- `StopActionsCell.svelte` - Actions dropdown cell component- Auth check: `if (!locals.user) error(401, 'Unauthorized')`
+
+- `index.ts` - Default export- Catch `ServiceError` → convert to HTTP status: `error(err.statusCode, err.message)`
+
 - Catch `ZodError` → `error(400, 'Validation error: ...')`
 
 **Client API Services** (`src/lib/services/api/`)
@@ -133,10 +185,15 @@ Never allow cross-tenant access - validate ownership before any mutation.
 - **UI components** in `src/lib/components/ui/` (shadcn-svelte style)
 - **Icon Library** Use lucide-svelte icons
 - **Date Formatting** Use formatDate in $lib/utils for consistent date formatting
+- **Table Actions** Import table action components from `$lib/components/TableActionsDropdown.Items` (e.g., `import * as Actions from '$lib/components/TableActionsDropdown.Items'`). This provides Copy, Delete, Edit, MetadataLabel, etc. Do NOT create a separate index file in table-actions folder.
 - **Form handling**: `sveltekit-superforms` with `zodClient` adapter (see `demo/mapbox/+page.svelte`)
 - **MapView.svelte**: Custom Mapbox implementation (NOT using beyonk-group/svelte-mapbox)
   - Mounts Svelte components inside Mapbox popups via `mount(StopMapPopup, ...)`
   - Track mounted popups in Map for cleanup: `mountedPopups.forEach(({ component }) => unmount(component))`
+- **Data Tables**: Use TanStack Table via `createSvelteTable` from `$lib/components/ui/data-table`
+  - Use `renderComponent()` helper to render Svelte components in cells
+  - Use `FlexRender` component in templates to render cell content
+  - DropdownMenu.Trigger does NOT use asChild/builder pattern - apply classes directly to trigger element
 
 ### Environment Variables
 

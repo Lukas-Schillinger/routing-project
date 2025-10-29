@@ -1,30 +1,72 @@
 <script lang="ts">
-	import { Badge } from '$lib/components/ui/badge';
+	import { invalidateAll } from '$app/navigation';
+	import EditOrCreateDriverPopover from '$lib/components/EditOrCreateDriverPopover.svelte';
+	import {
+		Copy,
+		Delete,
+		MetadataLabel
+	} from '$lib/components/TableActionsDropdown.Items';
+	import TableActionsDropdown from '$lib/components/TableActionsDropdown.svelte';
+	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
+	import * as Empty from '$lib/components/ui/empty';
 	import * as Table from '$lib/components/ui/table';
 	import type { Driver } from '$lib/schemas/driver';
+	import { driverApi } from '$lib/services/api/drivers';
 	import { formatDate } from '$lib/utils';
-	import { Phone, Truck, User } from 'lucide-svelte';
+	import { Pencil, Phone, Truck } from 'lucide-svelte';
+	import { toast } from 'svelte-sonner';
 
 	let {
-		drivers
+		drivers = $bindable([])
 	}: {
 		drivers: Driver[];
 	} = $props();
+
+	async function handleDriverSuccess() {
+		await invalidateAll();
+	}
+
+	async function handleDelete(driver: Driver) {
+		if (!confirm(`Are you sure you want to delete "${driver.name}"?`)) {
+			return;
+		}
+
+		try {
+			await driverApi.delete(driver.id);
+			drivers = drivers.filter((d) => d.id !== driver.id);
+			toast.success('Driver deleted successfully');
+		} catch (error) {
+			console.error('Error deleting driver:', error);
+			toast.error('Failed to delete driver');
+		}
+	}
+
+	function copyToClipboard(text: string) {
+		navigator.clipboard.writeText(text);
+	}
 </script>
 
 {#if drivers.length === 0}
-	<p class="body-medium mb-6 text-center text-muted-foreground">
-		No drivers yet. Add drivers to assign them to routes.
-	</p>
+	<Empty.Root>
+		<Empty.Media variant="icon">
+			<Truck />
+		</Empty.Media>
+		<Empty.Content>
+			<Empty.Title>No drivers yet</Empty.Title>
+			<Empty.Description
+				>Add drivers to assign them to routes.</Empty.Description
+			>
+		</Empty.Content>
+	</Empty.Root>
 {:else}
-	<div class="rounded-md border bg-card">
+	<div class="">
 		<Table.Root>
 			<Table.Header>
 				<Table.Row>
 					<Table.Head>Name</Table.Head>
 					<Table.Head>Phone</Table.Head>
-					<Table.Head>Status</Table.Head>
 					<Table.Head>Created</Table.Head>
+					<Table.Head class="w-[50px]"></Table.Head>
 				</Table.Row>
 			</Table.Header>
 			<Table.Body>
@@ -32,11 +74,6 @@
 					<Table.Row>
 						<Table.Cell>
 							<div class="flex items-center">
-								{#if driver.temporary}
-									<User class="mr-2 h-4 w-4 text-muted-foreground" />
-								{:else}
-									<Truck class="mr-2 h-4 w-4 text-primary" />
-								{/if}
 								<span class="font-semibold">{driver.name}</span>
 							</div>
 						</Table.Cell>
@@ -51,21 +88,33 @@
 							{/if}
 						</Table.Cell>
 						<Table.Cell>
-							<div class="flex gap-2">
-								{#if driver.active}
-									<Badge variant="default">Active</Badge>
-								{:else}
-									<Badge variant="outline">Inactive</Badge>
-								{/if}
-								{#if driver.temporary}
-									<Badge variant="secondary">Temporary</Badge>
-								{/if}
-							</div>
-						</Table.Cell>
-						<Table.Cell>
 							<div class="text-sm text-muted-foreground">
 								{formatDate(driver.created_at)}
 							</div>
+						</Table.Cell>
+						<Table.Cell>
+							<TableActionsDropdown>
+								<EditOrCreateDriverPopover
+									triggerClass="w-full"
+									mode="edit"
+									{driver}
+									onSuccess={handleDriverSuccess}
+								>
+									<DropdownMenu.Item
+										onSelect={(e) => e.preventDefault()}
+										class="w-full"
+									>
+										<Pencil />
+										Edit
+									</DropdownMenu.Item>
+								</EditOrCreateDriverPopover>
+								<Copy
+									onclick={() => copyToClipboard(driver.id)}
+									label="Copy ID"
+								/>
+								<Delete onclick={() => handleDelete(driver)} />
+								<MetadataLabel item={driver} />
+							</TableActionsDropdown>
 						</Table.Cell>
 					</Table.Row>
 				{/each}

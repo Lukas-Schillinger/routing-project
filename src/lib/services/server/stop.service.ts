@@ -137,14 +137,32 @@ export class StopService {
 		data: UpdateStop,
 		organizationId: string
 	): Promise<StopWithLocation> {
-		await this.verifyStopOwnership(stopId, organizationId);
+		const stop = await this.verifyStopOwnership(stopId, organizationId);
+		let locationId = stop.location_id;
+
+		// Create new location if data is provided
+		if (data.location) {
+			const location = await locationService.createLocation(data.location, organizationId);
+			locationId = location.id;
+		} else if (data.location_id) {
+			// Verify ownership if location_id is provided
+			await locationService.verifyLocationOwnership(data.location_id, organizationId);
+			locationId = data.location_id;
+		}
+
+		const updateData: Partial<typeof stops.$inferInsert> & { updated_at: Date } = {
+			location_id: locationId,
+			driver_id: data.driver_id !== undefined ? data.driver_id : stop.driver_id,
+			delivery_index: data.delivery_index !== undefined ? data.delivery_index : stop.delivery_index,
+			contact_name: data.contact_name !== undefined ? data.contact_name : stop.contact_name,
+			contact_phone: data.contact_phone !== undefined ? data.contact_phone : stop.contact_phone,
+			notes: data.notes !== undefined ? data.notes : stop.notes,
+			updated_at: new Date()
+		};
 
 		const [updatedStop] = await db
 			.update(stops)
-			.set({
-				...data,
-				updated_at: new Date()
-			})
+			.set(updateData)
 			.where(eq(stops.id, stopId))
 			.returning();
 

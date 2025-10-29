@@ -20,7 +20,6 @@
 					<Table.Head>Driver</Table.Head>
 					<Table.Head>Phone</Table.Head>
 					<Table.Head>Type</Table.Head>
-					<Table.Head>Stops</Table.Head>
 					<Table.Head class="text-right">Status</Table.Head>
 				</Table.Row>
 			</Table.Header>

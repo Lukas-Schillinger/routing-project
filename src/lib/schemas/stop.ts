@@ -20,6 +20,7 @@ export const createStopSchema = z
 
 export const updateStopSchema = z.object({
 	location_id: z.string().uuid().optional(),
+	location: locationCreateSchema.optional(),
 	driver_id: z.string().uuid().nullable().optional(),
 	delivery_index: z.number().int().nullable().optional(),
 	contact_name: z.string().max(200).nullable().optional(),
