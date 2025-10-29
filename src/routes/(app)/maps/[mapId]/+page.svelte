@@ -9,8 +9,10 @@
 		CardHeader,
 		CardTitle
 	} from '$lib/components/ui/card';
+	import { Label } from '$lib/components/ui/label';
+	import * as Select from '$lib/components/ui/select';
 	import { ApiError, mapApi } from '$lib/services/api';
-	import { MapPin, Route, Sparkles, Truck } from 'lucide-svelte';
+	import { Building2, MapPin, Route, Sparkles, Truck } from 'lucide-svelte';
 	import { getContext } from 'svelte';
 	import type { PageData } from './$types';
 	import EditDriversTable from './tables/EditDriversTable.svelte';
@@ -21,9 +23,7 @@
 	let { data }: { data: PageData } = $props();
 
 	// Set page header in layout context
-	const pageHeaderContext = getContext<{ set: (header: any) => void }>(
-		'pageHeader'
-	);
+	const pageHeaderContext = getContext<{ set: (header: any) => void }>('pageHeader');
 
 	if (pageHeaderContext) {
 		pageHeaderContext.set({
@@ -41,10 +41,19 @@
 	let optimizationResult = $state<any>(null);
 	let optimizationError = $state('');
 	let isViewMode = $state((data as any).isViewMode ?? false);
+	let selectedDepotId = $state<string | undefined>(undefined);
 
 	// Update view mode when data changes
 	$effect(() => {
 		isViewMode = (data as any).isViewMode ?? false;
+	});
+
+	// Set default depot if available
+	$effect(() => {
+		if (data.depots.length > 0 && !selectedDepotId) {
+			const defaultDepot = data.depots.find((d) => d.depot.default_depot);
+			selectedDepotId = defaultDepot?.depot.id || data.depots[0].depot.id;
+		}
 	});
 
 	async function removeDriver(routeId: string) {
@@ -63,8 +72,7 @@
 			// Refresh the page data
 			await invalidateAll();
 		} catch (err) {
-			errorMessage =
-				err instanceof ApiError ? err.message : 'Failed to remove driver';
+			errorMessage = err instanceof ApiError ? err.message : 'Failed to remove driver';
 			console.error('Error removing driver:', err);
 		} finally {
 			isLoading = false;
@@ -74,17 +82,27 @@
 	async function optimizeRoutes() {
 		if (isOptimizing) return;
 
+		// Check if there are depots
+		if (data.depots.length === 0) {
+			optimizationError = 'Please create at least one depot before optimizing routes';
+			return;
+		}
+
+		// Check if a depot is selected
+		if (!selectedDepotId) {
+			optimizationError = 'Please select a depot for route optimization';
+			return;
+		}
+
 		// Check if there are drivers assigned
 		if (data.assignedDrivers.length === 0) {
-			optimizationError =
-				'Please assign at least one driver before optimizing routes';
+			optimizationError = 'Please assign at least one driver before optimizing routes';
 			return;
 		}
 
 		// Check if there are stops
 		if (data.stops.length === 0) {
-			optimizationError =
-				'Please add stops to the map before optimizing routes';
+			optimizationError = 'Please add stops to the map before optimizing routes';
 			return;
 		}
 
@@ -94,6 +112,7 @@
 
 		try {
 			const res = await mapApi.optimize(data.map.id, {
+				depotId: selectedDepotId,
 				mode: 'drive',
 				optimize: 'time',
 				traffic: 'approximated',
@@ -110,8 +129,7 @@
 			// Refresh the page data to show updated routes
 			await invalidateAll();
 		} catch (err) {
-			optimizationError =
-				err instanceof Error ? err.message : 'Failed to optimize routes';
+			optimizationError = err instanceof Error ? err.message : 'Failed to optimize routes';
 			console.error('Error optimizing routes:', err);
 		} finally {
 			isOptimizing = false;
@@ -142,8 +160,7 @@
 			// Refresh the page data
 			await invalidateAll();
 		} catch (err) {
-			errorMessage =
-				err instanceof Error ? err.message : 'Failed to switch to edit mode';
+			errorMessage = err instanceof Error ? err.message : 'Failed to switch to edit mode';
 			console.error('Error switching to edit mode:', err);
 		} finally {
 			isLoading = false;
@@ -200,9 +217,7 @@
 						</div>
 						<div class="rounded-lg border bg-card p-4">
 							<div class="text-2xl font-bold">
-								{Math.round(
-									optimizationResult.summary.totalServiceTime / 60
-								)}min
+								{Math.round(optimizationResult.summary.totalServiceTime / 60)}min
 							</div>
 							<div class="text-sm text-muted-foreground">Service Time</div>
 						</div>
@@ -226,9 +241,7 @@
 
 					<!-- Full JSON Result -->
 					<details class="rounded-lg border bg-muted p-4">
-						<summary class="cursor-pointer font-semibold"
-							>View Full JSON Result</summary
-						>
+						<summary class="cursor-pointer font-semibold">View Full JSON Result</summary>
 						<pre
 							class="mt-4 overflow-auto rounded bg-black p-4 text-xs text-green-400">{JSON.stringify(
 								optimizationResult,
@@ -261,15 +274,10 @@
 					<Route class="h-5 w-5 text-primary" />
 					Optimized Routes
 				</CardTitle>
-				<CardDescription>
-					Stops organized by driver in optimal delivery order
-				</CardDescription>
+				<CardDescription>Stops organized by driver in optimal delivery order</CardDescription>
 			</CardHeader>
 			<CardContent>
-				<ViewRoutesTable
-					stops={data.stops}
-					assignedDrivers={data.assignedDrivers}
-				/>
+				<ViewRoutesTable stops={data.stops} assignedDrivers={data.assignedDrivers} />
 			</CardContent>
 		</Card>
 	{/if}
@@ -313,11 +321,9 @@
 		<CardContent class="space-y-4">
 			<!-- View Mode Info -->
 			{#if isViewMode}
-				<div
-					class="rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800"
-				>
-					<strong>View Mode:</strong> Routes have been optimized. Switch to Edit
-					Mode to make changes to drivers or stops.
+				<div class="rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
+					<strong>View Mode:</strong> Routes have been optimized. Switch to Edit Mode to make changes
+					to drivers or stops.
 				</div>
 			{/if}
 
@@ -332,10 +338,7 @@
 
 			<!-- Drivers Table -->
 			{#if isViewMode}
-				<ViewDriversTable
-					assignedDrivers={data.assignedDrivers}
-					isOptimized={data.isViewMode}
-				/>
+				<ViewDriversTable assignedDrivers={data.assignedDrivers} isOptimized={data.isViewMode} />
 			{:else}
 				<EditDriversTable
 					assignedDrivers={data.assignedDrivers}
@@ -348,34 +351,87 @@
 		</CardContent>
 	</Card>
 
-	<!-- Optimize Route Button -->
+	<!-- Optimization Section -->
 	{#if !isViewMode}
-		<div class="flex justify-center">
-			<Button
-				size="lg"
-				onclick={optimizeRoutes}
-				disabled={isOptimizing ||
-					data.assignedDrivers.length === 0 ||
-					data.stops.length === 0}
-				class="gap-2"
-			>
-				{#if isOptimizing}
-					<Sparkles class="h-5 w-5 animate-spin" />
-					Optimizing Routes...
-				{:else}
-					<Sparkles class="h-5 w-5" />
-					Optimize Routes
-				{/if}
-			</Button>
-		</div>
+		<Card>
+			<CardHeader>
+				<CardTitle class="flex items-center gap-2">
+					<Building2 class="h-5 w-5 text-primary" />
+					Route Optimization
+				</CardTitle>
+				<CardDescription>Configure and optimize delivery routes</CardDescription>
+			</CardHeader>
+			<CardContent class="space-y-4">
+				<!-- Depot Selection -->
+				<div class="space-y-2">
+					<Label for="depot-select">Starting Depot</Label>
+					{#if data.depots.length === 0}
+						<p class="text-sm text-muted-foreground">
+							No depots available. Please create a depot before optimizing routes.
+						</p>
+					{:else}
+						<Select.Root type="single" bind:value={selectedDepotId}>
+							<Select.Trigger id="depot-select" class="w-full">
+								{#if selectedDepotId}
+									{@const selectedDepot = data.depots.find((d) => d.depot.id === selectedDepotId)}
+									{#if selectedDepot}
+										<div class="flex items-center gap-2">
+											<Building2 class="h-4 w-4" />
+											<span>{selectedDepot.depot.name}</span>
+										</div>
+									{/if}
+								{:else}
+									<span class="text-muted-foreground">Select a depot</span>
+								{/if}
+							</Select.Trigger>
+							<Select.Content>
+								{#each data.depots as { depot, location }}
+									<Select.Item value={depot.id}>
+										<div class="flex items-center gap-2">
+											<Building2 class="h-4 w-4" />
+											<div>
+												<div class="font-medium">{depot.name}</div>
+												<div class="text-xs text-muted-foreground">
+													{location.address_line1}
+												</div>
+											</div>
+											{#if depot.default_depot}
+												<span class="ml-auto text-xs text-primary">(Default)</span>
+											{/if}
+										</div>
+									</Select.Item>
+								{/each}
+							</Select.Content>
+						</Select.Root>
+					{/if}
+				</div>
+
+				<!-- Optimize Button -->
+				<div class="flex justify-center pt-2">
+					<Button
+						size="lg"
+						onclick={optimizeRoutes}
+						disabled={isOptimizing ||
+							!selectedDepotId ||
+							data.depots.length === 0 ||
+							data.assignedDrivers.length === 0 ||
+							data.stops.length === 0}
+						class="gap-2"
+					>
+						{#if isOptimizing}
+							<Sparkles class="h-5 w-5 animate-spin" />
+							Optimizing Routes...
+						{:else}
+							<Sparkles class="h-5 w-5" />
+							Optimize Routes
+						{/if}
+					</Button>
+				</div>
+			</CardContent>
+		</Card>
 	{:else}
 		<div class="flex justify-center">
-			<Button
-				size="lg"
-				onclick={switchToEditMode}
-				disabled={isLoading}
-				variant="outline"
-			>
+			<Button size="lg" onclick={switchToEditMode} disabled={isLoading} variant="outline">
 				Switch to Edit Mode
 			</Button>
 		</div>

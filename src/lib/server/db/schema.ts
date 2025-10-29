@@ -4,6 +4,7 @@ import {
 	boolean,
 	index,
 	integer,
+	json,
 	jsonb,
 	numeric,
 	pgTable,
@@ -73,7 +74,8 @@ export const maps = pgTable(
 		organization_id: orgId.references(() => organizations.id, { onDelete: 'cascade' }),
 		title: varchar('title', { length: 200 }).notNull(),
 		created_at: ts('created_at'),
-		updated_at: ts('updated_at')
+		updated_at: ts('updated_at'),
+		geoapifyOptimization: json()
 	},
 	(t) => [index('maps_org_idx').on(t.organization_id)]
 );

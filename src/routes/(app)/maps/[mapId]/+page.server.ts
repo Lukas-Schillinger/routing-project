@@ -1,4 +1,10 @@
-import { driverService, mapService, ServiceError, stopService } from '$lib/services/server';
+import {
+	depotService,
+	driverService,
+	mapService,
+	ServiceError,
+	stopService
+} from '$lib/services/server';
 import { error, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -17,11 +23,12 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 
 	try {
 		// Fetch all data in parallel since they're independent
-		const [map, mapStops, orgDrivers, assignedDriversData] = await Promise.all([
+		const [map, mapStops, orgDrivers, assignedDriversData, depots] = await Promise.all([
 			mapService.getMapById(mapId, user.organization_id),
 			stopService.getStopsByMap(mapId, user.organization_id),
 			driverService.getDrivers(user.organization_id),
-			mapService.getDriversForMap(mapId, user.organization_id)
+			mapService.getDriversForMap(mapId, user.organization_id),
+			depotService.getDepots(user.organization_id)
 		]);
 
 		const assignedDrivers = assignedDriversData.map((d) => d.driver);
@@ -35,6 +42,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			stops: mapStops,
 			allDrivers: orgDrivers,
 			assignedDrivers,
+			depots,
 			isViewMode
 		};
 	} catch (err) {

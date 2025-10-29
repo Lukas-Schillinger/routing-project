@@ -17,11 +17,16 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 		// Parse optimization options from request body
 		const body = await request.json();
 
+		// Validate required depotId
+		if (!body.depotId) {
+			error(400, 'depotId is required for route optimization');
+		}
+
 		const result = await optimizationService.optimizeMap(mapId, user.organization_id, {
+			depotId: body.depotId,
 			mode: body.mode || 'drive',
 			traffic: body.traffic,
 			optimize: body.optimize || 'time',
-			depotLocation: body.depotLocation,
 			defaultServiceTime: body.defaultServiceTime || 300 // 5 minutes
 		});
 

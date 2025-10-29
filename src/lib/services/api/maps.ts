@@ -14,6 +14,7 @@ export interface DriverMembership {
 }
 
 export interface OptimizationOptions {
+	depotId: string;
 	mode?: 'drive' | 'walk' | 'bike';
 	optimize?: 'time' | 'distance';
 	traffic?: 'approximated' | 'free_flow';
@@ -107,8 +108,8 @@ class MapApiService {
 	/**
 	 * Optimize routes for a map
 	 */
-	async optimize(mapId: string, options?: OptimizationOptions): Promise<OptimizationResult> {
-		return apiClient.post<OptimizationResult>(`/maps/${mapId}/optimize`, options || {});
+	async optimize(mapId: string, options: OptimizationOptions): Promise<OptimizationResult> {
+		return apiClient.post<OptimizationResult>(`/maps/${mapId}/optimize`, options);
 	}
 
 	/**

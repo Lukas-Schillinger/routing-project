@@ -78,8 +78,26 @@ export const geocodingResponseSchema = z.object({
 	attribution: z.string()
 });
 
+// Distance Matrix API schemas
+export const matrixWaypointSchema = z.object({
+	name: z.string(),
+	location: coordinateSchema,
+	distance: z.number() // Distance in meters from the input coordinate to the snapped coordinate
+});
+
+export const matrixResponseSchema = z.object({
+	code: z.string(), // "Ok" on success, or error code
+	durations: z.array(z.array(z.number().nullable())).optional(), // Travel times in seconds (row-major order)
+	distances: z.array(z.array(z.number().nullable())).optional(), // Travel distances in meters (row-major order)
+	sources: z.array(matrixWaypointSchema), // Snapped source waypoints
+	destinations: z.array(matrixWaypointSchema), // Snapped destination waypoints
+	message: z.string().optional() // Error message if code is not "Ok"
+});
+
 // Type exports
 export type MapboxError = z.infer<typeof mapboxErrorSchema>;
 export type Coordinate = z.infer<typeof coordinateSchema>;
 export type GeocodingFeature = z.infer<typeof geocodingFeatureSchema>;
 export type GeocodingResponse = z.infer<typeof geocodingResponseSchema>;
+export type MatrixWaypoint = z.infer<typeof matrixWaypointSchema>;
+export type MatrixResponse = z.infer<typeof matrixResponseSchema>;

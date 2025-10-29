@@ -1,22 +1,27 @@
 import { db } from '$lib/server/db';
 import { driverMapMemberships, drivers, locations, maps, stops } from '$lib/server/db/schema';
 import { and, eq, isNotNull } from 'drizzle-orm';
-import type { GeoApifyAgent, GeoApifyJob } from '../external/geoapify';
+import type {
+	GeoApifyAgent,
+	GeoApifyJob,
+	GeoApifyOptimizationResponse
+} from '../external/geoapify';
 import { geoapifyOptimization } from '../external/geoapify';
+import { depotService } from './depot.service';
 import { ServiceError } from './errors';
 
 /**
  * Options for route optimization
  */
 export interface OptimizationOptions {
+	/** Required depot ID for route start/end location */
+	depotId: string;
 	/** Transportation mode: drive, walk, bicycle, truck */
 	mode?: 'drive' | 'walk' | 'bicycle' | 'truck';
 	/** Traffic consideration: free_flow or approximated */
 	traffic?: 'free_flow' | 'approximated';
 	/** Optimization goal: time or distance */
 	optimize?: 'time' | 'distance';
-	/** Depot location [longitude, latitude] */
-	depotLocation?: [number, number];
 	/** Default service time at each stop in seconds (default 300 = 5 minutes) */
 	defaultServiceTime?: number;
 }
@@ -27,11 +32,9 @@ export interface OptimizationOptions {
  */
 export class OptimizationService {
 	/**
-	 * Optimize routes for a map
-	 * Assigns stops to drivers and determines optimal delivery order
+	 * Verify map exists and user has access
 	 */
-	async optimizeMap(mapId: string, organizationId: string, options: OptimizationOptions = {}) {
-		// Verify map ownership
+	private async verifyMapOwnership(mapId: string, organizationId: string) {
 		const [map] = await db.select().from(maps).where(eq(maps.id, mapId)).limit(1);
 
 		if (!map) {
@@ -42,7 +45,31 @@ export class OptimizationService {
 			throw ServiceError.forbidden('Access denied');
 		}
 
-		// Fetch stops with locations
+		return map;
+	}
+
+	/**
+	 * Get depot location coordinates
+	 */
+	private async getDepotLocation(
+		depotId: string,
+		organizationId: string
+	): Promise<[number, number]> {
+		const depot = await depotService.getDepotById(depotId, organizationId);
+
+		if (!depot.location.lon || !depot.location.lat) {
+			throw ServiceError.validation(
+				'Depot location has no coordinates. Please update the depot with valid coordinates.'
+			);
+		}
+
+		return [Number(depot.location.lon), Number(depot.location.lat)];
+	}
+
+	/**
+	 * Fetch stops with their locations for a map
+	 */
+	private async fetchMapStops(mapId: string) {
 		const mapStops = await db
 			.select({
 				stop: stops,
@@ -56,7 +83,13 @@ export class OptimizationService {
 			throw ServiceError.validation('No stops found for this map');
 		}
 
-		// Fetch assigned drivers
+		return mapStops;
+	}
+
+	/**
+	 * Fetch active drivers assigned to a map
+	 */
+	private async fetchAssignedDrivers(mapId: string, organizationId: string) {
 		const assignedDrivers = await db
 			.select({
 				driver: drivers
@@ -77,18 +110,30 @@ export class OptimizationService {
 			);
 		}
 
-		// Determine depot location (use first stop if not provided)
-		const depotLocation =
-			options.depotLocation ||
-			([Number(mapStops[0].location.lon), Number(mapStops[0].location.lat)] as [number, number]);
+		return assignedDrivers;
+	}
 
-		// Convert to GeoApify format
-		const agents: GeoApifyAgent[] = assignedDrivers.map(({ driver }) => ({
+	/**
+	 * Convert drivers to Geoapify agent format
+	 */
+	private convertToAgents(
+		assignedDrivers: Awaited<ReturnType<typeof this.fetchAssignedDrivers>>,
+		depotLocation: [number, number]
+	): GeoApifyAgent[] {
+		return assignedDrivers.map(({ driver }) => ({
 			id: driver.id,
 			start_location: depotLocation
 		}));
+	}
 
-		const jobs: GeoApifyJob[] = mapStops.map(({ stop, location }) => {
+	/**
+	 * Convert stops to Geoapify job format
+	 */
+	private convertToJobs(
+		mapStops: Awaited<ReturnType<typeof this.fetchMapStops>>,
+		defaultServiceTime: number
+	): GeoApifyJob[] {
+		return mapStops.map(({ stop, location }) => {
 			if (!location.lon || !location.lat) {
 				throw ServiceError.validation(
 					`Stop "${location.name || stop.id}" has no coordinates. Geocode all stops before optimizing.`
@@ -98,20 +143,27 @@ export class OptimizationService {
 			return {
 				id: stop.id,
 				location: [Number(location.lon), Number(location.lat)],
-				service: options.defaultServiceTime || 300 // 5 minutes default
+				service: defaultServiceTime
 			};
 		});
+	}
 
-		// Call Geoapify optimization
-		const result = await geoapifyOptimization.optimize({
-			agents,
-			jobs,
-			mode: options.mode || 'drive',
-			traffic: options.traffic,
-			optimize: options.optimize || 'time'
-		});
+	/**
+	 * Save optimization result to database
+	 */
+	private async saveOptimizationResult(mapId: string, result: GeoApifyOptimizationResponse) {
+		await db
+			.update(maps)
+			.set({
+				geoapifyOptimization: result
+			})
+			.where(eq(maps.id, mapId));
+	}
 
-		// Clear existing driver assignments
+	/**
+	 * Clear existing driver assignments and delivery order
+	 */
+	private async clearStopAssignments(mapId: string) {
 		await db
 			.update(stops)
 			.set({
@@ -120,20 +172,28 @@ export class OptimizationService {
 				updated_at: new Date()
 			})
 			.where(eq(stops.map_id, mapId));
+	}
 
-		// Update stops with optimized routes
+	/**
+	 * Apply optimized routes to stops in database
+	 */
+	private async applyOptimizedRoutes(result: GeoApifyOptimizationResponse) {
 		const updatedStops = [];
+
 		for (const feature of result.features) {
 			const driverId = feature.properties.agent_id;
-			let deliveryIndex = 0;
 
 			for (const action of feature.properties.actions) {
 				if (action.type === 'job' && action.job_id) {
+					// Waypoint array is ordered according to stop order. Job index is
+					// the index of the job in the original array
+					const deliveryIndex = action.waypoint_index ?? 0;
+
 					const [updatedStop] = await db
 						.update(stops)
 						.set({
 							driver_id: driverId,
-							delivery_index: deliveryIndex++,
+							delivery_index: deliveryIndex,
 							updated_at: new Date()
 						})
 						.where(eq(stops.id, action.job_id))
@@ -146,7 +206,41 @@ export class OptimizationService {
 			}
 		}
 
-		// Return optimized routes with location details
+		return updatedStops;
+	}
+
+	/**
+	 * Optimize routes for a map
+	 * Assigns stops to drivers and determines optimal delivery order
+	 */
+	async optimizeMap(mapId: string, organizationId: string, options: OptimizationOptions) {
+		// Verify access
+		await this.verifyMapOwnership(mapId, organizationId);
+
+		// Gather required data
+		const depotLocation = await this.getDepotLocation(options.depotId, organizationId);
+		const mapStops = await this.fetchMapStops(mapId);
+		const assignedDrivers = await this.fetchAssignedDrivers(mapId, organizationId);
+
+		// Convert to Geoapify format
+		const agents = this.convertToAgents(assignedDrivers, depotLocation);
+		const jobs = this.convertToJobs(mapStops, options.defaultServiceTime || 300);
+
+		// Call Geoapify optimization
+		const result = await geoapifyOptimization.optimize({
+			agents,
+			jobs,
+			mode: options.mode || 'drive',
+			traffic: options.traffic,
+			optimize: options.optimize || 'time'
+		});
+
+		// Save and apply optimization results
+		await this.saveOptimizationResult(mapId, result);
+		await this.clearStopAssignments(mapId);
+		const updatedStops = await this.applyOptimizedRoutes(result);
+
+		// Fetch and return optimized routes
 		const optimizedStops = await db
 			.select({
 				stop: stops,
@@ -160,7 +254,6 @@ export class OptimizationService {
 		return {
 			success: true,
 			optimizedStops,
-			features: result.features, // Include raw response for debugging/analysis
 			stats: {
 				totalStops: mapStops.length,
 				assignedStops: updatedStops.length,

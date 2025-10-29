@@ -1,0 +1,862 @@
+[
+    {
+        "geoapifyOptimization": {
+            "type": "FeatureCollection",
+            "properties": {
+                "mode": "drive",
+                "params": {
+                    "agents": [
+                        {
+                            "id": "4d804bba-13da-4264-9fd8-31951a2f85bc",
+                            "start_location": [
+                                -81.9528,
+                                28.045506
+                            ]
+                        },
+                        {
+                            "id": "bb91246b-19ad-444c-971b-35dd496b1560",
+                            "start_location": [
+                                -81.9528,
+                                28.045506
+                            ]
+                        },
+                        {
+                            "id": "8e957076-1d10-42a8-ac42-98c7b7e565a2",
+                            "start_location": [
+                                -81.9528,
+                                28.045506
+                            ]
+                        }
+                    ],
+                    "jobs": [
+                        {
+                            "id": "503ebea3-67f4-4047-8547-3a8416284608",
+                            "location": [
+                                -81.95501,
+                                28.04568
+                            ]
+                        },
+                        {
+                            "id": "4987548a-0948-4b79-bf25-6794337aca9b",
+                            "location": [
+                                -81.945832,
+                                28.04294
+                            ]
+                        },
+                        {
+                            "id": "9b7f1cef-815c-46b2-820e-0230de197ff1",
+                            "location": [
+                                -81.88086,
+                                27.96923
+                            ]
+                        },
+                        {
+                            "id": "e0db6003-e8c8-4f2a-8685-d109921f3914",
+                            "location": [
+                                -81.949472,
+                                28.037597
+                            ]
+                        },
+                        {
+                            "id": "ea2e087d-46f7-4e7c-a5be-2f8ca83f92a8",
+                            "location": [
+                                -81.957103,
+                                28.025041
+                            ]
+                        },
+                        {
+                            "id": "b47d2e00-0286-4d0d-894a-cab3f70e8589",
+                            "location": [
+                                -81.963034,
+                                28.04148
+                            ]
+                        },
+                        {
+                            "id": "ae4e6bef-7ed0-4433-8507-67d7fa820716",
+                            "location": [
+                                -81.93966,
+                                27.99622
+                            ]
+                        },
+                        {
+                            "id": "0c002afc-abaf-4ede-b71d-2bc490f9310d",
+                            "location": [
+                                -81.944393,
+                                28.012111
+                            ]
+                        },
+                        {
+                            "id": "899c5ea2-a295-4bd1-a152-2d6db9b8fbab",
+                            "location": [
+                                -81.950452,
+                                28.04602
+                            ]
+                        },
+                        {
+                            "id": "f8411eea-ec66-4e2e-a598-67e4fb657c19",
+                            "location": [
+                                -81.946726,
+                                28.054998
+                            ]
+                        }
+                    ],
+                    "mode": "drive",
+                    "traffic": "approximated"
+                }
+            },
+            "features": [
+                {
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "MultiLineString",
+                        "coordinates": [
+                            [
+                                [
+                                    -81.952656,
+                                    28.045211
+                                ],
+                                [
+                                    -81.95014,
+                                    28.045987
+                                ]
+                            ],
+                            [
+                                [
+                                    -81.95014,
+                                    28.045987
+                                ],
+                                [
+                                    -81.945782,
+                                    28.042941
+                                ]
+                            ],
+                            [
+                                [
+                                    -81.945782,
+                                    28.042941
+                                ],
+                                [
+                                    -81.94916,
+                                    28.037684
+                                ]
+                            ],
+                            [
+                                [
+                                    -81.94916,
+                                    28.037684
+                                ],
+                                [
+                                    -81.957103,
+                                    28.025041
+                                ]
+                            ],
+                            [
+                                [
+                                    -81.957103,
+                                    28.025041
+                                ],
+                                [
+                                    -81.9444,
+                                    28.011334
+                                ]
+                            ],
+                            [
+                                [
+                                    -81.9444,
+                                    28.011334
+                                ],
+                                [
+                                    -81.88086,
+                                    27.96923
+                                ]
+                            ],
+                            [
+                                [
+                                    -81.88086,
+                                    27.96923
+                                ],
+                                [
+                                    -81.93951,
+                                    27.995361
+                                ]
+                            ]
+                        ]
+                    },
+                    "properties": {
+                        "agent_index": 0,
+                        "agent_id": "4d804bba-13da-4264-9fd8-31951a2f85bc",
+                        "time": 4379,
+                        "start_time": 0,
+                        "end_time": 4379,
+                        "distance": 26421,
+                        "legs": [
+                            {
+                                "time": 205,
+                                "distance": 402,
+                                "from_waypoint_index": 0,
+                                "to_waypoint_index": 1,
+                                "steps": [
+                                    {
+                                        "from_index": 0,
+                                        "to_index": 1,
+                                        "time": 205,
+                                        "distance": 402
+                                    }
+                                ]
+                            },
+                            {
+                                "time": 347,
+                                "distance": 790,
+                                "from_waypoint_index": 1,
+                                "to_waypoint_index": 2,
+                                "steps": [
+                                    {
+                                        "from_index": 0,
+                                        "to_index": 1,
+                                        "time": 347,
+                                        "distance": 790
+                                    }
+                                ]
+                            },
+                            {
+                                "time": 334,
+                                "distance": 1210,
+                                "from_waypoint_index": 2,
+                                "to_waypoint_index": 3,
+                                "steps": [
+                                    {
+                                        "from_index": 0,
+                                        "to_index": 1,
+                                        "time": 334,
+                                        "distance": 1210
+                                    }
+                                ]
+                            },
+                            {
+                                "time": 646,
+                                "distance": 2188,
+                                "from_waypoint_index": 3,
+                                "to_waypoint_index": 4,
+                                "steps": [
+                                    {
+                                        "from_index": 0,
+                                        "to_index": 1,
+                                        "time": 646,
+                                        "distance": 2188
+                                    }
+                                ]
+                            },
+                            {
+                                "time": 690,
+                                "distance": 3118,
+                                "from_waypoint_index": 4,
+                                "to_waypoint_index": 5,
+                                "steps": [
+                                    {
+                                        "from_index": 0,
+                                        "to_index": 1,
+                                        "time": 690,
+                                        "distance": 3118
+                                    }
+                                ]
+                            },
+                            {
+                                "time": 1346,
+                                "distance": 9806,
+                                "from_waypoint_index": 5,
+                                "to_waypoint_index": 6,
+                                "steps": [
+                                    {
+                                        "from_index": 0,
+                                        "to_index": 1,
+                                        "time": 1346,
+                                        "distance": 9806
+                                    }
+                                ]
+                            },
+                            {
+                                "time": 811,
+                                "distance": 8907,
+                                "from_waypoint_index": 6,
+                                "to_waypoint_index": 7,
+                                "steps": [
+                                    {
+                                        "from_index": 0,
+                                        "to_index": 1,
+                                        "time": 811,
+                                        "distance": 8907
+                                    }
+                                ]
+                            }
+                        ],
+                        "mode": "drive",
+                        "actions": [
+                            {
+                                "index": 0,
+                                "type": "start",
+                                "start_time": 0,
+                                "duration": 0,
+                                "waypoint_index": 0
+                            },
+                            {
+                                "index": 1,
+                                "type": "job",
+                                "start_time": 205,
+                                "duration": 0,
+                                "job_index": 8,
+                                "job_id": "899c5ea2-a295-4bd1-a152-2d6db9b8fbab",
+                                "waypoint_index": 1
+                            },
+                            {
+                                "index": 2,
+                                "type": "job",
+                                "start_time": 552,
+                                "duration": 0,
+                                "job_index": 1,
+                                "job_id": "4987548a-0948-4b79-bf25-6794337aca9b",
+                                "waypoint_index": 2
+                            },
+                            {
+                                "index": 3,
+                                "type": "job",
+                                "start_time": 886,
+                                "duration": 0,
+                                "job_index": 3,
+                                "job_id": "e0db6003-e8c8-4f2a-8685-d109921f3914",
+                                "waypoint_index": 3
+                            },
+                            {
+                                "index": 4,
+                                "type": "job",
+                                "start_time": 1532,
+                                "duration": 0,
+                                "job_index": 4,
+                                "job_id": "ea2e087d-46f7-4e7c-a5be-2f8ca83f92a8",
+                                "waypoint_index": 4
+                            },
+                            {
+                                "index": 5,
+                                "type": "job",
+                                "start_time": 2222,
+                                "duration": 0,
+                                "job_index": 7,
+                                "job_id": "0c002afc-abaf-4ede-b71d-2bc490f9310d",
+                                "waypoint_index": 5
+                            },
+                            {
+                                "index": 6,
+                                "type": "job",
+                                "start_time": 3568,
+                                "duration": 0,
+                                "job_index": 2,
+                                "job_id": "9b7f1cef-815c-46b2-820e-0230de197ff1",
+                                "waypoint_index": 6
+                            },
+                            {
+                                "index": 7,
+                                "type": "job",
+                                "start_time": 4379,
+                                "duration": 0,
+                                "job_index": 6,
+                                "job_id": "ae4e6bef-7ed0-4433-8507-67d7fa820716",
+                                "waypoint_index": 7
+                            },
+                            {
+                                "index": 8,
+                                "type": "end",
+                                "start_time": 4379,
+                                "duration": 0
+                            }
+                        ],
+                        "waypoints": [
+                            {
+                                "original_location": [
+                                    -81.9528,
+                                    28.045506
+                                ],
+                                "location": [
+                                    -81.952656,
+                                    28.045211
+                                ],
+                                "start_time": 0,
+                                "duration": 0,
+                                "actions": [
+                                    {
+                                        "index": 0,
+                                        "type": "start",
+                                        "start_time": 0,
+                                        "duration": 0,
+                                        "waypoint_index": 0
+                                    }
+                                ],
+                                "next_leg_index": 0
+                            },
+                            {
+                                "original_location": [
+                                    -81.950452,
+                                    28.04602
+                                ],
+                                "location": [
+                                    -81.95014,
+                                    28.045987
+                                ],
+                                "start_time": 205,
+                                "duration": 0,
+                                "actions": [
+                                    {
+                                        "index": 1,
+                                        "type": "job",
+                                        "start_time": 205,
+                                        "duration": 0,
+                                        "job_index": 8,
+                                        "job_id": "899c5ea2-a295-4bd1-a152-2d6db9b8fbab",
+                                        "waypoint_index": 1
+                                    }
+                                ],
+                                "prev_leg_index": 0,
+                                "next_leg_index": 1
+                            },
+                            {
+                                "original_location": [
+                                    -81.945832,
+                                    28.04294
+                                ],
+                                "location": [
+                                    -81.945782,
+                                    28.042941
+                                ],
+                                "start_time": 552,
+                                "duration": 0,
+                                "actions": [
+                                    {
+                                        "index": 2,
+                                        "type": "job",
+                                        "start_time": 552,
+                                        "duration": 0,
+                                        "job_index": 1,
+                                        "job_id": "4987548a-0948-4b79-bf25-6794337aca9b",
+                                        "waypoint_index": 2
+                                    }
+                                ],
+                                "prev_leg_index": 1,
+                                "next_leg_index": 2
+                            },
+                            {
+                                "original_location": [
+                                    -81.949472,
+                                    28.037597
+                                ],
+                                "location": [
+                                    -81.94916,
+                                    28.037684
+                                ],
+                                "start_time": 886,
+                                "duration": 0,
+                                "actions": [
+                                    {
+                                        "index": 3,
+                                        "type": "job",
+                                        "start_time": 886,
+                                        "duration": 0,
+                                        "job_index": 3,
+                                        "job_id": "e0db6003-e8c8-4f2a-8685-d109921f3914",
+                                        "waypoint_index": 3
+                                    }
+                                ],
+                                "prev_leg_index": 2,
+                                "next_leg_index": 3
+                            },
+                            {
+                                "original_location": [
+                                    -81.957103,
+                                    28.025041
+                                ],
+                                "location": [
+                                    -81.957103,
+                                    28.025041
+                                ],
+                                "start_time": 1532,
+                                "duration": 0,
+                                "actions": [
+                                    {
+                                        "index": 4,
+                                        "type": "job",
+                                        "start_time": 1532,
+                                        "duration": 0,
+                                        "job_index": 4,
+                                        "job_id": "ea2e087d-46f7-4e7c-a5be-2f8ca83f92a8",
+                                        "waypoint_index": 4
+                                    }
+                                ],
+                                "prev_leg_index": 3,
+                                "next_leg_index": 4
+                            },
+                            {
+                                "original_location": [
+                                    -81.944393,
+                                    28.012111
+                                ],
+                                "location": [
+                                    -81.9444,
+                                    28.011334
+                                ],
+                                "start_time": 2222,
+                                "duration": 0,
+                                "actions": [
+                                    {
+                                        "index": 5,
+                                        "type": "job",
+                                        "start_time": 2222,
+                                        "duration": 0,
+                                        "job_index": 7,
+                                        "job_id": "0c002afc-abaf-4ede-b71d-2bc490f9310d",
+                                        "waypoint_index": 5
+                                    }
+                                ],
+                                "prev_leg_index": 4,
+                                "next_leg_index": 5
+                            },
+                            {
+                                "original_location": [
+                                    -81.88086,
+                                    27.96923
+                                ],
+                                "location": [
+                                    -81.88086,
+                                    27.96923
+                                ],
+                                "start_time": 3568,
+                                "duration": 0,
+                                "actions": [
+                                    {
+                                        "index": 6,
+                                        "type": "job",
+                                        "start_time": 3568,
+                                        "duration": 0,
+                                        "job_index": 2,
+                                        "job_id": "9b7f1cef-815c-46b2-820e-0230de197ff1",
+                                        "waypoint_index": 6
+                                    }
+                                ],
+                                "prev_leg_index": 5,
+                                "next_leg_index": 6
+                            },
+                            {
+                                "original_location": [
+                                    -81.93966,
+                                    27.99622
+                                ],
+                                "location": [
+                                    -81.93951,
+                                    27.995361
+                                ],
+                                "start_time": 4379,
+                                "duration": 0,
+                                "actions": [
+                                    {
+                                        "index": 7,
+                                        "type": "job",
+                                        "start_time": 4379,
+                                        "duration": 0,
+                                        "job_index": 6,
+                                        "job_id": "ae4e6bef-7ed0-4433-8507-67d7fa820716",
+                                        "waypoint_index": 7
+                                    }
+                                ],
+                                "prev_leg_index": 6
+                            }
+                        ]
+                    }
+                },
+                {
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "MultiLineString",
+                        "coordinates": [
+                            [
+                                [
+                                    -81.952656,
+                                    28.045211
+                                ],
+                                [
+                                    -81.955203,
+                                    28.045678
+                                ]
+                            ],
+                            [
+                                [
+                                    -81.955203,
+                                    28.045678
+                                ],
+                                [
+                                    -81.963596,
+                                    28.041479
+                                ]
+                            ]
+                        ]
+                    },
+                    "properties": {
+                        "agent_index": 1,
+                        "agent_id": "bb91246b-19ad-444c-971b-35dd496b1560",
+                        "time": 665,
+                        "start_time": 0,
+                        "end_time": 665,
+                        "distance": 1653,
+                        "legs": [
+                            {
+                                "time": 106,
+                                "distance": 323,
+                                "from_waypoint_index": 0,
+                                "to_waypoint_index": 1,
+                                "steps": [
+                                    {
+                                        "from_index": 0,
+                                        "to_index": 1,
+                                        "time": 106,
+                                        "distance": 323
+                                    }
+                                ]
+                            },
+                            {
+                                "time": 559,
+                                "distance": 1330,
+                                "from_waypoint_index": 1,
+                                "to_waypoint_index": 2,
+                                "steps": [
+                                    {
+                                        "from_index": 0,
+                                        "to_index": 1,
+                                        "time": 559,
+                                        "distance": 1330
+                                    }
+                                ]
+                            }
+                        ],
+                        "mode": "drive",
+                        "actions": [
+                            {
+                                "index": 0,
+                                "type": "start",
+                                "start_time": 0,
+                                "duration": 0,
+                                "waypoint_index": 0
+                            },
+                            {
+                                "index": 1,
+                                "type": "job",
+                                "start_time": 106,
+                                "duration": 0,
+                                "job_index": 0,
+                                "job_id": "503ebea3-67f4-4047-8547-3a8416284608",
+                                "waypoint_index": 1
+                            },
+                            {
+                                "index": 2,
+                                "type": "job",
+                                "start_time": 665,
+                                "duration": 0,
+                                "job_index": 5,
+                                "job_id": "b47d2e00-0286-4d0d-894a-cab3f70e8589",
+                                "waypoint_index": 2
+                            },
+                            {
+                                "index": 3,
+                                "type": "end",
+                                "start_time": 665,
+                                "duration": 0
+                            }
+                        ],
+                        "waypoints": [
+                            {
+                                "original_location": [
+                                    -81.9528,
+                                    28.045506
+                                ],
+                                "location": [
+                                    -81.952656,
+                                    28.045211
+                                ],
+                                "start_time": 0,
+                                "duration": 0,
+                                "actions": [
+                                    {
+                                        "index": 0,
+                                        "type": "start",
+                                        "start_time": 0,
+                                        "duration": 0,
+                                        "waypoint_index": 0
+                                    }
+                                ],
+                                "next_leg_index": 0
+                            },
+                            {
+                                "original_location": [
+                                    -81.95501,
+                                    28.04568
+                                ],
+                                "location": [
+                                    -81.955203,
+                                    28.045678
+                                ],
+                                "start_time": 106,
+                                "duration": 0,
+                                "actions": [
+                                    {
+                                        "index": 1,
+                                        "type": "job",
+                                        "start_time": 106,
+                                        "duration": 0,
+                                        "job_index": 0,
+                                        "job_id": "503ebea3-67f4-4047-8547-3a8416284608",
+                                        "waypoint_index": 1
+                                    }
+                                ],
+                                "prev_leg_index": 0,
+                                "next_leg_index": 1
+                            },
+                            {
+                                "original_location": [
+                                    -81.963034,
+                                    28.04148
+                                ],
+                                "location": [
+                                    -81.963596,
+                                    28.041479
+                                ],
+                                "start_time": 665,
+                                "duration": 0,
+                                "actions": [
+                                    {
+                                        "index": 2,
+                                        "type": "job",
+                                        "start_time": 665,
+                                        "duration": 0,
+                                        "job_index": 5,
+                                        "job_id": "b47d2e00-0286-4d0d-894a-cab3f70e8589",
+                                        "waypoint_index": 2
+                                    }
+                                ],
+                                "prev_leg_index": 1
+                            }
+                        ]
+                    }
+                },
+                {
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "MultiLineString",
+                        "coordinates": [
+                            [
+                                [
+                                    -81.952656,
+                                    28.045211
+                                ],
+                                [
+                                    -81.946726,
+                                    28.054998
+                                ]
+                            ]
+                        ]
+                    },
+                    "properties": {
+                        "agent_index": 2,
+                        "agent_id": "8e957076-1d10-42a8-ac42-98c7b7e565a2",
+                        "time": 568,
+                        "start_time": 0,
+                        "end_time": 568,
+                        "distance": 1988,
+                        "legs": [
+                            {
+                                "time": 568,
+                                "distance": 1988,
+                                "from_waypoint_index": 0,
+                                "to_waypoint_index": 1,
+                                "steps": [
+                                    {
+                                        "from_index": 0,
+                                        "to_index": 1,
+                                        "time": 568,
+                                        "distance": 1988
+                                    }
+                                ]
+                            }
+                        ],
+                        "mode": "drive",
+                        "actions": [
+                            {
+                                "index": 0,
+                                "type": "start",
+                                "start_time": 0,
+                                "duration": 0,
+                                "waypoint_index": 0
+                            },
+                            {
+                                "index": 1,
+                                "type": "job",
+                                "start_time": 568,
+                                "duration": 0,
+                                "job_index": 9,
+                                "job_id": "f8411eea-ec66-4e2e-a598-67e4fb657c19",
+                                "waypoint_index": 1
+                            },
+                            {
+                                "index": 2,
+                                "type": "end",
+                                "start_time": 568,
+                                "duration": 0
+                            }
+                        ],
+                        "waypoints": [
+                            {
+                                "original_location": [
+                                    -81.9528,
+                                    28.045506
+                                ],
+                                "location": [
+                                    -81.952656,
+                                    28.045211
+                                ],
+                                "start_time": 0,
+                                "duration": 0,
+                                "actions": [
+                                    {
+                                        "index": 0,
+                                        "type": "start",
+                                        "start_time": 0,
+                                        "duration": 0,
+                                        "waypoint_index": 0
+                                    }
+                                ],
+                                "next_leg_index": 0
+                            },
+                            {
+                                "original_location": [
+                                    -81.946726,
+                                    28.054998
+                                ],
+                                "location": [
+                                    -81.946726,
+                                    28.054998
+                                ],
+                                "start_time": 568,
+                                "duration": 0,
+                                "actions": [
+                                    {
+                                        "index": 1,
+                                        "type": "job",
+                                        "start_time": 568,
+                                        "duration": 0,
+                                        "job_index": 9,
+                                        "job_id": "f8411eea-ec66-4e2e-a598-67e4fb657c19",
+                                        "waypoint_index": 1
+                                    }
+                                ],
+                                "prev_leg_index": 0
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    }
+]
