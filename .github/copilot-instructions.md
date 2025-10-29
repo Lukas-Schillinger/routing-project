@@ -2,7 +2,7 @@
 
 A feature-rich data table for managing stops in an unoptimized map. Built with TanStack Table and shadcn-svelte components.## Project Overview
 
-## FeaturesMulti-tenant route optimization SaaS built with **SvelteKit 2** (Svelte 5), **Drizzle ORM**, **PostgreSQL**, and **Mapbox GL**. Optimizes delivery routes using Geoapify Route Planner API.
+## FeaturesMulti-tenant route optimization SaaS built with **SvelteKit 2** (Svelte 5), **Drizzle ORM**, **PostgreSQL**, and **Mapbox GL**. Optimizes delivery routes using a custom TSP Solver API.
 
 - **Search**: Global search across all stop fields (contact, address, phone, notes)## Architecture
 
@@ -39,7 +39,7 @@ A feature-rich data table for managing stops in an unoptimized map. Built with T
 
 2. Check if `locations` table already has this hash for the organization
 
-  async function handleDelete(stopId: string) {3. If exists, reuse location; if new, geocode via Mapbox/Geoapify and create location
+  async function handleDelete(stopId: string) {3. If exists, reuse location; if new, geocode via Mapbox and create location
 
     // Delete logic4. Store geocoding confidence (`exact|high|medium|low`), provider, and raw response
 
@@ -112,6 +112,8 @@ A feature-rich data table for managing stops in an unoptimized map. Built with T
 - Server helpers: `createSession()`, `validateSessionToken()`, `requireLogin()`
 - User object includes `organization_id` for multi-tenancy filtering
 
+- Geoapify API key stored in external service configs
+
 ## Development Workflows
 
 ### Database Management
@@ -167,8 +169,8 @@ Never allow cross-tenant access - validate ownership before any mutation.
 
 1. Create map → assign drivers via `driver_map_memberships` table
 2. Add stops (auto-geocodes via `location.service.ts` if needed)
-3. POST to `/api/maps/[mapId]/optimize` with options (mode, traffic, optimize goal)
-4. `optimization.service.ts` calls Geoapify Route Planner API
+3. POST to `/api/maps/[mapId]/optimize` with options (depotId, fairness, timeLimitSec, etc.)
+4. `optimization.service.ts` uses **TSP Solver** with Mapbox distance matrix
 5. Updates `stops.driver_id` and `stops.delivery_index` with optimized assignments
 6. Frontend displays routes via `MapView.svelte` (Mapbox GL)
 
@@ -216,7 +218,8 @@ Never allow cross-tenant access - validate ownership before any mutation.
 - DB schema: `src/lib/server/db/schema.ts`
 - Services: `src/lib/services/server/[entity].service.ts`
 - API routes: `src/routes/api/[resource]/+server.ts`
-- Optimization: `src/lib/services/server/optimization.service.ts`, `src/lib/services/external/geoapify/`
+- Optimization: `src/lib/services/server/optimization.service.ts`
+- External services: `src/lib/services/external/tsp_solver/`, `src/lib/services/external/mapbox/`
 
 ## Code Style
 

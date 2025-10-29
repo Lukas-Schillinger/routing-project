@@ -10,5 +10,9 @@ export { DriverService, driverService } from './driver.service';
 export { ServiceError } from './errors';
 export { LocationService, locationService } from './location.service';
 export { MapService, mapService } from './map.service';
-export { OptimizationService, optimizationService } from './optimization.service';
+export {
+	OptimizationService,
+	optimizationService,
+	type OptimizationOptions
+} from './optimization.service';
 export { StopService, stopService } from './stop.service';

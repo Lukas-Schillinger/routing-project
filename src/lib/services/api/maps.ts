@@ -13,26 +13,36 @@ export interface DriverMembership {
 	driver: Driver;
 }
 
+/**
+ * Options for route optimization using TSP solver
+ */
 export interface OptimizationOptions {
 	depotId: string;
-	mode?: 'drive' | 'walk' | 'bike';
-	optimize?: 'time' | 'distance';
-	traffic?: 'approximated' | 'free_flow';
-	globalStopConfig?: {
-		serviceTime?: number;
-	};
+	fairness?: 'high' | 'medium' | 'low';
+	timeLimitSec?: number;
+	startAtDepot?: boolean;
+	endAtDepot?: boolean;
 }
 
+/**
+ * Optimization result from TSP solver
+ */
 export interface OptimizationResult {
-	success: boolean;
-	result?: {
+	result: {
+		success: boolean;
 		routes: Array<{
 			driver_id: string;
-			stops: Array<{
+			total_distance: number;
+			total_duration: number;
+			legs: Array<{
 				stop_id: string;
-				delivery_index: number;
+				distance: number;
+				duration: number;
 			}>;
 		}>;
+		total_distance: number;
+		total_duration: number;
+		computation_time: number;
 	};
 }
 
@@ -106,10 +116,17 @@ class MapApiService {
 	// Optimization Methods
 
 	/**
-	 * Optimize routes for a map
+	 * Optimize routes for a map using TSP solver
 	 */
 	async optimize(mapId: string, options: OptimizationOptions): Promise<OptimizationResult> {
-		return apiClient.post<OptimizationResult>(`/maps/${mapId}/optimize`, options);
+		const body = {
+			depotId: options.depotId,
+			fairness: options.fairness || 'medium',
+			timeLimitSec: options.timeLimitSec || 30,
+			startAtDepot: options.startAtDepot !== false,
+			endAtDepot: options.endAtDepot !== false
+		};
+		return apiClient.post<OptimizationResult>(`/maps/${mapId}/optimize`, body);
 	}
 
 	/**

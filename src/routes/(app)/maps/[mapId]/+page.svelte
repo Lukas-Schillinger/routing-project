@@ -111,17 +111,17 @@
 		optimizationResult = null;
 
 		try {
+			console.log('Starting Optimization');
 			const res = await mapApi.optimize(data.map.id, {
 				depotId: selectedDepotId,
-				mode: 'drive',
-				optimize: 'time',
-				traffic: 'approximated',
-				globalStopConfig: {
-					serviceTime: 300 // 5 minutes per stop
-				}
+				fairness: 'medium', // Options: 'high', 'medium', 'low'
+				timeLimitSec: 30, // Optimization time limit
+				startAtDepot: true, // Routes start at depot
+				endAtDepot: true // Routes end at depot
 			});
-
+			console.log('Optimization Finished');
 			optimizationResult = res.result;
+			console.log(optimizationResult);
 
 			// Switch to view mode after successful optimization
 			isViewMode = true;

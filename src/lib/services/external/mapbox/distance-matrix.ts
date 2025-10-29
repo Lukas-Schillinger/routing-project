@@ -7,38 +7,15 @@ import { mapboxClient } from './client';
 import { matrixResponseSchema, type MatrixResponse } from './types';
 
 /**
- * Profile for routing - determines the mode of transportation
- */
-export type MatrixProfile =
-	| 'mapbox/driving'
-	| 'mapbox/walking'
-	| 'mapbox/cycling'
-	| 'mapbox/driving-traffic';
-
-/**
- * Options for distance matrix request
- */
-export interface DistanceMatrixOptions {
-	/** Routing profile to use */
-	profile?: MatrixProfile;
-	/** Request both duration and distance (default: both) */
-	annotations?: 'duration' | 'distance' | 'duration,distance';
-}
-
-/**
  * Result returned from distance matrix service
  */
 export interface DistanceMatrixResult {
-	/** Distance matrix in meters (row-major: [source][destination]) */
-	distances: (number | null)[][];
-	/** Duration matrix in seconds (row-major: [source][destination]) */
-	durations: (number | null)[][];
+	/** Distance matrix in seconds (row-major: [source][destination]) */
+	matrix: number[][];
 	/** Ordered array of addresses (depot first, then stops) */
 	addresses: string[];
 	/** Ordered array of location IDs corresponding to addresses */
 	locationIds: string[];
-	/** Ordered array of coordinates [lon, lat] */
-	coordinates: [number, number][];
 	/** Raw Mapbox API response */
 	rawResponse: MatrixResponse;
 }
@@ -60,8 +37,7 @@ class MapboxDistanceMatrixService {
 	async createDistanceMatrix(
 		mapId: string,
 		depotId: string,
-		organizationId: string,
-		options?: DistanceMatrixOptions
+		organizationId: string
 	): Promise<DistanceMatrixResult> {
 		// Fetch depot with location
 		const depot = await depotService.getDepotById(depotId, organizationId);
@@ -112,8 +88,8 @@ class MapboxDistanceMatrixService {
 		}
 
 		// Validate coordinate count (Mapbox limit: 2-25 for most profiles, 2-10 for driving-traffic)
-		const profile = options?.profile || 'mapbox/driving';
-		const maxCoordinates = profile === 'mapbox/driving-traffic' ? 10 : 25;
+		const profile = 'mapbox/driving';
+		const maxCoordinates = 25;
 
 		if (coordinates.length > maxCoordinates) {
 			throw ServiceError.validation(
@@ -130,7 +106,7 @@ class MapboxDistanceMatrixService {
 		const endpoint = `/directions-matrix/v1/${profile}/${coordinatesParam}`;
 
 		const params: Record<string, string> = {
-			annotations: options?.annotations || 'duration,distance'
+			annotations: 'duration'
 		};
 
 		// Make API request
@@ -145,16 +121,14 @@ class MapboxDistanceMatrixService {
 			);
 		}
 
-		if (!validatedResponse.distances && !validatedResponse.durations) {
+		if (!validatedResponse.durations) {
 			throw ServiceError.internal('Mapbox Matrix API returned no distance or duration data');
 		}
 
 		return {
-			distances: validatedResponse.distances || [],
-			durations: validatedResponse.durations || [],
+			matrix: validatedResponse.durations || [],
 			addresses,
 			locationIds,
-			coordinates,
 			rawResponse: validatedResponse
 		};
 	}

@@ -1,4 +1,4 @@
-// POST /api/maps/[mapId]/optimize - Optimize routes for a map
+// POST /api/maps/[mapId]/optimize - Optimize routes for a map using TSP solver
 
 import { optimizationService } from '$lib/services/server';
 import { ServiceError } from '$lib/services/server/errors';
@@ -24,10 +24,12 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 
 		const result = await optimizationService.optimizeMap(mapId, user.organization_id, {
 			depotId: body.depotId,
-			mode: body.mode || 'drive',
-			traffic: body.traffic,
-			optimize: body.optimize || 'time',
-			defaultServiceTime: body.defaultServiceTime || 300 // 5 minutes
+			config: {
+				fairness: body.fairness || 'medium',
+				time_limit_sec: body.timeLimitSec || 30,
+				start_at_depot: body.startAtDepot !== false,
+				end_at_depot: body.endAtDepot !== false
+			}
 		});
 
 		return json(result);

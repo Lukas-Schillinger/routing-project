@@ -1,96 +1,104 @@
 import { db } from '$lib/server/db';
-import { driverMapMemberships, drivers, locations, maps, stops } from '$lib/server/db/schema';
-import { and, eq, isNotNull } from 'drizzle-orm';
-import type {
-	GeoApifyAgent,
-	GeoApifyJob,
-	GeoApifyOptimizationResponse
-} from '../external/geoapify';
-import { geoapifyOptimization } from '../external/geoapify';
-import { depotService } from './depot.service';
+import { driverMapMemberships, drivers, stops } from '$lib/server/db/schema';
+import { and, eq } from 'drizzle-orm';
+import { mapboxDistanceMatrix } from '../external/mapbox';
+import { tspSolverOptimization } from '../external/tsp_solver';
+import type { OptimizationConfig, OptimizationResult } from '../external/tsp_solver/types';
 import { ServiceError } from './errors';
 
 /**
- * Options for route optimization
+ * Options for map optimization
  */
 export interface OptimizationOptions {
 	/** Required depot ID for route start/end location */
 	depotId: string;
-	/** Transportation mode: drive, walk, bicycle, truck */
-	mode?: 'drive' | 'walk' | 'bicycle' | 'truck';
-	/** Traffic consideration: free_flow or approximated */
-	traffic?: 'free_flow' | 'approximated';
-	/** Optimization goal: time or distance */
-	optimize?: 'time' | 'distance';
-	/** Default service time at each stop in seconds (default 300 = 5 minutes) */
-	defaultServiceTime?: number;
+	/** Optimization configuration */
+	config: OptimizationConfig;
 }
 
 /**
- * Optimization service for route planning
- * Wraps Geoapify optimization and manages database updates
+ * Optimization Service
+ * Handles route optimization using TSP Solver
+ * Manages database operations and external API integration
  */
 export class OptimizationService {
 	/**
-	 * Verify map exists and user has access
+	 * Optimize routes for a map
+	 *
+	 * @param mapId - Map ID to optimize
+	 * @param organizationId - Organization ID for access control
+	 * @param options - Optimization options including depot and config
+	 * @returns Optimization result
 	 */
-	private async verifyMapOwnership(mapId: string, organizationId: string) {
-		const [map] = await db.select().from(maps).where(eq(maps.id, mapId)).limit(1);
+	async optimizeMap(
+		mapId: string,
+		organizationId: string,
+		options: OptimizationOptions
+	): Promise<OptimizationResult> {
+		// 1. Fetch assigned drivers from database
+		const assignedDrivers = await this.fetchAssignedDrivers(mapId, organizationId);
 
-		if (!map) {
-			throw ServiceError.notFound('Map not found');
-		}
-
-		if (map.organization_id !== organizationId) {
-			throw ServiceError.forbidden('Access denied');
-		}
-
-		return map;
-	}
-
-	/**
-	 * Get depot location coordinates
-	 */
-	private async getDepotLocation(
-		depotId: string,
-		organizationId: string
-	): Promise<[number, number]> {
-		const depot = await depotService.getDepotById(depotId, organizationId);
-
-		if (!depot.location.lon || !depot.location.lat) {
+		if (assignedDrivers.length === 0) {
 			throw ServiceError.validation(
-				'Depot location has no coordinates. Please update the depot with valid coordinates.'
+				'No active drivers assigned to this map. Assign at least one driver before optimizing.'
 			);
 		}
 
-		return [Number(depot.location.lon), Number(depot.location.lat)];
-	}
+		// 2. Get distance/duration matrix from Mapbox
+		const matrixResult = await mapboxDistanceMatrix.createDistanceMatrix(
+			mapId,
+			options.depotId,
+			organizationId
+		);
 
-	/**
-	 * Fetch stops with their locations for a map
-	 */
-	private async fetchMapStops(mapId: string) {
-		const mapStops = await db
-			.select({
-				stop: stops,
-				location: locations
-			})
-			.from(stops)
-			.innerJoin(locations, eq(stops.location_id, locations.id))
-			.where(eq(stops.map_id, mapId));
+		// 3. Prepare matrix (handle null values for unreachable locations)
+		const cleanedMatrix = matrixResult.matrix.map((row) =>
+			row.map((value) => (value === null ? 999999 : value))
+		);
 
-		if (mapStops.length === 0) {
-			throw ServiceError.validation('No stops found for this map');
+		// 4. Extract driver IDs
+		const vehicleIds = assignedDrivers.map((d) => d.driver.id);
+
+		// 5. Call TSP solver
+		const result = await tspSolverOptimization.optimize(
+			cleanedMatrix,
+			matrixResult.locationIds,
+			vehicleIds,
+			options.config
+		);
+
+		if (!result.success) {
+			throw ServiceError.internal('TSP solver optimization failed');
 		}
 
-		return mapStops;
+		// 6. Clear existing driver assignments
+		await this.clearStopAssignments(mapId);
+
+		// 7. Apply optimized routes to database
+		await this.applyOptimizedRoutes(mapId, result);
+
+		return result;
 	}
 
 	/**
-	 * Fetch active drivers assigned to a map
+	 * Reset optimization for a map (clear all driver assignments)
+	 */
+	async resetOptimization(mapId: string): Promise<void> {
+		await this.clearStopAssignments(mapId);
+	}
+
+	/**
+	 * Check if the TSP solver is available
+	 */
+	async isAvailable(): Promise<boolean> {
+		return await tspSolverOptimization.isAvailable();
+	}
+
+	/**
+	 * Fetch active drivers assigned to the map
 	 */
 	private async fetchAssignedDrivers(mapId: string, organizationId: string) {
-		const assignedDrivers = await db
+		return await db
 			.select({
 				driver: drivers
 			})
@@ -103,67 +111,12 @@ export class OptimizationService {
 					eq(drivers.active, true)
 				)
 			);
-
-		if (assignedDrivers.length === 0) {
-			throw ServiceError.validation(
-				'No active drivers assigned to this map. Assign at least one driver before optimizing.'
-			);
-		}
-
-		return assignedDrivers;
 	}
 
 	/**
-	 * Convert drivers to Geoapify agent format
+	 * Clear driver assignments for all stops in the map
 	 */
-	private convertToAgents(
-		assignedDrivers: Awaited<ReturnType<typeof this.fetchAssignedDrivers>>,
-		depotLocation: [number, number]
-	): GeoApifyAgent[] {
-		return assignedDrivers.map(({ driver }) => ({
-			id: driver.id,
-			start_location: depotLocation
-		}));
-	}
-
-	/**
-	 * Convert stops to Geoapify job format
-	 */
-	private convertToJobs(
-		mapStops: Awaited<ReturnType<typeof this.fetchMapStops>>,
-		defaultServiceTime: number
-	): GeoApifyJob[] {
-		return mapStops.map(({ stop, location }) => {
-			if (!location.lon || !location.lat) {
-				throw ServiceError.validation(
-					`Stop "${location.name || stop.id}" has no coordinates. Geocode all stops before optimizing.`
-				);
-			}
-
-			return {
-				id: stop.id,
-				location: [Number(location.lon), Number(location.lat)],
-				service: defaultServiceTime
-			};
-		});
-	}
-
-	/**
-	 * Save optimization result to database
-	 */
-	private async saveOptimizationResult(mapId: string, result: GeoApifyOptimizationResponse) {
-		await db
-			.update(maps)
-			.set({
-				geoapifyOptimization: result
-			})
-			.where(eq(maps.id, mapId));
-	}
-
-	/**
-	 * Clear existing driver assignments and delivery order
-	 */
-	private async clearStopAssignments(mapId: string) {
+	private async clearStopAssignments(mapId: string): Promise<void> {
 		await db
 			.update(stops)
 			.set({
@@ -175,119 +128,38 @@ export class OptimizationService {
 	}
 
 	/**
-	 * Apply optimized routes to stops in database
+	 * Apply optimized routes to stops in the database
 	 */
-	private async applyOptimizedRoutes(result: GeoApifyOptimizationResponse) {
-		const updatedStops = [];
+	private async applyOptimizedRoutes(mapId: string, result: OptimizationResult): Promise<number> {
+		let updatedCount = 0;
 
-		for (const feature of result.features) {
-			const driverId = feature.properties.agent_id;
+		for (const route of result.routes) {
+			for (let i = 0; i < route.legs.length; i++) {
+				const leg = route.legs[i];
 
-			for (const action of feature.properties.actions) {
-				if (action.type === 'job' && action.job_id) {
-					// Waypoint array is ordered according to stop order. Job index is
-					// the index of the job in the original array
-					const deliveryIndex = action.waypoint_index ?? 0;
+				// Find the stop by location_id
+				const [stop] = await db
+					.select()
+					.from(stops)
+					.where(and(eq(stops.map_id, mapId), eq(stops.location_id, leg.stop_id)))
+					.limit(1);
 
-					const [updatedStop] = await db
+				if (stop) {
+					await db
 						.update(stops)
 						.set({
-							driver_id: driverId,
-							delivery_index: deliveryIndex,
+							driver_id: route.driver_id,
+							delivery_index: i, // Use sequence order in route
 							updated_at: new Date()
 						})
-						.where(eq(stops.id, action.job_id))
-						.returning();
+						.where(eq(stops.id, stop.id));
 
-					if (updatedStop) {
-						updatedStops.push(updatedStop);
-					}
+					updatedCount++;
 				}
 			}
 		}
 
-		return updatedStops;
-	}
-
-	/**
-	 * Optimize routes for a map
-	 * Assigns stops to drivers and determines optimal delivery order
-	 */
-	async optimizeMap(mapId: string, organizationId: string, options: OptimizationOptions) {
-		// Verify access
-		await this.verifyMapOwnership(mapId, organizationId);
-
-		// Gather required data
-		const depotLocation = await this.getDepotLocation(options.depotId, organizationId);
-		const mapStops = await this.fetchMapStops(mapId);
-		const assignedDrivers = await this.fetchAssignedDrivers(mapId, organizationId);
-
-		// Convert to Geoapify format
-		const agents = this.convertToAgents(assignedDrivers, depotLocation);
-		const jobs = this.convertToJobs(mapStops, options.defaultServiceTime || 300);
-
-		// Call Geoapify optimization
-		const result = await geoapifyOptimization.optimize({
-			agents,
-			jobs,
-			mode: options.mode || 'drive',
-			traffic: options.traffic,
-			optimize: options.optimize || 'time'
-		});
-
-		// Save and apply optimization results
-		await this.saveOptimizationResult(mapId, result);
-		await this.clearStopAssignments(mapId);
-		const updatedStops = await this.applyOptimizedRoutes(result);
-
-		// Fetch and return optimized routes
-		const optimizedStops = await db
-			.select({
-				stop: stops,
-				location: locations
-			})
-			.from(stops)
-			.innerJoin(locations, eq(stops.location_id, locations.id))
-			.where(and(eq(stops.map_id, mapId), isNotNull(stops.driver_id)))
-			.orderBy(stops.driver_id, stops.delivery_index);
-
-		return {
-			success: true,
-			optimizedStops,
-			stats: {
-				totalStops: mapStops.length,
-				assignedStops: updatedStops.length,
-				drivers: assignedDrivers.length
-			}
-		};
-	}
-
-	/**
-	 * Clear optimization results for a map
-	 * Removes all driver assignments and delivery order
-	 */
-	async clearOptimization(mapId: string, organizationId: string) {
-		// Verify map ownership
-		const [map] = await db.select().from(maps).where(eq(maps.id, mapId)).limit(1);
-
-		if (!map) {
-			throw ServiceError.notFound('Map not found');
-		}
-
-		if (map.organization_id !== organizationId) {
-			throw ServiceError.forbidden('Access denied');
-		}
-
-		await db
-			.update(stops)
-			.set({
-				driver_id: null,
-				delivery_index: null,
-				updated_at: new Date()
-			})
-			.where(eq(stops.map_id, mapId));
-
-		return { success: true };
+		return updatedCount;
 	}
 }
 
