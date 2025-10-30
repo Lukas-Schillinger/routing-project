@@ -1,4 +1,4 @@
-import type { CreateRoute } from '$lib/schemas';
+import type { CreateRoute, Route } from '$lib/schemas';
 import { db } from '$lib/server/db';
 import { routes } from '$lib/server/db/schema';
 import { and, eq } from 'drizzle-orm';
@@ -66,10 +66,12 @@ export class RouteService {
 	 */
 	async getRoutesByMap(mapId: string, organizationId: string) {
 		try {
-			return await db
+			return (await db
 				.select()
 				.from(routes)
-				.where(and(eq(routes.map_id, mapId), eq(routes.organization_id, organizationId)));
+				.where(
+					and(eq(routes.map_id, mapId), eq(routes.organization_id, organizationId))
+				)) as Route[]; // little hack becasuse drizzle can't type the LineString
 		} catch (error) {
 			console.error('Error fetching routes:', error);
 			throw new ServiceError('Failed to fetch routes', 'INTERNAL_ERROR', 500);

@@ -60,7 +60,7 @@
 	<div class="grid grid-cols-1 gap-6 md:grid-cols-2">
 		<!-- Drivers Section -->
 		<section>
-			<Card.Root class="shadow-lg">
+			<Card.Root class="h-full shadow-lg">
 				<Card.Header>
 					<Card.Title class="flex items-center gap-2">
 						<Truck class="h-5 w-5 text-primary" />
@@ -81,7 +81,7 @@
 			</Card.Root>
 		</section>
 		<section>
-			<Card.Root class="shadow-lg">
+			<Card.Root class="h-full shadow-lg">
 				<Card.Header>
 					<Card.Title class="flex items-center gap-2">
 						<Building2 class="h-5 w-5 text-primary" />
@@ -92,8 +92,10 @@
 				<Card.Content>
 					<DepotsTable depots={data.depots} />
 				</Card.Content>
-				<Card.Footer>
-					<EditOrCreateDepotPopover mode="create" onSuccess={handleDepotCreated} />
+				<Card.Footer class="h-full">
+					<div class="mt-auto">
+						<EditOrCreateDepotPopover mode="create" onSuccess={handleDepotCreated} />
+					</div>
 				</Card.Footer>
 			</Card.Root>
 		</section>
