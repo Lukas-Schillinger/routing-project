@@ -42,6 +42,7 @@
 	let optimizationError = $state('');
 	let isViewMode = $state((data as any).isViewMode ?? false);
 	let selectedDepotId = $state<string | undefined>(undefined);
+	let focusedStopId = $state<string | null>(null);
 
 	// Update view mode when data changes
 	$effect(() => {
@@ -176,7 +177,7 @@
 	<!-- Map -->
 	{#if data.stops.length > 0}
 		<div class="h-[500px]">
-			<MapView stops={data.stops} />
+			<MapView stops={data.stops} routes={data.routes} bind:focusedStopId />
 		</div>
 	{/if}
 
@@ -277,7 +278,11 @@
 				<CardDescription>Stops organized by driver in optimal delivery order</CardDescription>
 			</CardHeader>
 			<CardContent>
-				<ViewRoutesTable stops={data.stops} assignedDrivers={data.assignedDrivers} />
+				<ViewRoutesTable
+					bind:focusedStopId
+					stops={data.stops}
+					assignedDrivers={data.assignedDrivers}
+				/>
 			</CardContent>
 		</Card>
 	{/if}

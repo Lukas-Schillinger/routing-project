@@ -13,11 +13,7 @@
 	import * as ButtonGroup from '$lib/components/ui/button-group/index.js';
 	import * as Card from '$lib/components/ui/card';
 	import { Checkbox } from '$lib/components/ui/checkbox';
-	import {
-		createSvelteTable,
-		FlexRender,
-		renderComponent
-	} from '$lib/components/ui/data-table';
+	import { createSvelteTable, FlexRender, renderComponent } from '$lib/components/ui/data-table';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import * as Empty from '$lib/components/ui/empty';
 	import { Input } from '$lib/components/ui/input';
@@ -58,8 +54,7 @@
 		onCreate?: (stop: StopWithLocation) => void;
 	}
 
-	let { stops, mapId, onDelete, onToggleInclude, onUpdate, onCreate }: Props =
-		$props();
+	let { stops, mapId, onDelete, onToggleInclude, onUpdate, onCreate }: Props = $props();
 
 	// Table state
 	let sorting = $state<SortingState>([{ id: 'contact', desc: true }]);
@@ -109,9 +104,7 @@
 			header: ({ table }) =>
 				renderComponent(Checkbox, {
 					checked: table.getIsAllPageRowsSelected(),
-					indeterminate:
-						table.getIsSomePageRowsSelected() &&
-						!table.getIsAllPageRowsSelected(),
+					indeterminate: table.getIsSomePageRowsSelected() && !table.getIsAllPageRowsSelected(),
 					onCheckedChange: (value: boolean) => {
 						table.toggleAllPageRowsSelected(!!value);
 					},
@@ -285,9 +278,7 @@
 				</Empty.Media>
 				<Empty.Content>
 					<Empty.Title>No stops yet</Empty.Title>
-					<Empty.Description
-						>Upload a CSV file to add stops to this map.</Empty.Description
-					>
+					<Empty.Description>Upload a CSV file to add stops to this map.</Empty.Description>
 				</Empty.Content>
 			</Empty.Root>
 		</Card.Content>
@@ -297,7 +288,7 @@
 		<!-- Toolbar -->
 		<div class="flex flex-col justify-between gap-2 sm:flex-row">
 			<!-- Search input with field selector -->
-			<ButtonGroup.Root class="max-w-md flex-1">
+			<ButtonGroup.Root class="w-full flex-1">
 				<Input
 					placeholder="Search {table
 						.getAllColumns()
@@ -321,10 +312,7 @@
 						{#each table
 							.getAllColumns()
 							.filter((column) => column.columnDef.filterFn && column.id !== 'include') as column}
-							<DropdownMenu.Item
-								onclick={() => (searchField = column.id)}
-								class="justify-between"
-							>
+							<DropdownMenu.Item onclick={() => (searchField = column.id)} class="justify-between">
 								<span class="flex items-center">
 									<span class="mr-2 inline-block h-4 w-4">
 										{#if searchField === column.id}
@@ -341,22 +329,15 @@
 			<!-- Sort dropdown -->
 			<div class="flex items-center gap-2">
 				<DropdownMenu.Root>
-					<DropdownMenu.Trigger
-						class="{buttonVariants({ variant: 'outline' })} gap-2"
-					>
+					<DropdownMenu.Trigger class="{buttonVariants({ variant: 'outline' })} gap-2">
 						<ArrowUpDown class="h-4 w-4" />
 						Sort
 					</DropdownMenu.Trigger>
 					<DropdownMenu.Content align="end" class="w-48">
-						{#each table
-							.getAllColumns()
-							.filter((column) => column.getCanSort()) as column}
+						{#each table.getAllColumns().filter((column) => column.getCanSort()) as column}
 							{@const SortIcon = getSortIcon(column.id)}
 							{@const currentSort = sorting.find((s) => s.id === column.id)}
-							<DropdownMenu.Item
-								onclick={() => toggleSort(column.id)}
-								class="justify-between"
-							>
+							<DropdownMenu.Item onclick={() => toggleSort(column.id)} class="justify-between">
 								<span class="flex items-center">
 									<span class="mr-2 inline-block h-4 w-4">
 										{#if SortIcon}
@@ -365,9 +346,7 @@
 									</span>
 									{column.columnDef.header}
 								</span>
-								<span
-									class="ml-auto w-12 text-right text-xs text-muted-foreground"
-								>
+								<span class="ml-auto w-12 text-right text-xs text-muted-foreground">
 									{#if currentSort}
 										({currentSort.desc ? 'desc' : 'asc'})
 									{/if}
@@ -379,22 +358,16 @@
 
 				<!-- Column visibility dropdown -->
 				<DropdownMenu.Root>
-					<DropdownMenu.Trigger
-						class="{buttonVariants({ variant: 'outline' })} gap-2"
-					>
+					<DropdownMenu.Trigger class="{buttonVariants({ variant: 'outline' })} gap-2">
 						Columns <ChevronDown class="h-4 w-4" />
 					</DropdownMenu.Trigger>
 					<DropdownMenu.Content align="end">
-						{#each table
-							.getAllColumns()
-							.filter((column) => column.getCanHide()) as column}
+						{#each table.getAllColumns().filter((column) => column.getCanHide()) as column}
 							<DropdownMenu.CheckboxItem
 								checked={column.getIsVisible()}
 								onCheckedChange={(value) => column.toggleVisibility(!!value)}
 							>
-								{typeof column.columnDef.header == 'string'
-									? column.columnDef.header
-									: null}
+								{typeof column.columnDef.header == 'string' ? column.columnDef.header : null}
 							</DropdownMenu.CheckboxItem>
 						{/each}
 					</DropdownMenu.Content>
@@ -442,19 +415,14 @@
 							<Table.Row data-state={row.getIsSelected() && 'selected'}>
 								{#each row.getVisibleCells() as cell}
 									<Table.Cell>
-										<FlexRender
-											content={cell.column.columnDef.cell}
-											context={cell.getContext()}
-										/>
+										<FlexRender content={cell.column.columnDef.cell} context={cell.getContext()} />
 									</Table.Cell>
 								{/each}
 							</Table.Row>
 						{/each}
 					{:else}
 						<Table.Row>
-							<Table.Cell colspan={columns.length} class="h-24 text-center"
-								>No results.</Table.Cell
-							>
+							<Table.Cell colspan={columns.length} class="h-24 text-center">No results.</Table.Cell>
 						</Table.Row>
 					{/if}
 				</Table.Body>
@@ -462,9 +430,7 @@
 		</div>
 
 		<!-- Pagination -->
-		<div
-			class="flex flex-col items-center justify-between gap-4 px-2 sm:flex-row"
-		>
+		<div class="flex flex-col items-center justify-between gap-4 px-2 sm:flex-row">
 			<div class="flex-1 text-sm text-muted-foreground">
 				{table.getFilteredSelectedRowModel().rows.length} of{' '}
 				{table.getFilteredRowModel().rows.length} row(s) selected.
@@ -492,12 +458,9 @@
 						</DropdownMenu.Content>
 					</DropdownMenu.Root>
 				</div>
-				<div
-					class="flex w-[60px] items-center justify-center text-sm font-medium sm:w-[100px]"
-				>
+				<div class="flex w-[60px] items-center justify-center text-sm font-medium sm:w-[100px]">
 					<span class="sm:hidden"
-						>{table.getState().pagination.pageIndex +
-							1}/{table.getPageCount()}</span
+						>{table.getState().pagination.pageIndex + 1}/{table.getPageCount()}</span
 					>
 					<span class="hidden sm:inline">
 						Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}

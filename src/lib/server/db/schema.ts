@@ -176,6 +176,33 @@ export const driverMapMemberships = pgTable(
 	]
 );
 
+export const routes = pgTable(
+	'routes',
+	{
+		id,
+		organization_id: orgId.references(() => organizations.id, { onDelete: 'cascade' }),
+		map_id: uuid('map_id')
+			.notNull()
+			.references(() => maps.id, { onDelete: 'cascade' }),
+		driver_id: uuid('driver_id')
+			.notNull()
+			.references(() => drivers.id, { onDelete: 'cascade' }),
+		depot_id: uuid('depot_id')
+			.notNull()
+			.references(() => depots.id, { onDelete: 'cascade' }),
+		geometry: jsonb('geometry').notNull(), // GeoJSON LineString object { type: "LineString", coordinates: [[lon, lat], ...] }
+		duration: numeric('duration', { precision: 12, scale: 2 }), // seconds
+		created_at: ts('created_at'),
+		updated_at: ts('updated_at')
+	},
+	(t) => [
+		index('routes_map_idx').on(t.map_id),
+		index('routes_driver_idx').on(t.driver_id),
+		index('routes_org_idx').on(t.organization_id),
+		uniqueIndex('routes_map_driver_uidx').on(t.map_id, t.driver_id)
+	]
+);
+
 /***************************************************************************************
  *
  * 									Relations
@@ -189,7 +216,8 @@ export const organizationsRelations = relations(organizations, ({ many }) => ({
 	locations: many(locations),
 	stops: many(stops),
 	driverMapMemberships: many(driverMapMemberships),
-	depots: many(depots)
+	depots: many(depots),
+	routes: many(routes)
 }));
 
 export const profilesRelations = relations(users, ({ one }) => ({
@@ -205,7 +233,8 @@ export const driversRelations = relations(drivers, ({ one, many }) => ({
 		references: [organizations.id]
 	}),
 	mapMemberships: many(driverMapMemberships),
-	stops: many(stops)
+	stops: many(stops),
+	routes: many(routes)
 }));
 
 export const mapsRelations = relations(maps, ({ one, many }) => ({
@@ -214,7 +243,8 @@ export const mapsRelations = relations(maps, ({ one, many }) => ({
 		references: [organizations.id]
 	}),
 	stops: many(stops),
-	driverMemberships: many(driverMapMemberships)
+	driverMemberships: many(driverMapMemberships),
+	routes: many(routes)
 }));
 
 export const locationsRelations = relations(locations, ({ one, many }) => ({
@@ -260,7 +290,7 @@ export const driverMapMembershipsRelations = relations(driverMapMemberships, ({ 
 	})
 }));
 
-export const depotsRelations = relations(depots, ({ one }) => ({
+export const depotsRelations = relations(depots, ({ one, many }) => ({
 	organization: one(organizations, {
 		fields: [depots.organization_id],
 		references: [organizations.id]
@@ -268,5 +298,25 @@ export const depotsRelations = relations(depots, ({ one }) => ({
 	location: one(locations, {
 		fields: [depots.location_id],
 		references: [locations.id]
+	}),
+	routes: many(routes)
+}));
+
+export const routesRelations = relations(routes, ({ one }) => ({
+	organization: one(organizations, {
+		fields: [routes.organization_id],
+		references: [organizations.id]
+	}),
+	map: one(maps, {
+		fields: [routes.map_id],
+		references: [maps.id]
+	}),
+	driver: one(drivers, {
+		fields: [routes.driver_id],
+		references: [drivers.id]
+	}),
+	depot: one(depots, {
+		fields: [routes.depot_id],
+		references: [depots.id]
 	})
 }));

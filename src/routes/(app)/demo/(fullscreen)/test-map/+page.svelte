@@ -4,7 +4,6 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import { MapPin, Navigation, User } from 'lucide-svelte';
-	import mapboxgl from 'mapbox-gl';
 	import 'mapbox-gl/dist/mapbox-gl.css';
 	import { onMount } from 'svelte';
 	import type { PageData } from './$types';

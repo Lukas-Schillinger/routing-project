@@ -15,4 +15,5 @@ export {
 	optimizationService,
 	type OptimizationOptions
 } from './optimization.service';
+export { RouteService, routeService } from './route.service';
 export { StopService, stopService } from './stop.service';

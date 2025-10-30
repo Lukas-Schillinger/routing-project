@@ -1,17 +1,19 @@
 <script lang="ts">
 	import { Badge } from '$lib/components/ui/badge';
+	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import * as Table from '$lib/components/ui/table';
 	import type { Driver } from '$lib/schemas/driver';
 	import type { StopWithLocation } from '$lib/schemas/stop';
-	import { MapPin, Package, Phone } from 'lucide-svelte';
+	import { Eye, MapPin, Package, Phone } from 'lucide-svelte';
 
 	interface Props {
 		stops: StopWithLocation[];
 		assignedDrivers: Driver[];
+		focusedStopId: string | null;
 	}
 
-	let { stops, assignedDrivers }: Props = $props();
+	let { stops, assignedDrivers, focusedStopId = $bindable() }: Props = $props();
 
 	// Group stops by driver
 	const routesByDriver = $derived.by(() => {
@@ -99,9 +101,7 @@
 											{driver.phone}
 										</span>
 									{:else}
-										{driverStops.length} stop{driverStops.length !== 1
-											? 's'
-											: ''}
+										{driverStops.length} stop{driverStops.length !== 1 ? 's' : ''}
 									{/if}
 								</Card.Description>
 							</div>
@@ -120,21 +120,18 @@
 								<Table.Head>Address</Table.Head>
 								<Table.Head>Phone</Table.Head>
 								<Table.Head>Notes</Table.Head>
+								<Table.Head></Table.Head>
 							</Table.Row>
 						</Table.Header>
 						<Table.Body>
 							{#each driverStops as { stop, location }, index}
 								<Table.Row>
 									<Table.Cell class="font-medium text-muted-foreground">
-										{stop.delivery_index !== null
-											? stop.delivery_index + 1
-											: index + 1}
+										{stop.delivery_index !== null ? stop.delivery_index + 1 : index + 1}
 									</Table.Cell>
 									<Table.Cell>
 										<div class="flex items-center">
-											<span class="font-semibold"
-												>{stop.contact_name || '—'}</span
-											>
+											<span class="font-semibold">{stop.contact_name || '—'}</span>
 										</div>
 									</Table.Cell>
 									<Table.Cell>
@@ -163,15 +160,17 @@
 									</Table.Cell>
 									<Table.Cell>
 										{#if stop.notes}
-											<div
-												class="max-w-[200px] truncate text-sm"
-												title={stop.notes}
-											>
+											<div class="max-w-[200px] truncate text-sm" title={stop.notes}>
 												{stop.notes}
 											</div>
 										{:else}
 											<span class="text-sm text-muted-foreground">—</span>
 										{/if}
+									</Table.Cell>
+									<Table.Cell>
+										<Button onclick={() => (focusedStopId = stop.id)} size="icon" variant="ghost">
+											<Eye />
+										</Button>
 									</Table.Cell>
 								</Table.Row>
 							{/each}

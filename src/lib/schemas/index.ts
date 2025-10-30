@@ -7,5 +7,6 @@ export * from './driverMapMembership.js';
 export * from './location.js';
 export * from './map.js';
 export * from './organization.js';
+export * from './route.js';
 export * from './stop.js';
 export * from './user.js';

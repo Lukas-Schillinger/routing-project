@@ -1,250 +1,154 @@
 <script lang="ts">
-	import { PUBLIC_MAPBOX_ACCESS_TOKEN } from '$env/static/public';
 	import type { StopWithLocation } from '$lib/schemas';
-	import mapboxgl from 'mapbox-gl';
-	import 'mapbox-gl/dist/mapbox-gl.css';
-	import { mount, onMount, unmount } from 'svelte';
+	import type maplibregl from 'maplibre-gl';
+	import { GeoJSON, LineLayer, MapLibre, Marker, Popup } from 'svelte-maplibre';
 	import StopMapPopup from './StopMapPopup.svelte';
 
 	interface Route {
 		id: string;
-		coordinates: [number, number][];
-		color: string;
+		driver_id: string;
+		geometry: string | object; // GeoJSON LineString
 	}
 
 	let {
 		stops = [],
-		routes = [],
+		routes = null,
 		center = [-98.5795, 39.8283],
 		zoom = 4,
+		focusedStopId = $bindable(null),
 		onGoToStop = (stopId: string) => {}
 	}: {
 		stops?: StopWithLocation[];
-		routes?: Route[];
+		routes?: Route[] | null;
 		center?: [number, number];
 		zoom?: number;
+		focusedStopId?: string | null;
 		onGoToStop?: (stopId: string) => void;
 	} = $props();
 
-	let mapContainer: HTMLDivElement;
-	let map: mapboxgl.Map;
+	let map: maplibregl.Map | undefined = $state();
 
-	// Track mounted popup components for cleanup
-	let mountedPopups = new Map<string, { component: any; container: HTMLElement }>();
+	// Color palette for driver routes
+	const driverColors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
 
-	onMount(() => {
-		// Initialize map
-		map = new mapboxgl.Map({
-			container: mapContainer,
-			accessToken: PUBLIC_MAPBOX_ACCESS_TOKEN,
-			style: 'mapbox://styles/mapbox/streets-v12',
-			center: center,
-			zoom: zoom
-		});
+	// Calculate bounds from stops for initial view
+	const bounds = $derived.by(() => {
+		if (stops.length === 0) return undefined;
 
-		// Add navigation controls
-		// map.addControl(new mapboxgl.NavigationControl(), 'top-right');
-		// map.addControl(new mapboxgl.FullscreenControl(), 'top-right');
-
-		map.on('load', () => {
-			// Add stops as markers
-			addStopMarkers();
-
-			// Add routes as lines
-
-			// Fit map to show all points
-			if (stops.length > 0) {
-				fitMapToStops();
-			}
-		});
-
-		return () => {
-			// Clean up all mounted popups
-			mountedPopups.forEach(({ component, container }) => {
-				unmount(component);
-			});
-			mountedPopups.clear();
-
-			map.remove();
-		};
-	});
-
-	/** I don't like that I can't understand this! I tried to use https://github.com/beyonk-group/svelte-mapbox to implement */
-	function addStopMarkers() {
-		stops.forEach((item, index) => {
-			const { stop, location } = item;
-
-			// Skip if coordinates are null or invalid
-			if (!location.lat || !location.lon) {
-				console.warn(`Missing coordinates for stop ${stop.id}`);
-				return;
-			}
-
-			const lat = parseFloat(location.lat);
-			const lon = parseFloat(location.lon);
-
-			if (isNaN(lat) || isNaN(lon)) {
-				console.warn(`Invalid coordinates for stop ${stop.id}`);
-				return;
-			}
-
-			// Create custom marker element
-			const el = document.createElement('div');
-			el.className = 'custom-marker';
-			el.innerHTML = `
-                <div class="marker-content">
-                    <span class="marker-number">${index + 1}</span>
-                </div>
-            `;
-
-			const popupId = `popup-${stop.id}`;
-
-			// Create popup (will mount component on open)
-			const popup = new mapboxgl.Popup({
-				offset: 25,
-				maxWidth: '300px'
-			});
-
-			// Mount component when popup opens
-			popup.on('open', () => {
-				// Create new container each time
-				const popupContainer = document.createElement('div');
-
-				// Mount Svelte component
-				const component = mount(StopMapPopup, {
-					target: popupContainer,
-					props: {
-						stop,
-						location,
-						index,
-						onGoToStop: (stopId: string) => {
-							// Close the popup
-							popup.remove();
-							// Call parent handler
-							onGoToStop(stopId);
-						}
-					}
-				});
-
-				// Set the content
-				popup.setDOMContent(popupContainer);
-
-				// Store reference for cleanup
-				mountedPopups.set(popupId, { component, container: popupContainer });
-			});
-
-			// Clean up on popup close
-			popup.on('close', () => {
-				const mounted = mountedPopups.get(popupId);
-				if (mounted) {
-					unmount(mounted.component);
-					mountedPopups.delete(popupId);
-				}
-			});
-
-			// Add marker to map
-			new mapboxgl.Marker(el).setLngLat([lon, lat]).setPopup(popup).addTo(map);
-		});
-	}
-
-	function fitMapToStops() {
-		const bounds = new mapboxgl.LngLatBounds();
+		let minLng = Infinity;
+		let maxLng = -Infinity;
+		let minLat = Infinity;
+		let maxLat = -Infinity;
 
 		stops.forEach((item) => {
-			// Skip if coordinates are null
-			if (!item.location.lat || !item.location.lon) {
-				return;
-			}
+			if (!item.location.lat || !item.location.lon) return;
 
 			const lat = parseFloat(item.location.lat);
 			const lon = parseFloat(item.location.lon);
 
 			if (!isNaN(lat) && !isNaN(lon)) {
-				bounds.extend([lon, lat]);
+				minLng = Math.min(minLng, lon);
+				maxLng = Math.max(maxLng, lon);
+				minLat = Math.min(minLat, lat);
+				maxLat = Math.max(maxLat, lat);
 			}
 		});
 
-		map.fitBounds(bounds, {
-			padding: 80,
-			maxZoom: 15,
-			animate: false
-		});
-	}
+		if (minLng === Infinity) return undefined;
+
+		return [
+			[minLng, minLat],
+			[maxLng, maxLat]
+		] as [[number, number], [number, number]];
+	});
+
+	// Watch for focusedStopId changes and fly to the stop
+	$effect(() => {
+		if (focusedStopId && map) {
+			const stop = stops.find((s) => s.stop.id === focusedStopId);
+			if (!stop || !stop.location.lat || !stop.location.lon) return;
+
+			const lat = parseFloat(stop.location.lat);
+			const lon = parseFloat(stop.location.lon);
+
+			if (!isNaN(lat) && !isNaN(lon)) {
+				map.flyTo({
+					center: [lon, lat],
+					zoom: 15,
+					duration: 1000
+				});
+			}
+
+			// Reset focusedStopId after flying
+			focusedStopId = null;
+		}
+	});
 </script>
 
-<div bind:this={mapContainer} class="h-full w-full rounded-xl"></div>
+<div class="h-full w-full rounded-xl">
+	<MapLibre
+		style="https://api.maptiler.com/maps/streets-v2/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL"
+		{center}
+		{zoom}
+		{bounds}
+		fitBoundsOptions={{ padding: 80, maxZoom: 15 }}
+		class="h-full w-full rounded-xl"
+		bind:map
+	>
+		<!-- Route lines -->
+		{#if routes && routes.length > 0}
+			{#each routes as route, index}
+				<GeoJSON id={`route-${route.driver_id}`} data={route.geometry}>
+					<LineLayer
+						paint={{
+							'line-color': driverColors[index % driverColors.length],
+							'line-width': 4,
+							'line-opacity': 0.7
+						}}
+						layout={{
+							'line-cap': 'round',
+							'line-join': 'round'
+						}}
+					/>
+				</GeoJSON>
+			{/each}
+		{/if}
+
+		<!-- Stop markers -->
+		{#each stops as item, index}
+			{@const { stop, location } = item}
+			{#if location.lat && location.lon}
+				{@const lat = parseFloat(location.lat)}
+				{@const lon = parseFloat(location.lon)}
+				{#if !isNaN(lat) && !isNaN(lon)}
+					<Marker lngLat={[lon, lat]} class="cursor-pointer ">
+						<div
+							class="relative flex h-7 w-7 items-center justify-center rounded-full border-[3px] border-white bg-emerald-700 shadow-lg transition-all duration-50 before:pointer-events-none before:absolute before:inset-[-6px] before:rounded-full before:border-2 before:border-emerald-700/60 before:content-[''] hover:scale-[1.15] hover:shadow-xl hover:before:border-[1.5px] hover:before:border-emerald-700/40"
+						>
+							<span class="relative z-[1] text-[10px] font-bold text-white drop-shadow"
+								>{index + 1}</span
+							>
+						</div>
+
+						<Popup openOn="click" offset={[0, -15]} closeOnClickOutside closeButton>
+							<StopMapPopup
+								{stop}
+								{location}
+								{index}
+								onGoToStop={(stopId) => {
+									onGoToStop(stopId);
+								}}
+							/>
+						</Popup>
+					</Marker>
+				{/if}
+			{/if}
+		{/each}
+	</MapLibre>
+</div>
 
 <style>
-	:global(.custom-marker) {
-		cursor: pointer;
-	}
-
-	:global(.custom-marker:hover) {
-		transform: scale(1.1);
-		z-index: 10;
-	}
-
-	:global(.marker-content) {
-		width: 28px;
-		height: 28px;
-		background: #0f4f44; /* forest-600 */
-		border: 3px solid white;
-		border-radius: 50%;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		box-shadow:
-			0 2px 8px rgba(0, 0, 0, 0.3),
-			0 0 0 2px rgba(15, 79, 68, 0.3); /* forest-600 with opacity */
-		transition: all 0.2s ease;
-		position: relative;
-	}
-
-	/* Outer ring effect similar to Google Maps */
-	:global(.marker-content::before) {
-		content: '';
-		position: absolute;
-		inset: -6px;
-		border-radius: 50%;
-		border: 2px solid rgba(15, 79, 68, 0.4); /* forest-600 with opacity */
-		pointer-events: none;
-	}
-
-	:global(.custom-marker:hover .marker-content) {
-		transform: scale(1.15);
-		box-shadow:
-			0 4px 12px rgba(0, 0, 0, 0.4),
-			0 0 0 3px rgba(15, 79, 68, 0.4); /* forest-600 with opacity */
-	}
-
-	:global(.custom-marker:hover .marker-content::before) {
-		border-color: rgba(15, 79, 68, 0.6); /* forest-600 with opacity */
-		border-width: 2.5px;
-	}
-
-	:global(.marker-number) {
-		color: white;
-		font-weight: 700;
-		font-size: 10px;
-		text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-		position: relative;
-		z-index: 1;
-	}
-
-	:global(.mapboxgl-popup-content) {
-		border-radius: 12px;
-		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-		padding: 12px;
-	}
-
-	:global(.mapboxgl-popup-close-button) {
-		font-size: 20px;
-		padding: 4px 8px;
-		color: hsl(var(--muted-foreground));
-	}
-
-	:global(.mapboxgl-popup-close-button:hover) {
-		background-color: hsl(var(--muted));
-		color: hsl(var(--foreground));
+	:global(.maplibregl-popup-content) {
+		border-radius: 0.5rem; /* rounded-lg */
 	}
 </style>

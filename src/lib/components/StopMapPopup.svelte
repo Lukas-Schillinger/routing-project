@@ -16,7 +16,7 @@
 	} = $props();
 </script>
 
-<div class="map-popup">
+<div class="min-w-48 p-1">
 	<h3 class="mb-1 text-sm font-semibold">{stop.contact_name || 'Unknown'}</h3>
 	<p class="mb-1 text-xs text-muted-foreground">{location.address_line1}</p>
 
@@ -27,23 +27,11 @@
 		</p>
 	{/if}
 
-	{#if stop.contact_phone}
-		<p class="mt-2 text-xs">📞 {stop.contact_phone}</p>
-	{/if}
-
 	{#if stop.notes}
 		<p class="mt-2 text-xs text-muted-foreground italic">{stop.notes}</p>
 	{/if}
 
 	<div class="mt-3">
-		<Button size="sm" class="w-full" onclick={() => onGoToStop(stop.id)}>Go to Stop</Button>
+		<Button class="h-6 w-full" size="sm" onclick={() => onGoToStop(stop.id)}>Go to Stop</Button>
 	</div>
 </div>
-
-<style>
-	.map-popup {
-		padding: 4px;
-		min-width: 180px;
-		max-width: 280px;
-	}
-</style>

@@ -2,6 +2,7 @@ import {
 	depotService,
 	driverService,
 	mapService,
+	routeService,
 	ServiceError,
 	stopService
 } from '$lib/services/server';
@@ -23,12 +24,13 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 
 	try {
 		// Fetch all data in parallel since they're independent
-		const [map, mapStops, orgDrivers, assignedDriversData, depots] = await Promise.all([
+		const [map, mapStops, orgDrivers, assignedDriversData, depots, routes] = await Promise.all([
 			mapService.getMapById(mapId, user.organization_id),
 			stopService.getStopsByMap(mapId, user.organization_id),
 			driverService.getDrivers(user.organization_id),
 			mapService.getDriversForMap(mapId, user.organization_id),
-			depotService.getDepots(user.organization_id)
+			depotService.getDepots(user.organization_id),
+			routeService.getRoutesByMap(mapId, user.organization_id)
 		]);
 
 		const assignedDrivers = assignedDriversData.map((d) => d.driver);
@@ -43,6 +45,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			allDrivers: orgDrivers,
 			assignedDrivers,
 			depots,
+			routes,
 			isViewMode
 		};
 	} catch (err) {
