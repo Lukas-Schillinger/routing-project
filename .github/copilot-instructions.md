@@ -196,6 +196,10 @@ Never allow cross-tenant access - validate ownership before any mutation.
   - Use `renderComponent()` helper to render Svelte components in cells
   - Use `FlexRender` component in templates to render cell content
   - DropdownMenu.Trigger does NOT use asChild/builder pattern - apply classes directly to trigger element
+- **Buttons**: use shadcn-svelte button component
+  - variant="primary" for buttons that do something like submitting a form or optimizing a route
+  - use outline buttons for UI components like data-table options
+  - use secondary buttons for create/edit popovers
 
 ### Environment Variables
 

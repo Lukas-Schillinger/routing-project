@@ -7,7 +7,7 @@
 	import type { Map as MapType, Stop } from '$lib/schemas';
 	import { mapApi } from '$lib/services/api';
 	import { formatDate } from '$lib/utils';
-	import { Calendar, Check, Map, Plus, X } from 'lucide-svelte';
+	import { Calendar, CircleCheck, Map, Plus } from 'lucide-svelte';
 
 	let {
 		maps = $bindable(),
@@ -43,10 +43,19 @@
 	}
 
 	function getMapIsRouted(mapId: string, stops: Stop[]) {
-		const unRoutedStops = getMapStops(mapId, stops).filter((e) => {
-			e.driver_id && e.delivery_index == null;
+		const mapStops = getMapStops(mapId, stops);
+
+		// If no stops, consider it as not routed
+		if (mapStops.length === 0) {
+			return false;
+		}
+
+		// A map is considered routed if all stops have both driver_id and delivery_index
+		const routedStops = mapStops.filter((stop) => {
+			return stop.driver_id !== null && stop.delivery_index !== null;
 		});
-		return unRoutedStops.length == 0 ? false : true;
+
+		return routedStops.length === mapStops.length;
 	}
 </script>
 
@@ -92,11 +101,9 @@
 							</div>
 						</Table.Cell>
 						<Table.Cell>
-							<div class="flex items-center text-sm text-muted-foreground">
+							<div class="flex w-full items-center text-sm text-muted-foreground">
 								{#if getMapIsRouted(map.id, stops)}
-									<Check />
-								{:else}
-									<X />
+									<CircleCheck class="size-5 stroke-primary" />
 								{/if}
 							</div>
 						</Table.Cell>

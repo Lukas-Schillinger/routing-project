@@ -156,7 +156,7 @@
 		{#if children}
 			{@render children()}
 		{:else if mode === 'create'}
-			<Button>
+			<Button size="sm" variant="secondary">
 				<Building2 class="mr-2 h-4 w-4" />
 				Create Depot
 			</Button>

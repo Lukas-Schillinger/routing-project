@@ -142,7 +142,7 @@
 		{#if children}
 			{@render children()}
 		{:else if mode === 'create'}
-			<Button>
+			<Button size="sm" variant="secondary">
 				<Truck class="mr-2 h-4 w-4" />
 				Create Driver
 			</Button>

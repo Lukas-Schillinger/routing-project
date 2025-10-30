@@ -1,11 +1,13 @@
 <script lang="ts">
+	import { invalidateAll } from '$app/navigation';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
-	import { Label } from '$lib/components/ui/label';
-	import * as Select from '$lib/components/ui/select';
+	import Label from '$lib/components/ui/label/label.svelte';
 	import type { DepotWithLocationJoin, Driver, Map, StopWithLocation } from '$lib/schemas';
 	import { mapApi } from '$lib/services/api';
 	import { Building2, Sparkles } from 'lucide-svelte';
+	import DepotSelect from './DepotSelect.svelte';
+	import FairnessSlider from './FairnessSlider.svelte';
 
 	interface Props {
 		map: Map;
@@ -14,6 +16,7 @@
 		assignedDrivers: Driver[];
 		isOptimizing: boolean;
 		onRoutesOptimized: () => void;
+		onDepotCreated: () => void;
 	}
 
 	let {
@@ -22,11 +25,13 @@
 		depots,
 		assignedDrivers,
 		isOptimizing = $bindable(),
-		onRoutesOptimized
+		onRoutesOptimized,
+		onDepotCreated
 	}: Props = $props();
 
 	let optimizationError = $state('');
 	let selectedDepotId = $state<string | undefined>(undefined);
+	let fairness = $state<'high' | 'medium' | 'low'>('medium');
 
 	// Set default depot if available
 	$effect(() => {
@@ -64,7 +69,7 @@
 			console.log('Starting Optimization');
 			const res = await mapApi.optimize(map.id, {
 				depotId: selectedDepotId,
-				fairness: 'medium', // Options: 'high', 'medium', 'low'
+				fairness: fairness, // Options: 'high', 'medium', 'low'
 				timeLimitSec: 30, // Optimization time limit
 				startAtDepot: true, // Routes start at depot
 				endAtDepot: true // Routes end at depot
@@ -90,62 +95,36 @@
 		</Card.Title>
 		<Card.Description>Configure and optimize delivery routes</Card.Description>
 	</Card.Header>
-	<Card.Content class="space-y-4">
+	<Card.Content class="space-y-8">
 		<!-- Depot Selection -->
-		<div class="space-y-2">
-			<Label for="depot-select">Starting Depot</Label>
-			{#if depots.length === 0}
-				<p class="text-sm text-muted-foreground">
-					No depots available. Please create a depot before optimizing routes.
-				</p>
-			{:else}
-				<Select.Root type="single" bind:value={selectedDepotId}>
-					<Select.Trigger id="depot-select" class="w-full">
-						{#if selectedDepotId}
-							{@const selectedDepot = depots.find((d) => d.depot.id === selectedDepotId)}
-							{#if selectedDepot}
-								<div class="flex items-center gap-2">
-									<Building2 class="h-4 w-4" />
-									<span>{selectedDepot.depot.name}</span>
-								</div>
-							{/if}
-						{:else}
-							<span class="text-muted-foreground">Select a depot</span>
-						{/if}
-					</Select.Trigger>
-					<Select.Content>
-						{#each depots as depot}
-							<Select.Item value={depot.depot.id}>
-								<div class="flex items-center gap-2">
-									<Building2 class="h-4 w-4" />
-									<div>
-										<div class="font-medium">{depot.depot.name}</div>
-										<div class="text-xs text-muted-foreground">
-											{depot.location.address_line1}
-										</div>
-									</div>
-									{#if depot.depot.default_depot}
-										<span class="ml-auto text-xs text-primary">(Default)</span>
-									{/if}
-								</div>
-							</Select.Item>
-						{/each}
-					</Select.Content>
-				</Select.Root>
-			{/if}
-		</div>
+		<div class="space-y-8">
+			<div class="space-y-2">
+				<Label>Depot</Label>
+				<DepotSelect onDepotCreated={() => invalidateAll()} {depots} {selectedDepotId} />
+			</div>
 
+			<div class="">
+				<div>
+					<Label>Route Options</Label>
+					<div class="pt-2 text-sm text-muted-foreground">
+						Fair routes evenly distribute stops between drivers. Efficient routes may leave some
+						drivers with more stops than others.
+					</div>
+				</div>
+				<div class="px-2"><FairnessSlider bind:fairness /></div>
+			</div>
+		</div>
 		<!-- Optimize Button -->
 		<div class="flex justify-center pt-2">
 			<Button
-				size="lg"
+				size="default"
 				onclick={optimizeRoutes}
 				disabled={isOptimizing ||
 					!selectedDepotId ||
 					depots.length === 0 ||
 					assignedDrivers.length === 0 ||
 					stops.length === 0}
-				class="gap-2"
+				class="w-full gap-2"
 			>
 				{#if isOptimizing}
 					<Sparkles class="h-5 w-5 animate-spin" />
@@ -157,6 +136,7 @@
 			</Button>
 		</div>
 	</Card.Content>
+
 	<!-- Optimization Error -->
 	{#if optimizationError}
 		<Card.Root class="border-destructive shadow-lg">

@@ -13,7 +13,7 @@
 	import { MapPin, Route, Truck } from 'lucide-svelte';
 	import { getContext } from 'svelte';
 	import type { PageData } from './$types';
-	import OptimizationCard from './OptimizationCard.svelte';
+	import OptimizationCard from './OptimizationCard/';
 	import EditDriversTable from './tables/EditDriversTable.svelte';
 	import EditStopsDataTable from './tables/EditStopsDataTable';
 	import ViewDriversTable from './tables/ViewDriversTable.svelte';
@@ -210,6 +210,7 @@
 			depots={data.depots}
 			{isOptimizing}
 			onRoutesOptimized={() => invalidateAll()}
+			onDepotCreated={() => invalidateAll()}
 		/>
 	{:else}
 		<div class="flex justify-center">

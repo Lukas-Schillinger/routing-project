@@ -37,7 +37,6 @@
 		Check,
 		ChevronDown,
 		MapPin,
-		Plus,
 		Search
 	} from 'lucide-svelte';
 	import AddressCell from './AddressCell.svelte';
@@ -382,9 +381,9 @@
 					}}
 					triggerClass="w-full"
 				>
-					<Button class="w-full" variant="default">
-						<Plus class="mr-2 h-4 w-4" />
-						Add Stop
+					<Button class="w-full" variant="secondary">
+						<MapPin class="mr-2 h-4 w-4" />
+						Create Stop
 					</Button>
 				</EditOrCreateStopPopover>
 			</div>
