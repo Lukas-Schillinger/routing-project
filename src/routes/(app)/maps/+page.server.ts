@@ -1,4 +1,4 @@
-import { depotService, driverService, mapService } from '$lib/services/server';
+import { depotService, driverService, mapService, stopService } from '$lib/services/server';
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
@@ -10,15 +10,17 @@ export const load: PageServerLoad = async ({ locals }) => {
 	}
 
 	// Fetch all data in parallel since they're independent
-	const [userMaps, userDepots, userDrivers] = await Promise.all([
+	const [userMaps, userDepots, userDrivers, stops] = await Promise.all([
 		mapService.getMaps(user.organization_id),
 		depotService.getDepots(user.organization_id),
-		driverService.getDrivers(user.organization_id)
+		driverService.getDrivers(user.organization_id),
+		stopService.getStops(user.organization_id)
 	]);
 
 	return {
 		maps: userMaps,
 		depots: userDepots,
-		drivers: userDrivers
+		drivers: userDrivers,
+		stops: stops
 	};
 };

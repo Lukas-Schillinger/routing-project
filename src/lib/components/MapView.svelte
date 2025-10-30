@@ -1,7 +1,8 @@
 <script lang="ts">
 	import type { StopWithLocation } from '$lib/schemas';
 	import type maplibregl from 'maplibre-gl';
-	import { GeoJSON, LineLayer, MapLibre, Marker, Popup } from 'svelte-maplibre';
+	import { LineLayer, MapLibre, Marker, Popup } from 'svelte-maplibre';
+	import GeoJSON from 'svelte-maplibre/GeoJSON.svelte';
 	import StopMapPopup from './StopMapPopup.svelte';
 
 	interface Route {

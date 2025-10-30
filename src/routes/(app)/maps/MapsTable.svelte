@@ -4,22 +4,17 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import * as Table from '$lib/components/ui/table';
+	import type { Map as MapType, Stop } from '$lib/schemas';
 	import { mapApi } from '$lib/services/api';
 	import { formatDate } from '$lib/utils';
-	import { Calendar, Map, Plus } from 'lucide-svelte';
-
-	type MapWithStops = {
-		id: string;
-		title: string;
-		numStops: number;
-		created_at: Date;
-		updated_at: Date;
-	};
+	import { Calendar, Check, Map, Plus, X } from 'lucide-svelte';
 
 	let {
-		maps = $bindable()
+		maps = $bindable(),
+		stops
 	}: {
-		maps: MapWithStops[];
+		maps: MapType[];
+		stops: Stop[];
 	} = $props();
 
 	const handleDelete = async (id: string) => {
@@ -40,6 +35,19 @@
 	const handleCopyId = (id: string) => {
 		navigator.clipboard.writeText(id);
 	};
+
+	function getMapStops(mapId: string, stops: Stop[]) {
+		return stops.filter((e) => {
+			return e.map_id == mapId;
+		});
+	}
+
+	function getMapIsRouted(mapId: string, stops: Stop[]) {
+		const unRoutedStops = getMapStops(mapId, stops).filter((e) => {
+			e.driver_id && e.delivery_index == null;
+		});
+		return unRoutedStops.length == 0 ? false : true;
+	}
 </script>
 
 {#if maps.length === 0}
@@ -63,6 +71,7 @@
 				<Table.Row>
 					<Table.Head>Title</Table.Head>
 					<Table.Head># Stops</Table.Head>
+					<Table.Head>Routed</Table.Head>
 					<Table.Head>Created</Table.Head>
 					<Table.Head>Updated</Table.Head>
 					<Table.Head class="w-[50px]"></Table.Head>
@@ -79,7 +88,16 @@
 						</Table.Cell>
 						<Table.Cell>
 							<div class="flex items-center text-sm text-muted-foreground">
-								{map.numStops}
+								{getMapStops(map.id, stops).length}
+							</div>
+						</Table.Cell>
+						<Table.Cell>
+							<div class="flex items-center text-sm text-muted-foreground">
+								{#if getMapIsRouted(map.id, stops)}
+									<Check />
+								{:else}
+									<X />
+								{/if}
 							</div>
 						</Table.Cell>
 						<Table.Cell>

@@ -13,8 +13,7 @@ export const createMapSchema = z.object({
  */
 export const updateMapSchema = z.object({
 	title: z.string().min(1).max(200).optional(),
-	description: z.string().max(1000).nullable().optional(),
-	geoapifyOptimizationResult: z.string().nullable().optional()
+	description: z.string().max(1000).nullable().optional()
 });
 
 /**
@@ -32,8 +31,7 @@ export const mapSchema = z.object({
 	organization_id: z.string().uuid(),
 	title: z.string(),
 	created_at: z.date(),
-	updated_at: z.date(),
-	geoapifyOptimizationResult: z.string().nullable()
+	updated_at: z.date()
 });
 
 /**

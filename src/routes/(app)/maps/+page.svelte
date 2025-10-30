@@ -14,9 +14,7 @@
 	let { data }: { data: PageData } = $props();
 
 	// Set page header in layout context
-	const pageHeaderContext = getContext<{ set: (header: any) => void }>(
-		'pageHeader'
-	);
+	const pageHeaderContext = getContext<{ set: (header: any) => void }>('pageHeader');
 	pageHeaderContext.set({
 		title: 'Maps',
 		description: 'Manage your routing maps and delivery routes'
@@ -43,9 +41,7 @@
 		<Card.CardHeader>
 			<div class="flex items-center justify-between">
 				<div>
-					<p class="text-sm text-muted-foreground">
-						Create and manage your route maps
-					</p>
+					<p class="text-sm text-muted-foreground">Create and manage your route maps</p>
 				</div>
 				<Button href="/demo/csv">
 					<Plus class="mr-2 h-4 w-4" />
@@ -57,7 +53,7 @@
 
 	<!-- Maps Section -->
 	<section>
-		<MapsTable maps={data.maps} />
+		<MapsTable maps={data.maps} stops={data.stops} />
 	</section>
 
 	<!-- Depots and Drivers Grid -->
@@ -80,10 +76,7 @@
 					/>
 				</Card.Content>
 				<Card.Footer>
-					<EditOrCreateDriverPopover
-						mode="create"
-						onSuccess={handleDriverCreated}
-					/>
+					<EditOrCreateDriverPopover mode="create" onSuccess={handleDriverCreated} />
 				</Card.Footer>
 			</Card.Root>
 		</section>
@@ -94,18 +87,13 @@
 						<Building2 class="h-5 w-5 text-primary" />
 						Depots
 					</Card.Title>
-					<Card.Description
-						>Starting locations for your delivery routes</Card.Description
-					>
+					<Card.Description>Starting locations for your delivery routes</Card.Description>
 				</Card.Header>
 				<Card.Content>
 					<DepotsTable depots={data.depots} />
 				</Card.Content>
 				<Card.Footer>
-					<EditOrCreateDepotPopover
-						mode="create"
-						onSuccess={handleDepotCreated}
-					/>
+					<EditOrCreateDepotPopover mode="create" onSuccess={handleDepotCreated} />
 				</Card.Footer>
 			</Card.Root>
 		</section>

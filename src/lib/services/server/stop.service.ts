@@ -1,4 +1,4 @@
-import type { CreateStop, StopFilter, StopWithLocation, UpdateStop } from '$lib/schemas/stop';
+import type { CreateStop, Stop, StopFilter, StopWithLocation, UpdateStop } from '$lib/schemas/stop';
 import { db } from '$lib/server/db';
 import { locations, maps, stops } from '$lib/server/db/schema';
 import { and, eq } from 'drizzle-orm';
@@ -21,6 +21,11 @@ export class StopService {
 		}
 
 		return stop;
+	}
+
+	async getStops(organizationId: string): Promise<Stop[]> {
+		const results = await db.select().from(stops).where(eq(stops.organization_id, organizationId));
+		return results;
 	}
 
 	/**
