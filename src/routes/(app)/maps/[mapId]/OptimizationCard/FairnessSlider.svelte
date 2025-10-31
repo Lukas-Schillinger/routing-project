@@ -8,9 +8,9 @@
 	let { fairness = $bindable() }: Props = $props();
 
 	const fairnessValues = [
-		{ value: 'low', number: 0, label: 'Fair' },
+		{ value: 'low', number: 0, label: 'Efficient' },
 		{ value: 'medium', number: 50, label: 'Balanced' },
-		{ value: 'high', number: 100, label: 'Efficient' }
+		{ value: 'high', number: 100, label: 'Fair' }
 	] as const;
 
 	// Get current fairness as number for slider
@@ -51,7 +51,7 @@
 >
 	{#snippet children()}
 		<span class="relative h-1.5 w-full grow overflow-hidden rounded-full bg-primary/20">
-			<Slider.Range class="absolute h-full bg-primary" />
+			<Slider.Range class="absolute h-full bg-transparent" />
 		</span>
 
 		<!-- Step markers -->

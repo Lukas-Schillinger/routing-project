@@ -55,7 +55,7 @@
 
 	async function createMap() {
 		console.log('Hello');
-		const mapName = `Map ${Date.now().toLocaleString()}`;
+		const mapName = `CSV Import ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`;
 		const res = await mapApi.createFromCSV(mapName, results);
 		goto(`/maps/${res.map.id}`);
 	}

@@ -131,6 +131,13 @@
 				<MapPin class="h-4 w-4" />
 				<span>{stops.length} total stops</span>
 			</div>
+			<div class="flex items-center gap-2 text-sm text-muted-foreground">
+				<Clock class="h-4 w-4" />
+				<span>
+					{Math.floor(routes.reduce((total, route) => total + Number(route.duration || 0), 0) / 60)}
+					min total
+				</span>
+			</div>
 		</div>
 
 		<div class="flex items-center gap-2">

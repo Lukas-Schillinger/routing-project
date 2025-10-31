@@ -62,6 +62,14 @@ class MapboxDistanceMatrixService {
 			throw ServiceError.validation('No stops found for this map');
 		}
 
+		// Sort stops by address_hash for deterministic ordering. This allows reuse of the matrix
+		// in the optimization service
+		mapStops.sort((a, b) => {
+			const hashA = a.location.address_hash || '';
+			const hashB = b.location.address_hash || '';
+			return hashA.localeCompare(hashB);
+		});
+
 		// Validate all stops have coordinates
 		for (const { stop, location } of mapStops) {
 			if (!location.lon || !location.lat) {
@@ -80,7 +88,7 @@ class MapboxDistanceMatrixService {
 
 		const locationIds: string[] = [depot.location.id];
 
-		// Add all stop coordinates
+		// Add all stop coordinates in sorted order
 		for (const { location } of mapStops) {
 			coordinates.push([Number(location.lon), Number(location.lat)]);
 			addresses.push(location.address_line1 || location.name || 'Unknown');

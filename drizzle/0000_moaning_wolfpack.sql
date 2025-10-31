@@ -29,6 +29,19 @@ CREATE TABLE "drivers" (
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "files" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"organization_id" uuid DEFAULT gen_random_uuid() NOT NULL,
+	"filename" text NOT NULL,
+	"original_filename" text NOT NULL,
+	"content_type" text NOT NULL,
+	"size_bytes" integer NOT NULL,
+	"r2_key" text NOT NULL,
+	"uploaded_by" uuid NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "locations" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"organization_id" uuid DEFAULT gen_random_uuid() NOT NULL,
@@ -55,13 +68,34 @@ CREATE TABLE "maps" (
 	"organization_id" uuid DEFAULT gen_random_uuid() NOT NULL,
 	"title" varchar(200) NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"geoapifyOptimization" json
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "matrices" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"organization_id" uuid DEFAULT gen_random_uuid() NOT NULL,
+	"map_id" uuid NOT NULL,
+	"inputs_hash" varchar(64) NOT NULL,
+	"matrix" double precision[][] NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "organizations" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"name" varchar(200) NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "routes" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"organization_id" uuid DEFAULT gen_random_uuid() NOT NULL,
+	"map_id" uuid NOT NULL,
+	"driver_id" uuid NOT NULL,
+	"depot_id" uuid NOT NULL,
+	"geometry" jsonb NOT NULL,
+	"duration" numeric(12, 2),
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -105,8 +139,16 @@ ALTER TABLE "driver_map_memberships" ADD CONSTRAINT "driver_map_memberships_orga
 ALTER TABLE "driver_map_memberships" ADD CONSTRAINT "driver_map_memberships_driver_id_drivers_id_fk" FOREIGN KEY ("driver_id") REFERENCES "public"."drivers"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "driver_map_memberships" ADD CONSTRAINT "driver_map_memberships_map_id_maps_id_fk" FOREIGN KEY ("map_id") REFERENCES "public"."maps"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "drivers" ADD CONSTRAINT "drivers_organization_id_organizations_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "files" ADD CONSTRAINT "files_organization_id_organizations_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "files" ADD CONSTRAINT "files_uploaded_by_users_id_fk" FOREIGN KEY ("uploaded_by") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "locations" ADD CONSTRAINT "locations_organization_id_organizations_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "maps" ADD CONSTRAINT "maps_organization_id_organizations_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "matrices" ADD CONSTRAINT "matrices_organization_id_organizations_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "matrices" ADD CONSTRAINT "matrices_map_id_maps_id_fk" FOREIGN KEY ("map_id") REFERENCES "public"."maps"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "routes" ADD CONSTRAINT "routes_organization_id_organizations_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "routes" ADD CONSTRAINT "routes_map_id_maps_id_fk" FOREIGN KEY ("map_id") REFERENCES "public"."maps"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "routes" ADD CONSTRAINT "routes_driver_id_drivers_id_fk" FOREIGN KEY ("driver_id") REFERENCES "public"."drivers"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "routes" ADD CONSTRAINT "routes_depot_id_depots_id_fk" FOREIGN KEY ("depot_id") REFERENCES "public"."depots"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "session" ADD CONSTRAINT "session_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stops" ADD CONSTRAINT "stops_organization_id_organizations_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stops" ADD CONSTRAINT "stops_map_id_maps_id_fk" FOREIGN KEY ("map_id") REFERENCES "public"."maps"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -121,9 +163,15 @@ CREATE INDEX "driver_map_memberships_driver_idx" ON "driver_map_memberships" USI
 CREATE INDEX "driver_map_memberships_map_idx" ON "driver_map_memberships" USING btree ("map_id");--> statement-breakpoint
 CREATE INDEX "driver_map_memberships_org_idx" ON "driver_map_memberships" USING btree ("organization_id");--> statement-breakpoint
 CREATE INDEX "drivers_org_idx" ON "drivers" USING btree ("organization_id");--> statement-breakpoint
+CREATE INDEX "files_org_idx" ON "files" USING btree ("organization_id");--> statement-breakpoint
+CREATE INDEX "files_uploader_idx" ON "files" USING btree ("uploaded_by");--> statement-breakpoint
 CREATE INDEX "locations_org_idx" ON "locations" USING btree ("organization_id");--> statement-breakpoint
 CREATE INDEX "locations_geo_idx" ON "locations" USING btree ("lat","lon");--> statement-breakpoint
 CREATE INDEX "locations_addr_hash_idx" ON "locations" USING btree ("organization_id","address_hash");--> statement-breakpoint
 CREATE INDEX "maps_org_idx" ON "maps" USING btree ("organization_id");--> statement-breakpoint
-CREATE UNIQUE INDEX "profiles_user_org_uidx" ON "users" USING btree ("organization_id","id");--> statement-breakpoint
-CREATE INDEX "profiles_org_idx" ON "users" USING btree ("organization_id");
+CREATE INDEX "routes_map_idx" ON "routes" USING btree ("map_id");--> statement-breakpoint
+CREATE INDEX "routes_driver_idx" ON "routes" USING btree ("driver_id");--> statement-breakpoint
+CREATE INDEX "routes_org_idx" ON "routes" USING btree ("organization_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "routes_map_driver_uidx" ON "routes" USING btree ("map_id","driver_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "users_user_org_uidx" ON "users" USING btree ("organization_id","id");--> statement-breakpoint
+CREATE INDEX "users_org_idx" ON "users" USING btree ("organization_id");

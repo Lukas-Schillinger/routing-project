@@ -1,8 +1,10 @@
 import { db } from '$lib/server/db';
-import { driverMapMemberships, drivers, locations, stops } from '$lib/server/db/schema';
+import { driverMapMemberships, drivers, locations, matrices, stops } from '$lib/server/db/schema';
+import { createHash } from 'crypto';
 import { and, eq } from 'drizzle-orm';
 import { mapboxDistanceMatrix, mapboxNavigation } from '../external/mapbox';
-import type { Coordinate } from '../external/mapbox/types';
+import type { DistanceMatrixResult } from '../external/mapbox/distance-matrix';
+import type { Coordinate, MatrixResponse } from '../external/mapbox/types';
 import { tspSolverOptimization } from '../external/tsp_solver';
 import type { OptimizationConfig, OptimizationResult } from '../external/tsp_solver/types';
 import { depotService } from './depot.service';
@@ -47,16 +49,16 @@ export class OptimizationService {
 			);
 		}
 
-		// 2. Get distance/duration matrix from Mapbox
-		const matrixResult = await mapboxDistanceMatrix.createDistanceMatrix(
+		// 2. Get or create distance matrix (with caching)
+		const matrixResult = await this.getOrCreateDistanceMatrix(
 			mapId,
 			options.depotId,
 			organizationId
 		);
 
 		// 3. Prepare matrix (handle null values for unreachable locations)
-		const cleanedMatrix = matrixResult.matrix.map((row) =>
-			row.map((value) => (value === null ? 999999 : value))
+		const cleanedMatrix = matrixResult.matrix.map((row: (number | null)[]) =>
+			row.map((value: number | null) => (value === null ? 999999 : value))
 		);
 
 		// 4. Extract driver IDs
@@ -120,6 +122,141 @@ export class OptimizationService {
 	}
 
 	/**
+	 * Get or create a distance matrix with caching
+	 * Checks for existing matrix with matching input hash before creating new one
+	 */
+	private async getOrCreateDistanceMatrix(
+		mapId: string,
+		depotId: string,
+		organizationId: string
+	): Promise<DistanceMatrixResult> {
+		// Get coordinates and create input hash
+		const coordinatesData = await this.getCoordinatesData(mapId, depotId, organizationId);
+		const inputHash = this.createInputHash(coordinatesData);
+
+		console.log('DO I NEED TO CREATE A MATRIX?');
+		// Check for existing matrix with same input hash
+		const existingMatrix = await db
+			.select()
+			.from(matrices)
+			.where(and(eq(matrices.organization_id, organizationId), eq(matrices.inputsHash, inputHash)))
+			.limit(1);
+
+		if (existingMatrix.length > 0) {
+			console.log('----------------------NO');
+
+			// Return cached matrix (create a mock MatrixResponse for compatibility)
+			const cached = existingMatrix[0];
+			const mockResponse: MatrixResponse = {
+				code: 'Ok',
+				durations: cached.matrix,
+				sources: [],
+				destinations: []
+			};
+
+			return {
+				matrix: cached.matrix as number[][],
+				addresses: coordinatesData.addresses,
+				locationIds: coordinatesData.locationIds,
+				rawResponse: mockResponse
+			};
+		}
+		console.log('----------------------YES');
+
+		// Create new matrix via API
+		const matrixResult = await mapboxDistanceMatrix.createDistanceMatrix(
+			mapId,
+			depotId,
+			organizationId
+		);
+
+		// Save matrix to database
+		await db.insert(matrices).values({
+			organization_id: organizationId,
+			map_id: mapId,
+			inputsHash: inputHash,
+			matrix: matrixResult.matrix
+		});
+
+		return matrixResult;
+	}
+
+	/**
+	 * Get coordinates data for depot and stops
+	 */
+	private async getCoordinatesData(mapId: string, depotId: string, organizationId: string) {
+		// Fetch depot with location
+		const depot = await depotService.getDepotById(depotId, organizationId);
+
+		if (!depot.location.lon || !depot.location.lat) {
+			throw ServiceError.validation(
+				'Depot location has no coordinates. Please update the depot with valid coordinates.'
+			);
+		}
+
+		// Fetch all stops with their locations for this map
+		const mapStops = await db
+			.select({
+				stop: stops,
+				location: locations
+			})
+			.from(stops)
+			.innerJoin(locations, eq(stops.location_id, locations.id))
+			.where(eq(stops.map_id, mapId));
+
+		if (mapStops.length === 0) {
+			throw ServiceError.validation('No stops found for this map');
+		}
+
+		// Sort stops by address_hash for deterministic ordering
+		mapStops.sort((a, b) => {
+			const hashA = a.location.address_hash || '';
+			const hashB = b.location.address_hash || '';
+			return hashA.localeCompare(hashB);
+		});
+
+		// Validate all stops have coordinates
+		for (const { stop, location } of mapStops) {
+			if (!location.lon || !location.lat) {
+				throw ServiceError.validation(
+					`Stop "${location.name || stop.id}" has no coordinates. Geocode all stops before creating distance matrix.`
+				);
+			}
+		}
+
+		// Build coordinates array with depot first
+		const coordinates: [number, number][] = [
+			[Number(depot.location.lon), Number(depot.location.lat)]
+		];
+
+		const addresses: string[] = [depot.location.address_line1 || depot.depot.name || 'Depot'];
+		const locationIds: string[] = [depot.location.id];
+
+		// Add all stop coordinates in sorted order
+		for (const { location } of mapStops) {
+			coordinates.push([Number(location.lon), Number(location.lat)]);
+			addresses.push(location.address_line1 || location.name || 'Unknown');
+			locationIds.push(location.id);
+		}
+
+		return {
+			coordinates,
+			addresses,
+			locationIds
+		};
+	}
+
+	/**
+	 * Create a deterministic hash from coordinates
+	 */
+	private createInputHash(coordinatesData: { coordinates: [number, number][] }): string {
+		// Keep coordinates in order - depot first, then stops ordered by address_hash
+		// This preserves the matrix index mapping across cache hits
+		const coordsString = coordinatesData.coordinates
+			.map((coord) => `${coord[0].toFixed(6)},${coord[1].toFixed(6)}`)
+			.join('|');
+		return createHash('sha256').update(coordsString).digest('hex');
+	} /**
 	 * Clear driver assignments for all stops in the map
 	 */
 	private async clearStopAssignments(mapId: string): Promise<void> {

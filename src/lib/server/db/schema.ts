@@ -2,6 +2,7 @@
 import { relations, sql } from 'drizzle-orm';
 import {
 	boolean,
+	doublePrecision,
 	index,
 	integer,
 	jsonb,
@@ -201,6 +202,18 @@ export const routes = pgTable(
 	]
 );
 
+export const matrices = pgTable('matrices', {
+	id,
+	organization_id: orgId.references(() => organizations.id, { onDelete: 'cascade' }),
+	map_id: uuid()
+		.references(() => maps.id, { onDelete: 'cascade' })
+		.notNull(),
+	inputsHash: varchar('inputs_hash', { length: 64 }).notNull(),
+	matrix: doublePrecision('matrix').array().array().notNull(),
+	created_at: ts('created_at'),
+	updated_at: ts('updated_at')
+});
+
 export const files = pgTable(
 	'files',
 	{
@@ -238,6 +251,7 @@ export const organizationsRelations = relations(organizations, ({ many }) => ({
 	driverMapMemberships: many(driverMapMemberships),
 	depots: many(depots),
 	routes: many(routes),
+	matrices: many(matrices),
 	files: many(files)
 }));
 
@@ -266,7 +280,8 @@ export const mapsRelations = relations(maps, ({ one, many }) => ({
 	}),
 	stops: many(stops),
 	driverMemberships: many(driverMapMemberships),
-	routes: many(routes)
+	routes: many(routes),
+	matrices: many(matrices)
 }));
 
 export const locationsRelations = relations(locations, ({ one, many }) => ({
@@ -351,5 +366,16 @@ export const filesRelations = relations(files, ({ one }) => ({
 	uploadedBy: one(users, {
 		fields: [files.uploaded_by],
 		references: [users.id]
+	})
+}));
+
+export const matricesRelations = relations(matrices, ({ one }) => ({
+	organization: one(organizations, {
+		fields: [matrices.organization_id],
+		references: [organizations.id]
+	}),
+	map: one(maps, {
+		fields: [matrices.map_id],
+		references: [maps.id]
 	})
 }));

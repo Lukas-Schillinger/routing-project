@@ -1,7 +1,7 @@
 import type { CreateStop } from '$lib/schemas';
 import type { CreateMap, UpdateMap } from '$lib/schemas/map';
 import { db } from '$lib/server/db';
-import { driverMapMemberships, drivers, maps, stops } from '$lib/server/db/schema';
+import { driverMapMemberships, drivers, maps, routes, stops } from '$lib/server/db/schema';
 import { geocodingFeatureToLocation } from '$lib/utils';
 import { and, eq, sql } from 'drizzle-orm';
 import type { GeocodeCSVResult } from './csv-import.service';
@@ -139,6 +139,8 @@ export class MapService {
 				updated_at: new Date()
 			})
 			.where(eq(stops.map_id, mapId));
+
+		await db.delete(routes).where(eq(routes.map_id, mapId));
 
 		return { success: true };
 	}
