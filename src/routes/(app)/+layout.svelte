@@ -24,7 +24,7 @@
 	<link rel="icon" href={favicon} />
 </svelte:head>
 
-<div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+<div class="min-h-screen">
 	<Header {pageHeader} />
 	<main
 		style="padding-top: var(--header-height, 64px);"

@@ -125,9 +125,9 @@
 						</Table.Header>
 						<Table.Body>
 							{#each driverStops as { stop, location }, index}
-								<Table.Row>
+								<Table.Row class="">
 									<Table.Cell class="font-medium text-muted-foreground">
-										{stop.delivery_index !== null ? stop.delivery_index + 1 : index + 1}
+										{stop.delivery_index !== null ? stop.delivery_index : index}
 									</Table.Cell>
 									<Table.Cell>
 										<div class="flex items-center">

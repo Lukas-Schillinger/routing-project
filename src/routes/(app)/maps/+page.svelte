@@ -2,9 +2,8 @@
 	import { invalidateAll } from '$app/navigation';
 	import EditOrCreateDepotPopover from '$lib/components/EditOrCreateDepotPopover.svelte';
 	import EditOrCreateDriverPopover from '$lib/components/EditOrCreateDriverPopover.svelte';
-	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
-	import { Building2, Plus, Truck } from 'lucide-svelte';
+	import { Building2, Truck } from 'lucide-svelte';
 	import { getContext } from 'svelte';
 	import type { PageData } from './$types';
 	import DepotsTable from './DepotsTable.svelte';
@@ -36,24 +35,12 @@
 </svelte:head>
 
 <div class="space-y-6">
-	<!-- Header Card -->
-	<Card.Card class="shadow-lg">
-		<Card.CardHeader>
-			<div class="flex items-center justify-between">
-				<div>
-					<p class="text-sm text-muted-foreground">Create and manage your route maps</p>
-				</div>
-				<Button href="/demo/csv">
-					<Plus class="mr-2 h-4 w-4" />
-					New Map
-				</Button>
-			</div>
-		</Card.CardHeader>
-	</Card.Card>
-
 	<!-- Maps Section -->
-	<section>
-		<MapsTable maps={data.maps} stops={data.stops} />
+	<section class="space-y-6">
+		<!-- Stacked List View -->
+		<div>
+			<MapsTable maps={data.maps} stops={data.stops} />
+		</div>
 	</section>
 
 	<!-- Depots and Drivers Grid -->

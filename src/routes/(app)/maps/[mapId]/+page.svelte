@@ -17,6 +17,7 @@
 	import EditDriversTable from './tables/EditDriversTable.svelte';
 	import EditStopsDataTable from './tables/EditStopsDataTable';
 	import ViewDriversTable from './tables/ViewDriversTable.svelte';
+	import ViewRoutes2 from './tables/ViewRoutes2.svelte';
 	import ViewRoutesTable from './tables/ViewRoutesTable.svelte';
 
 	let { data }: { data: PageData } = $props();
@@ -114,22 +115,31 @@
 
 	<!-- Routes Section (View Mode Only) -->
 	{#if isViewMode}
-		<Card>
-			<CardHeader>
-				<CardTitle class="flex items-center gap-2">
-					<Route class="h-5 w-5 text-primary" />
-					Optimized Routes
-				</CardTitle>
-				<CardDescription>Stops organized by driver in optimal delivery order</CardDescription>
-			</CardHeader>
-			<CardContent>
-				<ViewRoutesTable
-					bind:focusedStopId
-					stops={data.stops}
-					assignedDrivers={data.assignedDrivers}
-				/>
-			</CardContent>
-		</Card>
+		<!-- New Card-based Routes View -->
+		<div class="space-y-6">
+			<div>
+				<h2 class="mb-3 text-lg font-semibold">Route Overview</h2>
+				<ViewRoutes2 bind:focusedStopId stops={data.stops} assignedDrivers={data.assignedDrivers} />
+			</div>
+
+			<!-- Original Table View -->
+			<Card>
+				<CardHeader>
+					<CardTitle class="flex items-center gap-2">
+						<Route class="h-5 w-5 text-primary" />
+						Detailed Routes Table
+					</CardTitle>
+					<CardDescription>Detailed table view of stops organized by driver</CardDescription>
+				</CardHeader>
+				<CardContent>
+					<ViewRoutesTable
+						bind:focusedStopId
+						stops={data.stops}
+						assignedDrivers={data.assignedDrivers}
+					/>
+				</CardContent>
+			</Card>
+		</div>
 	{/if}
 
 	<!-- Stops Section (Edit Mode Only) -->

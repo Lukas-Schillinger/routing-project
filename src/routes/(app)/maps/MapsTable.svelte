@@ -1,13 +1,13 @@
 <script lang="ts">
 	import * as Actions from '$lib/components/TableActionsDropdown.Items';
 	import TableActionsDropdown from '$lib/components/TableActionsDropdown.svelte';
+	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
-	import { Card, CardContent } from '$lib/components/ui/card';
-	import * as Table from '$lib/components/ui/table';
+	import * as Card from '$lib/components/ui/card';
 	import type { Map as MapType, Stop } from '$lib/schemas';
 	import { mapApi } from '$lib/services/api';
 	import { formatDate } from '$lib/utils';
-	import { Calendar, CircleCheck, Map, Plus } from 'lucide-svelte';
+	import { Calendar, Check, Map, MapPin, Plus, Truck } from 'lucide-svelte';
 
 	let {
 		maps = $bindable(),
@@ -57,11 +57,19 @@
 
 		return routedStops.length === mapStops.length;
 	}
+
+	function getMapDriverCount(mapId: string, stops: Stop[]) {
+		const mapStops = getMapStops(mapId, stops);
+		const uniqueDrivers = new Set(
+			mapStops.map((stop) => stop.driver_id).filter((id) => id !== null)
+		);
+		return uniqueDrivers.size;
+	}
 </script>
 
 {#if maps.length === 0}
-	<Card>
-		<CardContent class="flex flex-col items-center justify-center py-16">
+	<Card.Root>
+		<Card.Content class="flex flex-col items-center justify-center py-16">
 			<Map class="mb-4 h-16 w-16 text-muted-foreground" />
 			<h3 class="headline-small mb-2">No Maps Yet</h3>
 			<p class="body-medium mb-6 text-center text-muted-foreground">
@@ -71,63 +79,78 @@
 				<Plus class="mr-2 h-4 w-4" />
 				Upload CSV
 			</Button>
-		</CardContent>
-	</Card>
+		</Card.Content>
+	</Card.Root>
 {:else}
-	<div class="rounded-md border bg-card">
-		<Table.Root>
-			<Table.Header>
-				<Table.Row>
-					<Table.Head>Title</Table.Head>
-					<Table.Head># Stops</Table.Head>
-					<Table.Head>Routed</Table.Head>
-					<Table.Head>Created</Table.Head>
-					<Table.Head>Updated</Table.Head>
-					<Table.Head class="w-[50px]"></Table.Head>
-				</Table.Row>
-			</Table.Header>
-			<Table.Body>
+	<Card.Root>
+		<Card.Content>
+			<div class="space-y-4">
 				{#each maps as map}
-					<Table.Row>
-						<Table.Cell>
-							<a href="/maps/{map.id}" class="flex items-center hover:underline">
-								<Map class="mr-2 h-4 w-4 text-primary" />
-								<span class="font-semibold">{map.title}</span>
-							</a>
-						</Table.Cell>
-						<Table.Cell>
-							<div class="flex items-center text-sm text-muted-foreground">
-								{getMapStops(map.id, stops).length}
+					{@const mapStops = getMapStops(map.id, stops)}
+					{@const isRouted = getMapIsRouted(map.id, stops)}
+					{@const driverCount = getMapDriverCount(map.id, stops)}
+
+					<div class="border-b border-border pb-4 last:border-b-0 last:pb-0">
+						<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+							<!-- Left side - Main info -->
+							<div class="flex-1">
+								<div class="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+									<a href="/maps/{map.id}" class="flex items-center gap-2 hover:underline">
+										<h3 class="text-lg font-semibold">{map.title}</h3>
+									</a>
+									{#if isRouted}
+										<Badge variant="default" class="w-fit bg-green-200 text-green-800">
+											<Check class="mr-1 size-3" />
+											Routed
+										</Badge>
+									{:else}
+										<Badge variant="outline" class="w-fit">Not Routed</Badge>
+									{/if}
+								</div>
+
+								<!-- Stats row -->
+								<div
+									class="flex flex-wrap items-center gap-2 text-sm text-muted-foreground sm:gap-6"
+								>
+									<div class="flex items-center gap-1 whitespace-nowrap">
+										<MapPin class="h-4 w-4" />
+										<span>{mapStops.length} stops</span>
+									</div>
+									{#if driverCount > 0}
+										<div class="flex items-center gap-1 whitespace-nowrap">
+											<Truck class="h-4 w-4" />
+											<span>{driverCount} driver{driverCount > 1 ? 's' : ''}</span>
+										</div>
+									{/if}
+									<div class="flex items-center gap-1 whitespace-nowrap">
+										<Calendar class="h-4 w-4" />
+										<span class="hidden sm:inline">Created </span>
+										<span>{formatDate(map.created_at)}</span>
+									</div>
+								</div>
 							</div>
-						</Table.Cell>
-						<Table.Cell>
-							<div class="flex w-full items-center text-sm text-muted-foreground">
-								{#if getMapIsRouted(map.id, stops)}
-									<CircleCheck class="size-5 stroke-primary" />
-								{/if}
+
+							<!-- Right side - Actions -->
+							<div class="flex items-center justify-between gap-2 sm:justify-end">
+								<Button
+									href="/maps/{map.id}"
+									variant="outline"
+									size="sm"
+									class="flex-1 sm:flex-none"
+								>
+									<span class="sm:hidden">View</span>
+									<span class="hidden sm:inline">View Map</span>
+								</Button>
+								<TableActionsDropdown>
+									<Actions.Copy onclick={() => handleCopyId(map.id)} label="Copy ID" />
+									<Actions.Delete onclick={() => handleDelete(map.id)} />
+									<Actions.MetadataLabel item={map} />
+								</TableActionsDropdown>
 							</div>
-						</Table.Cell>
-						<Table.Cell>
-							<div class="flex items-center text-sm text-muted-foreground">
-								<Calendar class="mr-2 h-3 w-3" />
-								{formatDate(map.created_at)}
-							</div>
-						</Table.Cell>
-						<Table.Cell>
-							<div class="text-sm text-muted-foreground">
-								{formatDate(map.updated_at)}
-							</div>
-						</Table.Cell>
-						<Table.Cell>
-							<TableActionsDropdown>
-								<Actions.Copy onclick={() => handleCopyId(map.id)} label="Copy ID" />
-								<Actions.Delete onclick={() => handleDelete(map.id)} />
-								<Actions.MetadataLabel item={map} />
-							</TableActionsDropdown>
-						</Table.Cell>
-					</Table.Row>
+						</div>
+					</div>
 				{/each}
-			</Table.Body>
-		</Table.Root>
-	</div>
+			</div>
+		</Card.Content>
+	</Card.Root>
 {/if}

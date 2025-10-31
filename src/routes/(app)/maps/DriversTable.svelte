@@ -1,11 +1,7 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
 	import EditOrCreateDriverPopover from '$lib/components/EditOrCreateDriverPopover.svelte';
-	import {
-		Copy,
-		Delete,
-		MetadataLabel
-	} from '$lib/components/TableActionsDropdown.Items';
+	import { Copy, Delete, MetadataLabel } from '$lib/components/TableActionsDropdown.Items';
 	import TableActionsDropdown from '$lib/components/TableActionsDropdown.svelte';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import * as Empty from '$lib/components/ui/empty';
@@ -53,9 +49,7 @@
 		</Empty.Media>
 		<Empty.Content>
 			<Empty.Title>No drivers yet</Empty.Title>
-			<Empty.Description
-				>Add drivers to assign them to routes.</Empty.Description
-			>
+			<Empty.Description>Add drivers to assign them to routes.</Empty.Description>
 		</Empty.Content>
 	</Empty.Root>
 {:else}
@@ -63,15 +57,33 @@
 		<Table.Root>
 			<Table.Header>
 				<Table.Row>
+					<Table.Head class="w-[50px]"></Table.Head>
 					<Table.Head>Name</Table.Head>
 					<Table.Head>Phone</Table.Head>
 					<Table.Head>Created</Table.Head>
-					<Table.Head class="w-[50px]"></Table.Head>
 				</Table.Row>
 			</Table.Header>
 			<Table.Body>
 				{#each drivers as driver}
 					<Table.Row>
+						<Table.Cell>
+							<TableActionsDropdown>
+								<EditOrCreateDriverPopover
+									triggerClass="w-full"
+									mode="edit"
+									{driver}
+									onSuccess={handleDriverSuccess}
+								>
+									<DropdownMenu.Item onSelect={(e) => e.preventDefault()} class="w-full">
+										<Pencil />
+										Edit
+									</DropdownMenu.Item>
+								</EditOrCreateDriverPopover>
+								<Copy onclick={() => copyToClipboard(driver.id)} label="Copy ID" />
+								<Delete onclick={() => handleDelete(driver)} />
+								<MetadataLabel item={driver} />
+							</TableActionsDropdown>
+						</Table.Cell>
 						<Table.Cell>
 							<div class="flex items-center">
 								<span class="font-semibold">{driver.name}</span>
@@ -91,30 +103,6 @@
 							<div class="text-sm text-muted-foreground">
 								{formatDate(driver.created_at)}
 							</div>
-						</Table.Cell>
-						<Table.Cell>
-							<TableActionsDropdown>
-								<EditOrCreateDriverPopover
-									triggerClass="w-full"
-									mode="edit"
-									{driver}
-									onSuccess={handleDriverSuccess}
-								>
-									<DropdownMenu.Item
-										onSelect={(e) => e.preventDefault()}
-										class="w-full"
-									>
-										<Pencil />
-										Edit
-									</DropdownMenu.Item>
-								</EditOrCreateDriverPopover>
-								<Copy
-									onclick={() => copyToClipboard(driver.id)}
-									label="Copy ID"
-								/>
-								<Delete onclick={() => handleDelete(driver)} />
-								<MetadataLabel item={driver} />
-							</TableActionsDropdown>
 						</Table.Cell>
 					</Table.Row>
 				{/each}
