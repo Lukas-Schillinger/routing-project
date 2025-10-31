@@ -1,8 +1,25 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
-	import { Button } from '$lib/components/ui/button';
-	import { ChevronRight, House, Map, MapPin, Menu, User, X } from 'lucide-svelte';
+	import { Button, buttonVariants } from '$lib/components/ui/button';
+	import * as Popover from '$lib/components/ui/popover';
+	import {
+		ChevronDown,
+		ChevronRight,
+		FileSpreadsheet,
+		Grid3x3,
+		House,
+		Map,
+		MapPin,
+		Menu,
+		Mouse,
+		Route,
+		TestTube,
+		TriangleAlert,
+		User,
+		X,
+		Zap
+	} from 'lucide-svelte';
 	import { onMount } from 'svelte';
 
 	let {
@@ -20,9 +37,49 @@
 
 	const navigation = [
 		{ name: 'Home', href: '/', icon: House },
-		{ name: 'Maps', href: '/maps', icon: Map },
-		{ name: 'Geocoding', href: '/demo/mapbox', icon: MapPin },
-		{ name: 'Auth', href: '/demo/lucia/login', icon: User }
+		{ name: 'Maps', href: '/maps', icon: Map }
+	];
+
+	const demoPages = [
+		{ name: 'Demo Home', href: '/demo', icon: TestTube, description: 'Demo overview page' },
+		{
+			name: 'Mapbox',
+			href: '/demo/mapbox',
+			icon: MapPin,
+			description: 'Geocoding and map services'
+		},
+		{
+			name: 'CSV Upload',
+			href: '/demo/csv',
+			icon: FileSpreadsheet,
+			description: 'Batch geocoding from CSV'
+		},
+		{
+			name: 'Address Autocomplete',
+			href: '/demo/address-autocomplete',
+			icon: Mouse,
+			description: 'Real-time address suggestions'
+		},
+		{
+			name: 'Route Visualization',
+			href: '/demo/routes',
+			icon: Route,
+			description: 'Driver route demos'
+		},
+		{
+			name: 'Distance Matrix',
+			href: '/demo/matrix',
+			icon: Grid3x3,
+			description: 'Matrix API examples'
+		},
+		{ name: 'GSAP Animations', href: '/demo/gsap', icon: Zap, description: 'Animation demos' },
+		{
+			name: 'Auth (Lucia)',
+			href: '/demo/lucia',
+			icon: User,
+			description: 'Authentication examples'
+		},
+		{ name: 'Test Map', href: '/demo/test-map', icon: Map, description: 'Fullscreen map testing' }
 	];
 
 	function toggleMobileMenu() {
@@ -83,12 +140,13 @@
 
 				<!-- Desktop Navigation & Theme Toggle -->
 				<div class="hidden items-center space-x-4 sm:flex">
-					<nav class="flex space-x-1">
+					<nav class="flex items-center space-x-1">
 						{#each navigation as item}
 							{@const Icon = item.icon}
 							<a
 								href={item.href}
-								class="flex items-center space-x-2 rounded-md px-3 py-1 text-sm font-medium text-primary-foreground/90 transition-colors
+								class="{buttonVariants({ variant: 'ghost' })}
+								text-gray-300
 									{page.url.pathname === item.href
 									? 'bg-primary-foreground/10 text-primary-foreground'
 									: 'hover:bg-primary-foreground/10 hover:text-primary-foreground'}"
@@ -97,6 +155,39 @@
 								<span>{item.name}</span>
 							</a>
 						{/each}
+
+						<!-- Demo Popover -->
+						<Popover.Root>
+							<Popover.Trigger>
+								<Button
+									variant="ghost"
+									class="flex items-center space-x-2 text-primary-foreground/90 hover:bg-primary-foreground/10 hover:text-primary-foreground"
+								>
+									<TriangleAlert class="h-4 w-4" />
+									<span>Demo</span>
+									<ChevronDown class="h-3 w-3" />
+								</Button>
+							</Popover.Trigger>
+							<Popover.Content class="w-[500px] p-4" align="end">
+								<div class="grid gap-3 md:grid-cols-2">
+									{#each demoPages as demo}
+										{@const Icon = demo.icon}
+										<a
+											href={demo.href}
+											class="group block space-y-1 rounded-md p-3 leading-none no-underline transition-colors outline-none select-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+										>
+											<div class="flex items-center space-x-2">
+												<Icon class="h-4 w-4" />
+												<div class="text-sm leading-none font-medium">{demo.name}</div>
+											</div>
+											<p class="line-clamp-2 text-sm leading-snug text-muted-foreground">
+												{demo.description}
+											</p>
+										</a>
+									{/each}
+								</div>
+							</Popover.Content>
+						</Popover.Root>
 					</nav>
 					<ThemeToggle variant="inverse" />
 				</div>
@@ -108,7 +199,7 @@
 						variant="ghost"
 						size="sm"
 						onclick={toggleMobileMenu}
-						class="h-9 w-9 p-0 text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
+						class="hovet:bg-primary-foreground/10 h-9 w-9 p-0 text-primary-foreground hover:text-primary-foreground"
 					>
 						{#if mobileMenuOpen}
 							<X class="h-5 w-5" />
@@ -137,6 +228,29 @@
 								<span>{item.name}</span>
 							</a>
 						{/each}
+
+						<!-- Demo Section -->
+						<div class="mt-2 border-t border-primary-foreground/10 pt-2">
+							<div
+								class="px-3 py-2 text-xs font-semibold tracking-wider text-primary-foreground/60 uppercase"
+							>
+								Demo Pages
+							</div>
+							{#each demoPages as demo}
+								{@const Icon = demo.icon}
+								<a
+									href={demo.href}
+									onclick={closeMobileMenu}
+									class="flex items-center space-x-3 rounded-md px-3 py-2 text-sm font-medium text-primary-foreground/90 transition-colors
+										{page.url.pathname === demo.href
+										? 'bg-primary-foreground/10 text-primary-foreground'
+										: 'hover:bg-primary-foreground/10 hover:text-primary-foreground'}"
+								>
+									<Icon class="h-4 w-4" />
+									<span>{demo.name}</span>
+								</a>
+							{/each}
+						</div>
 					</div>
 				</div>
 			{/if}

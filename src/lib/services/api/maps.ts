@@ -1,5 +1,7 @@
 import type { Driver } from '$lib/schemas/driver';
 import type { CreateMap, Map, MapWithStats, UpdateMap } from '$lib/schemas/map';
+import type { Stop } from '$lib/schemas/stop';
+import type { GeocodeCSVResult } from '$lib/services/server/csv-import.service';
 import { apiClient } from './base';
 
 export interface DriverMembership {
@@ -70,6 +72,22 @@ class MapApiService {
 	}
 
 	/**
+	 * Create a new map from CSV geocoding results
+	 */
+	async createFromCSV(
+		mapName: string,
+		geocodeResults: GeocodeCSVResult[]
+	): Promise<{
+		map: Map;
+		stops: Stop[];
+	}> {
+		return apiClient.post('/maps/from-csv-upload', {
+			mapName,
+			geocodeResults
+		});
+	}
+
+	/**
 	 * Update a map
 	 */
 	async update(mapId: string, data: UpdateMap): Promise<{ map: Map }> {
@@ -133,18 +151,17 @@ class MapApiService {
 	 * Reset optimization for a map (clear driver assignments)
 	 */
 	async resetOptimization(mapId: string): Promise<{ success: boolean }> {
-		// Use form action endpoint for reset
+		return apiClient.post<{ success: boolean }>(`/maps/${mapId}/reset-optimization`);
+	}
+
+	/**
+	 * Geocode CSV file and return enriched records with location data
+	 */
+	async geocodeCSV(file: File): Promise<GeocodeCSVResult[]> {
 		const formData = new FormData();
-		const response = await fetch(`/maps/${mapId}?/resetOptimization`, {
-			method: 'POST',
-			body: formData
-		});
+		formData.append('csvFile', file);
 
-		if (!response.ok) {
-			throw new Error('Failed to reset optimization');
-		}
-
-		return { success: true };
+		return apiClient.post<GeocodeCSVResult[]>('/maps/geocode-csv', formData);
 	}
 }
 

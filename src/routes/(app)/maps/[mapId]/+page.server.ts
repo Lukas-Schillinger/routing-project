@@ -7,7 +7,7 @@ import {
 	stopService
 } from '$lib/services/server';
 import { error, redirect } from '@sveltejs/kit';
-import type { Actions, PageServerLoad } from './$types';
+import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
 	const user = locals.user;
@@ -53,33 +53,5 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			throw error(err.statusCode, err.message);
 		}
 		throw err;
-	}
-};
-
-export const actions: Actions = {
-	resetOptimization: async ({ params, locals }) => {
-		const user = locals.user;
-
-		if (!user) {
-			throw redirect(302, '/demo/lucia/login');
-		}
-
-		const { mapId } = params;
-
-		if (!mapId) {
-			throw error(400, 'Map ID is required');
-		}
-
-		try {
-			// Reset optimization using the map service
-			await mapService.resetOptimization(mapId, user.organization_id);
-
-			return { success: true };
-		} catch (err) {
-			if (err instanceof ServiceError) {
-				throw error(err.statusCode, err.message);
-			}
-			throw err;
-		}
 	}
 };

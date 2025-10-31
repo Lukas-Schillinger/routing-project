@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import * as Alert from '$lib/components/ui/alert';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import {
@@ -10,448 +9,241 @@
 		CardHeader,
 		CardTitle
 	} from '$lib/components/ui/card';
+	import CardFooter from '$lib/components/ui/card/card-footer.svelte';
+	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
-	import * as Table from '$lib/components/ui/table';
-	import { CircleAlert, Download, Loader2, MapPin, Upload, User } from 'lucide-svelte';
+	import { mapApi } from '$lib/services/api/maps';
+	import type { GeocodeCSVResult } from '$lib/services/server/csv-import.service';
+	import { AlertCircle, CheckCircle, FileText, MapPin, Upload } from 'lucide-svelte';
 
-	let uploading = $state(false);
-	let geocoding = $state(false);
 	let fileInput: HTMLInputElement;
+	let selectedFile: File | null = null;
+	let isLoading = false;
+	let results: GeocodeCSVResult[] = [];
+	let error: string | null = null;
 
-	let uploadResult = $state<{
-		success: boolean;
-		error?: string;
-		mapId?: string;
-		uploadId?: string;
-		recordCount?: number;
-		records?: Array<{
-			name: string;
-			address: string;
-			phone: string | null;
-			notes: string | null;
-		}>;
-		fileName?: string;
-	} | null>(null);
+	function handleFileSelect(event: Event) {
+		const target = event.target as HTMLInputElement;
+		const file = target.files?.[0];
 
-	let geocodeResult = $state<{
-		success: boolean;
-		error?: string;
-		geocoded?: number;
-		failed?: number;
-		results?: Array<{
-			record: {
-				name: string;
-				address: string;
-				phone: string | null;
-				notes: string | null;
-			};
-			location: any;
-			stop: any;
-		}>;
-		errors?: Array<{
-			record: any;
-			error: string;
-		}>;
-	} | null>(null);
-
-	async function handleUpload(event: Event) {
-		event.preventDefault();
-		uploading = true;
-		uploadResult = null;
-		geocodeResult = null;
-
-		const form = event.target as HTMLFormElement;
-		const formData = new FormData(form);
-
-		try {
-			// Step 1: Upload CSV
-			const response = await fetch('/api/maps/upload', {
-				method: 'POST',
-				body: formData
-			});
-
-			const data = await response.json();
-
-			if (!response.ok) {
-				uploadResult = {
-					success: false,
-					error: data.error || 'Upload failed'
-				};
+		if (file) {
+			if (!file.name.endsWith('.csv')) {
+				error = 'Please select a CSV file';
+				selectedFile = null;
 				return;
 			}
-
-			uploadResult = {
-				success: true,
-				mapId: data.mapId,
-				uploadId: data.uploadId,
-				recordCount: data.recordCount,
-				records: data.records,
-				fileName: fileInput.files?.[0]?.name || 'uploaded-file.csv'
-			};
-
-			// Step 2: Automatically geocode the addresses
-			await geocodeAddresses(data.mapId, data.records);
-		} catch (error) {
-			uploadResult = {
-				success: false,
-				error: error instanceof Error ? error.message : 'Network error'
-			};
-		} finally {
-			uploading = false;
+			selectedFile = file;
+			error = null;
 		}
 	}
 
-	async function geocodeAddresses(mapId: string, records: any[]) {
-		geocoding = true;
-		geocodeResult = null;
+	async function handleUpload() {
+		if (!selectedFile) return;
+
+		isLoading = true;
+		error = null;
+		results = [];
 
 		try {
-			const response = await fetch(`/api/maps/${mapId}/geocode`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({ records })
-			});
-
-			const data = await response.json();
-
-			if (!response.ok) {
-				geocodeResult = {
-					success: false,
-					error: data.error || 'Geocoding failed'
-				};
-				return;
-			}
-
-			geocodeResult = {
-				success: true,
-				geocoded: data.geocoded,
-				failed: data.failed,
-				results: data.results,
-				errors: data.errors
-			};
-
-			// Redirect to map detail page after successful geocoding
-			if (data.geocoded && data.geocoded > 0) {
-				// Wait a moment to show success state
-				setTimeout(() => {
-					goto(`/maps/${mapId}`);
-				}, 1500);
-			}
-		} catch (error) {
-			geocodeResult = {
-				success: false,
-				error: error instanceof Error ? error.message : 'Network error'
-			};
+			results = await mapApi.geocodeCSV(selectedFile);
+		} catch (err) {
+			error = err instanceof Error ? err.message : 'Failed to geocode CSV';
 		} finally {
-			geocoding = false;
+			isLoading = false;
 		}
 	}
 
-	// Sample data for download
-	const sampleData = [
-		{
-			name: 'Laura Perez',
-			address: '215 N Kentucky Ave, Lakeland, FL 33801',
-			'phone number': '(863) 555-0193',
-			notes: ''
-		},
-		{
-			name: 'Marcus Allen',
-			address: '930 E Lemon St, Lakeland, FL 33801',
-			'phone number': '863-555-4472',
-			notes: ''
-		},
-		{
-			name: 'Stephanie Wong',
-			address: '420 Bartow Rd, Lakeland, FL 33803',
-			'phone number': '(863) 555-8230',
-			notes: ''
-		},
-		{
-			name: 'David Simmons',
-			address: '100 Lake Morton Dr, Lakeland, FL 33801',
-			'phone number': '(863) 555-3002',
-			notes: ''
-		},
-		{
-			name: 'Rachel Green',
-			address: '3700 Cleveland Heights Blvd, Lakeland, FL 33803',
-			'phone number': '863-555-7625',
-			notes: ''
-		},
-		{
-			name: 'Chris Martinez',
-			address: '640 E Main St, Lakeland, FL 33801',
-			'phone number': '(863) 555-2259',
-			notes: ''
-		},
-		{
-			name: 'Sandra Patel',
-			address: '1500 S Florida Ave, Lakeland, FL 33803',
-			'phone number': '863-555-0086',
-			notes: ''
-		},
-		{
-			name: 'Anthony Roberts',
-			address: '1000 E Edgewood Dr, Lakeland, FL 33803',
-			'phone number': '(863) 555-3910',
-			notes: ''
-		},
-		{
-			name: 'Emma Johnson',
-			address: '920 E Memorial Blvd, Lakeland, FL 33801',
-			'phone number': '863-555-5721',
-			notes: ''
-		},
-		{
-			name: 'Tyler Brooks',
-			address: '701 W Lime St, Lakeland, FL 33815',
-			'phone number': '(863) 555-6345',
-			notes: ''
-		}
-	];
-	function downloadSample() {
-		const headers = ['name', 'address', 'phone number', 'notes'];
-		const csvContent = [
-			headers.join(','),
-			...sampleData.map((row) =>
-				[`"${row.name}"`, `"${row.address}"`, `"${row['phone number']}"`, `"${row.notes}"`].join(
-					','
-				)
-			)
-		].join('\n');
+	async function createMap() {
+		console.log('Hello');
+		const mapName = `Map ${Date.now().toLocaleString()}`;
+		const res = await mapApi.createFromCSV(mapName, results);
+		goto(`/maps/${res.map.id}`);
+	}
 
-		const blob = new Blob([csvContent], { type: 'text/csv' });
-		const url = URL.createObjectURL(blob);
-		const a = document.createElement('a');
-		a.href = url;
-		a.download = 'sample-contacts.csv';
-		a.click();
-		URL.revokeObjectURL(url);
+	function reset() {
+		selectedFile = null;
+		results = [];
+		error = null;
+		if (fileInput) {
+			fileInput.value = '';
+		}
+	}
+
+	function getSuccessCount() {
+		return results.filter((r) => r.feature !== null).length;
+	}
+
+	function getFailedCount() {
+		return results.filter((r) => r.feature === null).length;
 	}
 </script>
 
-<svelte:head>
-	<title>New Map - Routing Project</title>
-</svelte:head>
-
-<div class="bg-gradient-to-br from-background via-muted to-secondary p-6">
-	<div class="container mx-auto max-w-4xl">
-		<div class="mb-8 text-center">
-			<h1 class="headline-large mb-4">Create New Map</h1>
-			<p class="body-large text-muted-foreground">
-				Upload a CSV file with your stops and we'll automatically geocode all addresses
-			</p>
-		</div>
-
+<div class="container mx-auto max-w-6xl p-6">
+	<div class="mb-8">
+		<h1 class="text-3xl font-bold">CSV Geocoding Demo</h1>
+		<p class="mt-2 text-muted-foreground">
+			Upload a CSV file with addresses to see geocoding results. Your CSV should have columns: name,
+			address, phone (optional), notes (optional).
+		</p>
+	</div>
+	<div class="grid gap-6 lg:grid-cols-2">
 		<!-- Upload Section -->
-		<Card class="mb-8 shadow-lg">
+		<Card>
 			<CardHeader>
-				<CardTitle class="headline-card flex items-center">
-					<Upload class="mr-2 h-5 w-5 text-primary" />
+				<CardTitle class="flex items-center gap-2">
+					<Upload class="h-5 w-5" />
 					Upload CSV File
 				</CardTitle>
-				<CardDescription class="body-medium">
-					Upload a CSV file with columns: name, address, phone number, notes
-				</CardDescription>
+				<CardDescription>Select a CSV file containing addresses to geocode</CardDescription>
 			</CardHeader>
-			<CardContent>
-				<form onsubmit={handleUpload} enctype="multipart/form-data" class="space-y-6">
-					<div class="space-y-2">
-						<Label for="csvFile" class="body-medium">CSV File</Label>
-						<input
-							bind:this={fileInput}
-							id="csvFile"
-							name="csvFile"
-							type="file"
-							accept=".csv,text/csv"
-							required
-							class="file:mr-4 file:rounded file:border-0 file:bg-primary file:px-4 file:py-2 file:text-primary-foreground file:hover:bg-primary/90"
-						/>
-						<p class="body-small text-muted-foreground">Accepted formats: .csv (max 5MB)</p>
+			<CardContent class="space-y-4">
+				<div class="space-y-2">
+					<Label for="csv-file">CSV File</Label>
+					<Input
+						id="csv-file"
+						type="file"
+						accept=".csv"
+						bind:value={fileInput}
+						onchange={handleFileSelect}
+						disabled={isLoading}
+					/>
+				</div>
+
+				{#if selectedFile}
+					<div class="flex items-center gap-2 text-sm text-muted-foreground">
+						<FileText class="h-4 w-4" />
+						<span>{selectedFile.name}</span>
+						<span>({(selectedFile.size / 1024).toFixed(1)} KB)</span>
 					</div>
+				{/if}
 
-					<div class="flex flex-col gap-4 sm:flex-row">
-						<Button type="submit" disabled={uploading || geocoding} class="flex-1">
-							{#if uploading}
-								<Upload class="mr-2 h-4 w-4 animate-spin" />
-								Uploading CSV...
-							{:else if geocoding}
-								<Loader2 class="mr-2 h-4 w-4 animate-spin" />
-								Geocoding Addresses...
-							{:else}
-								<Upload class="mr-2 h-4 w-4" />
-								Upload & Geocode CSV
-							{/if}
-						</Button>
-
-						<Button type="button" variant="outline" onclick={downloadSample}>
-							<Download class="mr-2 h-4 w-4" />
-							Download Sample
-						</Button>
+				{#if error}
+					<div class="flex items-center gap-2 text-sm text-destructive">
+						<AlertCircle class="h-4 w-4" />
+						{error}
 					</div>
+				{/if}
 
-					{#if uploadResult?.error}
-						<Alert.Root variant="destructive">
-							<CircleAlert class="h-4 w-4" />
-							<Alert.Title>Upload Error</Alert.Title>
-							<Alert.Description>{uploadResult.error}</Alert.Description>
-						</Alert.Root>
-					{/if}
+				<div class="flex gap-2">
+					<Button onclick={handleUpload} disabled={!selectedFile || isLoading} class="flex-1">
+						{#if isLoading}
+							<div class="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
+							Geocoding...
+						{:else}
+							<MapPin class="mr-2 h-4 w-4" />
+							Geocode CSV
+						{/if}
+					</Button>
 
-					{#if geocodeResult?.error}
-						<Alert.Root variant="destructive">
-							<CircleAlert class="h-4 w-4" />
-							<Alert.Title>Geocoding Error</Alert.Title>
-							<Alert.Description>{geocodeResult.error}</Alert.Description>
-						</Alert.Root>
+					{#if results.length > 0 || error}
+						<Button variant="outline" onclick={reset}>Reset</Button>
 					{/if}
-
-					{#if geocoding}
-						<Alert.Root>
-							<Loader2 class="h-4 w-4 animate-spin" />
-							<Alert.Title>Geocoding in Progress</Alert.Title>
-							<Alert.Description>
-								Please wait while we geocode the addresses using Mapbox...
-							</Alert.Description>
-						</Alert.Root>
-					{/if}
-				</form>
+				</div>
 			</CardContent>
 		</Card>
 
-		<!-- Geocoding Results Section -->
-		{#if geocodeResult?.success && geocodeResult?.results}
-			<!-- Redirect Alert -->
-			{#if geocodeResult.geocoded && geocodeResult.geocoded > 0}
-				<Alert.Root class="mb-8 border-blue-500 bg-blue-50 dark:bg-blue-950">
-					<Loader2 class="h-4 w-4 animate-spin text-blue-600 dark:text-blue-400" />
-					<Alert.Title class="text-blue-800 dark:text-blue-200">Redirecting to Map...</Alert.Title>
-					<Alert.Description class="text-blue-700 dark:text-blue-300">
-						Taking you to the map detail page in a moment...
-					</Alert.Description>
-				</Alert.Root>
-			{/if}
-
-			<Card class="mb-8 shadow-lg">
+		<!-- Results Summary -->
+		{#if results.length > 0}
+			<Card>
 				<CardHeader>
-					<CardTitle class="headline-card flex items-center">
-						<MapPin class="mr-2 h-5 w-5 text-primary" />
+					<CardTitle class="flex items-center gap-2">
+						<CheckCircle class="h-5 w-5" />
 						Geocoding Results
 					</CardTitle>
-					<CardDescription class="body-medium">
-						Successfully geocoded {geocodeResult.geocoded} of {uploadResult?.recordCount} addresses
-						{#if geocodeResult.failed && geocodeResult.failed > 0}
-							<span class="text-destructive">({geocodeResult.failed} failed)</span>
-						{/if}
+					<CardDescription>
+						Summary of geocoding results for {results.length} records
 					</CardDescription>
 				</CardHeader>
-				<CardContent class="space-y-6">
-					<!-- Summary -->
-					<div class="flex flex-wrap items-center justify-between gap-2">
-						<div class="flex flex-wrap gap-2">
-							<Badge variant="secondary">
-								<MapPin class="mr-1 h-3 w-3" />
-								{geocodeResult.geocoded} Geocoded
-							</Badge>
-							{#if geocodeResult.failed && geocodeResult.failed > 0}
-								<Badge variant="destructive">
-									<CircleAlert class="mr-1 h-3 w-3" />
-									{geocodeResult.failed} Failed
-								</Badge>
-							{/if}
-						</div>
-						{#if uploadResult?.mapId}
-							<Button href="/maps/{uploadResult.mapId}">
-								<MapPin class="mr-2 h-4 w-4" />
-								View Map Details
-							</Button>
-						{/if}
-					</div>
-
-					<!-- Geocoded Locations Table -->
-					<div class="space-y-4">
-						<h3 class="headline-small">Geocoded Locations</h3>
-						<div class="rounded-md border">
-							<Table.Root>
-								<Table.Header>
-									<Table.Row>
-										<Table.Head class="w-12">#</Table.Head>
-										<Table.Head>Name</Table.Head>
-										<Table.Head>Address</Table.Head>
-										<Table.Head>Coordinates</Table.Head>
-										<Table.Head>Confidence</Table.Head>
-									</Table.Row>
-								</Table.Header>
-								<Table.Body>
-									{#each geocodeResult.results as result, index}
-										<Table.Row>
-											<Table.Cell class="font-medium">{index + 1}</Table.Cell>
-											<Table.Cell>
-												<div class="flex items-center">
-													<User class="mr-2 h-4 w-4 flex-shrink-0 text-primary" />
-													<span class="font-semibold">{result.record.name}</span>
-												</div>
-											</Table.Cell>
-											<Table.Cell>
-												<div class="flex items-start">
-													<MapPin class="mt-0.5 mr-2 h-4 w-4 flex-shrink-0 text-primary" />
-													<div class="text-sm">
-														<div class="font-medium">{result.location.address_line1}</div>
-														<div class="text-muted-foreground">
-															{result.location.city}, {result.location.region}
-															{result.location.postal_code}
-														</div>
-													</div>
-												</div>
-											</Table.Cell>
-											<Table.Cell class="font-mono text-sm">
-												{parseFloat(result.location.lat).toFixed(6)}, {parseFloat(
-													result.location.lon
-												).toFixed(6)}
-											</Table.Cell>
-											<Table.Cell>
-												<Badge variant="outline">
-													{parseFloat(result.location.geocode_confidence).toFixed(1)}%
-												</Badge>
-											</Table.Cell>
-										</Table.Row>
-									{/each}
-								</Table.Body>
-							</Table.Root>
-						</div>
-					</div>
-
-					<!-- Failed Geocoding Errors -->
-					{#if geocodeResult.errors && geocodeResult.errors.length > 0}
-						<div class="space-y-4">
-							<h3 class="headline-small text-destructive">Failed Addresses</h3>
-							<div class="space-y-2">
-								{#each geocodeResult.errors as error}
-									<Alert.Root variant="destructive">
-										<CircleAlert class="h-4 w-4" />
-										<Alert.Title>{error.record.name}</Alert.Title>
-										<Alert.Description>
-											Address: {error.record.address}<br />
-											Error: {error.error}
-										</Alert.Description>
-									</Alert.Root>
-								{/each}
+				<CardContent class="space-y-4">
+					<div class="grid grid-cols-2 gap-4">
+						<div class="rounded-lg bg-green-50 p-4 text-center dark:bg-green-950">
+							<div class="text-2xl font-bold text-green-600 dark:text-green-400">
+								{getSuccessCount()}
 							</div>
+							<div class="text-sm text-green-600 dark:text-green-400">Successful</div>
 						</div>
-					{/if}
+						<div class="rounded-lg bg-red-50 p-4 text-center dark:bg-red-950">
+							<div class="text-2xl font-bold text-red-600 dark:text-red-400">
+								{getFailedCount()}
+							</div>
+							<div class="text-sm text-red-600 dark:text-red-400">Failed</div>
+						</div>
+					</div>
 
-					<!-- JSON Output -->
-					<details class="space-y-2">
-						<summary class="headline-small cursor-pointer">Geocoded Data JSON</summary>
-						<pre class="body-small overflow-x-auto rounded bg-muted p-4 text-muted-foreground"><code
-								>{JSON.stringify(geocodeResult.results, null, 2)}</code
-							></pre>
-					</details>
+					<div class="text-sm text-muted-foreground">
+						Success rate: {((getSuccessCount() / results.length) * 100).toFixed(1)}%
+					</div>
 				</CardContent>
+				<CardFooter>
+					<Button class="w-full" onclick={createMap}>Create Map</Button>
+				</CardFooter>
 			</Card>
 		{/if}
 	</div>
+
+	<!-- Detailed Results -->
+	{#if results.length > 0}
+		<Card class="mt-6">
+			<CardHeader>
+				<CardTitle>Detailed Results</CardTitle>
+				<CardDescription>View geocoding results for each address</CardDescription>
+			</CardHeader>
+			<CardContent>
+				<div class="max-h-96 space-y-3 overflow-y-auto">
+					{#each results as result, index}
+						<div class="space-y-2 rounded-lg border p-4">
+							<div class="flex items-start justify-between">
+								<div class="flex-1">
+									<div class="font-medium">{result.name}</div>
+									<div class="text-sm text-muted-foreground">{result.raw_address}</div>
+									{#if result.phone}
+										<div class="text-sm text-muted-foreground">{result.phone}</div>
+									{/if}
+									{#if result.notes}
+										<div class="text-sm text-muted-foreground">{result.notes}</div>
+									{/if}
+								</div>
+								<div class="ml-4">
+									{#if result.feature}
+										<Badge
+											class="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+										>
+											<MapPin class="mr-1 h-3 w-3" />
+											Geocoded
+										</Badge>
+									{:else}
+										<Badge variant="destructive">
+											<AlertCircle class="mr-1 h-3 w-3" />
+											Failed
+										</Badge>
+									{/if}
+								</div>
+							</div>
+
+							{#if result.feature}
+								<div class="space-y-1 text-xs text-muted-foreground">
+									<div>
+										<strong>Coordinates:</strong>
+										{result.feature.geometry.coordinates[1].toFixed(6)}, {result.feature.geometry.coordinates[0].toFixed(
+											6
+										)}
+									</div>
+									<div>
+										<strong>Formatted:</strong>
+										{result.feature.properties.place_formatted ||
+											result.feature.properties.full_address ||
+											'N/A'}
+									</div>
+									<div>
+										<strong>Confidence:</strong>
+										{result.feature.properties.feature_type}
+									</div>
+								</div>
+							{/if}
+						</div>
+					{/each}
+				</div>
+			</CardContent>
+		</Card>
+	{/if}
 </div>

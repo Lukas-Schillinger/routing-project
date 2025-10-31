@@ -1,4 +1,5 @@
 import Papa from 'papaparse';
+import { mapboxGeocoding, type GeocodingFeature } from '../external/mapbox';
 import { ServiceError } from './errors';
 import { mapService } from './map.service';
 
@@ -13,6 +14,14 @@ export interface CSVImportResult {
 	mapId: string;
 	recordCount: number;
 	records: CSVRecord[];
+}
+
+export interface GeocodeCSVResult {
+	name: string;
+	raw_address: string;
+	phone?: string | null;
+	notes?: string | null;
+	feature?: GeocodingFeature | null;
 }
 
 export class CSVImportService {
@@ -69,7 +78,7 @@ export class CSVImportService {
 		const records = this.parseCSV(text);
 
 		// Create map
-		const title = mapTitle || `Upload ${new Date().toISOString()}`;
+		const title = mapTitle || `Map ${new Date().toLocaleDateString()}`;
 		const map = await mapService.createMap({ title }, organizationId);
 
 		return {
@@ -77,6 +86,31 @@ export class CSVImportService {
 			recordCount: records.length,
 			records
 		};
+	}
+
+	async geocodeCSV(file: File): Promise<GeocodeCSVResult[]> {
+		const text = await file.text();
+		const records = this.parseCSV(text);
+
+		const geocodeResults = await mapboxGeocoding.batch(
+			records.map((record) => record.address),
+			{ types: ['address'] }
+		);
+
+		// Combine CSV records with their corresponding geocoding results
+		return records.map((record, index): GeocodeCSVResult => {
+			const geocodeResponse = geocodeResults[index];
+			// Get the first/best feature from the geocoding response, or null if no results
+			const feature = geocodeResponse?.features?.[0] || null;
+
+			return {
+				name: record.name,
+				raw_address: record.address,
+				phone: record.phone,
+				notes: record.notes,
+				feature
+			};
+		});
 	}
 }
 

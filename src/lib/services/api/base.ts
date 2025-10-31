@@ -27,10 +27,18 @@ export class ApiClient {
 		const config: RequestInit = {
 			...options,
 			headers: {
-				'Content-Type': 'application/json',
 				...options.headers
 			}
 		};
+
+		// Only set Content-Type for non-FormData requests
+		// FormData automatically sets the correct Content-Type with boundary
+		if (!(options.body instanceof FormData)) {
+			config.headers = {
+				'Content-Type': 'application/json',
+				...config.headers
+			};
+		}
 
 		try {
 			const response = await fetch(url, config);
@@ -63,9 +71,19 @@ export class ApiClient {
 	}
 
 	async post<T>(endpoint: string, body?: unknown): Promise<T> {
+		let requestBody: BodyInit | undefined;
+
+		if (body instanceof FormData) {
+			// Send FormData as-is, don't stringify
+			requestBody = body;
+		} else if (body !== undefined) {
+			// Stringify non-FormData bodies
+			requestBody = JSON.stringify(body);
+		}
+
 		return this.request<T>(endpoint, {
 			method: 'POST',
-			body: body ? JSON.stringify(body) : undefined
+			body: requestBody
 		});
 	}
 

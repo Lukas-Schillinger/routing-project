@@ -10,19 +10,14 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 	const formData = await request.formData();
 	const file = formData.get('csvFile') as File;
-	const mapTitle = (formData.get('mapTitle') as string) || null;
 
 	if (!file) {
 		return json({ error: 'No file provided' }, { status: 400 });
 	}
 
 	try {
-		const result = await csvImportService.importCSV(file, mapTitle, user.organization_id);
-
-		return json({
-			success: true,
-			...result
-		});
+		const geocodeCSVResult = await csvImportService.geocodeCSV(file);
+		return json(geocodeCSVResult);
 	} catch (error) {
 		console.error('CSV upload error:', error);
 
