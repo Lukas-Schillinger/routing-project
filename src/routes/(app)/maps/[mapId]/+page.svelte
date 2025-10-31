@@ -119,7 +119,12 @@
 		<div class="space-y-6">
 			<div>
 				<h2 class="mb-3 text-lg font-semibold">Route Overview</h2>
-				<ViewRoutes2 bind:focusedStopId stops={data.stops} assignedDrivers={data.assignedDrivers} />
+				<ViewRoutes2
+					bind:focusedStopId
+					stops={data.stops}
+					assignedDrivers={data.assignedDrivers}
+					routes={data.routes}
+				/>
 			</div>
 
 			<!-- Original Table View -->

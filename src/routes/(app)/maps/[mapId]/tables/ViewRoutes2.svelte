@@ -3,6 +3,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Separator } from '$lib/components/ui/separator';
+	import type { Route as RouteType } from '$lib/schemas';
 	import type { Driver } from '$lib/schemas/driver';
 	import type { StopWithLocation } from '$lib/schemas/stop';
 	import {
@@ -22,10 +23,11 @@
 	interface Props {
 		stops: StopWithLocation[];
 		assignedDrivers: Driver[];
+		routes: RouteType[];
 		focusedStopId: string | null;
 	}
 
-	let { stops, assignedDrivers, focusedStopId = $bindable() }: Props = $props();
+	let { stops, assignedDrivers, routes, focusedStopId = $bindable() }: Props = $props();
 
 	// Group stops by driver
 	const routesByDriver = $derived.by(() => {
@@ -72,11 +74,11 @@
 	// Calculate route statistics
 	function getRouteStats(driverStops: StopWithLocation[]) {
 		const assignedStops = driverStops.filter((s) => s.stop.delivery_index !== null);
-		const estimatedTime = assignedStops.length * 15; // 15 minutes per stop estimate
+		const driverRoute = routes.find((e) => e.driver_id == driverStops.at(0)?.stop.driver_id);
 		return {
 			totalStops: driverStops.length,
 			assignedStops: assignedStops.length,
-			estimatedTime: Math.round(estimatedTime)
+			estimatedTime: Math.floor(Number(driverRoute?.duration) / 60)
 		};
 	}
 
@@ -188,7 +190,7 @@
 											{/if}
 											<span class="flex items-center gap-1">
 												<Clock class="h-3 w-3" />
-												~{stats.estimatedTime} min route
+												~{stats.estimatedTime} min
 											</span>
 										</Card.Description>
 									</div>
@@ -203,7 +205,7 @@
 								</div>
 								{#if !isUnassigned}
 									<div class="text-center">
-										<div class="text-lg font-semibold">{stats.estimatedTime}m</div>
+										<div class="text-lg font-semibold">{stats.estimatedTime} min</div>
 										<div class="text-muted-foreground">est. time</div>
 									</div>
 								{/if}

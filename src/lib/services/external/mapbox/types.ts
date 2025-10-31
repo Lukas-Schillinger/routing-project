@@ -78,6 +78,10 @@ export const geocodingResponseSchema = z.object({
 	attribution: z.string()
 });
 
+export const batchGeocodingResponseSchema = z.object({
+	batch: z.array(geocodingResponseSchema)
+});
+
 // Distance Matrix API schemas
 export const matrixWaypointSchema = z.object({
 	name: z.string(),

@@ -1,5 +1,10 @@
 import { mapboxClient } from './client';
-import { geocodingResponseSchema, type GeocodingFeature } from './types';
+import {
+	batchGeocodingResponseSchema,
+	geocodingResponseSchema,
+	type GeocodingFeature,
+	type GeocodingResponse
+} from './types';
 
 /**
  * Geocoding service using Mapbox Geocoding v6 API
@@ -82,29 +87,40 @@ export class MapboxGeocodingService {
 	}
 
 	/**
-	 * Reverse geocoding - convert coordinates to address using v6 API
+	 * Batch geocoding - geocode multiple addresses in a single request
+	 * @see https://docs.mapbox.com/api/search/geocoding/#batch-geocoding
 	 */
-	async reverse(
-		longitude: number,
-		latitude: number,
+	async batch(
+		searches: string[],
 		options: {
-			types?: string[];
+			country?: string;
 			limit?: number;
+			types?: string[];
 		} = {}
-	): Promise<GeocodingFeature[]> {
+	): Promise<GeocodingResponse[]> {
+		if (searches.length === 0) {
+			return [];
+		}
+
+		if (searches.length > 50) {
+			throw new Error('Batch geocoding supports a maximum of 50 searches per request');
+		}
+
 		const params: Record<string, string> = {
-			longitude: String(longitude),
-			latitude: String(latitude),
-			limit: String(options.limit || 1)
+			country: options.country || 'US',
+			limit: String(options.limit || 5)
 		};
 
 		if (options.types?.length) {
 			params.types = options.types.join(',');
 		}
 
-		const response = await mapboxClient.get<unknown>('/search/geocode/v6/reverse', params);
-		const validated = geocodingResponseSchema.parse(response);
-		return validated.features;
+		const body = searches.map((search) => ({ q: search }));
+
+		const response = await mapboxClient.post<unknown>('/search/geocode/v6/batch', body, params);
+
+		const batch = batchGeocodingResponseSchema.parse(response);
+		return batch.batch;
 	}
 }
 
