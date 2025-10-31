@@ -37,8 +37,8 @@ export const users = pgTable(
 		updated_at: ts('updated_at')
 	},
 	(t) => [
-		uniqueIndex('profiles_user_org_uidx').on(t.organization_id, t.id),
-		index('profiles_org_idx').on(t.organization_id)
+		uniqueIndex('users_user_org_uidx').on(t.organization_id, t.id),
+		index('users_org_idx').on(t.organization_id)
 	]
 );
 
@@ -201,6 +201,28 @@ export const routes = pgTable(
 	]
 );
 
+export const files = pgTable(
+	'files',
+	{
+		id,
+		organization_id: orgId.references(() => organizations.id, { onDelete: 'cascade' }),
+		filename: text('filename').notNull(),
+		original_filename: text('original_filename').notNull(),
+		content_type: text('content_type').notNull(),
+		size_bytes: integer('size_bytes').notNull(),
+		r2_key: text('r2_key').notNull(), // The key in R2 bucket
+		uploaded_by: uuid('uploaded_by')
+			.notNull()
+			.references(() => users.id),
+		created_at: ts('created_at'),
+		updated_at: ts('updated_at')
+	},
+	(t) => [
+		index('files_org_idx').on(t.organization_id),
+		index('files_uploader_idx').on(t.uploaded_by)
+	]
+);
+
 /***************************************************************************************
  *
  * 									Relations
@@ -208,21 +230,23 @@ export const routes = pgTable(
  **************************************************************************************/
 
 export const organizationsRelations = relations(organizations, ({ many }) => ({
-	profiles: many(users),
+	users: many(users),
 	drivers: many(drivers),
 	maps: many(maps),
 	locations: many(locations),
 	stops: many(stops),
 	driverMapMemberships: many(driverMapMemberships),
 	depots: many(depots),
-	routes: many(routes)
+	routes: many(routes),
+	files: many(files)
 }));
 
-export const profilesRelations = relations(users, ({ one }) => ({
+export const usersRelations = relations(users, ({ one, many }) => ({
 	organization: one(organizations, {
 		fields: [users.organization_id],
 		references: [organizations.id]
-	})
+	}),
+	uploadedFiles: many(files)
 }));
 
 export const driversRelations = relations(drivers, ({ one, many }) => ({
@@ -316,5 +340,16 @@ export const routesRelations = relations(routes, ({ one }) => ({
 	depot: one(depots, {
 		fields: [routes.depot_id],
 		references: [depots.id]
+	})
+}));
+
+export const filesRelations = relations(files, ({ one }) => ({
+	organization: one(organizations, {
+		fields: [files.organization_id],
+		references: [organizations.id]
+	}),
+	uploadedBy: one(users, {
+		fields: [files.uploaded_by],
+		references: [users.id]
 	})
 }));

@@ -8,6 +8,7 @@ export {
 export { DepotService, depotService } from './depot.service';
 export { DriverService, driverService } from './driver.service';
 export { ServiceError } from './errors';
+export { FileService, fileService } from './file.service';
 export { LocationService, locationService } from './location.service';
 export { MapService, mapService } from './map.service';
 export {

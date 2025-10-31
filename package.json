@@ -71,6 +71,8 @@
 		"vitest-browser-svelte": "^0.1.0"
 	},
 	"dependencies": {
+		"@aws-sdk/client-s3": "^3.921.0",
+		"@aws-sdk/s3-request-presigner": "^3.921.0",
 		"@fontsource/eb-garamond": "^5.2.6",
 		"@fontsource/geist-sans": "^5.2.5",
 		"@node-rs/argon2": "^2.0.2",

@@ -4,6 +4,7 @@ export * from './common.js';
 export * from './depot.js';
 export * from './driver.js';
 export * from './driverMapMembership.js';
+export * from './file.js';
 export * from './location.js';
 export * from './map.js';
 export * from './organization.js';
