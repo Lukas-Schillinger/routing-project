@@ -12,7 +12,6 @@
 	import { Button, buttonVariants } from '$lib/components/ui/button';
 	import * as ButtonGroup from '$lib/components/ui/button-group/index.js';
 	import * as Card from '$lib/components/ui/card';
-	import { Checkbox } from '$lib/components/ui/checkbox';
 	import { createSvelteTable, FlexRender, renderComponent } from '$lib/components/ui/data-table';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import * as Empty from '$lib/components/ui/empty';
@@ -51,9 +50,11 @@
 		onToggleInclude?: (id: string, included: boolean) => Promise<void>;
 		onUpdate?: (stop: StopWithLocation) => void;
 		onCreate?: (stop: StopWithLocation) => void;
+		onZoomToStop: (stopId: string) => void;
 	}
 
-	let { stops, mapId, onDelete, onToggleInclude, onUpdate, onCreate }: Props = $props();
+	let { stops, mapId, onDelete, onToggleInclude, onUpdate, onCreate, onZoomToStop }: Props =
+		$props();
 
 	// Table state
 	let sorting = $state<SortingState>([{ id: 'contact', desc: true }]);
@@ -97,8 +98,26 @@
 
 	// Define columns
 	const columns: ColumnDef<StopWithLocation, any>[] = [
-		// Include checkbox column
+		// Actions column
 		columnHelper.display({
+			id: 'actions',
+			header: '',
+			cell: ({ row }) => {
+				const stop = row.original;
+				return renderComponent(StopActionsCell, {
+					stop,
+					onDelete,
+					onUpdate,
+					onZoomToStop
+				});
+			},
+
+			enableSorting: true,
+			enableHiding: false
+		}),
+
+		// Include checkbox column. Included as example for future projects
+		/* columnHelper.display({
 			id: 'include',
 			header: ({ table }) =>
 				renderComponent(Checkbox, {
@@ -120,7 +139,7 @@
 				}),
 			enableSorting: false,
 			enableHiding: false
-		}),
+		}), */
 
 		// Contact name column
 		columnHelper.accessor((row) => row.stop.contact_name, {
@@ -186,22 +205,6 @@
 				const date = info.getValue();
 				return renderComponent(DateCell, { date });
 			}
-		}),
-
-		// Actions column
-		columnHelper.display({
-			id: 'actions',
-			cell: ({ row }) => {
-				const stop = row.original;
-				return renderComponent(StopActionsCell, {
-					stop,
-					onDelete,
-					onUpdate
-				});
-			},
-
-			enableSorting: false,
-			enableHiding: false
 		})
 	];
 
@@ -308,9 +311,7 @@
 						<ChevronDown class="ml-1 h-3 w-3" />
 					</DropdownMenu.Trigger>
 					<DropdownMenu.Content align="end" class="w-40">
-						{#each table
-							.getAllColumns()
-							.filter((column) => column.columnDef.filterFn && column.id !== 'include') as column}
+						{#each table.getAllColumns().filter((column) => column.getCanHide()) as column}
 							<DropdownMenu.Item onclick={() => (searchField = column.id)} class="justify-between">
 								<span class="flex items-center">
 									<span class="mr-2 inline-block h-4 w-4">
@@ -326,51 +327,53 @@
 				</DropdownMenu.Root>
 			</ButtonGroup.Root>
 			<!-- Sort dropdown -->
-			<div class="flex items-center gap-2">
-				<DropdownMenu.Root>
-					<DropdownMenu.Trigger class="{buttonVariants({ variant: 'outline' })} gap-2">
-						<ArrowUpDown class="h-4 w-4" />
-						Sort
-					</DropdownMenu.Trigger>
-					<DropdownMenu.Content align="end" class="w-48">
-						{#each table.getAllColumns().filter((column) => column.getCanSort()) as column}
-							{@const SortIcon = getSortIcon(column.id)}
-							{@const currentSort = sorting.find((s) => s.id === column.id)}
-							<DropdownMenu.Item onclick={() => toggleSort(column.id)} class="justify-between">
-								<span class="flex items-center">
-									<span class="mr-2 inline-block h-4 w-4">
-										{#if SortIcon}
-											<SortIcon class="h-4 w-4" />
+			<div class="flex flex-col gap-2 sm:flex-row">
+				<div class="flex gap-2">
+					<DropdownMenu.Root>
+						<DropdownMenu.Trigger class="{buttonVariants({ variant: 'outline' })} grow gap-2">
+							<ArrowUpDown class="h-4 w-4" />
+							Sort
+						</DropdownMenu.Trigger>
+						<DropdownMenu.Content align="end" class="w-48">
+							{#each table.getAllColumns().filter((column) => column.getCanSort()) as column}
+								{@const SortIcon = getSortIcon(column.id)}
+								{@const currentSort = sorting.find((s) => s.id === column.id)}
+								<DropdownMenu.Item onclick={() => toggleSort(column.id)} class="justify-between">
+									<span class="flex items-center">
+										<span class="mr-2 inline-block h-4 w-4">
+											{#if SortIcon}
+												<SortIcon class="h-4 w-4" />
+											{/if}
+										</span>
+										{column.columnDef.header}
+									</span>
+									<span class="ml-auto w-12 text-right text-xs text-muted-foreground">
+										{#if currentSort}
+											({currentSort.desc ? 'desc' : 'asc'})
 										{/if}
 									</span>
-									{column.columnDef.header}
-								</span>
-								<span class="ml-auto w-12 text-right text-xs text-muted-foreground">
-									{#if currentSort}
-										({currentSort.desc ? 'desc' : 'asc'})
-									{/if}
-								</span>
-							</DropdownMenu.Item>
-						{/each}
-					</DropdownMenu.Content>
-				</DropdownMenu.Root>
+								</DropdownMenu.Item>
+							{/each}
+						</DropdownMenu.Content>
+					</DropdownMenu.Root>
 
-				<!-- Column visibility dropdown -->
-				<DropdownMenu.Root>
-					<DropdownMenu.Trigger class="{buttonVariants({ variant: 'outline' })} gap-2">
-						Columns <ChevronDown class="h-4 w-4" />
-					</DropdownMenu.Trigger>
-					<DropdownMenu.Content align="end">
-						{#each table.getAllColumns().filter((column) => column.getCanHide()) as column}
-							<DropdownMenu.CheckboxItem
-								checked={column.getIsVisible()}
-								onCheckedChange={(value) => column.toggleVisibility(!!value)}
-							>
-								{typeof column.columnDef.header == 'string' ? column.columnDef.header : null}
-							</DropdownMenu.CheckboxItem>
-						{/each}
-					</DropdownMenu.Content>
-				</DropdownMenu.Root>
+					<!-- Column visibility dropdown -->
+					<DropdownMenu.Root>
+						<DropdownMenu.Trigger class="{buttonVariants({ variant: 'outline' })} grow gap-2">
+							Columns <ChevronDown class="h-4 w-4" />
+						</DropdownMenu.Trigger>
+						<DropdownMenu.Content align="end">
+							{#each table.getAllColumns().filter((column) => column.getCanHide()) as column}
+								<DropdownMenu.CheckboxItem
+									checked={column.getIsVisible()}
+									onCheckedChange={(value) => column.toggleVisibility(!!value)}
+								>
+									{typeof column.columnDef.header == 'string' ? column.columnDef.header : null}
+								</DropdownMenu.CheckboxItem>
+							{/each}
+						</DropdownMenu.Content>
+					</DropdownMenu.Root>
+				</div>
 
 				<!-- Create stop button -->
 				<EditOrCreateStopPopover

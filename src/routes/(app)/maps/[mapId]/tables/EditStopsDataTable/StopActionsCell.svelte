@@ -10,9 +10,10 @@
 		stop: StopWithLocation;
 		onDelete?: (id: string) => Promise<void>;
 		onUpdate?: (stop: StopWithLocation) => void;
+		onZoomToStop?: (stopId: string) => void;
 	}
 
-	let { stop, onDelete, onUpdate }: Props = $props();
+	let { stop, onDelete, onUpdate, onZoomToStop }: Props = $props();
 
 	const handleCopyId = () => {
 		navigator.clipboard.writeText(stop.stop.id);
@@ -41,6 +42,7 @@
 		</DropdownMenuItem>
 	</EditOrCreateStopPopover>
 	<Actions.Copy onclick={handleCopyId} label="Copy ID" />
+	<Actions.Zoom onclick={() => (onZoomToStop ? onZoomToStop(stop.stop.id) : '')} label="Zoom to" />
 	<Actions.Delete onclick={handleDelete} />
 	<Actions.MetadataLabel item={stop.stop} />
 </TableActionsDropdown>
