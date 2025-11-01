@@ -28,6 +28,19 @@ export class StopService {
 		return results;
 	}
 
+	async getStopsWithLocation(organization_id: string): Promise<StopWithLocation[]> {
+		const results = await db
+			.select({
+				stop: stops,
+				location: locations
+			})
+			.from(stops)
+			.innerJoin(locations, eq(stops.location_id, locations.id))
+			.where(eq(stops.organization_id, organization_id));
+
+		return results;
+	}
+
 	/**
 	 * Get all stops for a map with location details
 	 */

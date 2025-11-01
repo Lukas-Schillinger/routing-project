@@ -3,12 +3,14 @@
 	import EditOrCreateDriverPopover from '$lib/components/EditOrCreateDriverPopover.svelte';
 	import { Copy, Delete, MetadataLabel } from '$lib/components/TableActionsDropdown.Items';
 	import TableActionsDropdown from '$lib/components/TableActionsDropdown.svelte';
+	import * as Avatar from '$lib/components/ui/avatar/index.js';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import * as Empty from '$lib/components/ui/empty';
 	import * as Table from '$lib/components/ui/table';
 	import type { Driver } from '$lib/schemas/driver';
 	import { driverApi } from '$lib/services/api/drivers';
-	import { formatDate } from '$lib/utils';
+	import { createAvatar } from '@dicebear/core';
+	import * as style from '@dicebear/identicon';
 	import { Pencil, Phone, Truck } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
@@ -17,6 +19,12 @@
 	}: {
 		drivers: Driver[];
 	} = $props();
+
+	function getAvatar(driverId: string) {
+		return createAvatar(style, {
+			seed: driverId
+		}).toDataUri();
+	}
 
 	async function handleDriverSuccess() {
 		await invalidateAll();
@@ -57,15 +65,37 @@
 		<Table.Root>
 			<Table.Header>
 				<Table.Row>
-					<Table.Head class="w-[50px]"></Table.Head>
+					<Table.Head />
 					<Table.Head>Name</Table.Head>
 					<Table.Head>Phone</Table.Head>
-					<Table.Head>Created</Table.Head>
+					<Table.Head class="w-[50px]"></Table.Head>
 				</Table.Row>
 			</Table.Header>
 			<Table.Body>
 				{#each drivers as driver}
 					<Table.Row>
+						<Table.Cell>
+							<Avatar.Root class="size-6">
+								<Avatar.Image src={getAvatar(driver.id)} alt="avatar" />
+								<Avatar.Fallback>CN</Avatar.Fallback>
+							</Avatar.Root>
+						</Table.Cell>
+						<Table.Cell>
+							<div class="flex items-center">
+								<span class="font-semibold">{driver.name}</span>
+							</div>
+						</Table.Cell>
+						<Table.Cell>
+							{#if driver.phone}
+								<div class="flex items-center text-sm text-muted-foreground">
+									<Phone class="mr-2 h-3 w-3 shrink-0" />
+									<span>{driver.phone}</span>
+								</div>
+							{:else}
+								<span class="text-sm text-muted-foreground">—</span>
+							{/if}
+						</Table.Cell>
+
 						<Table.Cell>
 							<TableActionsDropdown>
 								<EditOrCreateDriverPopover
@@ -83,26 +113,6 @@
 								<Delete onclick={() => handleDelete(driver)} />
 								<MetadataLabel item={driver} />
 							</TableActionsDropdown>
-						</Table.Cell>
-						<Table.Cell>
-							<div class="flex items-center">
-								<span class="font-semibold">{driver.name}</span>
-							</div>
-						</Table.Cell>
-						<Table.Cell>
-							{#if driver.phone}
-								<div class="flex items-center text-sm text-muted-foreground">
-									<Phone class="mr-2 h-3 w-3 shrink-0" />
-									<span>{driver.phone}</span>
-								</div>
-							{:else}
-								<span class="text-sm text-muted-foreground">—</span>
-							{/if}
-						</Table.Cell>
-						<Table.Cell>
-							<div class="text-sm text-muted-foreground">
-								{formatDate(driver.created_at)}
-							</div>
 						</Table.Cell>
 					</Table.Row>
 				{/each}

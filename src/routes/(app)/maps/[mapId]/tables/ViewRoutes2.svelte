@@ -1,4 +1,5 @@
 <script lang="ts">
+	import * as Avatar from '$lib/components/ui/avatar';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
@@ -6,8 +7,9 @@
 	import type { Route as RouteType } from '$lib/schemas';
 	import type { Driver } from '$lib/schemas/driver';
 	import type { StopWithLocation } from '$lib/schemas/stop';
+	import { createAvatar } from '@dicebear/core';
+	import * as style from '@dicebear/identicon';
 	import {
-		ChevronRight,
 		Clock,
 		Download,
 		Eye,
@@ -29,6 +31,11 @@
 
 	let { stops, assignedDrivers, routes, focusedStopId = $bindable() }: Props = $props();
 
+	function getAvatar(driverId: string) {
+		return createAvatar(style, {
+			seed: driverId
+		}).toDataUri();
+	}
 	// Group stops by driver
 	const routesByDriver = $derived.by(() => {
 		const routes = new Map<string, StopWithLocation[]>();
@@ -156,169 +163,177 @@
 		</div>
 	</div>
 
-	<!-- Routes Display -->
-	<div class="space-y-6">
-		{#each Array.from(routesByDriver) as [driverId, driverStops]}
-			{@const driver = getDriver(driverId)}
-			{@const isUnassigned = driverId === 'unassigned'}
-			{@const stats = getRouteStats(driverStops)}
+	<!-- Routes Display - Horizontal Carousel -->
+	<div class="relative overflow-clip">
+		<div
+			class="scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border flex snap-x snap-mandatory gap-6 overflow-x-auto pb-4"
+		>
+			{#each Array.from(routesByDriver) as [driverId, driverStops]}
+				{@const driver = getDriver(driverId)}
+				{@const isUnassigned = driverId === 'unassigned'}
+				{@const stats = getRouteStats(driverStops)}
 
-			{#if driverStops.length > 0}
-				<Card.Root class="overflow-hidden">
-					<!-- Route Header -->
-					<Card.Header class="pb-4">
-						<div class="flex items-center justify-between">
-							<div class="flex items-center gap-3">
-								{#if isUnassigned}
-									<div class="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
-										<Package class="h-5 w-5 text-muted-foreground" />
-									</div>
-									<div>
-										<Card.Title class="text-lg">Unassigned Stops</Card.Title>
-										<Card.Description>
-											{driverStops.length} stop{driverStops.length !== 1 ? 's' : ''} awaiting assignment
-										</Card.Description>
-									</div>
-								{:else if driver}
-									<div class="flex h-10 w-10 items-center justify-center rounded-full"></div>
-									<div>
-										<Card.Title class="flex items-center gap-2 text-lg">
-											{driver.name}
-											{#if driver.temporary}
-												<Badge variant="secondary" class="text-xs">Temporary</Badge>
-											{/if}
-										</Card.Title>
-										<Card.Description class="flex items-center gap-4">
-											{#if driver.phone}
-												<span class="flex items-center gap-1">
-													<Phone class="h-3 w-3" />
-													{driver.phone}
-												</span>
-											{/if}
-											<span class="flex items-center gap-1">
-												<Clock class="h-3 w-3" />
-												~{stats.estimatedTime} min
-											</span>
-										</Card.Description>
-									</div>
-								{/if}
-							</div>
-
-							<!-- Route Stats -->
-							<div class="flex items-center gap-4 text-sm">
-								<div class="text-center">
-									<div class="text-lg font-semibold">{stats.totalStops}</div>
-									<div class="text-muted-foreground">stops</div>
-								</div>
-								{#if !isUnassigned}
-									<div class="text-center">
-										<div class="text-lg font-semibold">{stats.estimatedTime} min</div>
-										<div class="text-muted-foreground">est. time</div>
-									</div>
-								{/if}
-							</div>
-						</div>
-					</Card.Header>
-
-					<Card.Content class="pt-0">
-						<!-- Route Steps -->
-						<div class="space-y-0">
-							{#each driverStops as { stop, location }, index}
-								{@const isFirst = index === 0}
-								{@const isLast = index === driverStops.length - 1}
-
-								<div class="flex items-start gap-4">
-									<!-- Step Number/Icon -->
-									<div class="flex flex-col items-center">
-										<div
-											class="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-medium text-primary-foreground"
-										>
-											{stop.delivery_index !== null ? stop.delivery_index : index + 1}
+				{#if driverStops.length > 0}
+					<Card.Root class=" max-w-80 min-w-80 flex-shrink-0 snap-start overflow-hidden">
+						<!-- Route Header -->
+						<Card.Header class="pb-4">
+							<div class="flex flex-col gap-3">
+								<div class="flex items-center gap-3">
+									{#if isUnassigned}
+										<div class="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+											<Package class="h-5 w-5 text-muted-foreground" />
 										</div>
-										{#if !isLast}
-											<div class="mt-2 h-8 w-px bg-border"></div>
-										{/if}
+										<div class="min-w-0 flex-1">
+											<Card.Title class="text-lg">Unassigned Stops</Card.Title>
+											<Card.Description>
+												{driverStops.length} stop{driverStops.length !== 1 ? 's' : ''} awaiting assignment
+											</Card.Description>
+										</div>
+									{:else if driver}
+										<div class="flex size-12 items-center justify-center rounded-full">
+											<Avatar.Root class="size-12">
+												<Avatar.Image src={getAvatar(driver.id)} alt="avatar" />
+												<Avatar.Fallback>CN</Avatar.Fallback>
+											</Avatar.Root>
+										</div>
+										<div class="min-w-0 flex-1">
+											<Card.Title class="flex items-center gap-2 text-lg">
+												{driver.name}
+												{#if driver.temporary}
+													<Badge variant="secondary" class="text-xs">Temporary</Badge>
+												{/if}
+											</Card.Title>
+											<Card.Description class="flex flex-col gap-1">
+												{#if driver.phone}
+													<span class="flex items-center gap-1">
+														<Phone class="h-3 w-3" />
+														{driver.phone}
+													</span>
+												{/if}
+												<span class="flex items-center gap-1">
+													<Clock class="h-3 w-3" />
+													~{stats.estimatedTime} min
+												</span>
+											</Card.Description>
+										</div>
+									{/if}
+								</div>
+
+								<!-- Route Stats -->
+								<div class="flex items-center justify-center gap-6 rounded-lg bg-muted/50 p-3">
+									<div class="text-center">
+										<div class="text-lg font-semibold">{stats.totalStops}</div>
+										<div class="text-xs text-muted-foreground">stops</div>
 									</div>
+									{#if !isUnassigned}
+										<div class="text-center">
+											<div class="text-lg font-semibold">{stats.estimatedTime} min</div>
+											<div class="text-xs text-muted-foreground">est. time</div>
+										</div>
+									{/if}
+								</div>
+							</div>
+						</Card.Header>
 
-									<!-- Stop Details -->
-									<div class="min-w-0 flex-1 pb-2">
-										<div class="flex items-start justify-between gap-4">
-											<div class="min-w-0 flex-1">
-												<!-- Contact Name -->
-												<div class="mb-1 flex items-center gap-2">
-													<h4 class="text-base font-semibold">
-														{stop.contact_name || 'No contact name'}
-													</h4>
-													{#if isFirst && !isUnassigned}
-														<Badge variant="outline" class="text-xs">First stop</Badge>
-													{:else if isLast && !isUnassigned}
-														<Badge variant="outline" class="text-xs">Last stop</Badge>
-													{/if}
-												</div>
+						<Card.Content class="pt-0">
+							<!-- Route Steps - Scrollable -->
+							<div
+								class="scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border max-h-96 space-y-0 overflow-y-auto"
+							>
+								{#each driverStops as { stop, location }, index}
+									{@const isFirst = index === 0}
+									{@const isLast = index === driverStops.length - 1}
 
-												<!-- Address -->
-												<div class="">
-													<div class="text-sm font-medium text-muted-foreground">
-														{location.address_line1}, {location.city || ''}{location.city &&
-														location.region
-															? ', '
-															: ''}{location.region || ''}
-														{location.postal_code || ''}
+									<div class="flex items-start gap-3">
+										<!-- Step Number/Icon -->
+										<div class="flex flex-col items-center">
+											<div
+												class="flex h-6 w-6 items-center justify-center rounded-full border border-primary bg-transparent text-xs font-medium text-primary"
+											>
+												{stop.delivery_index !== null ? stop.delivery_index : index + 1}
+											</div>
+											{#if !isLast}
+												<div class="mt-1 h-6 w-px bg-border"></div>
+											{/if}
+										</div>
+
+										<!-- Stop Details -->
+										<div class="min-w-0 flex-1 pb-2">
+											<div class="flex items-start justify-between gap-2">
+												<div class="min-w-0 flex-1">
+													<!-- Contact Name -->
+													<div class="mb-1 flex items-center gap-2">
+														<h4 class="text-sm font-semibold">
+															{stop.contact_name || 'No contact name'}
+														</h4>
+														{#if isFirst && !isUnassigned}
+															<Badge variant="outline" class="text-xs">First</Badge>
+														{:else if isLast && !isUnassigned}
+															<Badge variant="outline" class="text-xs">Last</Badge>
+														{/if}
+													</div>
+
+													<!-- Address -->
+													<div class="mb-1">
+														<div class="text-xs text-muted-foreground">
+															{location.address_line1}
+														</div>
+														<div class="text-xs text-muted-foreground">
+															{location.city || ''}{location.city && location.region
+																? ', '
+																: ''}{location.region || ''}
+															{location.postal_code || ''}
+														</div>
+													</div>
+
+													<!-- Contact Info & Notes -->
+													<div class="flex flex-col gap-1 text-xs text-muted-foreground">
+														{#if stop.contact_phone}
+															<div class="flex items-center gap-1">
+																<Phone class="h-3 w-3" />
+																{stop.contact_phone}
+															</div>
+														{/if}
+														{#if stop.notes}
+															<div class="truncate" title={stop.notes}>
+																{stop.notes}
+															</div>
+														{/if}
 													</div>
 												</div>
 
-												<!-- Contact Info & Notes -->
-												<div
-													class="flex flex-wrap items-center gap-4 text-sm text-muted-foreground"
+												<!-- Action Button -->
+												<Button
+													onclick={() => (focusedStopId = stop.id)}
+													size="sm"
+													variant="ghost"
+													class="h-6 w-6 shrink-0 p-0"
 												>
-													{#if stop.contact_phone}
-														<div class="flex items-center gap-1">
-															<Phone class="h-3 w-3" />
-															{stop.contact_phone}
-														</div>
-													{/if}
-													{#if stop.notes}
-														<div class="flex max-w-xs items-center gap-1">
-															<span class="truncate" title={stop.notes}>
-																{stop.notes}
-															</span>
-														</div>
-													{/if}
-												</div>
+													<Eye class="h-3 w-3" />
+													<span class="sr-only">View stop on map</span>
+												</Button>
 											</div>
-
-											<!-- Action Button -->
-											<Button
-												onclick={() => (focusedStopId = stop.id)}
-												size="sm"
-												variant="ghost"
-												class="shrink-0"
-											>
-												<Eye class="h-4 w-4" />
-												<span class="sr-only">View stop on map</span>
-											</Button>
 										</div>
 									</div>
-								</div>
-							{/each}
-						</div>
-
-						{#if !isUnassigned && driverStops.length > 1}
-							<Separator class="my-4" />
-							<div class="flex items-center justify-between text-sm text-muted-foreground">
-								<div class="flex items-center gap-2">
-									<Navigation class="h-4 w-4" />
-									<span>Route optimized for efficiency</span>
-								</div>
-								<div class="flex items-center gap-1">
-									<span>Total estimated time: {stats.estimatedTime} minutes</span>
-									<ChevronRight class="h-4 w-4" />
-								</div>
+								{/each}
 							</div>
-						{/if}
-					</Card.Content>
-				</Card.Root>
-			{/if}
-		{/each}
+
+							{#if !isUnassigned && driverStops.length > 1}
+								<Separator class="my-3" />
+								<div class="flex flex-col gap-2 text-xs text-muted-foreground">
+									<div class="flex items-center gap-2">
+										<Navigation class="h-3 w-3" />
+										<span>Route optimized</span>
+									</div>
+									<div class="flex items-center gap-1">
+										<span>Total: {stats.estimatedTime} min</span>
+									</div>
+								</div>
+							{/if}
+						</Card.Content>
+					</Card.Root>
+				{/if}
+			{/each}
+		</div>
 	</div>
 {/if}

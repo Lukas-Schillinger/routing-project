@@ -14,7 +14,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		mapService.getMaps(user.organization_id),
 		depotService.getDepots(user.organization_id),
 		driverService.getDrivers(user.organization_id),
-		stopService.getStops(user.organization_id)
+		stopService.getStopsWithLocation(user.organization_id)
 	]);
 
 	return {
