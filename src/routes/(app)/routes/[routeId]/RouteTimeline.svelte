@@ -125,8 +125,8 @@
 				{@const isCompleted = completedStops.has(stop.id)}
 				<div
 					data-stop-index={index}
-					class="border-b transition-colors hover:bg-secondary {selectedIndex === index
-						? 'bg-secondary'
+					class="border-b transition-colors hover:bg-sand-100 {selectedIndex === index
+						? 'bg-secondary hover:bg-sand-200'
 						: ''} {isCompleted ? 'bg-green-50' : ''}"
 				>
 					<div class="flex items-center justify-between p-3">

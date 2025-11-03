@@ -5,8 +5,8 @@
 	import * as Card from '$lib/components/ui/card';
 	import type { Route as RouteType } from '$lib/schemas';
 	import type { StopWithLocation } from '$lib/schemas/stop';
-	import { AppleMapsService } from '$lib/services/external-client/apple-maps';
-	import { GoogleMapsService } from '$lib/services/external-client/google-maps';
+	import { AppleMapsService } from '$lib/services/external/client/apple-maps';
+	import { GoogleMapsService } from '$lib/services/external/client/google-maps';
 	import {
 		Check,
 		ChevronLeft,
@@ -105,12 +105,12 @@
 
 <div class="flex-shrink-0 border-b bg-muted/30 px-4 pt-4 pb-2">
 	{#if stop}
-		<div class="p-1">
+		<div class="">
 			<div class="space-y-3">
 				<!-- Address -->
-				<div>
-					<h3 class="text-lg font-semibold">
-						{stop.location.address_line1}
+				<div class="h-24 py-3">
+					<h3 class="pb-1 text-2xl font-bold tracking-tight">
+						{stop.location.name}
 					</h3>
 					<div class="text-sm text-muted-foreground">
 						{stop.location.city || ''}{stop.location.city && stop.location.region ? ', ' : ''}{stop
@@ -145,12 +145,12 @@
 				{/if}
 
 				<!-- Delivery Status Button -->
-				<div class="flex gap-2 space-y-0">
+				<div class="grid grid-cols-3 gap-2">
 					<Button
 						onclick={toggleDeliveryStatus}
 						size="sm"
 						variant={isCompleted ? 'default' : 'outline'}
-						class="mb-0 w-2/3 {isCompleted ? 'bg-green-700 hover:bg-green-600' : ''}"
+						class="col-span-2 mb-0 {isCompleted ? 'bg-green-700 hover:bg-green-600' : ''}"
 					>
 						{#if isCompleted}
 							<Check class="mr-2 h-4 w-4" />
@@ -163,37 +163,35 @@
 
 					<!-- Get Directions Button -->
 					{#if directionsUrl}
-						<Button href={directionsUrl} size="sm" target="_blank" variant="outline" class="w-1/3">
-							<Navigation class="mr-2 h-4 w-4" />
+						<Button href={directionsUrl} size="sm" target="_blank" variant="outline" class="w-full">
+							<Navigation class="mr-2 h-4" />
 							Directions
 						</Button>
 					{/if}
 				</div>
-				<div class="flex w-full items-center justify-between gap-4">
+				<div class="grid w-full grid-cols-3 items-center justify-between gap-2">
 					<h2 class="shrink-0 text-lg font-semibold whitespace-nowrap">
 						Stop <span class="font-mono">{stopIndex + 1}</span> of
 						<span class="font-mono">{totalStops}</span>
 					</h2>
-					<div class="flex w-full items-center gap-2">
-						<Button
-							onclick={onPrevious}
-							disabled={stopIndex === 0}
-							size="sm"
-							variant="outline"
-							class="w-1/2 p-0 "
-						>
-							<ChevronLeft class="h-4 w-4" />
-						</Button>
-						<Button
-							onclick={onNext}
-							disabled={stopIndex === totalStops - 1}
-							size="sm"
-							variant="outline"
-							class="w-1/2 p-0"
-						>
-							<ChevronRight class="h-4 w-4" />
-						</Button>
-					</div>
+					<Button
+						onclick={onPrevious}
+						disabled={stopIndex === 0}
+						size="sm"
+						variant="outline"
+						class="w-full p-0 "
+					>
+						<ChevronLeft class="h-4 w-4" />
+					</Button>
+					<Button
+						onclick={onNext}
+						disabled={stopIndex === totalStops - 1}
+						size="sm"
+						variant="outline"
+						class="w-full p-0"
+					>
+						<ChevronRight class="h-4 w-4" />
+					</Button>
 				</div>
 			</div>
 		</div>
