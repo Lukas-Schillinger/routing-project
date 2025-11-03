@@ -8,6 +8,19 @@ export class RouteService {
 	/**
 	 * Create or update a route for a driver on a map
 	 */
+	async verifyRouteOwnership(routeId: string, organizationId: string): Promise<Route> {
+		const [route] = await db.select().from(routes).where(eq(routes.id, routeId)).limit(1);
+
+		if (!route) {
+			throw ServiceError.notFound('Route not found');
+		}
+
+		if (route.organization_id !== organizationId) {
+			throw ServiceError.forbidden('Route does not belong to your organization');
+		}
+
+		return route as Route;
+	}
 	async upsertRoute(input: CreateRoute) {
 		try {
 			// Check if route already exists
@@ -30,7 +43,7 @@ export class RouteService {
 					.where(eq(routes.id, existing[0].id))
 					.returning();
 
-				return updated;
+				return updated as Route;
 			} else {
 				// Insert new route
 				const [created] = await db
@@ -45,7 +58,7 @@ export class RouteService {
 					})
 					.returning();
 
-				return created;
+				return created as Route;
 			}
 		} catch (error) {
 			console.error('Error upserting route:', error);
@@ -59,6 +72,17 @@ export class RouteService {
 	async upsertRoutes(inputs: CreateRoute[]) {
 		const results = await Promise.all(inputs.map((input) => this.upsertRoute(input)));
 		return results;
+	}
+
+	async getRouteById(routeId: string, organizationId: string): Promise<Route> {
+		return this.verifyRouteOwnership(routeId, organizationId);
+	}
+
+	async getRoutes(organizationId: string) {
+		return (await db
+			.select()
+			.from(routes)
+			.where(eq(routes.organization_id, organizationId))) as Route[];
 	}
 
 	/**

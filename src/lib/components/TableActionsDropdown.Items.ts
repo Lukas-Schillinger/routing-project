@@ -5,5 +5,6 @@ export { default as Download } from './table-actions/Download.svelte';
 export { default as Edit } from './table-actions/Edit.svelte';
 export { default as MetadataLabel } from './table-actions/MetadataLabel.svelte';
 export { default as Open } from './table-actions/Open.svelte';
+export { default as Settings } from './table-actions/Settings.svelte';
 export { default as View } from './table-actions/View.svelte';
 export { default as Zoom } from './table-actions/Zoom.svelte';
