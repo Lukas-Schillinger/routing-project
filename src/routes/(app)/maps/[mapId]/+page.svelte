@@ -18,7 +18,6 @@
 	import EditDriversTable from './tables/EditDriversTable.svelte';
 	import EditStopsDataTable from './tables/EditStopsDataTable';
 	import RouteCards from './tables/RouteCards.svelte';
-	import ViewDriversTable from './tables/ViewDriversTable.svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -168,43 +167,33 @@
 		</Card>
 	{/if}
 
-	<!-- Drivers Section -->
-	<Card class="shadow-lg">
-		<CardHeader>
-			<CardTitle class="flex items-center gap-2">
-				<Truck class="h-5 w-5 text-primary" />
-				Drivers
-			</CardTitle>
-			<CardDescription>
-				{#if isViewMode}
-					Drivers assigned to this optimized map
-				{:else}
-					Assign drivers to this map for route optimization
+	{#if !isViewMode}
+		<!-- Drivers Section -->
+		<Card class="shadow-lg">
+			<CardHeader>
+				<CardTitle class="flex items-center gap-2">
+					<Truck class="h-5 w-5 text-primary" />
+					Drivers
+				</CardTitle>
+				<CardDescription>
+					{#if isViewMode}
+						Drivers assigned to this optimized map
+					{:else}
+						Assign drivers to this map for route optimization
+					{/if}
+				</CardDescription>
+			</CardHeader>
+			<CardContent class="space-y-4">
+				<!-- Error Message -->
+				{#if errorMessage}
+					<div
+						class="rounded-md border border-destructive bg-destructive/10 p-3 text-sm text-destructive"
+					>
+						{errorMessage}
+					</div>
 				{/if}
-			</CardDescription>
-		</CardHeader>
-		<CardContent class="space-y-4">
-			<!-- View Mode Info -->
-			{#if isViewMode}
-				<div class="rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
-					<strong>View Mode:</strong> Routes have been optimized. Switch to Edit Mode to make changes
-					to drivers or stops.
-				</div>
-			{/if}
 
-			<!-- Error Message -->
-			{#if errorMessage}
-				<div
-					class="rounded-md border border-destructive bg-destructive/10 p-3 text-sm text-destructive"
-				>
-					{errorMessage}
-				</div>
-			{/if}
-
-			<!-- Drivers Table -->
-			{#if isViewMode}
-				<ViewDriversTable assignedDrivers={data.assignedDrivers} isOptimized={data.isViewMode} />
-			{:else}
+				<!-- Drivers Table -->
 				<EditDriversTable
 					assignedDrivers={data.assignedDrivers}
 					allDrivers={data.allDrivers}
@@ -212,9 +201,9 @@
 					{isLoading}
 					onRemoveDriver={removeDriver}
 				/>
-			{/if}
-		</CardContent>
-	</Card>
+			</CardContent>
+		</Card>
+	{/if}
 
 	<!-- Optimization Section -->
 	{#if !isViewMode}

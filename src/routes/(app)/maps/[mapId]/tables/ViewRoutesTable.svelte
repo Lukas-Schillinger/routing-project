@@ -1,13 +1,11 @@
 <script lang="ts">
 	import { Badge } from '$lib/components/ui/badge';
-	import { Button, buttonVariants } from '$lib/components/ui/button';
+	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
-	import * as Collapsible from '$lib/components/ui/collapsible';
 	import * as Table from '$lib/components/ui/table';
 	import type { Driver } from '$lib/schemas/driver';
 	import type { StopWithLocation } from '$lib/schemas/stop';
-	import { ChevronsUpDown, Eye, MapPin, Package, Phone } from 'lucide-svelte';
-	import { slide } from 'svelte/transition';
+	import { Eye, MapPin, Package, Phone } from 'lucide-svelte';
 
 	interface Props {
 		stops: StopWithLocation[];
@@ -75,6 +73,7 @@
 		{#each Array.from(routesByDriver) as [driverId, driverStops]}
 			{@const driver = getDriver(driverId)}
 			{@const isUnassigned = driverId === 'unassigned'}
+
 			{#if driverStops.length > 0}
 				<div class="mb-2 flex items-center justify-between">
 					<div class="flex items-center gap-3">
@@ -112,87 +111,72 @@
 						{driverStops.length} stop{driverStops.length !== 1 ? 's' : ''}
 					</Badge>
 				</div>
-				<Collapsible.Root>
-					<Collapsible.Trigger class={buttonVariants({ variant: 'outline', size: 'sm' })}
-						><ChevronsUpDown /> expand stops</Collapsible.Trigger
-					>
-					<Collapsible.Content forceMount>
-						{#snippet child({ props, open })}
-							{#if open}
-								<div {...props} transition:slide>
-									<Table.Root>
-										<Table.Header>
-											<Table.Row>
-												<Table.Head class="w-12">#</Table.Head>
-												<Table.Head>Contact</Table.Head>
-												<Table.Head>Address</Table.Head>
-												<Table.Head>Phone</Table.Head>
-												<Table.Head>Notes</Table.Head>
-												<Table.Head></Table.Head>
-											</Table.Row>
-										</Table.Header>
-										<Table.Body>
-											{#each driverStops as { stop, location }, index}
-												<Table.Row class="">
-													<Table.Cell class="font-medium text-muted-foreground">
-														{stop.delivery_index !== null ? stop.delivery_index : index}
-													</Table.Cell>
-													<Table.Cell>
-														<div class="flex items-center">
-															<span class="font-semibold">{stop.contact_name || '—'}</span>
-														</div>
-													</Table.Cell>
-													<Table.Cell>
-														<div class="flex items-start">
-															<div class="text-sm">
-																<div class="font-medium">
-																	{location.address_line1}
-																</div>
-																<div class="text-muted-foreground">
-																	{location.city || ''}{location.city && location.region
-																		? ', '
-																		: ''}{location.region || ''}
-																	{location.postal_code || ''}
-																</div>
-															</div>
-														</div>
-													</Table.Cell>
-													<Table.Cell>
-														{#if stop.contact_phone}
-															<div class="flex items-center text-sm">
-																{stop.contact_phone}
-															</div>
-														{:else}
-															<span class="text-sm text-muted-foreground">—</span>
-														{/if}
-													</Table.Cell>
-													<Table.Cell>
-														{#if stop.notes}
-															<div class="max-w-[200px] truncate text-sm" title={stop.notes}>
-																{stop.notes}
-															</div>
-														{:else}
-															<span class="text-sm text-muted-foreground">—</span>
-														{/if}
-													</Table.Cell>
-													<Table.Cell>
-														<Button
-															onclick={() => (focusedStopId = stop.id)}
-															size="icon"
-															variant="ghost"
-														>
-															<Eye />
-														</Button>
-													</Table.Cell>
-												</Table.Row>
-											{/each}
-										</Table.Body>
-									</Table.Root>
-								</div>
-							{/if}
-						{/snippet}
-					</Collapsible.Content>
-				</Collapsible.Root>
+				<div class="">
+					<Table.Root>
+						<Table.Header>
+							<Table.Row>
+								<Table.Head class="w-12">#</Table.Head>
+								<Table.Head>Contact</Table.Head>
+								<Table.Head>Address</Table.Head>
+								<Table.Head>Phone</Table.Head>
+								<Table.Head>Notes</Table.Head>
+								<Table.Head></Table.Head>
+							</Table.Row>
+						</Table.Header>
+						<Table.Body>
+							{#each driverStops as { stop, location }, index}
+								<Table.Row class="">
+									<Table.Cell class="font-medium text-muted-foreground">
+										{stop.delivery_index !== null ? stop.delivery_index : index}
+									</Table.Cell>
+									<Table.Cell>
+										<div class="flex items-center">
+											<span class="font-semibold">{stop.contact_name || '—'}</span>
+										</div>
+									</Table.Cell>
+									<Table.Cell>
+										<div class="flex items-start">
+											<div class="text-sm">
+												<div class="font-medium">
+													{location.address_line1}
+												</div>
+												<div class="text-muted-foreground">
+													{location.city || ''}{location.city && location.region
+														? ', '
+														: ''}{location.region || ''}
+													{location.postal_code || ''}
+												</div>
+											</div>
+										</div>
+									</Table.Cell>
+									<Table.Cell>
+										{#if stop.contact_phone}
+											<div class="flex items-center text-sm">
+												{stop.contact_phone}
+											</div>
+										{:else}
+											<span class="text-sm text-muted-foreground">—</span>
+										{/if}
+									</Table.Cell>
+									<Table.Cell>
+										{#if stop.notes}
+											<div class="max-w-[200px] truncate text-sm" title={stop.notes}>
+												{stop.notes}
+											</div>
+										{:else}
+											<span class="text-sm text-muted-foreground">—</span>
+										{/if}
+									</Table.Cell>
+									<Table.Cell>
+										<Button onclick={() => (focusedStopId = stop.id)} size="icon" variant="ghost">
+											<Eye />
+										</Button>
+									</Table.Cell>
+								</Table.Row>
+							{/each}
+						</Table.Body>
+					</Table.Root>
+				</div>
 			{/if}
 		{/each}
 	</div>
