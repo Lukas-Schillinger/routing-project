@@ -1,8 +1,11 @@
+import { env } from '$env/dynamic/private';
 import { describe, expect, it } from 'vitest';
 import { mapboxGeocoding } from './geocoding';
 
+const RUN_METERED = env.RUN_METERED === '1';
+
 // Integration test - actually calls Mapbox Geocoding API
-describe('MapboxGeocodingService Integration Tests', () => {
+describe.skipIf(!RUN_METERED)('MapboxGeocodingService Integration Tests', () => {
 	describe('forward geocoding', () => {
 		it('should geocode a well-known address', async () => {
 			const address = 'Times Square, New York, NY';

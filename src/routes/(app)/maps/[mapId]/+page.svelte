@@ -14,11 +14,11 @@
 	import { getContext } from 'svelte';
 	import type { PageData } from './$types';
 	import OptimizationCard from './OptimizationCard/';
+	import DetailedRoutesTable from './tables/DetailedRoutesTable.svelte';
 	import EditDriversTable from './tables/EditDriversTable.svelte';
 	import EditStopsDataTable from './tables/EditStopsDataTable';
+	import RouteCards from './tables/RouteCards.svelte';
 	import ViewDriversTable from './tables/ViewDriversTable.svelte';
-	import ViewRoutes2 from './tables/ViewRoutes2.svelte';
-	import ViewRoutesTable from './tables/ViewRoutesTable.svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -118,8 +118,7 @@
 		<!-- New Card-based Routes View -->
 		<div class="space-y-6">
 			<div>
-				<h2 class="mb-3 text-lg font-semibold">Route Overview</h2>
-				<ViewRoutes2
+				<RouteCards
 					bind:focusedStopId
 					stops={data.stops}
 					assignedDrivers={data.assignedDrivers}
@@ -137,7 +136,7 @@
 					<CardDescription>Detailed table view of stops organized by driver</CardDescription>
 				</CardHeader>
 				<CardContent>
-					<ViewRoutesTable
+					<DetailedRoutesTable
 						bind:focusedStopId
 						stops={data.stops}
 						assignedDrivers={data.assignedDrivers}

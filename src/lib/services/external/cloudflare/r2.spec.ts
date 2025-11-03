@@ -1,12 +1,11 @@
-// import { env } from '$env/dynamic/private';
-// import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-// import { R2Service } from './r2';
+import { env } from '$env/dynamic/private';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { R2Service } from './r2';
 
-/**
- 
+const RUN_METERED = env.RUN_METERED === '1';
 
 // Integration test
-describe('R2Service Integration Tests', () => {
+describe.skipIf(!RUN_METERED)('R2Service Integration Tests', () => {
 	let r2Service: R2Service;
 	let uploadedKeys: string[] = [];
 
@@ -73,6 +72,3 @@ describe('R2Service Integration Tests', () => {
 		});
 	});
 });
-
-
-*/

@@ -1,25 +1,27 @@
 <script lang="ts">
 	import * as Avatar from '$lib/components/ui/avatar';
 	import { Badge } from '$lib/components/ui/badge';
-	import { Button } from '$lib/components/ui/button';
+	import { Button, buttonVariants } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
+	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
+	import * as Empty from '$lib/components/ui/empty';
 	import { Separator } from '$lib/components/ui/separator';
 	import type { Route as RouteType } from '$lib/schemas';
 	import type { Driver } from '$lib/schemas/driver';
 	import type { StopWithLocation } from '$lib/schemas/stop';
 	import { createAvatar } from '@dicebear/core';
 	import * as style from '@dicebear/identicon';
+
 	import {
 		Clock,
-		Download,
 		Eye,
 		MapPin,
-		Navigation,
 		Package,
 		Phone,
 		Printer,
 		Route,
-		Share2
+		Share2,
+		SquareArrowOutUpRight
 	} from 'lucide-svelte';
 
 	interface Props {
@@ -113,53 +115,53 @@
 {#if stops.length === 0}
 	<Card.Root>
 		<Card.Content class="flex flex-col items-center justify-center py-16">
-			<MapPin class="mb-4 h-16 w-16 text-muted-foreground" />
-			<h3 class="headline-small mb-2">No Stops Yet</h3>
-			<p class="body-medium text-center text-muted-foreground">
-				Add stops to this map to start planning routes.
-			</p>
+			<Empty.Root>
+				<Empty.Header>
+					<Empty.Media variant="icon">
+						<Route />
+					</Empty.Media>
+					<Empty.Title>No Routes for this map</Empty.Title>
+					<Empty.Description>This should never appear?</Empty.Description>
+				</Empty.Header>
+				<Empty.Content>
+					<Button href="/maps">Back to Maps</Button>
+				</Empty.Content>
+			</Empty.Root>
 		</Card.Content>
 	</Card.Root>
 {:else}
 	<!-- Action Bar -->
-	<div class="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-lg border bg-card p-4">
+	<div class="mb-6 flex flex-wrap items-center justify-between gap-4 bg-card">
 		<div class="flex items-center gap-4">
-			<div class="flex items-center gap-2 text-sm text-muted-foreground">
-				<Route class="h-4 w-4" />
-				<span
-					>{Array.from(routesByDriver).filter(([id]) => id !== 'unassigned').length} route{Array.from(
-						routesByDriver
-					).filter(([id]) => id !== 'unassigned').length !== 1
-						? 's'
-						: ''}</span
-				>
-			</div>
-			<div class="flex items-center gap-2 text-sm text-muted-foreground">
-				<MapPin class="h-4 w-4" />
-				<span>{stops.length} total stops</span>
-			</div>
-			<div class="flex items-center gap-2 text-sm text-muted-foreground">
-				<Clock class="h-4 w-4" />
-				<span>
-					{Math.floor(routes.reduce((total, route) => total + Number(route.duration || 0), 0) / 60)}
-					min total
-				</span>
-			</div>
-		</div>
-
-		<div class="flex items-center gap-2">
-			<Button variant="outline" size="sm" onclick={handleShare}>
-				<Share2 class="mr-2 h-4 w-4" />
-				Share
-			</Button>
-			<Button variant="outline" size="sm" onclick={handleExport}>
-				<Download class="mr-2 h-4 w-4" />
-				Export
-			</Button>
-			<Button variant="outline" size="sm" onclick={handlePrint}>
-				<Printer class="mr-2 h-4 w-4" />
-				Print
-			</Button>
+			<Badge>
+				<div class="flex items-center gap-2 text-sm">
+					<Route class="h-4 w-4" />
+					<span
+						>{Array.from(routesByDriver).filter(([id]) => id !== 'unassigned').length} route{Array.from(
+							routesByDriver
+						).filter(([id]) => id !== 'unassigned').length !== 1
+							? 's'
+							: ''}</span
+					>
+				</div>
+			</Badge>
+			<Badge>
+				<div class="foreground flex items-center gap-2 text-sm">
+					<MapPin class="h-4 w-4" />
+					<span>{stops.length} stops</span>
+				</div>
+			</Badge>
+			<Badge>
+				<div class="flex items-center gap-2 text-sm">
+					<Clock class="h-4 w-4" />
+					<span>
+						{Math.floor(
+							routes.reduce((total, route) => total + Number(route.duration || 0), 0) / 60
+						)}
+						minutes
+					</span>
+				</div>
+			</Badge>
 		</div>
 	</div>
 
@@ -176,7 +178,7 @@
 				{#if driverStops.length > 0}
 					<Card.Root class=" max-w-80 min-w-80 flex-shrink-0 snap-start overflow-hidden">
 						<!-- Route Header -->
-						<Card.Header class="pb-4">
+						<Card.Header class="">
 							<div class="flex flex-col gap-3">
 								<div class="flex items-center gap-3">
 									{#if isUnassigned}
@@ -197,11 +199,8 @@
 											</Avatar.Root>
 										</div>
 										<div class="min-w-0 flex-1">
-											<Card.Title class="flex items-center gap-2 text-lg">
+											<Card.Title class="flex items-center gap-2 text-xl">
 												{driver.name}
-												{#if driver.temporary}
-													<Badge variant="secondary" class="text-xs">Temporary</Badge>
-												{/if}
 											</Card.Title>
 											<Card.Description class="flex flex-col gap-1">
 												{#if driver.phone}
@@ -210,32 +209,24 @@
 														{driver.phone}
 													</span>
 												{/if}
-												<span class="flex items-center gap-1">
-													<Clock class="h-3 w-3" />
-													~{stats.estimatedTime} min
-												</span>
+												<div class="flex gap-3">
+													<span class="flex items-center gap-1">
+														<Clock class="size-4" />
+														{stats.estimatedTime}
+													</span>
+													<span class="flex items-center gap-1">
+														<MapPin class="size-4" />
+														{stats.assignedStops}
+													</span>
+												</div>
 											</Card.Description>
-										</div>
-									{/if}
-								</div>
-
-								<!-- Route Stats -->
-								<div class="flex items-center justify-center gap-6 rounded-lg bg-muted/50 p-3">
-									<div class="text-center">
-										<div class="text-lg font-semibold">{stats.totalStops}</div>
-										<div class="text-xs text-muted-foreground">stops</div>
-									</div>
-									{#if !isUnassigned}
-										<div class="text-center">
-											<div class="text-lg font-semibold">{stats.estimatedTime} min</div>
-											<div class="text-xs text-muted-foreground">est. time</div>
 										</div>
 									{/if}
 								</div>
 							</div>
 						</Card.Header>
 
-						<Card.Content class="pt-0">
+						<Card.Content class="flex h-full flex-col justify-between pt-0">
 							<!-- Route Steps - Scrollable -->
 							<div
 								class="scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border max-h-96 space-y-0 overflow-y-auto"
@@ -318,18 +309,46 @@
 								{/each}
 							</div>
 
-							{#if !isUnassigned && driverStops.length > 1}
-								<Separator class="my-3" />
-								<div class="flex flex-col gap-2 text-xs text-muted-foreground">
-									<div class="flex items-center gap-2">
-										<Navigation class="h-3 w-3" />
-										<span>Route optimized</span>
-									</div>
-									<div class="flex items-center gap-1">
-										<span>Total: {stats.estimatedTime} min</span>
-									</div>
+							<div class="flex flex-col gap-2 text-xs text-muted-foreground">
+								<Separator class="mb-2" />
+								<DropdownMenu.Root>
+									<DropdownMenu.Trigger
+										class={buttonVariants({ variant: 'outline', size: 'sm' })}
+										disabled={true}
+									>
+										<Share2 /> Share
+									</DropdownMenu.Trigger>
+									<DropdownMenu.Content>
+										<DropdownMenu.Group>
+											<DropdownMenu.Label>My Account</DropdownMenu.Label>
+											<DropdownMenu.Separator />
+											<DropdownMenu.Item>Profile</DropdownMenu.Item>
+											<DropdownMenu.Item>Billing</DropdownMenu.Item>
+											<DropdownMenu.Item>Team</DropdownMenu.Item>
+											<DropdownMenu.Item>Subscription</DropdownMenu.Item>
+										</DropdownMenu.Group>
+									</DropdownMenu.Content>
+								</DropdownMenu.Root>
+								<div class="grid grid-cols-2">
+									<Button
+										class="flex gap-2"
+										size="sm"
+										variant="link"
+										href={`/routes/${
+											routes.find((e) => {
+												return e.driver_id == driver?.id;
+											})?.id
+										}`}
+									>
+										<SquareArrowOutUpRight class="size-4" />
+										Route Page
+									</Button>
+									<Button class="flex gap-2" disabled size="sm" variant="ghost">
+										<Printer class="size-4" />
+										Print
+									</Button>
 								</div>
-							{/if}
+							</div>
 						</Card.Content>
 					</Card.Root>
 				{/if}

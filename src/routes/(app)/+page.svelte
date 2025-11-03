@@ -66,7 +66,7 @@
 		<div class="slide-up mb-16 grid gap-8 md:grid-cols-2">
 			<Card class="shadow-lg transition-shadow hover:shadow-xl">
 				<CardHeader>
-					<CardTitle class="headline-card flex items-center">
+					<CardTitle class="flex items-center">
 						<MapPin class="mr-3 h-6 w-6 text-primary" />
 						Mapbox Integration
 					</CardTitle>
@@ -87,7 +87,7 @@
 
 			<Card class="shadow-lg transition-shadow hover:shadow-xl">
 				<CardHeader>
-					<CardTitle class="headline-card flex items-center">
+					<CardTitle class="flex items-center">
 						<User class="mr-3 h-6 w-6 text-primary" />
 						Authentication System
 					</CardTitle>

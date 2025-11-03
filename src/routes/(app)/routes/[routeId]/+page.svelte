@@ -1,6 +1,5 @@
-<!-- @component This work in browser but doen't work in the iphone simulator
-	Uses scroll snap to snap panels across map display. For some reason it won't 
-	scroll on mobile. I think it has something to do with pointer-events. 
+<!-- @component There's an issue with this page where the map will load in mobile and 
+ desktop views despite not being visible in the mobile version. 
 -->
 <script lang="ts">
 	import { browser } from '$app/environment';
@@ -200,7 +199,6 @@
 				stop={selectedStop}
 				stopIndex={selectedStopIndex}
 				totalStops={sortedStops.length}
-				showNavigation={true}
 				onPrevious={goToPreviousStop}
 				onNext={goToNextStop}
 				{route}
@@ -241,7 +239,6 @@
 						stop={selectedStop}
 						stopIndex={selectedStopIndex}
 						totalStops={sortedStops.length}
-						showNavigation={true}
 						onPrevious={goToPreviousStop}
 						onNext={goToNextStop}
 						{route}
