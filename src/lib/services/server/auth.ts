@@ -1,3 +1,4 @@
+import type { PublicUser } from '$lib/schemas';
 import { db } from '$lib/server/db';
 import * as table from '$lib/server/db/schema';
 import { sha256 } from '@oslojs/crypto/sha2';
@@ -35,7 +36,9 @@ export async function validateSessionToken(token: string) {
 			user: {
 				id: table.users.id,
 				email: table.users.email,
-				organization_id: table.users.organization_id
+				organization_id: table.users.organization_id,
+				updated_at: table.users.updated_at,
+				created_at: table.users.created_at
 			},
 			session: table.session
 		})
@@ -116,9 +119,9 @@ export async function createUser(email: string, passwordHash: string, organizati
 	return result[0];
 }
 
-export function requireLogin(event: RequestEvent) {
-	if (!event.locals.user) {
+export function getUserOrRedirect(locals: App.Locals): PublicUser {
+	if (!locals.user) {
 		throw redirect(302, '/demo/lucia/login');
 	}
-	return event.locals.user;
+	return locals.user;
 }

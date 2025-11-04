@@ -1,4 +1,4 @@
-import { loginSchema } from '$lib/schemas/auth';
+import { registerSchema } from '$lib/schemas/auth';
 import { emailSchema, passwordSchema } from '$lib/schemas/common';
 import { fail, redirect } from '@sveltejs/kit';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -6,7 +6,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 // Import modules that will be mocked
 import { db } from '$lib/server/db';
 import * as auth from '$lib/services/server/auth';
-import { verify } from '@node-rs/argon2';
 
 // Mock dependencies
 vi.mock('$lib/server/db', () => ({
@@ -33,7 +32,7 @@ vi.mock('@node-rs/argon2', () => ({
 	verify: vi.fn()
 }));
 
-describe('Authentication Server Actions', () => {
+describe('Registration Server Actions', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 	});
@@ -122,141 +121,122 @@ describe('Authentication Server Actions', () => {
 			});
 		});
 
-		describe('loginSchema', () => {
-			it('should validate complete login input', () => {
+		describe('registerSchema', () => {
+			it('should validate complete registration input', () => {
 				const validInput = {
 					email: 'test@example.com',
-					password: 'password123'
+					password: 'password123',
+					passwordConfirm: 'password123'
 				};
-				expect(loginSchema.safeParse(validInput).success).toBe(true);
+				expect(registerSchema.safeParse(validInput).success).toBe(true);
 			});
 
-			it('should reject invalid login input', () => {
+			it('should reject invalid registration input', () => {
 				const invalidInputs = [
-					{ email: 'invalid', password: 'password123' },
-					{ email: 'test@example.com', password: '123' },
-					{ email: '', password: '' },
-					{ email: 'test@example.com' }, // missing password
-					{ password: 'password123' } // missing email
+					{ email: 'invalid', password: 'password123', passwordConfirm: 'password123' },
+					{ email: 'test@example.com', password: '123', passwordConfirm: '123' },
+					{ email: '', password: '', passwordConfirm: '' },
+					{ email: 'test@example.com', passwordConfirm: 'password123' }, // missing password
+					{ password: 'password123', passwordConfirm: 'password123' }, // missing email
+					{ email: 'test@example.com', password: 'password123' } // missing contirm password
 				];
 
 				invalidInputs.forEach((input) => {
-					expect(loginSchema.safeParse(input).success).toBe(false);
+					expect(registerSchema.safeParse(input).success).toBe(false);
 				});
 			});
 		});
 	});
 
 	describe('Server Actions', () => {
-		// Helper function to create mock form data
-		const createMockEvent = (email: string, password: string) => ({
-			request: {
-				formData: vi.fn().mockResolvedValue(
-					new Map([
-						['email', email],
-						['password', password]
-					])
-				)
-			},
-			locals: { user: null, session: null }
-		});
-
-		describe('Login Action', () => {
-			it('should handle successful login flow', async () => {
+		describe('Register Action', () => {
+			it('should handle successful registration', async () => {
 				const { actions } = await import('./+page.server.js');
 
-				// Mock successful database query
-				const mockUser = {
-					id: 'user-123',
-					email: 'test@example.com',
-					passwordHash: 'hashed-password'
-				};
-
-				vi.mocked(db.select).mockReturnValue({
-					from: vi.fn().mockReturnValue({
-						where: vi.fn().mockResolvedValue([mockUser])
-					})
-				} as never);
-
-				// Mock successful password verification
-				vi.mocked(verify).mockResolvedValue(true);
+				// Mock the createUser function
+				vi.mocked(auth.createUser).mockResolvedValue({ id: 'new-user-123' });
 
 				// Mock auth functions
 				vi.mocked(auth.generateSessionToken).mockReturnValue('session-token');
 				vi.mocked(auth.createSession).mockResolvedValue({
 					id: 'session-123',
-					user_id: 'user-123',
+					user_id: 'new-user-123',
 					expires_at: new Date('2025-01-01')
 				});
 				vi.mocked(auth.setSessionTokenCookie).mockImplementation(() => {});
 
-				// Mock SvelteKit functions
 				vi.mocked(redirect).mockImplementation(() => {
-					throw new Error('redirect'); // SvelteKit redirects throw
+					throw new Error('redirect');
 				});
 
-				const mockEvent = createMockEvent('test@example.com', 'password123');
+				const mockEvent = {
+					request: {
+						formData: vi.fn().mockResolvedValue(
+							new Map([
+								['email', 'newuser@example.com'],
+								['password', 'password123'],
+								['password-confirm', 'password123']
+							])
+						)
+					},
+					locals: { user: null, session: null }
+				};
 
-				// Should throw redirect
-				await expect(actions.login(mockEvent as never)).rejects.toThrow('redirect');
+				await expect(actions.register(mockEvent as never)).rejects.toThrow('redirect');
 				expect(redirect).toHaveBeenCalledWith(302, '/demo/lucia');
 			});
 
-			it('should handle invalid email', async () => {
+			it('should handle registration with invalid email', async () => {
 				const { actions } = await import('./+page.server.js');
 
 				vi.mocked(fail).mockReturnValue({ status: 400 } as never);
-				const mockEvent = createMockEvent('invalid-email', 'password123');
 
-				await actions.login(mockEvent as never);
+				const mockEvent = {
+					request: {
+						formData: vi.fn().mockResolvedValue(
+							new Map([
+								['email', 'invalid-email'],
+								['password', 'password123']
+							])
+						)
+					},
+					locals: { user: null, session: null }
+				};
+
+				await actions.register(mockEvent as never);
 				expect(fail).toHaveBeenCalledWith(400, {
 					message: 'Please enter a valid email address'
 				});
 			});
 
-			it('should handle user not found', async () => {
+			it('should handle database error during registration', async () => {
 				const { actions } = await import('./+page.server.js');
 
-				// Mock empty database result
-				vi.mocked(db.select).mockReturnValue({
-					from: vi.fn().mockReturnValue({
-						where: vi.fn().mockResolvedValue([])
+				// Mock database error
+				vi.mocked(db.insert).mockReturnValue({
+					values: vi.fn().mockReturnValue({
+						returning: vi.fn().mockRejectedValue(new Error('Unique constraint violation'))
 					})
 				} as never);
 
-				vi.mocked(fail).mockReturnValue({ status: 400 } as never);
-				const mockEvent = createMockEvent('nonexistent@example.com', 'password123');
+				vi.mocked(fail).mockReturnValue({ status: 500 } as never);
 
-				await actions.login(mockEvent as never);
-				expect(fail).toHaveBeenCalledWith(400, {
-					message: 'Incorrect email or password'
-				});
-			});
-
-			it('should handle incorrect password', async () => {
-				const { actions } = await import('./+page.server.js');
-
-				const mockUser = {
-					id: 'user-123',
-					email: 'test@example.com',
-					passwordHash: 'hashed-password'
+				const mockEvent = {
+					request: {
+						formData: vi.fn().mockResolvedValue(
+							new Map([
+								['email', 'existing@example.com'],
+								['password', 'password123'],
+								['password-confirm', 'password123']
+							])
+						)
+					},
+					locals: { user: null, session: null }
 				};
 
-				vi.mocked(db.select).mockReturnValue({
-					from: vi.fn().mockReturnValue({
-						where: vi.fn().mockResolvedValue([mockUser])
-					})
-				} as never);
-
-				// Mock failed password verification
-				vi.mocked(verify).mockResolvedValue(false);
-				vi.mocked(fail).mockReturnValue({ status: 400 } as never);
-
-				const mockEvent = createMockEvent('test@example.com', 'wrongpassword');
-
-				await actions.login(mockEvent as never);
-				expect(fail).toHaveBeenCalledWith(400, {
-					message: 'Incorrect email or password'
+				await actions.register(mockEvent as never);
+				expect(fail).toHaveBeenCalledWith(500, {
+					message: 'An error has occurred'
 				});
 			});
 		});

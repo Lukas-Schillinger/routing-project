@@ -19,6 +19,7 @@ export default defineConfig({
 						provider: 'playwright',
 						instances: [{ browser: 'chromium' }]
 					},
+					includeTaskLocation: true,
 					include: ['src/**/*.svelte.{test,spec}.{js,ts}'],
 					exclude: ['src/lib/server/**'],
 					setupFiles: ['./vitest-setup-client.ts']
@@ -29,6 +30,7 @@ export default defineConfig({
 				test: {
 					name: 'server',
 					environment: 'node',
+					includeTaskLocation: true,
 					include: ['src/**/*.{test,spec}.{js,ts}'],
 					exclude: ['src/**/*.svelte.{test,spec}.{js,ts}']
 				}

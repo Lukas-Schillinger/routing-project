@@ -25,10 +25,10 @@ export const userFilterSchema = z.object({
 // Full user schema (what comes from DB)
 export const userSchema = z.object({
 	id: uuidSchema,
-	organization_id: uuidSchema.nullable(),
+	organization_id: uuidSchema,
 	email: emailSchema,
 	passwordHash: z.string(),
-	role: z.enum(['admin', 'member', 'viewer']),
+	// role: z.enum(['admin', 'member', 'viewer']),
 	created_at: timestampSchema,
 	updated_at: timestampSchema
 });

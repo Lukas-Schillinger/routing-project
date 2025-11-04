@@ -1,13 +1,9 @@
 import { depotService, driverService, mapService, stopService } from '$lib/services/server';
-import { redirect } from '@sveltejs/kit';
+import { getUserOrRedirect } from '$lib/services/server/auth';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
-	const user = locals.user;
-
-	if (!user) {
-		throw redirect(302, '/demo/lucia/login');
-	}
+	const user = getUserOrRedirect(locals);
 
 	// Fetch all data in parallel since they're independent
 	const [userMaps, userDepots, userDrivers, stops] = await Promise.all([
