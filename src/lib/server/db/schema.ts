@@ -51,6 +51,27 @@ export const session = pgTable('session', {
 	updated_at: ts('updated_at')
 });
 
+export const magicLinks = pgTable('msgic_links', {
+	id: id,
+	organization_id: orgId,
+	created_at: ts('created_at'),
+	updated_at: ts('updated_at').$onUpdate(() => new Date()),
+
+	expires_at: ts('expires_at').notNull(),
+	type: text('type').$type<'invite' | 'login'>().notNull(),
+
+	invitee_organization_id: uuid('invitee_organization_id').references(() => organizations.id, {
+		onDelete: 'set null'
+	}), // used for invite
+	email: text('email'), // used for invite
+	// role needs to be added eventually
+
+	user_id: uuid('user_id').references(() => users.id, { onDelete: 'set null' }), // used for login
+
+	used_at: ts('used_at'), // used for invite
+	token_hash: text('token_hash').notNull()
+});
+
 export const drivers = pgTable(
 	'drivers',
 	{
