@@ -26,14 +26,13 @@ const createMagicLinkSchema = z.object({
 	email: z.string().email().nullable().optional(),
 	// role: z.string().optional().nullable(),
 
-	user_id: z.string().nullable().optional(),
+	user_id: z.string().nullable().optional()
 
-	token_hash: z.string()
+	// token_hash: z.string()
 });
 
 export const createMagicInviteSchema = createMagicLinkSchema.extend({
 	type: z.literal('invite'),
-	invitee_organization_id: z.string(),
 	email: z.string().email()
 });
 
@@ -42,25 +41,31 @@ export const createMagicLoginSchema = createMagicLinkSchema.extend({
 	user_id: z.string()
 });
 
+export const magicLinkSchema = createMagicLinkSchema.extend({
+	id: z.string(),
+	organization_id: z.string(),
+	updated_at: z.date(),
+	created_at: z.date(),
+	token_hash: z.string(),
+	used_at: z.date().nullable()
+});
+
 export const magicInviteSchema = createMagicInviteSchema.extend({
 	id: z.string(),
 	organization_id: z.string(),
 	updated_at: z.date(),
-	created_at: z.date()
+	created_at: z.date(),
+	token_hash: z.string(),
+	used_at: z.date().nullable()
 });
 
 export const magicLoginSchema = createMagicLoginSchema.extend({
 	id: z.string(),
 	organization_id: z.string(),
 	updated_at: z.date(),
-	created_at: z.date()
-});
-
-export const magicLinkSchema = createMagicLinkSchema.extend({
-	id: z.string(),
-	organization_id: z.string(),
-	updated_at: z.date(),
-	created_at: z.date()
+	created_at: z.date(),
+	token_hash: z.string(),
+	used_at: z.date().nullable()
 });
 
 // Type exports for convenience

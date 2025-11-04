@@ -1,4 +1,4 @@
-import type { Organization, User } from '$lib/schemas';
+import type { Organization, PublicUser, User } from '$lib/schemas';
 import { db } from '$lib/server/db';
 import { organizations, users } from '$lib/server/db/schema';
 import { and, eq } from 'drizzle-orm';
@@ -17,6 +17,52 @@ export class UserService {
 		}
 
 		return user;
+	}
+
+	async getPublicUser(userId: string, organization_id: string): Promise<PublicUser> {
+		const user = await this.getUser(userId, organization_id);
+		return {
+			id: user.id,
+			created_at: user.created_at,
+			updated_at: user.updated_at,
+			organization_id: user.organization_id,
+			email: user.email
+		};
+	}
+
+	async createUser(
+		email: string,
+		passwordHash?: string,
+		organizationId?: string | null
+	): Promise<User> {
+		// If no organization ID provided, create a new organization with a random name
+		let orgId = organizationId;
+
+		if (!orgId) {
+			// Generate a random organization name
+			const timestamp = Date.now();
+			const randomSuffix = Math.random().toString(36).substring(2, 8);
+			const orgName = `Organization-${timestamp}-${randomSuffix}`;
+
+			// Create a new organization
+			const orgResult = await db
+				.insert(organizations)
+				.values({ name: orgName })
+				.returning({ id: organizations.id });
+			orgId = orgResult[0].id;
+		}
+
+		// Create the user with the organization ID
+		const [result] = await db
+			.insert(users)
+			.values({
+				email,
+				passwordHash,
+				organization_id: orgId
+			})
+			.returning();
+
+		return result;
 	}
 }
 

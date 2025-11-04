@@ -88,37 +88,6 @@ export function deleteSessionTokenCookie(event: RequestEvent) {
 	});
 }
 
-export async function createUser(email: string, passwordHash: string, organizationId?: string) {
-	// If no organization ID provided, create a new organization with a random name
-	let orgId = organizationId;
-
-	if (!orgId) {
-		// Generate a random organization name
-		const timestamp = Date.now();
-		const randomSuffix = Math.random().toString(36).substring(2, 8);
-		const orgName = `Organization-${timestamp}-${randomSuffix}`;
-
-		// Create a new organization
-		const orgResult = await db
-			.insert(table.organizations)
-			.values({ name: orgName })
-			.returning({ id: table.organizations.id });
-		orgId = orgResult[0].id;
-	}
-
-	// Create the user with the organization ID
-	const result = await db
-		.insert(table.users)
-		.values({
-			email,
-			passwordHash,
-			organization_id: orgId
-		})
-		.returning({ id: table.users.id });
-
-	return result[0];
-}
-
 export function getUserOrRedirect(locals: App.Locals): PublicUser {
 	if (!locals.user) {
 		throw redirect(302, '/demo/lucia/login');

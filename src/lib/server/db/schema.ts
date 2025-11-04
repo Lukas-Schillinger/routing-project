@@ -32,7 +32,7 @@ export const users = pgTable(
 		id,
 		organization_id: orgId.references(() => organizations.id, { onDelete: 'cascade' }),
 		email: text('email').notNull().unique(),
-		passwordHash: text('password_hash').notNull(),
+		passwordHash: text('password_hash'),
 		role: varchar('role', { length: 32 }).default('member').notNull(),
 		created_at: ts('created_at'),
 		updated_at: ts('updated_at')
@@ -51,7 +51,7 @@ export const session = pgTable('session', {
 	updated_at: ts('updated_at')
 });
 
-export const magicLinks = pgTable('msgic_links', {
+export const magicLinks = pgTable('magic_links', {
 	id: id,
 	organization_id: orgId,
 	created_at: ts('created_at'),

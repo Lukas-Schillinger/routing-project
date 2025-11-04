@@ -4,7 +4,7 @@ import { emailSchema, timestampSchema, uuidSchema } from './common.js';
 // User creation schema
 export const createUserSchema = z.object({
 	email: emailSchema,
-	passwordHash: z.string().min(1, 'Password hash is required'),
+	passwordHash: z.string().min(1, 'Password hash is required').nullable(),
 	organization_id: uuidSchema.optional(),
 	role: z.enum(['admin', 'member', 'viewer']).default('member')
 });
@@ -27,7 +27,7 @@ export const userSchema = z.object({
 	id: uuidSchema,
 	organization_id: uuidSchema,
 	email: emailSchema,
-	passwordHash: z.string(),
+	passwordHash: z.string().nullable(),
 	// role: z.enum(['admin', 'member', 'viewer']),
 	created_at: timestampSchema,
 	updated_at: timestampSchema

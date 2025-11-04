@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 // Import modules that will be mocked
 import { db } from '$lib/server/db';
 import * as auth from '$lib/services/server/auth';
+import { userService } from '$lib/services/server/user.service.js';
 
 // Mock dependencies
 vi.mock('$lib/server/db', () => ({
@@ -20,6 +21,12 @@ vi.mock('$lib/services/server/auth', () => ({
 	createSession: vi.fn(),
 	setSessionTokenCookie: vi.fn(),
 	createUser: vi.fn()
+}));
+
+vi.mock('$lib/services/server/user.service.js', () => ({
+	userService: {
+		createUser: vi.fn()
+	}
 }));
 
 vi.mock('@sveltejs/kit', () => ({
@@ -154,7 +161,13 @@ describe('Registration Server Actions', () => {
 				const { actions } = await import('./+page.server.js');
 
 				// Mock the createUser function
-				vi.mocked(auth.createUser).mockResolvedValue({ id: 'new-user-123' });
+				vi.mocked(userService.createUser).mockResolvedValue({
+					id: 'new-user-123',
+					email: 'test@example.com',
+					created_at: new Date(),
+					updated_at: new Date(),
+					organization_id: 'org_id'
+				});
 
 				// Mock auth functions
 				vi.mocked(auth.generateSessionToken).mockReturnValue('session-token');

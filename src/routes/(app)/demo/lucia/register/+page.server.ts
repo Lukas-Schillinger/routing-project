@@ -1,5 +1,6 @@
 import { registerSchema } from '$lib/schemas/auth';
 import * as auth from '$lib/services/server/auth';
+import { userService } from '$lib/services/server/user.service';
 import { hash } from '@node-rs/argon2';
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
@@ -39,7 +40,7 @@ export const actions: Actions = {
 		});
 
 		try {
-			const user = await auth.createUser(validEmail, passwordHash);
+			const user = await userService.createUser(validEmail, passwordHash);
 			const userId = user.id;
 
 			const sessionToken = auth.generateSessionToken();
