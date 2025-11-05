@@ -65,7 +65,7 @@ export class MagicLinkService {
 	async createMagicInvite(
 		magicInviteData: CreateMagicInvite,
 		organization_id: string
-	): Promise<{ invite: MagicInvite; token: string }> {
+	): Promise<{ magicInvite: MagicInvite; token: string }> {
 		if (
 			magicInviteData.invitee_organization_id &&
 			magicInviteData.invitee_organization_id != organization_id
@@ -84,7 +84,7 @@ export class MagicLinkService {
 			})
 			.returning();
 
-		return { invite: newMagicInvite as MagicInvite, token: token };
+		return { magicInvite: newMagicInvite as MagicInvite, token: token };
 	}
 
 	async createMagicLogin(

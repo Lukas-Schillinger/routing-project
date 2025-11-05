@@ -30,6 +30,18 @@ export class UserService {
 		};
 	}
 
+	/** Does not validate requester organization ID! */
+	async getAnyUser(userId: string): Promise<User | null> {
+		const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+		return user;
+	}
+
+	/** Does not validate requester organization ID! */
+	async findAnyUserByEmail(email: string): Promise<User | null> {
+		const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+		return user;
+	}
+
 	async createUser(
 		email: string,
 		passwordHash?: string,

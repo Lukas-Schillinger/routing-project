@@ -18,7 +18,7 @@ export const registerSchema = z
 		path: ['passwordConfirm']
 	});
 
-const createMagicLinkSchema = z.object({
+export const createMagicLinkSchema = z.object({
 	expires_at: z.date(),
 	type: z.enum(['invite', 'login']),
 
