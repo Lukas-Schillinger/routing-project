@@ -2,13 +2,12 @@
 	import MapBoxStaticMap from '$lib/components/MapBoxStaticMap.svelte';
 	import * as Actions from '$lib/components/TableActionsDropdown.Items';
 	import TableActionsDropdown from '$lib/components/TableActionsDropdown.svelte';
-	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import type { Map as MapType, StopWithLocation } from '$lib/schemas';
 	import { mapApi } from '$lib/services/api';
 	import { formatDate } from '$lib/utils';
-	import { Calendar, Check, Map, MapPin, Plus, Truck } from 'lucide-svelte';
+	import { Calendar, Map, MapPin, Plus, Route, Truck } from 'lucide-svelte';
 
 	let {
 		maps = $bindable(),
@@ -111,18 +110,20 @@
 										<a href="/maps/{map.id}" class="flex items-center gap-2 hover:underline">
 											<h3 class="text-lg font-semibold">{map.title}</h3>
 										</a>
-										{#if isRouted}
-											<Badge variant="default" class="w-fit bg-green-200 text-green-800">
-												<Check class="mr-1 size-3" />
-												Routed
-											</Badge>
-										{/if}
 									</div>
 
 									<!-- Stats row -->
 									<div
-										class="flex flex-wrap items-center gap-2 text-sm text-muted-foreground sm:gap-6"
+										class="flex flex-wrap items-center gap-2 text-sm text-muted-foreground sm:gap-x-6"
 									>
+										{#if isRouted}
+											<div
+												class="flex items-center gap-1 whitespace-nowrap text-secondary-foreground"
+											>
+												<Route class="h-4 w-4" />
+												<span>routed</span>
+											</div>
+										{/if}
 										<div class="flex items-center gap-1 whitespace-nowrap">
 											<MapPin class="h-4 w-4" />
 											<span>{mapStops.length} stops</span>
@@ -149,7 +150,7 @@
 										href="/maps/{map.id}"
 										variant="outline"
 										size="sm"
-										class="hidden flex-1 sm:block sm:flex-none"
+										class="hidden flex-1 sm:flex sm:flex-none"
 									>
 										<span class="sm:hidden">View</span>
 										<span class="hidden sm:inline">View Map</span>

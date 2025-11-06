@@ -2,6 +2,7 @@
 	import type { Route, StopWithLocation } from '$lib/schemas';
 	import type maplibregl from 'maplibre-gl';
 	import { mode } from 'mode-watcher';
+	import { onMount } from 'svelte';
 	import { LineLayer, MapLibre, Marker, Popup } from 'svelte-maplibre';
 	import GeoJSON from 'svelte-maplibre/GeoJSON.svelte';
 	import StopMapPopup from './StopMapPopup.svelte';
@@ -27,6 +28,10 @@
 		return mode.current == 'light'
 			? 'https://api.maptiler.com/maps/streets-v4/style.json?key=L2oyusC7bBTlsWRPZFQh'
 			: 'https://api.maptiler.com/maps/streets-v2-dark/style.json?key=L2oyusC7bBTlsWRPZFQh';
+	});
+
+	onMount(() => {
+		console.log('MOUNTED', new Date().toLocaleTimeString());
 	});
 
 	// Color palette for driver routes

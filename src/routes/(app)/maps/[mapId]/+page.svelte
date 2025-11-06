@@ -27,10 +27,7 @@
 	if (pageHeaderContext) {
 		pageHeaderContext.set({
 			title: data.map.title,
-			breadcrumbs: [
-				{ name: 'Maps', href: '/maps' },
-				{ name: data.map.title, href: `/maps/${data.map.id}` }
-			]
+			breadcrumbs: [{ name: 'Maps', href: '/maps' }]
 		});
 	}
 

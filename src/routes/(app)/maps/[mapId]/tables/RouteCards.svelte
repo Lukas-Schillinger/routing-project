@@ -131,7 +131,7 @@
 	</Card.Root>
 {:else}
 	<!-- Action Bar -->
-	<div class="mb-6 flex flex-wrap items-center justify-between gap-4 bg-card">
+	<div class="mb-6 flex flex-wrap items-center justify-between gap-4">
 		<div class="flex items-center gap-4">
 			<Badge>
 				<div class="flex items-center gap-2 text-sm">
@@ -148,7 +148,7 @@
 			<Badge>
 				<div class="foreground flex items-center gap-2 text-sm">
 					<MapPin class="h-4 w-4" />
-					<span>{stops.length} stops</span>
+					<span class="">{stops.length} stops</span>
 				</div>
 			</Badge>
 			<Badge>

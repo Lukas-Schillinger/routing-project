@@ -10,9 +10,7 @@
 	variant="ghost"
 	size="sm"
 	onclick={toggleMode}
-	class="h-9 w-9 p-0 {variant === 'inverse'
-		? 'text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground'
-		: ''}"
+	class="h-9 w-9 p-0 {variant === 'inverse' ? '' : ''}"
 	aria-label="Toggle theme"
 >
 	{#if mode.current === 'dark'}

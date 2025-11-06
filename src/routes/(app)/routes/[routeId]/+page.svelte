@@ -1,7 +1,6 @@
-<!-- @component There's an issue with this page where the map will load in mobile and 
- desktop views despite not being visible in the mobile version. 
--->
+<!-- @component Route details page with map view (desktop) and mobile-optimized stop navigation -->
 <script lang="ts">
+	// Imports
 	import { browser } from '$app/environment';
 	import MapView from '$lib/components/MapView.svelte';
 	import * as Avatar from '$lib/components/ui/avatar';
@@ -13,18 +12,36 @@
 	import RouteSettingsDropdown from './RouteSettingsDropdown.svelte';
 	import RouteTimeline from './RouteTimeline.svelte';
 
+	// Props
 	let { data }: { data: PageData } = $props();
 
-	// State for mobile panel visibility
-	let showPanel = $state(true);
-
-	// Destructure the data
+	// Destructure data
 	const { map, stops, assignedDrivers, route } = data;
-
-	// Get the driver for this route
 	const driver = $derived(assignedDrivers.find((d) => d.id === route.driver_id));
 
-	// Directions provider preference with local storage
+	// ========================================
+	// UI State Management
+	// ========================================
+
+	// Panel visibility (desktop only)
+	let showPanel = $state(true);
+
+	// Map rendering state (prevents loading on mobile)
+	let showMap = $state(false);
+
+	// Mobile stop navigation
+	let selectedStopIndex = $state(0);
+
+	// Desktop map focus
+	let focusedStopId = $state<string | null>(null);
+
+	// Timeline scroll reference
+	let scrollToIndex: ((index: number) => void) | null = null;
+
+	// ========================================
+	// Directions Provider Preferences
+	// ========================================
+
 	type DirectionsProvider = 'google' | 'apple';
 
 	function getDirectionsProvider(): DirectionsProvider {
@@ -48,26 +65,46 @@
 
 	let directionsProvider = $state<DirectionsProvider>(getDirectionsProvider());
 
-	// Watch for changes and persist to localStorage
+	// Persist provider changes to localStorage
 	$effect(() => {
 		saveDirectionsProvider(directionsProvider);
 	});
 
-	// Function to handle directions provider change
-	function handleDirectionsProviderChange(provider: DirectionsProvider) {
-		directionsProvider = provider;
-	}
+	// ========================================
+	// Responsive Map Loading
+	// ========================================
 
-	// Generate avatar for driver
-	function getAvatar(driverId: string) {
-		return createAvatar(style, {
-			seed: driverId
-		}).toDataUri();
-	}
+	// Responsive map loading - only load on desktop, keep loaded once initialized
+	// Causes a lot of jitter on desktop
+	$effect(() => {
+		if (!browser) return;
 
-	// Calculate map center from stops
+		function updateScreenSize() {
+			// Once map is loaded, keep it loaded (prevents re-initialization)
+			showMap = showMap || window.innerWidth >= 768;
+		}
+
+		updateScreenSize();
+		window.addEventListener('resize', updateScreenSize);
+
+		return () => window.removeEventListener('resize', updateScreenSize);
+	});
+
+	// ========================================
+	// Data Processing & Computed Values
+	// ========================================
+
+	// Sort stops by delivery order
+	const sortedStops = $derived(
+		stops.sort((a, b) => (a.stop.delivery_index || 0) - (b.stop.delivery_index || 0))
+	);
+
+	// Current stop for mobile view
+	const selectedStop = $derived(sortedStops[selectedStopIndex]);
+
+	// Calculate map center from stop coordinates
 	const mapCenter = $derived.by(() => {
-		if (stops.length === 0) return [-98.5795, 39.8283] as [number, number];
+		if (stops.length === 0) return [-98.5795, 39.8283] as [number, number]; // Default center (US)
 
 		let totalLat = 0;
 		let totalLon = 0;
@@ -86,34 +123,15 @@
 		return [totalLon / validCount, totalLat / validCount] as [number, number];
 	});
 
-	// Calculate route statistics
-	const routeStats = $derived.by(() => {
-		const totalStops = stops.length;
-		const totalDuration = Number(route.duration) || 0;
+	// ========================================
+	// Event Handlers
+	// ========================================
 
-		return {
-			totalStops,
-			totalDuration: Math.floor(totalDuration / 60), // Convert to minutes
-			estimatedHours: Math.floor(totalDuration / 3600),
-			estimatedMinutes: Math.floor((totalDuration % 3600) / 60)
-		};
-	});
+	function handleDirectionsProviderChange(provider: DirectionsProvider) {
+		directionsProvider = provider;
+	}
 
-	// Sort stops by delivery index
-	const sortedStops = $derived(
-		stops.sort((a, b) => (a.stop.delivery_index || 0) - (b.stop.delivery_index || 0))
-	);
-
-	// State for current stop index in mobile view
-	let selectedStopIndex = $state(0);
-
-	// Get current stop for mobile view
-	const selectedStop = $derived(sortedStops[selectedStopIndex]);
-
-	// Reference to scroll function from RouteTimeline
-	let scrollToIndex: ((index: number) => void) | null = null;
-
-	// Navigation functions for mobile
+	// Mobile stop navigation
 	function goToPreviousStop() {
 		if (selectedStopIndex > 0) {
 			selectedStopIndex--;
@@ -128,12 +146,19 @@
 		}
 	}
 
-	// State for focused stop (desktop only)
-	let focusedStopId = $state<string | null>(null);
-
-	// Function to handle going to a specific stop (desktop only)
+	// Desktop map interaction
 	function handleGoToStop(stopId: string) {
 		focusedStopId = stopId;
+	}
+
+	// ========================================
+	// Utility Functions
+	// ========================================
+
+	function getAvatar(driverId: string) {
+		return createAvatar(style, {
+			seed: driverId
+		}).toDataUri();
 	}
 </script>
 
@@ -220,20 +245,22 @@
 		<!-- Desktop: Combined View -->
 		<div class="hidden h-full w-full md:flex">
 			<!-- Map View -->
-			<div class="relative flex-1">
-				<MapView
-					stops={sortedStops}
-					routes={[route]}
-					center={mapCenter}
-					zoom={12}
-					bind:focusedStopId
-					onGoToStop={handleGoToStop}
-				/>
-			</div>
+			{#if showMap}
+				<div class="relative flex-1 bg-muted/30">
+					<MapView
+						stops={sortedStops}
+						routes={[route]}
+						center={mapCenter}
+						zoom={12}
+						bind:focusedStopId
+						onGoToStop={handleGoToStop}
+					/>
+				</div>
+			{/if}
 
 			<!-- Side Panel -->
 			{#if showPanel}
-				<div class="flex w-96 flex-shrink-0 flex-col overflow-hidden border-l bg-muted/30">
+				<div class="flex w-96 flex-shrink-0 flex-col overflow-hidden bg-muted/30">
 					<!-- Current Stop Panel -->
 					<CurrentStopPanel
 						stop={selectedStop}

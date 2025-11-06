@@ -15,8 +15,7 @@
 	// Set page header in layout context
 	const pageHeaderContext = getContext<{ set: (header: any) => void }>('pageHeader');
 	pageHeaderContext.set({
-		title: 'Maps',
-		description: 'Manage your routing maps and delivery routes'
+		breadcrumbs: [{ name: 'Maps', href: '/maps' }]
 	});
 
 	async function handleDepotCreated() {
