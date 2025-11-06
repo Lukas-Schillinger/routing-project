@@ -18,54 +18,45 @@ export const registerSchema = z
 		path: ['passwordConfirm']
 	});
 
-export const createMagicLinkSchema = z.object({
-	expires_at: z.date(),
-	type: z.enum(['invite', 'login']),
-
-	invitee_organization_id: z.string().nullable().optional(),
-	email: z.string().email().nullable().optional(),
-	// role: z.string().optional().nullable(),
-
-	user_id: z.string().nullable().optional()
-
-	// token_hash: z.string()
-});
-
-export const createMagicInviteSchema = createMagicLinkSchema.extend({
+export const createMagicInviteSchema = z.object({
 	type: z.literal('invite'),
-	email: z.string().email()
+	email: z.string().email(),
+	token_duration_hours: z.number().default(720),
+	invitee_organization_id: z.string().nullable().optional()
 });
 
-export const createMagicLoginSchema = createMagicLinkSchema.extend({
+export const createMagicLoginSchema = z.object({
+	type: z.literal('login'),
+	email: z.string(),
+	token_duration_hours: z.number().default(720)
+});
+
+export const magicLinkSchema = z.object({
+	id: z.string(),
+	organization_id: z.string(),
+	updated_at: z.date(),
+	created_at: z.date(),
+
+	expires_at: z.date(),
+	type: z.enum(['login', 'invite']),
+
+	invitee_organization_id: z.string().nullable(),
+	email: z.string().email(),
+
+	user_id: z.string().nullable(),
+
+	used_at: z.date().nullable(),
+	token_hash: z.string()
+});
+
+export const magicInviteSchema = magicLinkSchema.extend({
+	type: z.literal('invite'),
+	user_id: z.null()
+});
+
+export const magicLoginSchema = magicLinkSchema.extend({
 	type: z.literal('login'),
 	user_id: z.string()
-});
-
-export const magicLinkSchema = createMagicLinkSchema.extend({
-	id: z.string(),
-	organization_id: z.string(),
-	updated_at: z.date(),
-	created_at: z.date(),
-	token_hash: z.string(),
-	used_at: z.date().nullable()
-});
-
-export const magicInviteSchema = createMagicInviteSchema.extend({
-	id: z.string(),
-	organization_id: z.string(),
-	updated_at: z.date(),
-	created_at: z.date(),
-	token_hash: z.string(),
-	used_at: z.date().nullable()
-});
-
-export const magicLoginSchema = createMagicLoginSchema.extend({
-	id: z.string(),
-	organization_id: z.string(),
-	updated_at: z.date(),
-	created_at: z.date(),
-	token_hash: z.string(),
-	used_at: z.date().nullable()
 });
 
 // Type exports for convenience

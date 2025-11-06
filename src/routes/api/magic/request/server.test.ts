@@ -159,7 +159,7 @@ describe('Magic Link Request API', () => {
 			};
 			vi.mocked(userService.findAnyUserByEmail).mockResolvedValue(existingUser);
 			vi.mocked(magicLinkService.createMagicLogin).mockResolvedValue({
-				login: { id: 'login-123', expires_at: new Date() } as never,
+				magicLogin: { id: 'login-123', expires_at: new Date() } as never,
 				token: 'token-123'
 			});
 

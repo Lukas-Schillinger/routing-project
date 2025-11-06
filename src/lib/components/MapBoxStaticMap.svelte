@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { PUBLIC_MAPBOX_ACCESS_TOKEN } from '$env/static/public';
 	import type { StopWithLocation } from '$lib/schemas';
+	import { mode } from 'mode-watcher';
 
 	interface Props {
 		stops: StopWithLocation[];
@@ -16,10 +17,14 @@
 		mapId,
 		width = 600,
 		height = 400,
-		style = 'mapbox://styles/mapbox/streets-v12',
+
 		padding = 20,
 		...restProps
 	}: Props = $props();
+
+	let style = $derived.by(() => {
+		return mode.current == 'light' ? 'streets-v12' : 'dark-v11';
+	});
 
 	function getBoundingBox(stops: StopWithLocation[]): [number, number, number, number] {
 		if (stops.length === 0) {
@@ -68,7 +73,7 @@
 			.join(',');
 
 		// Construct the URL with viewport-appropriate dimensions
-		const baseUrl = 'https://api.mapbox.com/styles/v1/mapbox/streets-v12/static';
+		const baseUrl = `https://api.mapbox.com/styles/v1/mapbox/${style}/static`;
 		const params = new URLSearchParams({
 			access_token: token,
 			attribution: 'true'

@@ -103,7 +103,7 @@
 
 							<!-- Content wrapper -->
 							<div
-								class="flex flex-1 flex-col gap-3 p-6 sm:flex-row sm:items-center sm:justify-between"
+								class="flex flex-1 flex-row gap-3 p-6 sm:flex-row sm:items-center sm:justify-between"
 							>
 								<!-- Left side - Main info -->
 								<div class="flex-1">
@@ -143,13 +143,13 @@
 
 								<!-- Right side - Actions -->
 								<div
-									class="flex items-center justify-between gap-2 sm:flex-shrink-0 sm:justify-end"
+									class="flex items-center justify-between gap-2 sm:flex sm:flex-shrink-0 sm:justify-end"
 								>
 									<Button
 										href="/maps/{map.id}"
 										variant="outline"
 										size="sm"
-										class="flex-1 sm:flex-none"
+										class="hidden flex-1 sm:block sm:flex-none"
 									>
 										<span class="sm:hidden">View</span>
 										<span class="hidden sm:inline">View Map</span>

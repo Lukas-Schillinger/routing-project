@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Route, StopWithLocation } from '$lib/schemas';
 	import type maplibregl from 'maplibre-gl';
+	import { mode } from 'mode-watcher';
 	import { LineLayer, MapLibre, Marker, Popup } from 'svelte-maplibre';
 	import GeoJSON from 'svelte-maplibre/GeoJSON.svelte';
 	import StopMapPopup from './StopMapPopup.svelte';
@@ -22,6 +23,11 @@
 	} = $props();
 
 	let map: maplibregl.Map | undefined = $state();
+	let style = $derived.by(() => {
+		return mode.current == 'light'
+			? 'https://api.maptiler.com/maps/streets-v4/style.json?key=L2oyusC7bBTlsWRPZFQh'
+			: 'https://api.maptiler.com/maps/streets-v2-dark/style.json?key=L2oyusC7bBTlsWRPZFQh';
+	});
 
 	// Color palette for driver routes
 	const driverColors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
@@ -81,9 +87,10 @@
 </script>
 
 <div class="h-full w-full rounded-xl">
+	<!-- style="https://api.maptiler.com/maps/streets-v2/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL" -->
 	<MapLibre
-		style="https://api.maptiler.com/maps/streets-v2/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL"
 		{center}
+		{style}
 		{zoom}
 		{bounds}
 		fitBoundsOptions={{ padding: 80, maxZoom: 15 }}

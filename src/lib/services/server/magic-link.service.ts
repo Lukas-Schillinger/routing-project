@@ -10,10 +10,11 @@ import {
 	type User
 } from '$lib/schemas';
 import { db } from '$lib/server/db';
-import { magicLinks, users } from '$lib/server/db/schema';
-import { hash } from '@node-rs/argon2';
-import { eq } from 'drizzle-orm';
-import { generateSessionToken } from './auth';
+import { magicLinks } from '$lib/server/db/schema';
+import { sha256 } from '@oslojs/crypto/sha2';
+import { encodeHexLowerCase } from '@oslojs/encoding';
+import { randomUUID } from 'crypto';
+import { and, eq } from 'drizzle-orm';
 import { ServiceError } from './errors';
 import { userService } from './user.service';
 
@@ -35,20 +36,23 @@ export class MagicLinkService {
 		return db.select().from(magicLinks).where(eq(magicLinks.organization_id, organizationId));
 	}
 
+	async getMagicInvites(organizationId: string): Promise<MagicInvite[]> {
+		const invites = (await db
+			.select()
+			.from(magicLinks)
+			.where(
+				and(eq(magicLinks.organization_id, organizationId), eq(magicLinks.type, 'invite'))
+			)) as MagicInvite[];
+		return invites;
+	}
+
 	async hashToken(raw: string) {
-		return hash(raw, {
-			// recommended minimum parameters
-			memoryCost: 19456,
-			timeCost: 2,
-			outputLen: 32,
-			parallelism: 1
-		});
+		return encodeHexLowerCase(sha256(new TextEncoder().encode(raw)));
 	}
 
 	async getMagicLinkFromToken(token: string): Promise<MagicLink | null> {
 		const hashed = await this.hashToken(token);
 
-		// Directly fetch the specific magic link by ID
 		const [magicLink] = await db
 			.select()
 			.from(magicLinks)
@@ -62,6 +66,11 @@ export class MagicLinkService {
 		return magicLink;
 	}
 
+	/* Note that duration is in hours */
+	private getExpiry(duration: number): Date {
+		return new Date(Date.now() + duration * 60 * 60 * 1000);
+	}
+
 	async createMagicInvite(
 		magicInviteData: CreateMagicInvite,
 		organization_id: string
@@ -73,14 +82,33 @@ export class MagicLinkService {
 			throw ServiceError.forbidden("Can't create invite to another organization");
 		}
 
-		const token = generateSessionToken();
+		// Check if user with this email already exists
+		const existingUser = await userService.findAnyUserByEmail(magicInviteData.email);
+		if (existingUser) {
+			throw ServiceError.conflict('A user with this email already exists');
+		}
+
+		// Check that no magic invites have already been send to this user
+		const [existingInvite] = await db
+			.select()
+			.from(magicLinks)
+			.where(eq(magicLinks.email, magicInviteData.email))
+			.limit(1);
+		if (existingInvite) {
+			throw ServiceError.conflict('An invitation has already been sent to this email');
+		}
+
+		const token = randomUUID();
 		const tokenHash = await this.hashToken(token);
 		const [newMagicInvite] = await db
 			.insert(magicLinks)
 			.values({
 				organization_id: organization_id,
-				token_hash: tokenHash, // Store hash of secret only
-				...magicInviteData
+				type: 'invite',
+				email: magicInviteData.email,
+				expires_at: this.getExpiry(magicInviteData.token_duration_hours),
+				invitee_organization_id: magicInviteData.invitee_organization_id,
+				token_hash: tokenHash // Store hash of secret only
 			})
 			.returning();
 
@@ -89,30 +117,29 @@ export class MagicLinkService {
 
 	async createMagicLogin(
 		magicLoginData: CreateMagicLogin
-	): Promise<{ login: MagicLogin; token: string }> {
-		const [user] = await db
-			.select()
-			.from(users)
-			.where(eq(users.id, magicLoginData.user_id))
-			.limit(1);
-
-		if (!user) {
-			throw ServiceError.notFound(`Couldn't find user with id ${magicLoginData.user_id}`);
+	): Promise<{ magicLogin: MagicLogin; token: string }> {
+		// Check if user exists
+		const existingUser = await userService.findAnyUserByEmail(magicLoginData.email);
+		if (!existingUser) {
+			throw ServiceError.notFound('User with that email could not be found');
 		}
 
-		const token = generateSessionToken();
+		const token = randomUUID();
 		const tokenHash = await this.hashToken(token);
 
 		const [magicLogin] = await db
 			.insert(magicLinks)
 			.values({
-				organization_id: user.organization_id,
-				token_hash: tokenHash, // Store hash of secret only
-				...magicLoginData
+				organization_id: existingUser.organization_id,
+				type: 'login',
+				email: existingUser.email,
+				expires_at: this.getExpiry(magicLoginData.token_duration_hours),
+				user_id: existingUser.id,
+				token_hash: tokenHash
 			})
 			.returning();
 
-		return { login: magicLogin as MagicLogin, token: token };
+		return { magicLogin: magicLogin as MagicLogin, token: token };
 	}
 
 	private isExpired(date: Date) {
@@ -124,17 +151,17 @@ export class MagicLinkService {
 		const magicLink = await this.getMagicLinkFromToken(token);
 
 		if (!magicLink) {
-			throw ServiceError.unauthorized('Invalid invite link');
+			throw ServiceError.notFound("Couldn't find an invitation matching that token. ");
 		}
 
 		const magicInvite = magicInviteSchema.parse(magicLink);
 
 		if (this.isExpired(magicInvite.expires_at)) {
-			throw ServiceError.unauthorized('Invite expired');
+			throw ServiceError.forbidden('Invitation expired');
 		}
 
 		if (magicInvite.used_at != null) {
-			throw ServiceError.unauthorized('Invite already redeemed');
+			throw ServiceError.forbidden('Invitation already redeemed');
 		}
 
 		// Use transaction to ensure atomicity
@@ -160,13 +187,13 @@ export class MagicLinkService {
 		const magicLink = await this.getMagicLinkFromToken(token);
 
 		if (!magicLink) {
-			throw ServiceError.unauthorized('Invalid login link');
+			throw ServiceError.notFound("Couldn't find a login matching that token");
 		}
 
 		const magicLogin = magicLoginSchema.parse(magicLink);
 
 		if (this.isExpired(magicLogin.expires_at)) {
-			throw ServiceError.unauthorized('Login link expired');
+			throw ServiceError.forbidden('Login link expired');
 		}
 
 		const user = await userService.getPublicUser(magicLogin.user_id, magicLogin.organization_id);

@@ -63,12 +63,12 @@ export const magicLinks = pgTable('magic_links', {
 	invitee_organization_id: uuid('invitee_organization_id').references(() => organizations.id, {
 		onDelete: 'set null'
 	}), // used for invite
-	email: text('email'), // used for invite
+	email: text('email').notNull(), // used for invite
 	// role needs to be added eventually
 
 	user_id: uuid('user_id').references(() => users.id, { onDelete: 'set null' }), // used for login
 
-	used_at: ts('used_at'), // used for invite
+	used_at: timestamp('used_at'), // used for invite
 	token_hash: text('token_hash').notNull()
 });
 
