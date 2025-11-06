@@ -6,7 +6,8 @@
 	import * as Table from '$lib/components/ui/table';
 	import type { Driver } from '$lib/schemas/driver';
 	import type { StopWithLocation } from '$lib/schemas/stop';
-	import { ChevronsUpDown, Eye, MapPin, Package, Phone } from 'lucide-svelte';
+	import ChevronDown from '@lucide/svelte/icons/chevron-down';
+	import { Eye, MapPin, Package, Phone } from 'lucide-svelte';
 	import { slide } from 'svelte/transition';
 
 	interface Props {
@@ -76,7 +77,7 @@
 			{@const driver = getDriver(driverId)}
 			{@const isUnassigned = driverId === 'unassigned'}
 			{#if driverStops.length > 0}
-				<div class="mb-2 flex items-center justify-between">
+				<div class="mb-2 flex items-center justify-between overflow-auto">
 					<div class="flex items-center gap-3">
 						{#if isUnassigned}
 							<Package class="h-5 w-5 text-muted-foreground" />
@@ -88,111 +89,115 @@
 								</Card.Description>
 							</div>
 						{:else if driver}
-							<div>
-								<Card.Title class="flex items-center gap-2">
-									{driver.name}
-									{#if driver.temporary}
-										<Badge variant="secondary" class="text-xs">Temporary</Badge>
-									{/if}
-								</Card.Title>
-								<Card.Description>
-									{#if driver.phone}
+							<Collapsible.Root>
+								<div class="flex items-center gap-2">
+									<Collapsible.Trigger class={buttonVariants({ variant: 'outline', size: 'sm' })}>
+										<ChevronDown />
+									</Collapsible.Trigger>
+									<Card.Title class="flex items-center gap-2">
+										{driver.name}
+										{#if driver.temporary}
+											<Badge variant="secondary" class="text-xs">Temporary</Badge>
+										{/if}
+									</Card.Title>
+									<Card.Description class="items-center">
+										{#if driver.phone}
+											<span class="flex items-center gap-1">
+												<Phone class="h-3 w-3" />
+												{driver.phone}
+											</span>
+										{/if}
 										<span class="flex items-center gap-1">
-											<Phone class="h-3 w-3" />
-											{driver.phone}
+											<MapPin class="h-3 w-3" />
+											{driverStops.length} stop{driverStops.length !== 1 ? 's' : ''}
 										</span>
-									{:else}
-										{driverStops.length} stop{driverStops.length !== 1 ? 's' : ''}
-									{/if}
-								</Card.Description>
-							</div>
+									</Card.Description>
+								</div>
+								<div>
+									<Collapsible.Content forceMount class="overflow-scroll">
+										{#snippet child({ props, open })}
+											{#if open}
+												<div {...props} transition:slide>
+													<Table.Root>
+														<Table.Header>
+															<Table.Row>
+																<Table.Head class="w-12">#</Table.Head>
+																<Table.Head>Contact</Table.Head>
+																<Table.Head>Address</Table.Head>
+																<Table.Head>Phone</Table.Head>
+																<Table.Head>Notes</Table.Head>
+																<Table.Head></Table.Head>
+															</Table.Row>
+														</Table.Header>
+														<Table.Body>
+															{#each driverStops as { stop, location }, index}
+																<Table.Row class="">
+																	<Table.Cell class="font-medium text-muted-foreground">
+																		{stop.delivery_index !== null ? stop.delivery_index : index}
+																	</Table.Cell>
+																	<Table.Cell>
+																		<div class="flex items-center">
+																			<span class="font-semibold">{stop.contact_name || '—'}</span>
+																		</div>
+																	</Table.Cell>
+																	<Table.Cell>
+																		<div class="flex items-start">
+																			<div class="text-sm">
+																				<div class="font-medium">
+																					{location.address_line1}
+																				</div>
+																				<div class="text-muted-foreground">
+																					{location.city || ''}{location.city && location.region
+																						? ', '
+																						: ''}{location.region || ''}
+																					{location.postal_code || ''}
+																				</div>
+																			</div>
+																		</div>
+																	</Table.Cell>
+																	<Table.Cell>
+																		{#if stop.contact_phone}
+																			<div class="flex items-center text-sm">
+																				{stop.contact_phone}
+																			</div>
+																		{:else}
+																			<span class="text-sm text-muted-foreground">—</span>
+																		{/if}
+																	</Table.Cell>
+																	<Table.Cell>
+																		{#if stop.notes}
+																			<div
+																				class="max-w-[200px] truncate text-sm"
+																				title={stop.notes}
+																			>
+																				{stop.notes}
+																			</div>
+																		{:else}
+																			<span class="text-sm text-muted-foreground">—</span>
+																		{/if}
+																	</Table.Cell>
+																	<Table.Cell>
+																		<Button
+																			onclick={() => (focusedStopId = stop.id)}
+																			size="icon"
+																			variant="ghost"
+																		>
+																			<Eye />
+																		</Button>
+																	</Table.Cell>
+																</Table.Row>
+															{/each}
+														</Table.Body>
+													</Table.Root>
+												</div>
+											{/if}
+										{/snippet}
+									</Collapsible.Content>
+								</div>
+							</Collapsible.Root>
 						{/if}
 					</div>
-					<Badge variant="outline" class="text-sm">
-						{driverStops.length} stop{driverStops.length !== 1 ? 's' : ''}
-					</Badge>
 				</div>
-				<Collapsible.Root>
-					<Collapsible.Trigger class={buttonVariants({ variant: 'outline', size: 'sm' })}
-						><ChevronsUpDown /> expand stops</Collapsible.Trigger
-					>
-					<Collapsible.Content forceMount>
-						{#snippet child({ props, open })}
-							{#if open}
-								<div {...props} transition:slide>
-									<Table.Root>
-										<Table.Header>
-											<Table.Row>
-												<Table.Head class="w-12">#</Table.Head>
-												<Table.Head>Contact</Table.Head>
-												<Table.Head>Address</Table.Head>
-												<Table.Head>Phone</Table.Head>
-												<Table.Head>Notes</Table.Head>
-												<Table.Head></Table.Head>
-											</Table.Row>
-										</Table.Header>
-										<Table.Body>
-											{#each driverStops as { stop, location }, index}
-												<Table.Row class="">
-													<Table.Cell class="font-medium text-muted-foreground">
-														{stop.delivery_index !== null ? stop.delivery_index : index}
-													</Table.Cell>
-													<Table.Cell>
-														<div class="flex items-center">
-															<span class="font-semibold">{stop.contact_name || '—'}</span>
-														</div>
-													</Table.Cell>
-													<Table.Cell>
-														<div class="flex items-start">
-															<div class="text-sm">
-																<div class="font-medium">
-																	{location.address_line1}
-																</div>
-																<div class="text-muted-foreground">
-																	{location.city || ''}{location.city && location.region
-																		? ', '
-																		: ''}{location.region || ''}
-																	{location.postal_code || ''}
-																</div>
-															</div>
-														</div>
-													</Table.Cell>
-													<Table.Cell>
-														{#if stop.contact_phone}
-															<div class="flex items-center text-sm">
-																{stop.contact_phone}
-															</div>
-														{:else}
-															<span class="text-sm text-muted-foreground">—</span>
-														{/if}
-													</Table.Cell>
-													<Table.Cell>
-														{#if stop.notes}
-															<div class="max-w-[200px] truncate text-sm" title={stop.notes}>
-																{stop.notes}
-															</div>
-														{:else}
-															<span class="text-sm text-muted-foreground">—</span>
-														{/if}
-													</Table.Cell>
-													<Table.Cell>
-														<Button
-															onclick={() => (focusedStopId = stop.id)}
-															size="icon"
-															variant="ghost"
-														>
-															<Eye />
-														</Button>
-													</Table.Cell>
-												</Table.Row>
-											{/each}
-										</Table.Body>
-									</Table.Root>
-								</div>
-							{/if}
-						{/snippet}
-					</Collapsible.Content>
-				</Collapsible.Root>
 			{/if}
 		{/each}
 	</div>
