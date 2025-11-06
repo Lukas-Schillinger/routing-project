@@ -1,5 +1,7 @@
 <script lang="ts">
 	import type { Route, StopWithLocation } from '$lib/schemas';
+	import { createAvatar } from '@dicebear/core';
+	import * as avatarStyle from '@dicebear/identicon';
 	import { MapPin } from 'lucide-svelte';
 	import type maplibregl from 'maplibre-gl';
 	import { mode } from 'mode-watcher';
@@ -7,8 +9,6 @@
 	import { LineLayer, MapLibre, Marker, Popup } from 'svelte-maplibre';
 	import GeoJSON from 'svelte-maplibre/GeoJSON.svelte';
 	import StopMapPopup from './StopMapPopup.svelte';
-	import * as avatarStyle from '@dicebear/identicon'
-	import { createAvatar } from '@dicebear/core';
 
 	let {
 		stops = [],
@@ -144,20 +144,13 @@
 								<div
 									class="relative -top-[38px] flex size-7 items-center justify-center rounded-full border-3 border-white bg-emerald-700 shadow-lg transition-all duration-50 hover:scale-[1.15] hover:shadow-xl"
 								>
-									<span class="relative z-[1] text-[10px] font-bold text-white drop-shadow"
+									<span class="relative z-[1] font-bold text-white drop-shadow"
 										>{stop.delivery_index ? stop.delivery_index : ''}</span
 									>
 								</div>
 							</div>
 						{:else}
-							<MapPin class="relative top-10 right-1.5 size-10 fill-primary" />
-							<div
-								class="relative flex h-7 w-7 items-center justify-center rounded-full border-[3px] border-white bg-emerald-700 shadow-lg transition-all duration-50 before:pointer-events-none before:absolute before:inset-[-6px] before:rounded-full before:border-2 before:border-emerald-700/60 before:content-[''] hover:scale-[1.15] hover:shadow-xl hover:before:border-[1.5px] hover:before:border-emerald-700/40"
-							>
-								<span class="relative z-[1] text-[10px] font-bold text-white drop-shadow"
-									>{stop.delivery_index ? stop.delivery_index : ''}</span
-								>
-							</div>
+							<MapPin class="relative right-1.5 size-7 fill-primary duration-100 hover:scale-125" />
 						{/if}
 
 						<Popup openOn="click" offset={[0, -15]} closeOnClickOutside closeButton>
