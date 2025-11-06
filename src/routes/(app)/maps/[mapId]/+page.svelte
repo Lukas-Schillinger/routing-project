@@ -158,6 +158,7 @@
 					mapId={data.map.id}
 					onUpdate={() => invalidateAll()}
 					onCreate={() => invalidateAll()}
+					onDelete={() => invalidateAll()}
 					onZoomToStop={(stopId) => (focusedStopId = stopId)}
 				/>
 			</CardContent>

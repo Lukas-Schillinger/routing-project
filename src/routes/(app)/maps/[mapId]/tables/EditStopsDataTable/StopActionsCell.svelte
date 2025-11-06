@@ -4,7 +4,9 @@
 	import TableActionsDropdown from '$lib/components/TableActionsDropdown.svelte';
 	import DropdownMenuItem from '$lib/components/ui/dropdown-menu/dropdown-menu-item.svelte';
 	import type { StopWithLocation } from '$lib/schemas/stop';
+	import { ApiError, stopApi } from '$lib/services/api';
 	import { Pencil } from 'lucide-svelte';
+	import { toast } from 'svelte-sonner';
 
 	interface Props {
 		stop: StopWithLocation;
@@ -21,11 +23,23 @@
 
 	const handleDelete = async () => {
 		if (
-			confirm(
+			!confirm(
 				`Are you sure you want to delete the stop for ${stop.stop.contact_name || 'this address'}?`
 			)
 		) {
+			return;
+		}
+
+		try {
+			await stopApi.delete(stop.stop.id);
 			await onDelete?.(stop.stop.id);
+			toast.success(`Stop Deleted`);
+		} catch (err) {
+			if (err instanceof ApiError) {
+				toast.error(err.message);
+			} else {
+				toast.error('An unknown error occurred');
+			}
 		}
 	};
 
