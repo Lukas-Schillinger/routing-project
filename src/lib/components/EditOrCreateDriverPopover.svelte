@@ -8,7 +8,8 @@
 	import type { Driver } from '$lib/schemas/driver';
 	import { ApiError } from '$lib/services/api/base';
 	import { driverApi } from '$lib/services/api/drivers';
-	import { Check, LoaderCircle, Pencil, Truck } from 'lucide-svelte';
+	import { generateRandomColor } from '$lib/utils';
+	import { Check, LoaderCircle, Pencil, RefreshCw, Truck } from 'lucide-svelte';
 
 	// Props
 	let {
@@ -43,6 +44,7 @@
 	let notes = $state('');
 	let isActive = $state(true);
 	let isTemporary = $state(false);
+	let color = $state(generateRandomColor());
 
 	// Initialize form with existing data in edit mode
 	$effect(() => {
@@ -52,6 +54,7 @@
 			notes = driver.notes || '';
 			isActive = driver.active;
 			isTemporary = driver.temporary;
+			color = driver.color;
 		}
 	});
 
@@ -63,12 +66,14 @@
 			notes = '';
 			isActive = true;
 			isTemporary = false;
+			color = generateRandomColor();
 		} else if (driver) {
 			driverName = driver.name;
 			phone = driver.phone || '';
 			notes = driver.notes || '';
 			isActive = driver.active;
 			isTemporary = driver.temporary;
+			color = driver.color;
 		}
 		error = null;
 	}
@@ -94,7 +99,8 @@
 					phone: phone.trim() || null,
 					notes: notes.trim() || null,
 					active: isActive,
-					temporary: isTemporary
+					temporary: isTemporary,
+					color: color
 				});
 			} else {
 				updatedDriver = await driverApi.update(driver!.id, {
@@ -102,7 +108,8 @@
 					phone: phone.trim() || null,
 					notes: notes.trim() || null,
 					active: isActive,
-					temporary: isTemporary
+					temporary: isTemporary,
+					color: color
 				});
 			}
 
@@ -189,6 +196,17 @@
 					placeholder="e.g., (555) 123-4567"
 					disabled={isSubmitting}
 				/>
+			</div>
+
+			<!-- Pick Driver Color -->
+			<div class="space-y-2">
+				<Label for="driver-color">Color</Label>
+				<div class="flex gap-2">
+					<Input type="color" id="driver-color" disabled={isSubmitting} bind:value={color} />
+					<Button onclick={() => (color = generateRandomColor())} variant="ghost" size="icon"
+						><RefreshCw /></Button
+					>
+				</div>
 			</div>
 
 			<div class="space-y-2">

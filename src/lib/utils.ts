@@ -1,7 +1,10 @@
+import { createAvatar } from '@dicebear/core';
+import * as style from '@dicebear/identicon';
 import { clsx, type ClassValue } from 'clsx';
 import TimeAgo from 'javascript-time-ago';
 import en from 'javascript-time-ago/locale/en';
 import { twMerge } from 'tailwind-merge';
+import type { Driver } from './schemas';
 import type { LocationCreate } from './schemas/location';
 import type { GeocodingFeature } from './services/external/mapbox/types';
 
@@ -15,6 +18,37 @@ export function formatDate(date: Date | string): string {
 
 export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));
+}
+
+export function getIdenticon(driver: Driver) {
+	return createAvatar(style, {
+		seed: driver.id,
+		rowColor: [driver.color.slice(1)] // remove #
+	}).toDataUri();
+}
+
+/* Returns the appropriate text color, black or white, depending on the given background color hex */
+export function getTextColor(hex: string) {
+	hex = hex.replace('#', '');
+	if (hex.length === 3) {
+		hex = hex
+			.split('')
+			.map((x) => x + x)
+			.join('');
+	}
+
+	const r = parseInt(hex.slice(0, 2), 16) / 255;
+	const g = parseInt(hex.slice(2, 4), 16) / 255;
+	const b = parseInt(hex.slice(4, 6), 16) / 255;
+
+	// sRGB gamma correction
+	const srgb = [r, g, b].map((v) =>
+		v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4)
+	);
+
+	const luminance = 0.2126 * srgb[0] + 0.7152 * srgb[1] + 0.0722 * srgb[2];
+
+	return luminance > 0.179 ? '#000000' : '#FFFFFF';
 }
 
 /**
@@ -62,6 +96,81 @@ export function geocodingFeatureToLocation(feature: GeocodingFeature): LocationC
 		geocode_place_id: feature.properties.mapbox_id,
 		geocode_raw: feature
 	};
+}
+
+export function generateRandomColor(): string {
+	const colors = [
+		// red
+		'#f87171',
+		'#dc2626',
+		'#991b1b',
+		// orange
+		'#fb923c',
+		'#ea580c',
+		'#9a3412',
+		// amber
+		'#fbbf24',
+		'#d97706',
+		'#92400e',
+		// yellow
+		'#facc15',
+		'#ca8a04',
+		'#854d0e',
+		// lime
+		'#a3e635',
+		'#65a30d',
+		'#3f6212',
+		// green
+		'#4ade80',
+		'#16a34a',
+		'#166534',
+		// emerald
+		'#34d399',
+		'#059669',
+		'#065f46',
+		// teal
+		'#2dd4bf',
+		'#0d9488',
+		'#115e59',
+		// cyan
+		'#22d3ee',
+		'#0891b2',
+		'#155e75',
+		// sky
+		'#38bdf8',
+		'#0284c7',
+		'#075985',
+		// blue
+		'#60a5fa',
+		'#2563eb',
+		'#1e40af',
+		// indigo
+		'#818cf8',
+		'#4f46e5',
+		'#3730a3',
+		// violet
+		'#a78bfa',
+		'#7c3aed',
+		'#5b21b6',
+		// purple
+		'#c084fc',
+		'#9333ea',
+		'#6b21a8',
+		// fuchsia
+		'#e879f9',
+		'#c026d3',
+		'#86198f',
+		// pink
+		'#f472b6',
+		'#db2777',
+		'#9d174d',
+		// rose
+		'#fb7185',
+		'#e11d48',
+		'#9f1239'
+	];
+
+	return colors[Math.floor(Math.random() * colors.length)];
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

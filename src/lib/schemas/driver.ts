@@ -11,6 +11,7 @@ export const driverSchema = z.object({
 	notes: z.string().nullable(),
 	active: z.boolean(),
 	temporary: z.boolean(),
+	color: z.string().regex(/^#[0-9A-F]{6}$/i),
 	created_at: z.date(),
 	updated_at: z.date()
 });
@@ -50,7 +51,11 @@ export const driverUpdateSchema = z
 		phone: z.string().max(32).nullable().optional(),
 		notes: z.string().nullable().optional(),
 		active: z.boolean().optional(),
-		temporary: z.boolean().optional()
+		temporary: z.boolean().optional(),
+		color: z
+			.string()
+			.regex(/^#[0-9A-F]{6}$/i)
+			.optional()
 	})
 	.refine((data) => Object.keys(data).length > 0, {
 		message: 'At least one field must be provided for update'

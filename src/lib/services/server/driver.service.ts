@@ -42,6 +42,7 @@ export class DriverService {
 			.values({
 				organization_id: organizationId,
 				name: data.name.trim(),
+				color: data.color,
 				phone: data.phone || null,
 				notes: data.notes || null,
 				active: data.active ?? true,
@@ -72,7 +73,8 @@ export class DriverService {
 				notes: data.notes,
 				active: data.active,
 				temporary: data.temporary,
-				updated_at: new Date()
+				updated_at: new Date(),
+				color: data.color
 			})
 			.where(eq(drivers.id, driverId))
 			.returning();

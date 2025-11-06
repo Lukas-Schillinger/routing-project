@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
+	import * as Avatar from '$lib/components/ui/avatar';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Command from '$lib/components/ui/command';
@@ -10,14 +11,8 @@
 	import * as Table from '$lib/components/ui/table';
 	import type { Driver } from '$lib/schemas/driver';
 	import { ApiError, driverApi, mapApi } from '$lib/services/api';
-	import {
-		ChevronsUpDown,
-		Phone,
-		Plus,
-		Trash2,
-		Truck,
-		UserPlus
-	} from 'lucide-svelte';
+	import { generateRandomColor, getIdenticon } from '$lib/utils';
+	import { ChevronsUpDown, Phone, Plus, RefreshCw, Trash2, Truck, UserPlus } from 'lucide-svelte';
 
 	interface Props {
 		assignedDrivers: Driver[];
@@ -27,13 +22,7 @@
 		onRemoveDriver: (driverId: string) => void;
 	}
 
-	let {
-		assignedDrivers,
-		allDrivers,
-		mapId,
-		isLoading = false,
-		onRemoveDriver
-	}: Props = $props();
+	let { assignedDrivers, allDrivers, mapId, isLoading = false, onRemoveDriver }: Props = $props();
 
 	// Local state
 	let open = $state(false);
@@ -43,28 +32,24 @@
 	let errorMessage = $state('');
 
 	// Get available drivers (non-temporary, not already assigned)
-	function getExistingDriverOptions(
-		all: Driver[],
-		assigned: Driver[]
-	): Driver[] {
+	function getExistingDriverOptions(all: Driver[], assigned: Driver[]): Driver[] {
 		const assignedDriverIds = new Set(assigned.map((d) => d.id));
-		return all.filter(
-			(driver) => !driver.temporary && !assignedDriverIds.has(driver.id)
-		);
+		return all.filter((driver) => !driver.temporary && !assignedDriverIds.has(driver.id));
 	}
 
 	// Derived state for available drivers
-	const availableDrivers = $derived(
-		getExistingDriverOptions(allDrivers, assignedDrivers)
-	);
+	const availableDrivers = $derived(getExistingDriverOptions(allDrivers, assignedDrivers));
 
 	// Generate random driver name
 	function generateDriverName(): string {
-		const randomNum = Math.floor(Math.random() * 1000000);
+		const randomNum = Math.floor(Math.random() * 10000)
+			.toString()
+			.padStart(4, '0');
 		return `driver-${randomNum}`;
 	}
 
 	let newDriverName = $state(generateDriverName());
+	let newDriverColor = $state(generateRandomColor());
 
 	// Close and reset the combobox
 	function closeAndReset() {
@@ -86,8 +71,7 @@
 			await invalidateAll();
 			closeAndReset();
 		} catch (err) {
-			errorMessage =
-				err instanceof ApiError ? err.message : 'Failed to assign driver';
+			errorMessage = err instanceof ApiError ? err.message : 'Failed to assign driver';
 			console.error('Error assigning driver:', err);
 		} finally {
 			localIsLoading = false;
@@ -105,6 +89,7 @@
 			const newDriver = await driverApi.create({
 				name: newDriverName.trim(),
 				phone: newDriverPhone.trim() || null,
+				color: newDriverColor,
 				temporary: true,
 				active: true
 			});
@@ -117,14 +102,12 @@
 
 			// Reset form
 			newDriverName = generateDriverName();
+			newDriverColor = generateRandomColor();
 			newDriverPhone = '';
 			openNewDriver = false;
 			errorMessage = '';
 		} catch (err) {
-			errorMessage =
-				err instanceof ApiError
-					? err.message
-					: 'Failed to create temporary driver';
+			errorMessage = err instanceof ApiError ? err.message : 'Failed to create temporary driver';
 			console.error('Error creating temporary driver:', err);
 		} finally {
 			localIsLoading = false;
@@ -159,9 +142,7 @@
 								<div class="flex flex-col">
 									<span>{driver.name}</span>
 									{#if driver.phone}
-										<span class="text-xs text-muted-foreground"
-											>{driver.phone}</span
-										>
+										<span class="text-xs text-muted-foreground">{driver.phone}</span>
 									{/if}
 								</div>
 							</Command.Item>
@@ -195,8 +176,19 @@
 								type="text"
 								bind:value={newDriverName}
 								placeholder="driver-123456"
-								disabled={localIsLoading}
+								disabled={true}
 							/>
+						</div>
+						<div class="space-y-2">
+							<Label for="driver-color">Color</Label>
+							<div class="flex gap-2">
+								<Input type="color" id="driver-color" bind:value={newDriverColor} />
+								<Button
+									onclick={() => (newDriverColor = generateRandomColor())}
+									variant="ghost"
+									size="icon"><RefreshCw /></Button
+								>
+							</div>
 						</div>
 						<div class="space-y-2">
 							<Label for="temp-driver-phone">Phone Number (optional)</Label>
@@ -237,6 +229,7 @@
 			<Table.Root>
 				<Table.Header>
 					<Table.Row>
+						<Table.Head class="w-10"></Table.Head>
 						<Table.Head>Driver</Table.Head>
 						<Table.Head>Phone</Table.Head>
 						<Table.Head>Type</Table.Head>
@@ -247,10 +240,14 @@
 					{#each assignedDrivers as driver}
 						<Table.Row>
 							<Table.Cell>
+								<Avatar.Root>
+									<Avatar.Image src={getIdenticon(driver)} alt="@shadcn" />
+									<Avatar.Fallback>CN</Avatar.Fallback>
+								</Avatar.Root>
+							</Table.Cell>
+							<Table.Cell>
 								<div class="flex items-center">
-									<span class="font-semibold"
-										>{driver.name || 'Unassigned'}</span
-									>
+									<span class="font-semibold">{driver.name || 'Unassigned'}</span>
 								</div>
 							</Table.Cell>
 							<Table.Cell>
@@ -292,9 +289,7 @@
 			</Empty.Media>
 			<Empty.Content>
 				<Empty.Title>No drivers assigned yet</Empty.Title>
-				<Empty.Description
-					>Add drivers to this map to start planning routes.</Empty.Description
-				>
+				<Empty.Description>Add drivers to this map to start planning routes.</Empty.Description>
 			</Empty.Content>
 		</Empty.Root>
 	{/if}

@@ -9,6 +9,7 @@
 		CardHeader,
 		CardTitle
 	} from '$lib/components/ui/card';
+	import type { Driver } from '$lib/schemas';
 	import { ApiError, mapApi } from '$lib/services/api';
 	import { MapPin, Route, Truck } from 'lucide-svelte';
 	import { getContext } from 'svelte';
@@ -37,6 +38,7 @@
 	let isViewMode = $state((data as any).isViewMode ?? false);
 	let selectedDepotId = $state<string | undefined>(undefined);
 	let focusedStopId = $state<string | null>(null);
+	let hiddenDrivers = $state<Driver[]>([]);
 
 	// Update view mode when data changes
 	$effect(() => {
@@ -105,10 +107,15 @@
 	<!-- Map -->
 	{#if data.stops.length > 0}
 		<div class="h-[500px]">
-			<MapView stops={data.stops} routes={data.routes} bind:focusedStopId />
+			<MapView
+				stops={data.stops}
+				routes={data.routes}
+				drivers={data.allDrivers}
+				bind:hiddenDrivers
+				bind:focusedStopId
+			/>
 		</div>
 	{/if}
-
 	<!-- Routes Section (View Mode Only) -->
 	{#if isViewMode}
 		<!-- New Card-based Routes View -->
@@ -116,6 +123,7 @@
 			<div>
 				<RouteCards
 					bind:focusedStopId
+					bind:hiddenDrivers
 					stops={data.stops}
 					assignedDrivers={data.assignedDrivers}
 					routes={data.routes}

@@ -82,6 +82,7 @@ export const drivers = pgTable(
 		notes: text('notes'),
 		active: boolean('active').default(true).notNull(),
 		temporary: boolean('temporary').default(false).notNull(), // Temporary drivers are deleted when removed from a map
+		color: varchar('color', { length: 7 }).notNull(),
 		created_at: ts('created_at'),
 		updated_at: ts('updated_at')
 	},

@@ -1,11 +1,9 @@
 <script lang="ts">
-	import type { Route, StopWithLocation } from '$lib/schemas';
-	import { createAvatar } from '@dicebear/core';
-	import * as avatarStyle from '@dicebear/identicon';
+	import type { Driver, Route, StopWithLocation } from '$lib/schemas';
+	import { getTextColor } from '$lib/utils';
 	import { MapPin } from 'lucide-svelte';
 	import type maplibregl from 'maplibre-gl';
 	import { mode } from 'mode-watcher';
-	import { onMount } from 'svelte';
 	import { LineLayer, MapLibre, Marker, Popup } from 'svelte-maplibre';
 	import GeoJSON from 'svelte-maplibre/GeoJSON.svelte';
 	import StopMapPopup from './StopMapPopup.svelte';
@@ -13,17 +11,21 @@
 	let {
 		stops = [],
 		routes = null,
+		drivers = [],
 		center = [-98.5795, 39.8283],
 		zoom = 4,
 		focusedStopId = $bindable(null),
+		hiddenDrivers = $bindable([]),
 		onGoToStop = (stopId: string) => {}
 	}: {
 		stops?: StopWithLocation[];
 		routes?: Route[] | null;
+		drivers?: Driver[];
 		center?: [number, number];
 		zoom?: number;
 		focusedStopId?: string | null;
 		onGoToStop?: (stopId: string) => void;
+		hiddenDrivers?: Driver[];
 	} = $props();
 
 	let map: maplibregl.Map | undefined = $state();
@@ -33,18 +35,15 @@
 			: 'https://api.maptiler.com/maps/streets-v2-dark/style.json?key=L2oyusC7bBTlsWRPZFQh';
 	});
 
-	onMount(() => {
-		console.log('MOUNTED', new Date().toLocaleTimeString());
-	});
+	function getDriverColorById(driverId: string, drivers: Driver[]): string {
+		const routeDriverId = driverId;
+		const matchingDriver = drivers.find((e) => e.id == routeDriverId);
+		if (matchingDriver) return matchingDriver.color;
 
-	function getAvatar(driverId: string) {
-		return createAvatar(avatarStyle, {
-			seed: driverId
-		}).toDataUri();
+		if (mode.current == 'light') {
+			return '#60A5FA';
+		} else return '#ffffff';
 	}
-
-	// Color palette for driver routes
-	const driverColors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
 
 	// Calculate bounds from stops for initial view
 	const bounds = $derived.by(() => {
@@ -114,50 +113,58 @@
 		<!-- Route lines -->
 		{#if routes && routes.length > 0}
 			{#each routes as route, index}
-				<GeoJSON id={`route-${route.driver_id}`} data={route.geometry}>
-					<LineLayer
-						paint={{
-							'line-color': driverColors[index % driverColors.length],
-							'line-width': 4,
-							'line-opacity': 0.7
-						}}
-						layout={{
-							'line-cap': 'round',
-							'line-join': 'round'
-						}}
-					/>
-				</GeoJSON>
+				{#if !hiddenDrivers.find((e) => e.id == route.driver_id)}
+					<GeoJSON id={`route-${route.driver_id}`} data={route.geometry}>
+						<LineLayer
+							paint={{
+								'line-color': getDriverColorById(route.driver_id, drivers),
+								'line-width': 4,
+								'line-opacity': 0.7
+							}}
+							layout={{
+								'line-cap': 'round',
+								'line-join': 'round'
+							}}
+						/>
+					</GeoJSON>
+				{/if}
 			{/each}
 		{/if}
 
 		<!-- Stop markers -->
 		{#each stops as item, index}
 			{@const { stop, location } = item}
-			{#if location.lat && location.lon}
+			{#if location.lat && location.lon && !hiddenDrivers.find((e) => e.id == stop.driver_id)}
 				{@const lat = parseFloat(location.lat)}
 				{@const lon = parseFloat(location.lon)}
 				{#if !isNaN(lat) && !isNaN(lon)}
 					<Marker lngLat={[lon, lat]} class=" cursor-pointer">
-						{#if stop.delivery_index}
-							<div class="top-24">
-								<MapPin class="relative right-1.5 size-10 fill-primary" />
+						{#if stop.delivery_index && stop.driver_id}
+							{@const color = getDriverColorById(stop.driver_id, drivers)}
+							<div class="top-24" style="fill: {color}">
+								<MapPin class="relative right-1.5 size-10 stroke-white" style="fill: {color}" />
 								<div
 									class="relative -top-[38px] flex size-7 items-center justify-center rounded-full border-3 border-white bg-emerald-700 shadow-lg transition-all duration-50 hover:scale-[1.15] hover:shadow-xl"
+									style="background-color: {color};"
 								>
-									<span class="relative z-[1] font-bold text-white drop-shadow"
+									<span
+										class="relative z-[1] font-bold text-white drop-shadow"
+										style="color: {getTextColor(color)};"
 										>{stop.delivery_index ? stop.delivery_index : ''}</span
 									>
 								</div>
 							</div>
 						{:else}
-							<MapPin class="relative right-1.5 size-7 fill-primary duration-100 hover:scale-125" />
+							<MapPin
+								class="relative right-1.5 size-6 fill-emerald-500 duration-100 hover:scale-125 dark:fill-blue-800"
+							/>
 						{/if}
 
 						<Popup openOn="click" offset={[0, -15]} closeOnClickOutside closeButton>
 							<StopMapPopup
 								{stop}
 								{location}
-								{index}
+								driver={drivers.find((e) => e.id == stop.driver_id)}
 								onGoToStop={(stopId) => {
 									onGoToStop(stopId);
 								}}

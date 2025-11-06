@@ -9,17 +9,18 @@
 	import type { Route as RouteType } from '$lib/schemas';
 	import type { Driver } from '$lib/schemas/driver';
 	import type { StopWithLocation } from '$lib/schemas/stop';
-	import { createAvatar } from '@dicebear/core';
-	import * as style from '@dicebear/identicon';
+	import { getIdenticon } from '$lib/utils';
 
 	import {
 		Clock,
 		Eye,
+		EyeClosed,
 		MapPin,
 		Package,
 		Phone,
 		Printer,
 		Route,
+		ScanSearch,
 		Share2,
 		SquareArrowOutUpRight
 	} from 'lucide-svelte';
@@ -29,15 +30,17 @@
 		assignedDrivers: Driver[];
 		routes: RouteType[];
 		focusedStopId: string | null;
+		hiddenDrivers?: Driver[];
 	}
 
-	let { stops, assignedDrivers, routes, focusedStopId = $bindable() }: Props = $props();
+	let {
+		stops,
+		assignedDrivers,
+		routes,
+		focusedStopId = $bindable(),
+		hiddenDrivers = $bindable()
+	}: Props = $props();
 
-	function getAvatar(driverId: string) {
-		return createAvatar(style, {
-			seed: driverId
-		}).toDataUri();
-	}
 	// Group stops by driver
 	const routesByDriver = $derived.by(() => {
 		const routes = new Map<string, StopWithLocation[]>();
@@ -194,7 +197,7 @@
 									{:else if driver}
 										<div class="flex size-12 items-center justify-center rounded-full">
 											<Avatar.Root class="size-12">
-												<Avatar.Image src={getAvatar(driver.id)} alt="avatar" />
+												<Avatar.Image src={getIdenticon(driver)} alt="avatar" />
 												<Avatar.Fallback>CN</Avatar.Fallback>
 											</Avatar.Root>
 										</div>
@@ -257,11 +260,6 @@
 														<h4 class="text-sm font-semibold">
 															{stop.contact_name || 'No contact name'}
 														</h4>
-														{#if isFirst && !isUnassigned}
-															<Badge variant="outline" class="text-xs">First</Badge>
-														{:else if isLast && !isUnassigned}
-															<Badge variant="outline" class="text-xs">Last</Badge>
-														{/if}
 													</div>
 
 													<!-- Address -->
@@ -296,11 +294,11 @@
 												<!-- Action Button -->
 												<Button
 													onclick={() => (focusedStopId = stop.id)}
-													size="sm"
+													size="icon-sm"
 													variant="ghost"
-													class="h-6 w-6 shrink-0 p-0"
+													class=" shrink-0"
 												>
-													<Eye class="h-3 w-3" />
+													<ScanSearch class="" />
 													<span class="sr-only">View stop on map</span>
 												</Button>
 											</div>
@@ -311,24 +309,53 @@
 
 							<div class="flex flex-col gap-2 text-xs text-muted-foreground">
 								<Separator class="mb-2" />
-								<DropdownMenu.Root>
-									<DropdownMenu.Trigger
-										class={buttonVariants({ variant: 'outline', size: 'sm' })}
-										disabled={true}
-									>
-										<Share2 /> Share
-									</DropdownMenu.Trigger>
-									<DropdownMenu.Content>
-										<DropdownMenu.Group>
-											<DropdownMenu.Label>My Account</DropdownMenu.Label>
-											<DropdownMenu.Separator />
-											<DropdownMenu.Item>Profile</DropdownMenu.Item>
-											<DropdownMenu.Item>Billing</DropdownMenu.Item>
-											<DropdownMenu.Item>Team</DropdownMenu.Item>
-											<DropdownMenu.Item>Subscription</DropdownMenu.Item>
-										</DropdownMenu.Group>
-									</DropdownMenu.Content>
-								</DropdownMenu.Root>
+								<div class="flex w-full gap-2">
+									<DropdownMenu.Root>
+										<DropdownMenu.Trigger
+											class="{buttonVariants({ variant: 'outline', size: 'sm' })} flex-1"
+											disabled={true}
+										>
+											<Share2 /> Share
+										</DropdownMenu.Trigger>
+										<DropdownMenu.Content>
+											<DropdownMenu.Group>
+												<DropdownMenu.Label>My Account</DropdownMenu.Label>
+												<DropdownMenu.Separator />
+												<DropdownMenu.Item>Profile</DropdownMenu.Item>
+												<DropdownMenu.Item>Billing</DropdownMenu.Item>
+												<DropdownMenu.Item>Team</DropdownMenu.Item>
+												<DropdownMenu.Item>Subscription</DropdownMenu.Item>
+											</DropdownMenu.Group>
+										</DropdownMenu.Content>
+									</DropdownMenu.Root>
+									{#if !isUnassigned && driver}
+										{#if hiddenDrivers?.find((e) => e.id == driver.id)}
+											<Button
+												onclick={() => {
+													if (hiddenDrivers) {
+														hiddenDrivers = hiddenDrivers.filter((d) => d.id !== driver.id);
+													}
+												}}
+												variant="outline"
+												size="sm"
+											>
+												<EyeClosed />
+											</Button>
+										{:else}
+											<Button
+												onclick={() => {
+													if (hiddenDrivers && driver) {
+														hiddenDrivers = [...hiddenDrivers, driver];
+													}
+												}}
+												variant="outline"
+												size="sm"
+											>
+												<Eye />
+											</Button>
+										{/if}
+									{/if}
+								</div>
 								<div class="grid grid-cols-2">
 									<Button
 										class="flex gap-2"

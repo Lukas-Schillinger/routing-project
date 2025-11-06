@@ -4,8 +4,7 @@
 	import { browser } from '$app/environment';
 	import MapView from '$lib/components/MapView.svelte';
 	import * as Avatar from '$lib/components/ui/avatar';
-	import { createAvatar } from '@dicebear/core';
-	import * as style from '@dicebear/identicon';
+	import { getIdenticon } from '$lib/utils';
 	import { Map, Menu, Route, User } from 'lucide-svelte';
 	import type { PageData } from './$types';
 	import CurrentStopPanel from './CurrentStopPanel.svelte';
@@ -150,16 +149,6 @@
 	function handleGoToStop(stopId: string) {
 		focusedStopId = stopId;
 	}
-
-	// ========================================
-	// Utility Functions
-	// ========================================
-
-	function getAvatar(driverId: string) {
-		return createAvatar(style, {
-			seed: driverId
-		}).toDataUri();
-	}
 </script>
 
 <svelte:head>
@@ -175,7 +164,7 @@
 				{#if driver}
 					<div class="flex items-center gap-3">
 						<Avatar.Root class="size-8">
-							<Avatar.Image src={getAvatar(driver.id)} alt="Driver avatar" />
+							<Avatar.Image src={getIdenticon(driver)} alt="Driver avatar" />
 							<Avatar.Fallback><User class="h-4 w-4" /></Avatar.Fallback>
 						</Avatar.Root>
 						<div>

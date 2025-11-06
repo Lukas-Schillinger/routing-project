@@ -9,6 +9,7 @@
 	import * as Table from '$lib/components/ui/table';
 	import type { Driver } from '$lib/schemas/driver';
 	import { driverApi } from '$lib/services/api/drivers';
+	import { getIdenticon } from '$lib/utils';
 	import { createAvatar } from '@dicebear/core';
 	import * as style from '@dicebear/identicon';
 	import { Pencil, Phone, Truck } from 'lucide-svelte';
@@ -20,9 +21,10 @@
 		drivers: Driver[];
 	} = $props();
 
-	function getAvatar(driverId: string) {
+	function getAvatar(driver: Driver) {
 		return createAvatar(style, {
-			seed: driverId
+			seed: driver.id,
+			rowColor: [driver.color.slice(1)]
 		}).toDataUri();
 	}
 
@@ -76,7 +78,7 @@
 					<Table.Row>
 						<Table.Cell>
 							<Avatar.Root class="size-6">
-								<Avatar.Image src={getAvatar(driver.id)} alt="avatar" />
+								<Avatar.Image src={getIdenticon(driver)} alt="avatar" />
 								<Avatar.Fallback>CN</Avatar.Fallback>
 							</Avatar.Root>
 						</Table.Cell>

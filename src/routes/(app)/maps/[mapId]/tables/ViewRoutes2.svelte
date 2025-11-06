@@ -7,8 +7,7 @@
 	import type { Route as RouteType } from '$lib/schemas';
 	import type { Driver } from '$lib/schemas/driver';
 	import type { StopWithLocation } from '$lib/schemas/stop';
-	import { createAvatar } from '@dicebear/core';
-	import * as style from '@dicebear/identicon';
+	import { getIdenticon } from '$lib/utils';
 	import {
 		Clock,
 		Download,
@@ -31,11 +30,6 @@
 
 	let { stops, assignedDrivers, routes, focusedStopId = $bindable() }: Props = $props();
 
-	function getAvatar(driverId: string) {
-		return createAvatar(style, {
-			seed: driverId
-		}).toDataUri();
-	}
 	// Group stops by driver
 	const routesByDriver = $derived.by(() => {
 		const routes = new Map<string, StopWithLocation[]>();
@@ -192,7 +186,7 @@
 									{:else if driver}
 										<div class="flex size-12 items-center justify-center rounded-full">
 											<Avatar.Root class="size-12">
-												<Avatar.Image src={getAvatar(driver.id)} alt="avatar" />
+												<Avatar.Image src={getIdenticon(driver)} alt="avatar" />
 												<Avatar.Fallback>CN</Avatar.Fallback>
 											</Avatar.Root>
 										</div>
