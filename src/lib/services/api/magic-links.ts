@@ -2,6 +2,10 @@ import type { CreateMagicInvite, CreateMagicLogin, MagicInvite, MagicLogin } fro
 import { apiClient } from './base';
 
 class MagicApiService {
+	async deleteInvite(magicLinkId: string): Promise<{ success: true }> {
+		return apiClient.delete<{ success: true }>(`/magic/${magicLinkId}`);
+	}
+
 	/**
 	 * Request a magic link to be sent via email
 	 */

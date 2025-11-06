@@ -4,49 +4,51 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import type { MagicInvite } from '$lib/schemas';
-	import { ApiError } from '$lib/services/api';
-	import { magicLinksApi } from '$lib/services/api/magic-links';
 	import { formatDate } from '$lib/utils';
-	import { Calendar, Mail, UserPlus, Users, X } from 'lucide-svelte';
+	import { AlertCircle, Calendar, Mail, UserPlus, Users, X } from 'lucide-svelte';
 	import CreateMagicInvitePopover from './CreateMagicInvitePopover.svelte';
 
 	// Props
 	let {
 		magicInvites,
 		onCreateMagicInvite = () => {},
-		onDeleteMagicInvite = () => {}
+		error = null
 	}: {
 		magicInvites: MagicInvite[];
 		onCreateMagicInvite: (magicInvite: MagicInvite) => void;
-		onDeleteMagicInvite: () => void;
+		error?: string | null;
 	} = $props();
 
-	let error = $state<string | null>(null);
+	// Local error state for component-specific errors
+	let localError = $state<string | null>(null);
+
+	// Combined error state (external or local)
+	const displayError = $derived(error || localError);
 
 	async function handleResendInvite(email: string) {
-		// TODO: Implement resend invite
-		console.log('Resending invite to:', email);
+		localError = null;
+		try {
+			// TODO: Implement resend invite
+			console.log('Resending invite to:', email);
+		} catch (err) {
+			localError = err instanceof Error ? err.message : 'Failed to resend invitation';
+		}
 	}
 
-	async function handleDeleteMagicLink(magicLinkId: string) {
-		if (
-			!window.confirm(
-				'Are you sure you want to revoke this invitation? The email cannot be unsent. '
-			)
-		) {
-			return;
-		}
-
+	async function handleRevokeInvite(inviteId: string) {
+		localError = null;
 		try {
-			await magicLinksApi.deleteInvite(magicLinkId);
-			onDeleteMagicInvite();
+			// TODO: Implement revoke invite
+			console.log('Revoking invite:', inviteId);
 		} catch (err) {
-			if (err instanceof ApiError) {
-				error = err.message;
-			} else {
-				error = 'An unexpected error occurred';
-			}
+			localError = err instanceof Error ? err.message : 'Failed to revoke invitation';
 		}
+	}
+
+	// Clear error when new invite is created successfully
+	function handleInviteSuccess(magicInvite: MagicInvite) {
+		localError = null;
+		onCreateMagicInvite(magicInvite);
 	}
 
 	// Helper functions
@@ -115,12 +117,30 @@
 				<UserPlus class="h-5 w-5" />
 				<Card.Title>Team Invitations</Card.Title>
 			</div>
-			<CreateMagicInvitePopover {onCreateMagicInvite} />
+			<CreateMagicInvitePopover onSuccess={handleInviteSuccess} />
 		</div>
 		<Card.Description>Manage team member invitations for your organization</Card.Description>
 	</Card.Header>
 
 	<Card.Content class="space-y-4">
+		<!-- Error Display -->
+		{#if displayError}
+			<div class="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+				<div class="flex items-center gap-2">
+					<AlertCircle class="h-4 w-4 flex-shrink-0" />
+					<span>{displayError}</span>
+					<Button
+						variant="ghost"
+						size="sm"
+						onclick={() => (localError = null)}
+						class="ml-auto h-6 w-6 p-1"
+					>
+						<X class="h-3 w-3" />
+					</Button>
+				</div>
+			</div>
+		{/if}
+
 		<!-- Pending Invites List -->
 		<div class="space-y-4">
 			<div class="flex items-center gap-2">
@@ -181,7 +201,8 @@
 									<Button
 										variant="ghost"
 										size="sm"
-										onclick={() => handleDeleteMagicLink(invite.id)}
+										onclick={() => handleRevokeInvite(invite.id)}
+										disabled
 									>
 										<X class="h-4 w-4" />
 									</Button>

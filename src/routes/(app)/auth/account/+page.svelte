@@ -37,6 +37,7 @@
 		<MagicInvitesCard
 			magicInvites={data.magicInvites}
 			onCreateMagicInvite={() => invalidateAll()}
+			onDeleteMagicInvite={() => invalidateAll()}
 		/>
 
 		<!-- Preferences Section -->

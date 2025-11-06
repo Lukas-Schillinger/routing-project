@@ -19,11 +19,11 @@ import { ServiceError } from './errors';
 import { userService } from './user.service';
 
 export class MagicLinkService {
-	async getMagicLink(magicLinkId: string): Promise<MagicLink> {
+	async getMagicLink(magicLinkId: string, organization_id: string): Promise<MagicLink> {
 		const [magicLink] = await db
 			.select()
 			.from(magicLinks)
-			.where(eq(magicLinks.id, magicLinkId))
+			.where(and(eq(magicLinks.id, magicLinkId), eq(magicLinks.organization_id, organization_id)))
 			.limit(1);
 
 		if (!magicLink) {
@@ -46,7 +46,14 @@ export class MagicLinkService {
 		return invites;
 	}
 
-	async hashToken(raw: string) {
+	async deleteMagicLink(magicLinkId: string, organization_id: string) {
+		await this.getMagicLink(magicLinkId, organization_id);
+		await db.delete(magicLinks).where(eq(magicLinks.id, magicLinkId));
+
+		return { success: true };
+	}
+
+	private async hashToken(raw: string) {
 		return encodeHexLowerCase(sha256(new TextEncoder().encode(raw)));
 	}
 
