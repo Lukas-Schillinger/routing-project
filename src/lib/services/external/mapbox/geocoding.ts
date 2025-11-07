@@ -21,12 +21,11 @@ export class MapboxGeocodingService {
 			proximity?: [number, number]; // [lon, lat]
 			limit?: number;
 			types?: string[];
-			bbox?: [number, number, number, number]; // [minLon, minLat, maxLon, maxLat]
 		} = {}
 	): Promise<GeocodingFeature[]> {
 		const params: Record<string, string> = {
 			q: searchText,
-			limit: String(options.limit || 5),
+			limit: String(options.limit || 10),
 			country: options.country || 'US'
 		};
 
@@ -36,14 +35,13 @@ export class MapboxGeocodingService {
 
 		if (options.types?.length) {
 			params.types = options.types.join(',');
-		}
-
-		if (options.bbox) {
-			params.bbox = options.bbox.join(',');
+		} else {
+			params.types = 'address,secondary_address';
 		}
 
 		const response = await mapboxClient.get<unknown>('/search/geocode/v6/forward', params);
 		const validated = geocodingResponseSchema.parse(response);
+
 		return validated.features;
 	}
 
@@ -70,7 +68,7 @@ export class MapboxGeocodingService {
 			limit: String(options.limit || 8),
 			country: options.country || 'US',
 			autocomplete: 'true',
-			types: 'address' // Only addresses by default for autocomplete
+			types: 'address,secondary_address' // Only addresses by default for autocomplete
 		};
 
 		if (options.proximity) {
@@ -95,7 +93,6 @@ export class MapboxGeocodingService {
 		options: {
 			country?: string;
 			limit?: number;
-			types?: string[];
 		} = {}
 	): Promise<GeocodingResponse[]> {
 		if (searches.length === 0) {
@@ -108,17 +105,13 @@ export class MapboxGeocodingService {
 
 		const params: Record<string, string> = {
 			country: options.country || 'US',
-			limit: String(options.limit || 5)
+			limit: String(options.limit || 5),
+			types: 'address,secondary_address'
 		};
-
-		if (options.types?.length) {
-			params.types = options.types.join(',');
-		}
 
 		const body = searches.map((search) => ({ q: search }));
 
 		const response = await mapboxClient.post<unknown>('/search/geocode/v6/batch', body, params);
-
 		const batch = batchGeocodingResponseSchema.parse(response);
 		return batch.batch;
 	}

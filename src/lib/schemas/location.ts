@@ -11,22 +11,27 @@ export const geocodeConfidenceSchema = z.enum(['exact', 'high', 'medium', 'low']
 export const locationSchema = z.object({
 	id: z.string().uuid(),
 	organization_id: z.string().uuid(),
-	name: z.string().max(200).nullable(),
-	address_line1: z.string().max(240),
-	address_line2: z.string().max(240).nullable(),
+	created_at: z.date(),
+	updated_at: z.date(),
+
+	address_line_1: z.string().max(240),
+	address_line_2: z.string().max(240).nullable(),
+
+	address_number: z.string().max(240),
+	street_name: z.string().max(240),
 	city: z.string().max(120).nullable(),
 	region: z.string().max(120).nullable(),
 	postal_code: z.string().max(40).nullable(),
-	country: z.string().max(2).default('US'),
-	lat: z.string().nullable(),
-	lon: z.string().nullable(),
-	geocode_provider: z.string().max(40).nullable(),
+	country: z.string().length(2),
+
+	lat: z.number(),
+	lon: z.number(),
+
+	geocode_raw: z.unknown(),
 	geocode_confidence: geocodeConfidenceSchema,
+	geocode_provider: z.string().max(40).nullable(),
 	geocode_place_id: z.string().max(120).nullable(),
-	geocode_raw: z.any().nullable(),
-	address_hash: z.string().max(64).nullable(),
-	created_at: z.date(),
-	updated_at: z.date()
+	address_hash: z.string().max(64).nullable()
 });
 
 /**
@@ -35,59 +40,21 @@ export const locationSchema = z.object({
 export type Location = z.infer<typeof locationSchema>;
 
 /**
- * Partial location for updates
- */
-export const locationUpdateSchema = locationSchema.partial().required({ id: true });
-
-export type LocationUpdate = z.infer<typeof locationUpdateSchema>;
-
-/**
  * Location creation schema (without id and timestamps)
  */
-export const locationCreateSchema = locationSchema
-	.omit({
-		id: true,
-		organization_id: true,
-		created_at: true,
-		updated_at: true
-	})
-	.extend({
-		// Make optional fields explicitly optional for creation
-		name: z.string().max(200).nullable().optional(),
-		address_line2: z.string().max(240).nullable().optional(),
-		city: z.string().max(120).nullable().optional(),
-		region: z.string().max(120).nullable().optional(),
-		postal_code: z.string().max(40).nullable().optional(),
-		lat: z.string().nullable().optional(),
-		lon: z.string().nullable().optional(),
-		geocode_provider: z.string().max(40).nullable().optional(),
-		geocode_confidence: geocodeConfidenceSchema.optional(),
-		geocode_place_id: z.string().nullable().optional(),
-		geocode_raw: z.any().nullable().optional(),
-		address_hash: z.string().max(64).nullable().optional()
-	});
+export const locationCreateSchema = locationSchema.omit({
+	id: true,
+	organization_id: true,
+	created_at: true,
+	updated_at: true
+});
 
 export type LocationCreate = z.infer<typeof locationCreateSchema>;
 
-/**
- * Minimal location for display (coordinates and address)
- */
-export const locationDisplaySchema = z.object({
-	id: z.string().uuid(),
-	name: z.string().nullable(),
-	address_line1: z.string(),
-	address_line2: z.string().nullable(),
-	city: z.string().nullable(),
-	region: z.string().nullable(),
-	postal_code: z.string().nullable(),
-	country: z.string(),
-	lat: z.string().nullable(),
-	lon: z.string().nullable(),
-	geocode_provider: z.string().nullable(),
-	geocode_confidence: geocodeConfidenceSchema,
-	geocode_place_id: z.string().nullable(),
-	geocode_raw: z.any().nullable(),
-	address_hash: z.string().nullable()
+export const locationDisplaySchema = locationSchema.omit({
+	geocode_raw: true,
+	geocode_confidence: true,
+	geocode_provider: true,
+	geocode_place_id: true,
+	address_hash: true
 });
-
-export type LocationDisplay = z.infer<typeof locationDisplaySchema>;

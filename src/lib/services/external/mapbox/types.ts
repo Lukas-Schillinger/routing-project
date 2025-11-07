@@ -12,11 +12,12 @@ export const coordinateSchema = z.tuple([z.number(), z.number()]); // [longitude
 const contextSubObjectSchema = z.object({
 	mapbox_id: z.string(),
 	name: z.string(),
-	wikidata_id: z.string().optional(),
-	short_code: z.string().optional()
+	wikidata_id: z.string().optional()
 });
 
-const addressContextSchema = contextSubObjectSchema.extend({
+const addressContextSchema = z.object({
+	mapbox_id: z.string(),
+	name: z.string(),
 	address_number: z.string().optional(),
 	street_name: z.string().optional()
 });
@@ -31,6 +32,14 @@ const countryContextSchema = contextSubObjectSchema.extend({
 	country_code_alpha_3: z.string()
 });
 
+const secondaryAddressContextSchema = contextSubObjectSchema.extend({
+	mapbox_id: z.string(),
+	name: z.string(),
+	designator: z.string().optional(), // e.g., "UNIT"
+	identifier: z.string().optional(), // e.g., "201"
+	extrapolated: z.boolean().optional() // true if inferred
+});
+
 const featureContextSchema = z.object({
 	address: addressContextSchema.optional(),
 	street: contextSubObjectSchema.optional(),
@@ -40,7 +49,8 @@ const featureContextSchema = z.object({
 	place: contextSubObjectSchema.optional(),
 	district: contextSubObjectSchema.optional(),
 	region: regionContextSchema.optional(),
-	country: countryContextSchema.optional()
+	country: countryContextSchema.optional(),
+	secondary_address: secondaryAddressContextSchema.optional()
 });
 
 // Main feature schema for v6

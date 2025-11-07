@@ -88,7 +88,7 @@
 							<Input
 								id="password"
 								type="password"
-								name="confirm-password"
+								name="password-confirm"
 								placeholder="Confirm Password"
 								class="pl-10"
 								required

@@ -5,7 +5,7 @@ import TimeAgo from 'javascript-time-ago';
 import en from 'javascript-time-ago/locale/en';
 import { twMerge } from 'tailwind-merge';
 import type { Driver } from './schemas';
-import type { LocationCreate } from './schemas/location';
+import { locationCreateSchema, type LocationCreate } from './schemas/location';
 import type { GeocodingFeature } from './services/external/mapbox/types';
 
 TimeAgo.addLocale(en);
@@ -57,19 +57,7 @@ export function getTextColor(hex: string) {
  * @see https://docs.mapbox.com/api/search/geocoding/#geocoding-response-object
  */
 export function geocodingFeatureToLocation(feature: GeocodingFeature): LocationCreate {
-	// In v6, context is a nested object inside properties, not an array
 	const context = feature.properties.context || {};
-
-	// Extract address components from the context object
-	const address = context.address;
-	const place = context.place;
-	const region = context.region;
-	const postcode = context.postcode;
-	const country = context.country;
-
-	// Build address_line1 from address context
-	// In v6, address.name contains the full address like "1600 Pennsylvania Avenue Northwest"
-	const addressLine1 = address?.name || feature.properties.name;
 
 	// Extract confidence level and validate it's one of the expected values
 	const confidence = feature.properties.match_code?.confidence;
@@ -81,21 +69,30 @@ export function geocodingFeatureToLocation(feature: GeocodingFeature): LocationC
 			? confidence
 			: null;
 
-	return {
-		name: feature.properties.name,
-		address_line1: addressLine1,
-		address_line2: null,
-		city: place?.name || null,
-		region: region?.name || null,
-		postal_code: postcode?.name || null,
-		country: country?.country_code || 'US', // ISO 2-letter code
-		lat: feature.geometry.coordinates[1].toString(),
-		lon: feature.geometry.coordinates[0].toString(),
+	const draft = {
+		address_line_1: context.address?.name,
+		address_line_2: context.secondary_address?.name || null,
+
+		address_number: context.address?.address_number,
+		street_name: context.address?.street_name,
+		city: context.place?.name || null,
+		region: context.region?.name || null,
+		postal_code: context.postcode?.name || null,
+		country: context.country?.country_code || null, // ISO 2-letter code
+
+		lat: feature.geometry.coordinates[1],
+		lon: feature.geometry.coordinates[0],
+
 		geocode_provider: 'mapbox',
 		geocode_confidence: geocodeConfidence, // 'exact', 'high', 'medium', or 'low'
 		geocode_place_id: feature.properties.mapbox_id,
-		geocode_raw: feature
+		geocode_raw: feature,
+
+		address_hash: null
 	};
+
+	const validated = locationCreateSchema.parse(draft);
+	return validated;
 }
 
 export function generateRandomColor(): string {

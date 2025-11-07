@@ -111,8 +111,8 @@
 
 		stops.forEach((stop) => {
 			if (stop.location.lat && stop.location.lon) {
-				totalLat += parseFloat(stop.location.lat);
-				totalLon += parseFloat(stop.location.lon);
+				totalLat += stop.location.lat;
+				totalLon += stop.location.lon;
 				validCount++;
 			}
 		});

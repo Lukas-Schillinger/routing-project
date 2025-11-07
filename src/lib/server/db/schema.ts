@@ -106,24 +106,29 @@ export const locations = pgTable(
 	{
 		id,
 		organization_id: orgId.references(() => organizations.id, { onDelete: 'cascade' }),
-		name: varchar('name', { length: 200 }),
-		address_line1: varchar('address_line1', { length: 240 }).notNull(),
-		address_line2: varchar('address_line2', { length: 240 }),
+		created_at: ts('created_at'),
+		updated_at: ts('updated_at'),
+
+		address_line_1: varchar('address_line_1', { length: 240 }).notNull(), // Mapbox v6 address_name field
+		address_line_2: varchar('address_line_2', { length: 240 }), // Mapbox v6 secondary_address.name field
+
+		address_number: varchar('address_number', { length: 240 }).notNull(),
+		street_name: varchar('street_name', { length: 240 }).notNull(),
 		city: varchar('city', { length: 120 }),
 		region: varchar('region', { length: 120 }),
 		postal_code: varchar('postal_code', { length: 40 }),
-		country: varchar('country', { length: 2 }).default('US').notNull(),
-		lat: numeric('lat', { precision: 10, scale: 6 }),
-		lon: numeric('lon', { precision: 10, scale: 6 }),
-		geocode_provider: varchar('geocode_provider', { length: 40 }),
+		country: varchar('country', { length: 2 }).notNull(),
+
+		lat: doublePrecision('lat').notNull(),
+		lon: doublePrecision('lon').notNull(),
+
+		geocode_raw: jsonb('geocode_raw').notNull(),
 		geocode_confidence: varchar('geocode_confidence', { length: 20 }).$type<
 			'exact' | 'high' | 'medium' | 'low' | null
 		>(), // Mapbox v6: 'exact', 'high', 'medium', 'low'
+		geocode_provider: varchar('geocode_provider', { length: 40 }),
 		geocode_place_id: varchar('geocode_place_id'),
-		geocode_raw: jsonb('geocode_raw'),
-		address_hash: varchar('address_hash', { length: 64 }),
-		created_at: ts('created_at'),
-		updated_at: ts('updated_at')
+		address_hash: varchar('address_hash', { length: 64 })
 	},
 	(t) => [
 		index('locations_org_idx').on(t.organization_id),

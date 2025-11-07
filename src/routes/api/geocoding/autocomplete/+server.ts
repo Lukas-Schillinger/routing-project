@@ -27,9 +27,6 @@ export const GET: RequestHandler = async ({ url }) => {
 			}
 		}
 
-		// TODO: Could add IP-based geolocation fallback here
-		// const clientIp = getClientAddress();
-
 		const results = await mapboxGeocoding.autocomplete(q, {
 			country,
 			limit,

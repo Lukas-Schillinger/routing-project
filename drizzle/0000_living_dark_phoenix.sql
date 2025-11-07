@@ -25,6 +25,7 @@ CREATE TABLE "drivers" (
 	"notes" text,
 	"active" boolean DEFAULT true NOT NULL,
 	"temporary" boolean DEFAULT false NOT NULL,
+	"color" varchar(7) NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -45,22 +46,37 @@ CREATE TABLE "files" (
 CREATE TABLE "locations" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"organization_id" uuid DEFAULT gen_random_uuid() NOT NULL,
-	"name" varchar(200),
-	"address_line1" varchar(240) NOT NULL,
-	"address_line2" varchar(240),
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"address_line_1" varchar(240) NOT NULL,
+	"address_line_2" varchar(240),
+	"address_number" varchar(240) NOT NULL,
+	"street_name" varchar(240) NOT NULL,
 	"city" varchar(120),
 	"region" varchar(120),
 	"postal_code" varchar(40),
-	"country" varchar(2) DEFAULT 'US' NOT NULL,
-	"lat" numeric(10, 6),
-	"lon" numeric(10, 6),
-	"geocode_provider" varchar(40),
+	"country" varchar(2) NOT NULL,
+	"lat" double precision NOT NULL,
+	"lon" double precision NOT NULL,
+	"geocode_raw" jsonb NOT NULL,
 	"geocode_confidence" varchar(20),
+	"geocode_provider" varchar(40),
 	"geocode_place_id" varchar,
-	"geocode_raw" jsonb,
-	"address_hash" varchar(64),
+	"address_hash" varchar(64)
+);
+--> statement-breakpoint
+CREATE TABLE "magic_links" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"organization_id" uuid DEFAULT gen_random_uuid() NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"expires_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"type" text NOT NULL,
+	"invitee_organization_id" uuid,
+	"email" text NOT NULL,
+	"user_id" uuid,
+	"used_at" timestamp,
+	"token_hash" text NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "maps" (
@@ -126,7 +142,7 @@ CREATE TABLE "users" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"organization_id" uuid DEFAULT gen_random_uuid() NOT NULL,
 	"email" text NOT NULL,
-	"password_hash" text NOT NULL,
+	"password_hash" text,
 	"role" varchar(32) DEFAULT 'member' NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
@@ -142,6 +158,9 @@ ALTER TABLE "drivers" ADD CONSTRAINT "drivers_organization_id_organizations_id_f
 ALTER TABLE "files" ADD CONSTRAINT "files_organization_id_organizations_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "files" ADD CONSTRAINT "files_uploaded_by_users_id_fk" FOREIGN KEY ("uploaded_by") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "locations" ADD CONSTRAINT "locations_organization_id_organizations_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "magic_links" ADD CONSTRAINT "magic_links_organization_id_organizations_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "magic_links" ADD CONSTRAINT "magic_links_invitee_organization_id_organizations_id_fk" FOREIGN KEY ("invitee_organization_id") REFERENCES "public"."organizations"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "magic_links" ADD CONSTRAINT "magic_links_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "maps" ADD CONSTRAINT "maps_organization_id_organizations_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "matrices" ADD CONSTRAINT "matrices_organization_id_organizations_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "matrices" ADD CONSTRAINT "matrices_map_id_maps_id_fk" FOREIGN KEY ("map_id") REFERENCES "public"."maps"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint

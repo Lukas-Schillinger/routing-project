@@ -75,9 +75,9 @@
 		if (!stop || !stop.location.lat || !stop.location.lon) return null;
 
 		const destination = {
-			lat: parseFloat(stop.location.lat),
-			lng: parseFloat(stop.location.lon),
-			address: stop.location.address_line1
+			lat: stop.location.lat,
+			lng: stop.location.lon,
+			address: stop.location.address_line_1
 		};
 
 		if (directionsProvider === 'apple') {
@@ -110,7 +110,7 @@
 				<!-- Address -->
 				<div class="h-24 py-3">
 					<h3 class="pb-1 text-2xl font-bold tracking-tight">
-						{stop.location.name}
+						{stop.location.address_line_1}
 					</h3>
 					<div class="text-sm text-muted-foreground">
 						{stop.location.city || ''}{stop.location.city && stop.location.region ? ', ' : ''}{stop

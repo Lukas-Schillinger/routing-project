@@ -1,5 +1,5 @@
 {
-  "id": "c07f6c3a-296d-4b8a-b35a-7bd80f120da0",
+  "id": "b3a7904c-c864-4c08-9a42-3d8f01cf056e",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -348,6 +348,12 @@
           "notNull": true,
           "default": false
         },
+        "color": {
+          "name": "color",
+          "type": "varchar(7)",
+          "primaryKey": false,
+          "notNull": true
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -554,23 +560,43 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "name": {
-          "name": "name",
-          "type": "varchar(200)",
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true,
+          "default": "now()"
         },
-        "address_line1": {
-          "name": "address_line1",
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "address_line_1": {
+          "name": "address_line_1",
           "type": "varchar(240)",
           "primaryKey": false,
           "notNull": true
         },
-        "address_line2": {
-          "name": "address_line2",
+        "address_line_2": {
+          "name": "address_line_2",
           "type": "varchar(240)",
           "primaryKey": false,
           "notNull": false
+        },
+        "address_number": {
+          "name": "address_number",
+          "type": "varchar(240)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "street_name": {
+          "name": "street_name",
+          "type": "varchar(240)",
+          "primaryKey": false,
+          "notNull": true
         },
         "city": {
           "name": "city",
@@ -594,18 +620,29 @@
           "name": "country",
           "type": "varchar(2)",
           "primaryKey": false,
-          "notNull": true,
-          "default": "'US'"
+          "notNull": true
         },
         "lat": {
           "name": "lat",
-          "type": "numeric(10, 6)",
+          "type": "double precision",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "lon": {
           "name": "lon",
-          "type": "numeric(10, 6)",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "geocode_raw": {
+          "name": "geocode_raw",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "geocode_confidence": {
+          "name": "geocode_confidence",
+          "type": "varchar(20)",
           "primaryKey": false,
           "notNull": false
         },
@@ -615,21 +652,9 @@
           "primaryKey": false,
           "notNull": false
         },
-        "geocode_confidence": {
-          "name": "geocode_confidence",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": false
-        },
         "geocode_place_id": {
           "name": "geocode_place_id",
           "type": "varchar",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "geocode_raw": {
-          "name": "geocode_raw",
-          "type": "jsonb",
           "primaryKey": false,
           "notNull": false
         },
@@ -638,20 +663,6 @@
           "type": "varchar(64)",
           "primaryKey": false,
           "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
         }
       },
       "indexes": {
@@ -725,6 +736,130 @@
             "id"
           ],
           "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.magic_links": {
+      "name": "magic_links",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "invitee_organization_id": {
+          "name": "invitee_organization_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "used_at": {
+          "name": "used_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "token_hash": {
+          "name": "token_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "magic_links_organization_id_organizations_id_fk": {
+          "name": "magic_links_organization_id_organizations_id_fk",
+          "tableFrom": "magic_links",
+          "tableTo": "organizations",
+          "columnsFrom": [
+            "organization_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "magic_links_invitee_organization_id_organizations_id_fk": {
+          "name": "magic_links_invitee_organization_id_organizations_id_fk",
+          "tableFrom": "magic_links",
+          "tableTo": "organizations",
+          "columnsFrom": [
+            "invitee_organization_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "magic_links_user_id_users_id_fk": {
+          "name": "magic_links_user_id_users_id_fk",
+          "tableFrom": "magic_links",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
           "onUpdate": "no action"
         }
       },
@@ -1350,7 +1485,7 @@
           "name": "password_hash",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "role": {
           "name": "role",

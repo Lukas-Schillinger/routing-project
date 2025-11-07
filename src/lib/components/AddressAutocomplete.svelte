@@ -35,22 +35,22 @@
 	let userProximity = $state<[number, number] | null>(null);
 
 	// Get user's location on mount
-	onMount(() => {
-		getUserLocation();
+	onMount(async () => {
+		userProximity = await getUserLocation();
 	});
 
-	async function getUserLocation() {
+	async function getUserLocation(): Promise<[number, number] | null> {
 		// Try geolocation API first
 		if ('geolocation' in navigator) {
 			navigator.geolocation.getCurrentPosition(
 				(position) => {
-					userProximity = [position.coords.longitude, position.coords.latitude];
-					console.log('Using user location for proximity:', userProximity);
+					return [position.coords.longitude, position.coords.latitude];
+					// console.log('Using user location for proximity:', userProximity);
 				},
 				async (error) => {
 					console.warn('Geolocation denied or failed:', error.message);
 					// Fallback to IP-based location
-					await getIPLocation();
+					return getIPLocation();
 				},
 				{
 					enableHighAccuracy: false,
@@ -60,24 +60,27 @@
 			);
 		} else {
 			// Geolocation not supported, fallback to IP
-			await getIPLocation();
+			return getIPLocation();
 		}
+		return null;
 	}
 
-	async function getIPLocation() {
+	async function getIPLocation(): Promise<[number, number] | null> {
 		try {
-			// Use ipapi.co for IP-based geolocation (free tier, no API key needed)
+			// Free for non-commercial use. Limited to 45 req/s
 			const response = await fetch('https://ipapi.co/json/');
 			if (response.ok) {
 				const data = await response.json();
 				if (data.longitude && data.latitude) {
-					userProximity = [data.longitude, data.latitude];
-					console.log('Using IP-based location for proximity:', userProximity);
+					return [data.longitude, data.latitude];
+					// console.log('Using IP-based location for proximity:', userProximity);
 				}
 			}
+			return null;
 		} catch (error) {
 			console.warn('Failed to get IP-based location:', error);
 			// Continue without proximity bias
+			return null;
 		}
 	}
 
@@ -91,11 +94,12 @@
 		isSearching = true;
 
 		try {
-			suggestions = await geocodingApi.autocomplete(query, {
+			suggestions = await geocodingApi.forward(query, {
 				country,
-				limit: 8,
-				proximity: userProximity || undefined
+				limit: 8
+				// proximity: userProximity || undefined
 			});
+			// console.log(suggestions);
 		} catch (error) {
 			console.error('Address search error:', error);
 			suggestions = [];
@@ -120,7 +124,7 @@
 	}
 
 	// Handle selection
-	function selectAddress(feature: GeocodingFeature) {
+	function handleSelectAddress(feature: GeocodingFeature) {
 		selectedFeature = feature;
 		// v6 API: use full_address or construct from name + place_formatted
 		const fullAddress =
@@ -205,7 +209,7 @@
 						`${feature.properties.name}${feature.properties.place_formatted ? ', ' + feature.properties.place_formatted : ''}`}
 					<Command.Item
 						value={fullAddress}
-						onSelect={() => selectAddress(feature)}
+						onSelect={() => handleSelectAddress(feature)}
 						class="cursor-pointer"
 					>
 						<div class="flex items-start gap-2">

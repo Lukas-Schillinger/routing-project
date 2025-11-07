@@ -92,10 +92,7 @@ export class CSVImportService {
 		const text = await file.text();
 		const records = this.parseCSV(text);
 
-		const geocodeResults = await mapboxGeocoding.batch(
-			records.map((record) => record.address),
-			{ types: ['address'] }
-		);
+		const geocodeResults = await mapboxGeocoding.batch(records.map((record) => record.address));
 
 		// Combine CSV records with their corresponding geocoding results
 		return records.map((record, index): GeocodeCSVResult => {

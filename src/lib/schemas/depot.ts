@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { locationCreateSchema } from './location';
+import { locationCreateSchema, locationSchema } from './location';
 
 /**
  * Depot schema - represents a depot/warehouse location in the system
@@ -60,46 +60,7 @@ export type DepotUpdate = z.infer<typeof depotUpdateSchema>;
  */
 export const depotWithLocationJoinSchema = z.object({
 	depot: depotSchema,
-	location: z.object({
-		id: z.string().uuid(),
-		organization_id: z.string().uuid(),
-		name: z.string().nullable(),
-		address_line1: z.string(),
-		address_line2: z.string().nullable(),
-		city: z.string().nullable(),
-		region: z.string().nullable(),
-		postal_code: z.string().nullable(),
-		country: z.string(),
-		lat: z.string().nullable(),
-		lon: z.string().nullable(),
-		geocode_provider: z.string().nullable(),
-		geocode_confidence: z.enum(['exact', 'high', 'medium', 'low']).nullable(),
-		geocode_place_id: z.string().nullable(),
-		geocode_raw: z.any().nullable(),
-		address_hash: z.string().nullable(),
-		created_at: z.date(),
-		updated_at: z.date()
-	})
+	location: locationSchema
 });
 
 export type DepotWithLocationJoin = z.infer<typeof depotWithLocationJoinSchema>;
-
-/**
- * Depot with location details for display (flat structure)
- */
-export const depotWithLocationSchema = depotSchema.extend({
-	location: z.object({
-		id: z.string().uuid(),
-		name: z.string().nullable(),
-		address_line1: z.string(),
-		address_line2: z.string().nullable(),
-		city: z.string().nullable(),
-		region: z.string().nullable(),
-		postal_code: z.string().nullable(),
-		country: z.string(),
-		lat: z.string().nullable(),
-		lon: z.string().nullable()
-	})
-});
-
-export type DepotWithLocation = z.infer<typeof depotWithLocationSchema>;

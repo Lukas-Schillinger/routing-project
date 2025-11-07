@@ -215,27 +215,18 @@ export class OptimizationService {
 			return hashA.localeCompare(hashB);
 		});
 
-		// Validate all stops have coordinates
-		for (const { stop, location } of mapStops) {
-			if (!location.lon || !location.lat) {
-				throw ServiceError.validation(
-					`Stop "${location.name || stop.id}" has no coordinates. Geocode all stops before creating distance matrix.`
-				);
-			}
-		}
-
 		// Build coordinates array with depot first
 		const coordinates: [number, number][] = [
 			[Number(depot.location.lon), Number(depot.location.lat)]
 		];
 
-		const addresses: string[] = [depot.location.address_line1 || depot.depot.name || 'Depot'];
+		const addresses: string[] = [depot.location.address_line_1 || depot.depot.name || 'Depot'];
 		const locationIds: string[] = [depot.location.id];
 
 		// Add all stop coordinates in sorted order
 		for (const { location } of mapStops) {
 			coordinates.push([Number(location.lon), Number(location.lat)]);
-			addresses.push(location.address_line1 || location.name || 'Unknown');
+			addresses.push(location.address_line_1 || 'Unknown');
 			locationIds.push(location.id);
 		}
 
@@ -317,10 +308,7 @@ export class OptimizationService {
 	): Promise<void> {
 		// Get depot location
 		const depot = await depotService.getDepotById(depotId, organizationId);
-		const depotCoord: Coordinate = [
-			parseFloat(depot.location.lon!),
-			parseFloat(depot.location.lat!)
-		];
+		const depotCoord: Coordinate = [depot.location.lon!, depot.location.lat!];
 
 		// Prepare all route computations in parallel
 		const routePromises = result.routes.map(async (route) => {
@@ -344,9 +332,7 @@ export class OptimizationService {
 				// Build coordinate sequence: depot → stops → depot
 				const coordinates: Coordinate[] = [
 					depotCoord,
-					...driverStops.map(
-						(s) => [parseFloat(s.location.lon!), parseFloat(s.location.lat!)] as Coordinate
-					),
+					...driverStops.map((s) => [s.location.lon!, s.location.lat!] as Coordinate),
 					depotCoord
 				];
 

@@ -20,6 +20,7 @@ export const actions: Actions = {
 		const passwordConfirm = formData.get('password-confirm');
 
 		// Validate input using Zod
+		console.log(email, password, passwordConfirm);
 		const validation = registerSchema.safeParse({ email, password, passwordConfirm });
 		if (!validation.success) {
 			const errors = validation.error.issues;
