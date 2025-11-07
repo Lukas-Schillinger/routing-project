@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 test.describe('Authentication Flow', () => {
 	test.beforeEach(async ({ page }) => {
 		// Navigate to the login page before each test
-		await page.goto('/demo/lucia/login');
+		await page.goto('/auth/login');
 	});
 
 	test.describe('Login Page UI', () => {
@@ -97,11 +97,11 @@ test.describe('Authentication Flow', () => {
 			}
 
 			// Should redirect to the protected page
-			await expect(page).toHaveURL('/demo/lucia');
+			await expect(page).toHaveURL('/auth/account');
 
 			// Logout before testing login
 			await page.click('button:has-text("Sign out")');
-			await expect(page).toHaveURL('/demo/lucia/login');
+			await expect(page).toHaveURL('/auth/login');
 
 			// Now test login with the same credentials
 			await page.fill('input[name="email"]', uniqueEmail);
@@ -118,7 +118,7 @@ test.describe('Authentication Flow', () => {
 			}
 
 			// Should redirect to the protected page
-			await expect(page).toHaveURL('/demo/lucia');
+			await expect(page).toHaveURL('/auth/account');
 		});
 	});
 
@@ -204,7 +204,7 @@ test.describe('Authentication Flow', () => {
 test.describe('REgistration Flow', () => {
 	test.beforeEach(async ({ page }) => {
 		// Navigate to the login page before each test
-		await page.goto('/demo/lucia/registration');
+		await page.goto('/auth/registration');
 	});
 
 	test.describe('Registration Page UI', () => {
@@ -318,7 +318,7 @@ test.describe('REgistration Flow', () => {
 			await page.click('button:has-text("Register")');
 
 			// Should redirect to the protected page
-			await expect(page).toHaveURL('/demo/lucia');
+			await expect(page).toHaveURL('/auth/account');
 		});
 
 		test('should show error when registering with existing email', async ({ page }) => {
@@ -331,11 +331,11 @@ test.describe('REgistration Flow', () => {
 			await page.click('button:has-text("Register")');
 
 			// Should redirect on success
-			await expect(page).toHaveURL('/demo/lucia');
+			await expect(page).toHaveURL('/auth/account');
 
 			// Logout before trying to register again
 			await page.click('button:has-text("Sign out")');
-			await expect(page).toHaveURL('/demo/lucia/login');
+			await expect(page).toHaveURL('/auth/login');
 
 			// Try to register with same email
 			await page.fill('input[name="email"]', duplicateEmail);

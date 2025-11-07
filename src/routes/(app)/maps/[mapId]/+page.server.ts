@@ -10,8 +10,8 @@ import { getUserOrRedirect } from '$lib/services/server/auth';
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ params, locals }) => {
-	const user = getUserOrRedirect(locals);
+export const load: PageServerLoad = async ({ params }) => {
+	const user = getUserOrRedirect();
 
 	const { mapId } = params;
 

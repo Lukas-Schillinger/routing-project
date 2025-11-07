@@ -1,3 +1,4 @@
+import { getRequestEvent } from '$app/server';
 import type { PublicUser } from '$lib/schemas';
 import { db } from '$lib/server/db';
 import * as table from '$lib/server/db/schema';
@@ -88,9 +89,10 @@ export function deleteSessionTokenCookie(event: RequestEvent) {
 	});
 }
 
-export function getUserOrRedirect(locals: App.Locals): PublicUser {
-	if (!locals.user) {
-		throw redirect(302, '/demo/lucia/login');
+export function getUserOrRedirect(): PublicUser {
+	const request = getRequestEvent();
+	if (!request.locals.user) {
+		throw redirect(302, '/auth/login');
 	}
-	return locals.user;
+	return request.locals.user;
 }

@@ -9,7 +9,7 @@ import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async (event) => {
 	if (event.locals.user) {
-		return redirect(302, '/demo/lucia');
+		return redirect(302, '/auth/account');
 	}
 	return {};
 };
@@ -57,6 +57,6 @@ export const actions: Actions = {
 		const session = await auth.createSession(sessionToken, existingUser.id);
 		auth.setSessionTokenCookie(event, sessionToken, session.expires_at);
 
-		return redirect(302, '/demo/lucia');
+		return redirect(302, '/auth/account');
 	}
 };

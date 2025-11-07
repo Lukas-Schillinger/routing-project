@@ -199,7 +199,7 @@ describe('Authentication Server Actions', () => {
 
 				// Should throw redirect
 				await expect(actions.login(mockEvent as never)).rejects.toThrow('redirect');
-				expect(redirect).toHaveBeenCalledWith(302, '/demo/lucia');
+				expect(redirect).toHaveBeenCalledWith(302, '/auth/account');
 			});
 
 			it('should handle invalid email', async () => {

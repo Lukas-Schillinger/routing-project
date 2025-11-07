@@ -1,13 +1,10 @@
 import { mapService, routeService, ServiceError, stopService } from '$lib/services/server';
-import { error, redirect } from '@sveltejs/kit';
+import { getUserOrRedirect } from '$lib/services/server/auth';
+import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ params, locals }) => {
-	const user = locals.user;
-
-	if (!user) {
-		throw redirect(302, '/demo/lucia/login');
-	}
+export const load: PageServerLoad = async ({ params }) => {
+	const user = getUserOrRedirect();
 
 	const route = await routeService.getRouteById(params.routeId, user.organization_id);
 

@@ -18,7 +18,7 @@
 </script>
 
 <svelte:head>
-	<title>Wend / Register</title>
+	<title>Login - Routing Project</title>
 </svelte:head>
 
 <div
@@ -26,8 +26,8 @@
 >
 	<div class="w-full max-w-sm">
 		<div class="mb-8 text-center">
-			<h1 class="headline-medium mb-2 text-primary-foreground">Sign Up</h1>
-			<p class="body-medium text-primary-foreground">Welcome to Wend! Lets get started.</p>
+			<h1 class="mb-2 font-serif text-6xl font-bold text-white">Welcome Back</h1>
+			<p class="body-medium text-white">Sign in to your account or create a new one</p>
 		</div>
 
 		<Card class="border-border bg-card shadow-xl">
@@ -48,7 +48,7 @@
 					</Alert.Root>
 				{/if}
 
-				<form method="post" action="?/register" use:enhance class="space-y-4" novalidate>
+				<form method="post" action="?/login" use:enhance class="space-y-4" novalidate>
 					<div class="space-y-2">
 						<Label for="email" class="body-medium text-foreground">Email</Label>
 						<div class="relative">
@@ -57,7 +57,7 @@
 								id="email"
 								type="email"
 								name="email"
-								placeholder="Email"
+								placeholder="Enter your email"
 								class="pl-10"
 								required
 							/>
@@ -72,24 +72,7 @@
 								id="password"
 								type="password"
 								name="password"
-								placeholder="Password"
-								class="pl-10"
-								required
-							/>
-						</div>
-					</div>
-
-					<div class="space-y-2">
-						<Label for="confirm-password" class="body-medium text-foreground"
-							>Confirm Password</Label
-						>
-						<div class="relative">
-							<Lock class="absolute top-2.5 left-3 h-4 w-4 " />
-							<Input
-								id="password"
-								type="password"
-								name="password-confirm"
-								placeholder="Confirm Password"
+								placeholder="Enter your password"
 								class="pl-10"
 								required
 							/>
@@ -97,19 +80,19 @@
 					</div>
 
 					<div class="grid grid-cols-1 gap-3 px-16 pt-2">
-						<Button type="submit">Register</Button>
+						<Button type="submit">Sign In</Button>
 					</div>
 				</form>
 
 				<div class="text-center">
 					<p class="body-small text-muted-foreground">
-						Already have an account?
+						Don't have an account?
 						<Button
 							variant="link"
-							href="/demo/lucia/login"
+							href="/auth/register"
 							class="body-small font-medium text-foreground underline hover:text-accent-foreground"
 						>
-							Sign In Here
+							Register Here
 						</Button>
 					</p>
 				</div>

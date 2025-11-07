@@ -5,7 +5,7 @@
 	import * as Card from '$lib/components/ui/card';
 	import type { MagicInvite } from '$lib/schemas';
 	import { ApiError } from '$lib/services/api';
-	import { magicLinksApi } from '$lib/services/api/magic-links';
+	import { magicLinksApi } from '$lib/services/api/auth';
 	import { formatDate } from '$lib/utils';
 	import { Calendar, Mail, UserPlus, Users, X } from 'lucide-svelte';
 	import CreateMagicInvitePopover from './CreateMagicInvitePopover.svelte';

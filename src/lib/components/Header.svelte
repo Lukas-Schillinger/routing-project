@@ -72,12 +72,6 @@
 			description: 'Matrix API examples'
 		},
 		{ name: 'GSAP Animations', href: '/demo/gsap', icon: Zap, description: 'Animation demos' },
-		{
-			name: 'Auth (Lucia)',
-			href: '/demo/lucia',
-			icon: User,
-			description: 'Authentication examples'
-		},
 		{ name: 'Test Map', href: '/demo/test-map', icon: Map, description: 'Fullscreen map testing' }
 	];
 

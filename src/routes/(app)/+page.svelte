@@ -55,7 +55,7 @@
 					Try Mapbox Demo
 					<ArrowRight class="ml-2 h-4 w-4" />
 				</Button>
-				<Button href="/demo/lucia/login" variant="outline" size="lg">
+				<Button href="/auth/login" variant="outline" size="lg">
 					<User class="mr-2 h-5 w-5" />
 					Authentication Demo
 				</Button>
@@ -102,7 +102,7 @@
 						<li>• Secure password handling</li>
 						<li>• Modern UI components</li>
 					</ul>
-					<FancyButton href="/demo/lucia/login" class="mt-4">Try Authentication</FancyButton>
+					<FancyButton href="/auth/login" class="mt-4">Try Authentication</FancyButton>
 				</CardContent>
 			</Card>
 		</div>

@@ -164,6 +164,7 @@ describe('Registration Server Actions', () => {
 				vi.mocked(userService.createUser).mockResolvedValue({
 					id: 'new-user-123',
 					email: 'test@example.com',
+					passwordHash: null,
 					created_at: new Date(),
 					updated_at: new Date(),
 					organization_id: 'org_id'
@@ -196,7 +197,7 @@ describe('Registration Server Actions', () => {
 				};
 
 				await expect(actions.register(mockEvent as never)).rejects.toThrow('redirect');
-				expect(redirect).toHaveBeenCalledWith(302, '/demo/lucia');
+				expect(redirect).toHaveBeenCalledWith(302, '/auth/account');
 			});
 
 			it('should handle registration with invalid email', async () => {

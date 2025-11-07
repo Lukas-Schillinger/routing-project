@@ -40,7 +40,7 @@
 					</li>
 					<li>
 						<a
-							href="/demo/lucia/login"
+							href="/auth/login"
 							class="body-small text-muted-foreground transition-colors hover:text-foreground"
 						>
 							Authentication

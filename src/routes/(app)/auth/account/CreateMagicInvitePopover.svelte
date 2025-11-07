@@ -5,8 +5,8 @@
 	import { Label } from '$lib/components/ui/label';
 	import * as Popover from '$lib/components/ui/popover';
 	import type { MagicInvite } from '$lib/schemas';
+	import { magicLinksApi } from '$lib/services/api/auth';
 	import { ApiError } from '$lib/services/api/base';
-	import { magicLinksApi } from '$lib/services/api/magic-links';
 	import { Check, LoaderCircle, Mail, Plus } from 'lucide-svelte';
 
 	// Props

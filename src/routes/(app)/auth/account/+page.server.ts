@@ -3,8 +3,8 @@ import { magicLinkService } from '$lib/services/server/magic-link.service';
 import { organizationService } from '$lib/services/server/user.service';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ locals }) => {
-	const user = getUserOrRedirect(locals);
+export const load: PageServerLoad = async () => {
+	const user = getUserOrRedirect();
 
 	// Fetch all data in parallel since they're independent
 	const [organization, magicInvites] = await Promise.all([
