@@ -3,6 +3,7 @@
 	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Popover from '$lib/components/ui/popover';
+	import type { PublicUser } from '$lib/schemas';
 	import {
 		ChevronDown,
 		ChevronRight,
@@ -11,7 +12,6 @@
 		Map,
 		MapPin,
 		Menu,
-		Mouse,
 		Route,
 		TestTube,
 		TriangleAlert,
@@ -22,31 +22,25 @@
 	import { onMount } from 'svelte';
 
 	let {
-		pageHeader = {}
+		pageHeader = {},
+		user
 	}: {
 		pageHeader?: {
 			title?: string;
 			description?: string;
 			breadcrumbs?: Array<{ name: string; href: string }>;
 		};
+		user?: PublicUser | null;
 	} = $props();
 
 	let mobileMenuOpen = $state(false);
 	let headerElement: HTMLDivElement;
 
-	const navigation = [
-		{ name: 'Maps', href: '/maps', icon: Map },
-		{ name: 'Account', href: '/auth/account', icon: User }
-	];
+	const navigation = [{ name: 'Maps', href: '/maps', icon: Map }];
 
 	const demoPages = [
 		{ name: 'Demo Home', href: '/demo', icon: TestTube, description: 'Demo overview page' },
-		{
-			name: 'Mapbox',
-			href: '/demo/mapbox',
-			icon: MapPin,
-			description: 'Geocoding and map services'
-		},
+
 		{
 			name: 'CSV Upload',
 			href: '/demo/csv',
@@ -54,14 +48,8 @@
 			description: 'Batch geocoding from CSV'
 		},
 		{
-			name: 'Address Autocomplete',
-			href: '/demo/address-autocomplete',
-			icon: Mouse,
-			description: 'Real-time address suggestions'
-		},
-		{
-			name: 'Route Visualization',
-			href: '/demo/routes',
+			name: 'Cool Routes',
+			href: '/demo/cool-routes',
 			icon: Route,
 			description: 'Driver route demos'
 		},
@@ -71,8 +59,7 @@
 			icon: Grid3x3,
 			description: 'Matrix API examples'
 		},
-		{ name: 'GSAP Animations', href: '/demo/gsap', icon: Zap, description: 'Animation demos' },
-		{ name: 'Test Map', href: '/demo/test-map', icon: Map, description: 'Fullscreen map testing' }
+		{ name: 'GSAP Animations', href: '/demo/gsap', icon: Zap, description: 'Animation demos' }
 	];
 
 	function toggleMobileMenu() {
@@ -172,6 +159,29 @@
 								<span>{item.name}</span>
 							</Button>
 						{/each}
+						{#if user}
+							<Button
+								class={page.url.pathname === '/auth/account' ? '' : 'text-muted-foreground'}
+								variant="ghost"
+								size="sm"
+								href={'/auth/account'}
+							>
+								<User size="4" />
+
+								<span>Account</span>
+							</Button>
+						{:else}
+							<Button
+								class={page.url.pathname === '/auth/login' ? '' : 'text-muted-foreground'}
+								variant="ghost"
+								size="sm"
+								href={'/auth/login'}
+							>
+								<User size="4" />
+
+								<span>Login</span>
+							</Button>
+						{/if}
 
 						<!-- Demo Popover -->
 						<Popover.Root>
@@ -207,8 +217,8 @@
 								</div>
 							</Popover.Content>
 						</Popover.Root>
+						<ThemeToggle variant="inverse" />
 					</nav>
-					<ThemeToggle variant="inverse" />
 				</div>
 
 				<!-- Mobile menu button & Theme Toggle -->
@@ -231,12 +241,35 @@
 						{#each navigation as item}
 							{@const Icon = item.icon}
 							<div>
-								<Button variant="ghost" href={item.href} onclick={closeMobileMenu}>
+								<Button
+									class={page.url.pathname === item.href ? '' : 'text-muted-foreground'}
+									variant="ghost"
+									href={item.href}
+									onclick={closeMobileMenu}
+								>
 									<Icon class="h-5 w-5" />
 									<span>{item.name}</span>
 								</Button>
 							</div>
 						{/each}
+						{#if user}
+							<Button
+								class={page.url.pathname === '/auth/account' ? '' : 'text-muted-foreground'}
+								variant="ghost"
+								size="sm"
+								href={'/auth/account'}
+							>
+								<User size="4" />
+
+								<span>Account</span>
+							</Button>
+						{:else}
+							<Button variant="ghost" size="sm" href={'/auth/login'}>
+								<User size="4" />
+
+								<span>Login</span>
+							</Button>
+						{/if}
 
 						<!-- Demo Section -->
 						<div class="mt-2 border-t border-primary-foreground/10 pt-2">

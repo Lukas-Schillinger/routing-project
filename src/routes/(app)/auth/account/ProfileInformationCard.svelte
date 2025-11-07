@@ -1,19 +1,23 @@
 <!-- @component Profile Information card for account page -->
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
+	import Separator from '$lib/components/ui/separator/separator.svelte';
+	import type { PublicUser } from '$lib/schemas';
+	import { authApi } from '$lib/services/api/auth';
 	import { formatDate } from '$lib/utils';
-	import { Calendar, Mail, Shield, User } from 'lucide-svelte';
-	import type { PageData } from './$types';
+	import { Calendar, Mail, MoonIcon, Shield, SunIcon, User } from 'lucide-svelte';
+	import { toggleMode } from 'mode-watcher';
 
 	// Props
 	let {
 		user
 	}: {
-		user: PageData['user'];
+		user: PublicUser;
 	} = $props();
 
 	// Local state for editing
@@ -35,6 +39,11 @@
 		isEditingProfile = false;
 		// Reset form
 		profileForm.email = user.email;
+	}
+
+	async function handleLogout() {
+		await authApi.logout();
+		goto('/auth/login');
 	}
 
 	// Get user role badge variant
@@ -117,7 +126,28 @@
 						</div>
 					</div>
 				</div>
+
+				<div class="flex items-center gap-3">
+					<div class="mt-1">
+						<Button onclick={toggleMode} variant="outline">
+							<div class="relative">
+								<SunIcon
+									class="h-[1.2rem] w-[1.2rem] scale-100 rotate-0 !transition-all dark:scale-0 dark:-rotate-90"
+								/>
+								<MoonIcon
+									class="absolute top-0 h-[1.2rem] w-[1.2rem] scale-0 rotate-90 !transition-all dark:scale-100 dark:rotate-0"
+								/>
+							</div>
+							<span>Toggle Theme</span>
+						</Button>
+					</div>
+					<div></div>
+				</div>
 			</div>
 		{/if}
 	</Card.Content>
+	<Separator />
+	<Card.Footer>
+		<Button onclick={handleLogout} variant="destructive">Logout</Button>
+	</Card.Footer>
 </Card.Root>

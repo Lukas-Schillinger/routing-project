@@ -4,15 +4,15 @@
 	import * as Card from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
+	import type { PublicUser } from '$lib/schemas';
 	import { formatDate } from '$lib/utils';
 	import { Key, Shield } from 'lucide-svelte';
-	import type { PageData } from './$types';
 
 	// Props
 	let {
 		user
 	}: {
-		user: PageData['user'];
+		user: PublicUser;
 	} = $props();
 
 	// Local state for editing
