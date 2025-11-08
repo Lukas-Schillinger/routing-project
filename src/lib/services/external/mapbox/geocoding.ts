@@ -6,6 +6,17 @@ import {
 	type GeocodingResponse
 } from './types';
 
+/** Types of features returned by mapbox. The documentation lists [country, region,
+ * postcode, district, place, locality, neighborhood, street, address] but only mentions
+ * "secondary_address" (suite, apt.) later in the documentation.
+ *
+ * The documentation lists "type" as an optional parameter for batch geocoding but it's
+ * not actually applied.
+ *
+ * https://docs.mapbox.com/api/search/geocoding/
+ */
+const types = 'address,secondary_address';
+
 /**
  * Geocoding service using Mapbox Geocoding v6 API
  * @see https://docs.mapbox.com/api/search/geocoding/
@@ -20,7 +31,6 @@ export class MapboxGeocodingService {
 			country?: string;
 			proximity?: [number, number]; // [lon, lat]
 			limit?: number;
-			types?: string[];
 		} = {}
 	): Promise<GeocodingFeature[]> {
 		const params: Record<string, string> = {
@@ -33,11 +43,7 @@ export class MapboxGeocodingService {
 			params.proximity = options.proximity.join(',');
 		}
 
-		if (options.types?.length) {
-			params.types = options.types.join(',');
-		} else {
-			params.types = 'address,secondary_address';
-		}
+		params.types = types;
 
 		const response = await mapboxClient.get<unknown>('/search/geocode/v6/forward', params);
 		const validated = geocodingResponseSchema.parse(response);
@@ -68,7 +74,7 @@ export class MapboxGeocodingService {
 			limit: String(options.limit || 8),
 			country: options.country || 'US',
 			autocomplete: 'true',
-			types: 'address,secondary_address' // Only addresses by default for autocomplete
+			types: types
 		};
 
 		if (options.proximity) {
@@ -106,14 +112,23 @@ export class MapboxGeocodingService {
 		const params: Record<string, string> = {
 			country: options.country || 'US',
 			limit: String(options.limit || 5),
-			types: 'address,secondary_address'
+			types: types
 		};
 
 		const body = searches.map((search) => ({ q: search }));
 
 		const response = await mapboxClient.post<unknown>('/search/geocode/v6/batch', body, params);
 		const batch = batchGeocodingResponseSchema.parse(response);
-		return batch.batch;
+
+		const filtered = batch.batch.map((e) => {
+			e.features = e.features.filter(
+				(e) =>
+					e.properties.feature_type == 'address' || e.properties.feature_type == 'secondary_address'
+			);
+			return e;
+		});
+
+		return filtered;
 	}
 }
 

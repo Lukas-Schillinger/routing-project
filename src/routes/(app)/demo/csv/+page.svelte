@@ -46,6 +46,7 @@
 
 		try {
 			results = await mapApi.geocodeCSV(selectedFile);
+			console.log(results);
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to geocode CSV';
 		} finally {
@@ -54,7 +55,6 @@
 	}
 
 	async function createMap() {
-		console.log('Hello');
 		const mapName = `CSV Import ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`;
 		const res = await mapApi.createFromCSV(mapName, results);
 		goto(`/maps/${res.map.id}`);
@@ -189,7 +189,7 @@
 				<CardDescription>View geocoding results for each address</CardDescription>
 			</CardHeader>
 			<CardContent>
-				<div class="max-h-96 space-y-3 overflow-y-auto">
+				<div class=" space-y-3 overflow-y-auto">
 					{#each results as result, index}
 						<div class="space-y-2 rounded-lg border p-4">
 							<div class="flex items-start justify-between">
@@ -237,6 +237,23 @@
 									<div>
 										<strong>Confidence:</strong>
 										{result.feature.properties.feature_type}
+									</div>
+
+									<div>
+										<strong>Name:</strong>
+										{result.feature.properties.name}
+									</div>
+									<div>
+										<strong>Preferred:</strong>
+										{result.feature.properties.name_preferred}
+									</div>
+									<div>
+										<strong>Street:</strong>
+										{result.feature.properties.context?.street?.name}
+									</div>
+									<div>
+										<strong>Number:</strong>
+										{result.feature.properties.context?.address?.address_number}
 									</div>
 								</div>
 							{/if}

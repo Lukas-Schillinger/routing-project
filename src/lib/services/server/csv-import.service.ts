@@ -97,8 +97,13 @@ export class CSVImportService {
 		// Combine CSV records with their corresponding geocoding results
 		return records.map((record, index): GeocodeCSVResult => {
 			const geocodeResponse = geocodeResults[index];
+
+			/* Not sure why but features not of type feature_type="address" | "secondary_address"
+			are being returned by the batch geocode API
+		 	*/
+
 			// Get the first/best feature from the geocoding response, or null if no results
-			const feature = geocodeResponse?.features?.[0] || null;
+			const feature = geocodeResponse.features[0] || null;
 
 			return {
 				name: record.name,
