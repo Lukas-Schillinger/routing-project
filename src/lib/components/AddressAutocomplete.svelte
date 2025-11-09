@@ -14,7 +14,7 @@
 		placeholder = 'Search for an address...',
 		country = 'US',
 		onSelect = (location: LocationCreate) => {},
-		onClear = () => {}, // signal clear to parent
+		onClear = () => {},
 		disabled = false
 	}: {
 		value?: string;
@@ -34,23 +34,86 @@
 	let selectedFeature = $state<GeocodingFeature | null>(null);
 	let userProximity = $state<[number, number] | null>(null);
 
-	// Get user's location on mount
-	onMount(async () => {
-		userProximity = await getUserLocation();
-	});
+	const LOCATION_STORAGE_KEY = 'user_proximity_location';
 
-	async function getUserLocation(): Promise<[number, number] | null> {
-		// Try geolocation API first
+	// Pure functions - no side effects
+	const getFullAddress = (feature: GeocodingFeature): string =>
+		feature.properties.full_address ||
+		`${feature.properties.name}${feature.properties.place_formatted ? ', ' + feature.properties.place_formatted : ''}`;
+
+	const loadCachedLocation = (key: string): [number, number] | null => {
+		try {
+			const cached = sessionStorage.getItem(key);
+			return cached ? JSON.parse(cached) : null;
+		} catch (error) {
+			console.warn('Failed to parse cached location', error);
+			return null;
+		}
+	};
+
+	const saveLocationToCache = (location: [number, number], key: string): void => {
+		sessionStorage.setItem(key, JSON.stringify(location));
+	};
+
+	// Async pure function - returns value, no mutation
+	async function fetchIPLocation(): Promise<[number, number] | null> {
+		try {
+			const response = await fetch('https://ipapi.co/json/');
+			if (!response.ok) return null;
+
+			const data = await response.json();
+			return data.longitude && data.latitude ? [data.longitude, data.latitude] : null;
+		} catch (error) {
+			console.warn('Failed to get IP-based location:', error);
+			return null;
+		}
+	}
+
+	// Async pure function - returns geocoding results
+	async function fetchAddressSuggestions(
+		query: string,
+		options: { country: string; limit: number; proximity?: [number, number] }
+	): Promise<GeocodingFeature[]> {
+		if (query.trim().length < 2) {
+			return [];
+		}
+
+		try {
+			return await geocodingApi.autocomplete(query, options);
+		} catch (error) {
+			console.error('Address search error:', error);
+			return [];
+		}
+	}
+
+	// Side-effect: Initialize user location on mount
+	onMount(() => {
+		const cached = loadCachedLocation(LOCATION_STORAGE_KEY);
+		if (cached) {
+			userProximity = cached;
+			console.log('Using cached location for proximity bias');
+			return;
+		}
+
+		// Attempt browser geolocation
 		if ('geolocation' in navigator) {
 			navigator.geolocation.getCurrentPosition(
 				(position) => {
-					return [position.coords.longitude, position.coords.latitude];
-					// console.log('Using user location for proximity:', userProximity);
+					const location: [number, number] = [position.coords.longitude, position.coords.latitude];
+					userProximity = location;
+					saveLocationToCache(location, LOCATION_STORAGE_KEY);
+					console.log('Using device location for proximity bias');
 				},
-				async (error) => {
-					console.warn('Geolocation denied or failed:', error.message);
-					// Fallback to IP-based location
-					return getIPLocation();
+				(error) => {
+					console.log('Geolocation not available:', error.message);
+					// Fall back to IP location
+					fetchIPLocation().then((location) => {
+						if (location) {
+							userProximity = location;
+							saveLocationToCache(location, LOCATION_STORAGE_KEY);
+							console.log('Using IP-based location for proximity');
+						}
+					});
 				},
 				{
 					enableHighAccuracy: false,
@@ -59,88 +122,57 @@
 				}
 			);
 		} else {
-			// Geolocation not supported, fallback to IP
-			return getIPLocation();
-		}
-		return null;
-	}
-
-	async function getIPLocation(): Promise<[number, number] | null> {
-		try {
-			// Free for non-commercial use. Limited to 45 req/s
-			const response = await fetch('https://ipapi.co/json/');
-			if (response.ok) {
-				const data = await response.json();
-				if (data.longitude && data.latitude) {
-					return [data.longitude, data.latitude];
-					// console.log('Using IP-based location for proximity:', userProximity);
+			// No geolocation API, try IP fallback
+			fetchIPLocation().then((location) => {
+				if (location) {
+					userProximity = location;
+					saveLocationToCache(location, LOCATION_STORAGE_KEY);
+					console.log('Using IP-based location for proximity');
 				}
-			}
-			return null;
-		} catch (error) {
-			console.warn('Failed to get IP-based location:', error);
-			// Continue without proximity bias
-			return null;
-		}
-	}
-
-	// Debounced search function
-	async function searchAddresses(query: string) {
-		if (query.trim().length < 2) {
-			suggestions = [];
-			return;
-		}
-
-		isSearching = true;
-
-		try {
-			suggestions = await geocodingApi.forward(query, {
-				country,
-				limit: 8
-				// proximity: userProximity || undefined
 			});
-			// console.log(suggestions);
-		} catch (error) {
-			console.error('Address search error:', error);
-			suggestions = [];
-		} finally {
-			isSearching = false;
 		}
+	});
+
+	// Side-effect: Perform search and update state
+	async function performSearch(query: string): Promise<void> {
+		isSearching = true;
+		const results = await fetchAddressSuggestions(query, {
+			country,
+			limit: 8,
+			proximity: userProximity || undefined
+		});
+		suggestions = results;
+		isSearching = false;
 	}
 
-	// Handle search input with debounce
-	function handleSearchInput(query: string) {
+	// Event handler with debouncing
+	function handleSearchInput(query: string): void {
 		searchQuery = query;
 
-		// Clear previous timeout
 		if (searchTimeout) {
 			clearTimeout(searchTimeout);
 		}
 
-		// Set new timeout for debounced search
-		searchTimeout = setTimeout(() => {
-			searchAddresses(query);
-		}, 300);
+		searchTimeout = setTimeout(() => performSearch(query), 300);
 	}
 
-	// Handle selection
-	function handleSelectAddress(feature: GeocodingFeature) {
+	// Event handler for address selection
+	function handleSelectAddress(feature: GeocodingFeature): void {
+		const fullAddress = getFullAddress(feature);
+		const location = geocodingFeatureToLocation(feature);
+
+		// Update state in one place
 		selectedFeature = feature;
-		// v6 API: use full_address or construct from name + place_formatted
-		const fullAddress =
-			feature.properties.full_address ||
-			`${feature.properties.name}${feature.properties.place_formatted ? ', ' + feature.properties.place_formatted : ''}`;
 		value = fullAddress;
 		searchQuery = fullAddress;
 		open = false;
 
-		// Convert to LocationCreate and call the onSelect callback
-		const location = geocodingFeatureToLocation(feature);
+		// Notify parent
 		onSelect(location);
 	}
 
-	// Clear selection
-	function clearSelection() {
+	// Event handler for clearing selection
+	function handleClearSelection(): void {
 		selectedFeature = null;
 		value = '';
 		searchQuery = '';
@@ -149,21 +181,20 @@
 		onClear();
 	}
 
-	// Close and reset
-	function handleOpenChange(isOpen: boolean) {
+	// Event handler for popover state changes
+	function handleOpenChange(isOpen: boolean): void {
 		open = isOpen;
-		if (!isOpen) {
-			// Reset search when closing if no selection was made
-			if (!selectedFeature) {
-				searchQuery = '';
-				suggestions = [];
-			}
-		} else {
-			// When opening, set search to current value
+
+		if (isOpen) {
+			// Opening: initialize search with current value
 			searchQuery = value;
 			if (value.length >= 2) {
-				searchAddresses(value);
+				performSearch(value);
 			}
+		} else if (!selectedFeature) {
+			// Closing without selection: reset search
+			searchQuery = '';
+			suggestions = [];
 		}
 	}
 </script>
@@ -204,9 +235,7 @@
 			</Command.Empty>
 			<Command.Group>
 				{#each suggestions as feature (feature.id)}
-					{@const fullAddress =
-						feature.properties.full_address ||
-						`${feature.properties.name}${feature.properties.place_formatted ? ', ' + feature.properties.place_formatted : ''}`}
+					{@const fullAddress = getFullAddress(feature)}
 					<Command.Item
 						value={fullAddress}
 						onSelect={() => handleSelectAddress(feature)}
@@ -230,7 +259,7 @@
 			{#if selectedFeature}
 				<Command.Separator />
 				<Command.Group>
-					<Command.Item onSelect={clearSelection} class="cursor-pointer justify-center">
+					<Command.Item onSelect={handleClearSelection} class="cursor-pointer justify-center">
 						<span class="text-sm text-muted-foreground">Clear selection</span>
 					</Command.Item>
 				</Command.Group>

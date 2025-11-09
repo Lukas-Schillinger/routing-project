@@ -2,6 +2,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import EditOrCreateDepotPopover from '$lib/components/EditOrCreateDepotPopover.svelte';
 	import EditOrCreateDriverPopover from '$lib/components/EditOrCreateDriverPopover.svelte';
+	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Building2, Truck } from 'lucide-svelte';
 	import { getContext } from 'svelte';
@@ -41,6 +42,8 @@
 			<MapsTable maps={data.maps} stops={data.stops} />
 		</div>
 	</section>
+
+	<Button class="w-full" href="/maps/import" variant="link">New Map</Button>
 
 	<!-- Depots and Drivers Grid -->
 	<div class="grid grid-cols-1 gap-6 md:grid-cols-2">

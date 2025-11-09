@@ -1,10 +1,9 @@
 import Papa from 'papaparse';
 import { mapboxGeocoding, type GeocodingFeature } from '../external/mapbox';
 import { ServiceError } from './errors';
-import { mapService } from './map.service';
 
 export interface CSVRecord {
-	name: string;
+	name?: string | null;
 	address: string;
 	phone?: string | null;
 	notes?: string | null;
@@ -17,7 +16,7 @@ export interface CSVImportResult {
 }
 
 export interface GeocodeCSVResult {
-	name: string;
+	name?: string | null;
 	raw_address: string;
 	phone?: string | null;
 	notes?: string | null;
@@ -48,7 +47,7 @@ export class CSVImportService {
 		}
 
 		// Validate required columns
-		const requiredColumns = ['name', 'address'];
+		const requiredColumns = ['address'];
 		const headers = Object.keys(records[0] || {});
 		const missingColumns = requiredColumns.filter((col) => !headers.includes(col));
 
@@ -58,34 +57,11 @@ export class CSVImportService {
 
 		// Transform records
 		return records.map((r) => ({
-			name: r.name,
+			name: r.name || '',
 			address: r.address,
 			phone: r.phone || null,
 			notes: r.notes || null
 		}));
-	}
-
-	/**
-	 * Import CSV file and create a map with parsed records
-	 */
-	async importCSV(
-		file: File,
-		mapTitle: string | null,
-		organizationId: string
-	): Promise<CSVImportResult> {
-		// Parse CSV
-		const text = await file.text();
-		const records = this.parseCSV(text);
-
-		// Create map
-		const title = mapTitle || `Map ${new Date().toLocaleDateString()}`;
-		const map = await mapService.createMap({ title }, organizationId);
-
-		return {
-			mapId: map.id,
-			recordCount: records.length,
-			records
-		};
 	}
 
 	async geocodeCSV(file: File): Promise<GeocodeCSVResult[]> {

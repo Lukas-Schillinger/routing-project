@@ -1,10 +1,7 @@
 <!-- src/routes/(app)/maps/[mapId]/import/components/ColumnMappingStep.svelte -->
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
-	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
-	import { Label } from '$lib/components/ui/label';
-	import * as Select from '$lib/components/ui/select';
-	import { ArrowLeft, ArrowRight, Settings } from 'lucide-svelte';
+	import { ArrowLeft, ArrowRight } from 'lucide-svelte';
 	import CsvPreviewTable from './CsvPreviewTable.svelte';
 
 	let {
@@ -24,13 +21,6 @@
 	let addressColumn = $state<string>('');
 	let phoneColumn = $state<string>('');
 	let notesColumn = $state<string>('');
-
-	const requiredFields = [
-		{ key: 'name', label: 'Name/Contact', required: true },
-		{ key: 'address', label: 'Address', required: true },
-		{ key: 'phone', label: 'Phone Number', required: false },
-		{ key: 'notes', label: 'Notes', required: false }
-	];
 
 	// Auto-detect likely column mappings
 	$effect(() => {
@@ -61,7 +51,7 @@
 		}
 	});
 
-	const canProceed = $derived(nameColumn && addressColumn);
+	const canProceed = $derived(addressColumn);
 
 	function handleNext() {
 		if (!canProceed) return;
@@ -74,98 +64,25 @@
 
 		onColumnsMapped(mapping);
 	}
-
-	function getFieldValue(field: string) {
-		switch (field) {
-			case 'name':
-				return nameColumn;
-			case 'address':
-				return addressColumn;
-			case 'phone':
-				return phoneColumn;
-			case 'notes':
-				return notesColumn;
-			default:
-				return '';
-		}
-	}
-
-	function setFieldValue(field: string, value: string) {
-		switch (field) {
-			case 'name':
-				nameColumn = value;
-				break;
-			case 'address':
-				addressColumn = value;
-				break;
-			case 'phone':
-				phoneColumn = value;
-				break;
-			case 'notes':
-				notesColumn = value;
-				break;
-		}
-	}
 </script>
 
 <div class="space-y-6">
-	<Card>
-		<CardHeader>
-			<CardTitle class="flex items-center gap-2">
-				<Settings class="h-5 w-5" />
-				Map CSV Columns
-			</CardTitle>
-		</CardHeader>
-		<CardContent class="space-y-4">
-			<p class="text-sm text-muted-foreground">
-				Map your CSV columns to the required stop fields. Name and Address are required.
-			</p>
-
-			<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-				{#each requiredFields as field}
-					<div class="space-y-2">
-						<Label class="flex items-center gap-2">
-							{field.label}
-							{#if field.required}
-								<span class="text-xs text-destructive">*</span>
-							{/if}
-						</Label>
-						<Select.Root
-							type="single"
-							value={getFieldValue(field.key)}
-							onValueChange={(value) => setFieldValue(field.key, (value as string) || '')}
-						>
-							<Select.Trigger>
-								<span class="text-muted-foreground">
-									{getFieldValue(field.key) || 'Select column...'}
-								</span>
-							</Select.Trigger>
-							<Select.Content>
-								<Select.Item value="">-- None --</Select.Item>
-								{#each csvHeaders as header}
-									<Select.Item value={header}>{header}</Select.Item>
-								{/each}
-							</Select.Content>
-						</Select.Root>
-					</div>
-				{/each}
-			</div>
-
-			{#if !canProceed}
-				<div class="rounded-md border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
-					Please map the required fields (Name and Address) to continue.
-				</div>
-			{/if}
-		</CardContent>
-	</Card>
-
-	<!-- Preview Table -->
+	<!-- Preview Table with inline mapping -->
 	<CsvPreviewTable
 		{csvData}
 		{csvHeaders}
-		mapping={{ name: nameColumn, address: addressColumn, phone: phoneColumn, notes: notesColumn }}
+		bind:nameColumn
+		bind:addressColumn
+		bind:phoneColumn
+		bind:notesColumn
 		maxRows={5}
 	/>
+
+	{#if !canProceed}
+		<div class="rounded-md border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
+			Address field is required to proceed.
+		</div>
+	{/if}
 
 	<!-- Navigation -->
 	<div class="flex justify-between">

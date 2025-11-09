@@ -41,11 +41,13 @@ class GeocodingApiService {
 		options: {
 			country?: string;
 			limit?: number;
+			proximity?: [number, number];
 		} = {}
 	): Promise<GeocodingFeature[]> {
 		const params: Record<string, string> = { q: query };
 		if (options.country) params.country = options.country;
 		if (options.limit) params.limit = String(options.limit);
+		if (options.proximity) params.proximity = options.proximity.join(',');
 
 		const response = await apiClient.get<{ features: GeocodingFeature[] }>(
 			'/geocoding/forward',

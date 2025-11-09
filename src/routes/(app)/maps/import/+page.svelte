@@ -2,12 +2,14 @@
 <script lang="ts">
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { Progress } from '$lib/components/ui/progress';
+	import type { GeocodeCSVResult } from '$lib/services/server/csv-import.service';
 	import { FileText, Settings, Upload } from 'lucide-svelte';
 	import { getContext } from 'svelte';
 	import type { PageData } from './$types';
 
 	import ColumnMappingStep from './ColumnMappingStep.svelte';
 	import FileUploadStep from './FileUploadStep.svelte';
+	import GeocodeReviewStep from './GeocodeReviewStep.svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -17,6 +19,8 @@
 	let csvHeaders = $state<string[]>([]);
 	let columnMapping = $state<Record<string, string>>({});
 	let selectedFile = $state<File | null>(null);
+	let geocodedResults = $state<GeocodeCSVResult[]>([]);
+	let isGeocoding = $state(false);
 
 	// Set page header
 	const pageHeaderContext = getContext<{ set: (header: any) => void }>('pageHeader');
@@ -39,9 +43,80 @@
 		currentStep = 2;
 	}
 
-	function handleColumnsMapped(mapping: Record<string, string>) {
+	async function handleColumnsMapped(mapping: Record<string, string>) {
 		columnMapping = mapping;
 		currentStep = 3;
+
+		// Start geocoding
+		await geocodeAddresses();
+	}
+
+	async function geocodeAddresses() {
+		if (!selectedFile) return;
+
+		isGeocoding = true;
+		geocodedResults = [];
+
+		try {
+			// Transform CSV data based on column mapping
+			const transformedData = csvData.map((row) => {
+				const transformed: Record<string, string> = {};
+				for (const [field, columnName] of Object.entries(columnMapping)) {
+					if (columnName) {
+						transformed[field] = row[columnName] || '';
+					}
+				}
+				return transformed;
+			});
+
+			// Create a temporary file with the mapped data
+			const csvContent = [
+				Object.keys(columnMapping).join(','),
+				...transformedData.map((row) =>
+					Object.keys(columnMapping)
+						.map((field) => {
+							const value = row[field] || '';
+							// Escape quotes and wrap in quotes if contains comma
+							return value.includes(',') || value.includes('"')
+								? `"${value.replace(/"/g, '""')}"`
+								: value;
+						})
+						.join(',')
+				)
+			].join('\n');
+
+			const blob = new Blob([csvContent], { type: 'text/csv' });
+			const file = new File([blob], selectedFile.name, { type: 'text/csv' });
+
+			// Call geocoding API
+			const formData = new FormData();
+			formData.append('csvFile', file);
+
+			const response = await fetch('/api/maps/geocode-csv', {
+				method: 'POST',
+				body: formData
+			});
+
+			if (!response.ok) {
+				const error = await response.json();
+				throw new Error(error.error || 'Failed to geocode addresses');
+			}
+
+			const data = await response.json();
+			geocodedResults = data;
+		} catch (error) {
+			console.error('Geocoding error:', error);
+			alert('Failed to geocode addresses. Please try again.');
+			currentStep = 2; // Go back to mapping step
+		} finally {
+			isGeocoding = false;
+		}
+	}
+
+	async function handleImport(results: GeocodeCSVResult[]) {
+		// TODO: Implement actual import logic
+		console.log('Importing results:', results);
+		alert(`Import functionality coming soon! Would import ${results.length} stops.`);
 	}
 </script>
 
@@ -52,7 +127,7 @@
 			<CardTitle>Import CSV Stops</CardTitle>
 		</CardHeader>
 		<CardContent>
-			<div class="flex items-center justify-between">
+			<div class="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
 				{#each steps as step, index}
 					<div class="flex items-center">
 						<div
@@ -69,9 +144,6 @@
 							{/if}
 						</div>
 						<span class="ml-2 text-sm font-medium">{step.title}</span>
-						{#if index < steps.length - 1}
-							<div class="mx-4 h-px w-16 bg-border"></div>
-						{/if}
 					</div>
 				{/each}
 			</div>
@@ -90,7 +162,11 @@
 			onBack={() => (currentStep = 1)}
 		/>
 	{:else if currentStep === 3}
-		<!-- Step 3 will be geocoding review -->
-		<div>Review step coming next...</div>
+		<GeocodeReviewStep
+			bind:geocodedResults
+			{isGeocoding}
+			onBack={() => (currentStep = 2)}
+			onImport={handleImport}
+		/>
 	{/if}
 </div>

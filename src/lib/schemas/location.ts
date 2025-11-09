@@ -30,7 +30,7 @@ export const locationSchema = z.object({
 	geocode_raw: z.unknown(),
 	geocode_confidence: geocodeConfidenceSchema,
 	geocode_provider: z.string().max(40).nullable(),
-	geocode_place_id: z.string().max(120).nullable(),
+	geocode_place_id: z.string().nullable(),
 	address_hash: z.string().max(64).nullable()
 });
 
