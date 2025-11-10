@@ -1,6 +1,6 @@
 <script lang="ts">
-	import CloudflareImage from '$lib/components/CloudflareImage.svelte';
 	import FancyButton from '$lib/components/FancyButton.svelte';
+	import Header from '$lib/components/Header.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import {
 		Card,
@@ -10,10 +10,7 @@
 		CardTitle
 	} from '$lib/components/ui/card';
 	import { ArrowRight, Image, MapPin, User } from 'lucide-svelte';
-	import { getContext } from 'svelte';
-
-	const pageHeaderContext = getContext<{ set: (header: any) => void }>('pageHeader');
-	pageHeaderContext.set({});
+	let playbackRate = 0.65;
 </script>
 
 <svelte:head>
@@ -24,31 +21,50 @@
 	/>
 </svelte:head>
 
-<div class="bg-gradient-to-br from-background via-muted to-secondary py-12">
+<Header />
+
+<div class="bg-gradient-to-br from-background via-muted to-secondary pt-16">
 	<div class="container mx-auto max-w-6xl px-6">
 		<!-- Hero Section -->
-		<div class="mb-16">
-			<div class="hero-text mb-8 flex w-full flex-col">
-				<div
-					class="track text-[12rem] leading-[0.8] font-black tracking-[-0.09em] text-black drop-shadow-2xl md:text-[14rem] lg:text-[18rem]"
-				>
-					wend
+		<div class="pb-16">
+			<div class="relative">
+				<div class="h-[80vh] rounded-4xl bg-forest-600">
+					<!-- 					<img
+					class="h-full rounded-4xl object-cover"
+					src="https://storage-public.wend-routing.com/photos/hero-video-first-frame-med.webp"
+					alt=""
+					/> -->
+					<video
+						class="pointer-events-none h-full rounded-4xl object-cover"
+						src="https://media.fun.schillingertools.com/hero-video.mp4"
+						poster=""
+						autoplay={true}
+						bind:playbackRate
+					>
+						<div class="text-white">content</div>
+						<track kind="captions" />
+					</video>
 				</div>
-				<div class="pl-2 text-2xl font-semibold text-black sm:text-4xl">
-					Multi-stop route optimization
+				<div class="absolute bottom-3 pl-3 sm:bottom-12 sm:pl-12">
+					<div class="w-min pb-2">
+						<div class="-mb-4 flex w-full justify-center">
+							<img
+								class="w-[28dvw] max-w-84"
+								src="https://storage-public.wend-routing.com/logo/logo_white.png"
+								alt=""
+							/>
+						</div>
+						<div
+							class="track text-[7rem] leading-[0.8] font-black tracking-[-0.09em] text-white drop-shadow-2xl md:text-[12rem] lg:text-[12rem]"
+						>
+							wend
+						</div>
+					</div>
+					<div class="pl-2 text-2xl font-semibold text-white sm:text-4xl">
+						Multi-stop route optimization
+					</div>
 				</div>
 			</div>
-			<!-- Hero Image Frame -->
-			<div class="hero-timeline-subject relative mb-8 max-h-[75vh] w-full overflow-visible">
-				<div class="z-10">
-					<CloudflareImage
-						src="https://media.fun.schillingertools.com/routing-project-hero-alt.jpg"
-						alt="Winding Road"
-						class="hero-image h-full max-h-[75vh] w-full rounded-4xl object-cover brightness-75"
-					/>
-				</div>
-			</div>
-
 			<div class="relative z-50 flex flex-col justify-center gap-4 sm:flex-row">
 				<Button href="/demo/mapbox" size="lg">
 					<MapPin class="mr-2 h-5 w-5" />

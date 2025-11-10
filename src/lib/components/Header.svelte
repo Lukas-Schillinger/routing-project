@@ -19,6 +19,7 @@
 		X,
 		Zap
 	} from 'lucide-svelte';
+	import { mode } from 'mode-watcher';
 	import { onMount } from 'svelte';
 
 	let {
@@ -108,14 +109,24 @@
 >
 	<header class="">
 		<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-			<div class="flex h-10 items-center justify-between">
+			<div class="flex h-10 items-center justify-between overflow-clip">
 				<!-- Logo/Brand -->
 				<div class="flex items-center">
 					<a href="/" class="flex items-center space-x-2">
-						<div
-							class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-foreground/10"
-						>
+						<div class="mt-2 flex size-12 items-center justify-center rounded-lg">
 							<MapPin class="h-5 w-5" />
+							{#if mode.current == 'light'}
+								<img
+									src="https://pub-7210daee28ba4cac82595c41b998d12f.r2.dev/logo/logo_black.png"
+									alt=""
+								/>
+							{:else}
+								<img
+									class=""
+									src="https://pub-7210daee28ba4cac82595c41b998d12f.r2.dev/logo/logo_white.png"
+									alt=""
+								/>
+							{/if}
 						</div>
 						<span class="text-lg font-bold">wend</span>
 						{#if pageHeader.breadcrumbs && pageHeader.breadcrumbs.length > 0}
