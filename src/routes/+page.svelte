@@ -10,7 +10,11 @@
 		CardTitle
 	} from '$lib/components/ui/card';
 	import { ArrowRight, Image, MapPin, User } from 'lucide-svelte';
-	let playbackRate = 0.65;
+	import type { PageData } from './$types';
+
+	let { data }: { data: PageData } = $props();
+
+	let playbackRate = 0.85;
 </script>
 
 <svelte:head>
@@ -21,10 +25,10 @@
 	/>
 </svelte:head>
 
-<Header />
+<Header user={data.user} />
 
 <div class="bg-gradient-to-br from-background via-muted to-secondary pt-16">
-	<div class="container mx-auto max-w-6xl px-6">
+	<div class="container mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 		<!-- Hero Section -->
 		<div class="pb-16">
 			<div class="relative">
@@ -36,13 +40,28 @@
 					/> -->
 					<video
 						class="pointer-events-none h-full rounded-4xl object-cover"
-						src="https://media.fun.schillingertools.com/hero-video.mp4"
-						poster=""
+						poster="https://storage-public.wend-routing.com/cdn-cgi/image/width=1920,format=webp/photos/hero-video-first-frame-med.webp"
 						autoplay={true}
 						bind:playbackRate
+						muted
+						loop
+						playsinline
 					>
-						<div class="text-white">content</div>
 						<track kind="captions" />
+						<source
+							src="https://storage-public.wend-routing.com/cdn-cgi/media/mode=video,time=0s,duration=12s,width=1920,height=1080,fit=scale-down,audio=false/https://storage-public.wend-routing.com/photos/hero-video-h265.mp4"
+							type="video/mp4"
+							media="(min-width: 1024px)"
+						/>
+						<source
+							src="https://storage-public.wend-routing.com/cdn-cgi/media/mode=video,time=0s,duration=12s,width=1280,fit=scale-down,audio=false/https://storage-public.wend-routing.com/photos/hero-video-h265.mp4"
+							type="video/mp4"
+							media="(min-width: 640px)"
+						/>
+						<source
+							src="https://storage-public.wend-routing.com/cdn-cgi/media/mode=video,time=0s,duration=12s,width=1280,fit=scale-down,audio=false/https://storage-public.wend-routing.com/photos/hero-video-h265.mp4"
+							type="video/mp4"
+						/>
 					</video>
 				</div>
 				<div class="absolute bottom-3 pl-3 sm:bottom-12 sm:pl-12">
@@ -65,7 +84,7 @@
 					</div>
 				</div>
 			</div>
-			<div class="relative z-50 flex flex-col justify-center gap-4 sm:flex-row">
+			<div class="relative z-50 flex flex-col justify-center gap-4 pt-8 sm:flex-row">
 				<Button href="/demo/mapbox" size="lg">
 					<MapPin class="mr-2 h-5 w-5" />
 					Try Mapbox Demo
@@ -235,13 +254,6 @@
 		animation: expand-hero linear forwards;
 		animation-timeline: scroll();
 		animation-range: 0% 50%;
-	}
-
-	/* Hero text fade out animation */
-	.hero-text {
-		animation: fade-text linear forwards;
-		animation-timeline: scroll();
-		animation-range: 0% 25%;
 	}
 
 	/* Slide-up animation for content that should slide up from below */

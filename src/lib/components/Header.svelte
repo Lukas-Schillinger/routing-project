@@ -2,10 +2,8 @@
 	import { page } from '$app/state';
 	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
 	import { Button } from '$lib/components/ui/button';
-	import * as Popover from '$lib/components/ui/popover';
 	import type { PublicUser } from '$lib/schemas';
 	import {
-		ChevronDown,
 		ChevronRight,
 		FileSpreadsheet,
 		Grid3x3,
@@ -14,7 +12,6 @@
 		Menu,
 		Route,
 		TestTube,
-		TriangleAlert,
 		User,
 		X,
 		Zap
@@ -194,40 +191,6 @@
 							</Button>
 						{/if}
 
-						<!-- Demo Popover -->
-						<Popover.Root>
-							<Popover.Trigger>
-								<Button
-									variant="ghost"
-									class="flex items-center space-x-2 {page.url.pathname === '/demo'
-										? ''
-										: 'text-muted-foreground'} "
-								>
-									<TriangleAlert class="h-4 w-4" />
-									<span>Demo</span>
-									<ChevronDown class="h-3 w-3" />
-								</Button>
-							</Popover.Trigger>
-							<Popover.Content class="w-[500px] p-4" align="end">
-								<div class="grid gap-3 md:grid-cols-2">
-									{#each demoPages as demo}
-										{@const Icon = demo.icon}
-										<a
-											href={demo.href}
-											class="group block space-y-1 rounded-md p-3 leading-none no-underline transition-colors outline-none select-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-										>
-											<div class="flex items-center space-x-2">
-												<Icon class="h-4 w-4" />
-												<div class="text-sm leading-none font-medium">{demo.name}</div>
-											</div>
-											<p class="line-clamp-2 text-sm leading-snug text-muted-foreground">
-												{demo.description}
-											</p>
-										</a>
-									{/each}
-								</div>
-							</Popover.Content>
-						</Popover.Root>
 						<ThemeToggle variant="inverse" />
 					</nav>
 				</div>
@@ -281,23 +244,6 @@
 								<span>Login</span>
 							</Button>
 						{/if}
-
-						<!-- Demo Section -->
-						<div class="mt-2 border-t border-primary-foreground/10 pt-2">
-							<div class="px-3 py-2 text-xs font-semibold tracking-wider uppercase">Demo Pages</div>
-							{#each demoPages as demo}
-								{@const Icon = demo.icon}
-								<a
-									href={demo.href}
-									onclick={closeMobileMenu}
-									class="flex items-center space-x-3 rounded-md px-3 py-2 text-sm font-medium transition-colors
-										{page.url.pathname === demo.href ? '' : ''}"
-								>
-									<Icon class="h-4 w-4" />
-									<span>{demo.name}</span>
-								</a>
-							{/each}
-						</div>
 					</div>
 				</div>
 			{/if}
@@ -306,15 +252,13 @@
 
 	<!-- Page Header Section (when provided) -->
 	{#if pageHeader.title}
-		<div class="">
-			<div class="mx-auto max-w-7xl px-4 pb-2 sm:px-6 lg:px-8">
-				{#if pageHeader.title}
-					<h1 class="text-2xl font-bold">{pageHeader.title}</h1>
-					{#if pageHeader.description}
-						<p class="mt-2 text-lg">{pageHeader.description}</p>
-					{/if}
+		<div class="mx-auto max-w-7xl px-4 py-1 sm:px-6 lg:px-8">
+			{#if pageHeader.title}
+				<h1 class="text-2xl font-bold">{pageHeader.title}</h1>
+				{#if pageHeader.description}
+					<p class="mt-2 text-lg">{pageHeader.description}</p>
 				{/if}
-			</div>
+			{/if}
 		</div>
 	{/if}
 </div>
