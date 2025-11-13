@@ -8,7 +8,6 @@
 		FileSpreadsheet,
 		Grid3x3,
 		Map,
-		MapPin,
 		Menu,
 		Route,
 		TestTube,
@@ -101,7 +100,7 @@
 
 <!-- Branded Navigation Header -->
 <div
-	class="bg-opacity-40 fixed top-0 z-50 w-full rounded-b-lg border-b backdrop-blur-lg dark:bg-black/55"
+	class="bg-opacity-40 fixed top-0 z-50 w-full rounded-b-lg border-b bg-white/55 backdrop-blur-lg dark:bg-black/55"
 	bind:this={headerElement}
 >
 	<header class="">
@@ -109,12 +108,11 @@
 			<div class="flex h-10 items-center justify-between overflow-clip">
 				<!-- Logo/Brand -->
 				<div class="flex items-center">
-					<a href="/" class="flex items-center space-x-2">
+					<a href="/" class="flex items-center space-x-1">
 						<div class="mt-2 flex size-12 items-center justify-center rounded-lg">
-							<MapPin class="h-5 w-5" />
 							{#if mode.current == 'light'}
 								<img
-									src="https://pub-7210daee28ba4cac82595c41b998d12f.r2.dev/logo/logo_black.png"
+									src="https://storage-public.wend-routing.com/cdn-cgi/image/width=100,height=100,fit=cover,format=webp,quality=100/logo/logo_black.png"
 									alt=""
 								/>
 							{:else}
@@ -125,7 +123,7 @@
 								/>
 							{/if}
 						</div>
-						<span class="text-lg font-bold">wend</span>
+						<span class="text-3xl font-extrabold tracking-tighter">wend</span>
 						{#if pageHeader.breadcrumbs && pageHeader.breadcrumbs.length > 0}
 							<ChevronRight class="mr-2 h-4 w-4 " />
 						{/if}

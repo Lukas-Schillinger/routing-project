@@ -28,7 +28,7 @@
 <Header user={data.user} />
 
 <div class="bg-gradient-to-br from-background via-muted to-secondary pt-16">
-	<div class="container mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+	<div class="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 		<!-- Hero Section -->
 		<div class="pb-16">
 			<div class="relative">
@@ -84,7 +84,7 @@
 					</div>
 				</div>
 			</div>
-			<div class="relative z-50 flex flex-col justify-center gap-4 pt-8 sm:flex-row">
+			<div class="relative flex flex-col justify-center gap-4 pt-8 sm:flex-row">
 				<Button href="/demo/mapbox" size="lg">
 					<MapPin class="mr-2 h-5 w-5" />
 					Try Mapbox Demo

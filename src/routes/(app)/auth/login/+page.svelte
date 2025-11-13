@@ -25,10 +25,7 @@
 	class="flex min-h-[calc(100vh)] items-center justify-center bg-gradient-to-br from-forest-600 via-forest-700 to-forest-900 p-6"
 >
 	<div class="w-full max-w-sm">
-		<div class="mb-8 text-center">
-			<h1 class="mb-2 font-serif text-6xl font-bold text-white">Welcome Back</h1>
-			<p class="body-medium text-white">Sign in to your account or create a new one</p>
-		</div>
+		<div class="mb-8 text-center"></div>
 
 		<Card class="border-border bg-card shadow-xl">
 			<CardHeader class="space-y-1">
@@ -100,3 +97,9 @@
 		</Card>
 	</div>
 </div>
+
+<style lang="postcss">
+	:global(body) {
+		background-color: #013328;
+	}
+</style>
