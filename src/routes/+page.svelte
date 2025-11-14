@@ -74,7 +74,7 @@
 							/>
 						</div>
 						<div
-							class="track text-[7rem] leading-[0.8] font-black tracking-[-0.09em] text-white drop-shadow-2xl md:text-[12rem] lg:text-[12rem]"
+							class="track text-[7rem] leading-[0.8] font-black tracking-tighter text-white drop-shadow-2xl md:text-[12rem] lg:text-[12rem]"
 						>
 							wend
 						</div>
