@@ -16,7 +16,7 @@
 	} = $props();
 </script>
 
-<DropdownMenu.Root>
+<DropdownMenu.Root open={false}>
 	<DropdownMenu.Trigger class={triggerClass}>
 		{#if trigger}
 			{@render trigger()}

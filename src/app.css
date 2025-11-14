@@ -1,6 +1,7 @@
 @import 'tailwindcss';
 @import '@fontsource-variable/eb-garamond';
 @import '@fontsource-variable/geist';
+@import '@fontsource-variable/geist';
 
 @import 'tw-animate-css';
 
@@ -8,6 +9,8 @@
 
 /* globals.css (or any imported CSS file) */
 @theme {
+	--font: 'Geist';
+
 	--color-sand-50: #faf8f5;
 	--color-sand-100: #f4f1eb;
 	--color-sand-200: #eae2d7;
@@ -175,7 +178,7 @@
 	body {
 		@apply bg-background text-foreground;
 		font-family:
-			'Geist Sans',
+			'Geist',
 			system-ui,
 			-apple-system,
 			sans-serif;

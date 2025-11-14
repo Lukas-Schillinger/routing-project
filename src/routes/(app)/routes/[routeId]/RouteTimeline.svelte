@@ -125,9 +125,10 @@
 				{@const isCompleted = completedStops.has(stop.id)}
 				<div
 					data-stop-index={index}
-					class="border-b transition-colors hover:bg-sand-100 {selectedIndex === index
-						? 'bg-secondary hover:bg-sand-200'
-						: ''} {isCompleted ? 'bg-green-50' : ''}"
+					class="border-b transition-colors {selectedIndex === index
+						? 'bg-secondary hover:bg-sand-200 dark:hover:bg-secondary'
+						: 'hover:bg-sand-100 dark:hover:bg-secondary/55'} 
+						{isCompleted ? 'opacity-75' : ''}"
 				>
 					<div class="flex items-center justify-between p-3">
 						<button
@@ -139,9 +140,9 @@
 						>
 							<div class="flex items-center gap-4">
 								<span
-									class="flex h-6 w-6 items-center justify-center rounded-full border border-white text-xs font-medium {isCompleted
+									class="flex h-6 w-6 items-center justify-center rounded-full border text-xs font-medium {isCompleted
 										? 'bg-green-700 text-white'
-										: 'bg-gray-200'}"
+										: 'bg-secondary'}"
 								>
 									{#if isCompleted}
 										<Check class="h-3 w-3" />
@@ -151,7 +152,7 @@
 								</span>
 
 								<div class={isCompleted ? 'opacity-60' : ''}>
-									<h4 class={isCompleted ? 'line-through' : ''}>{location.address_line1}</h4>
+									<h4 class={isCompleted ? 'line-through' : ''}>{location.address_line_1}</h4>
 									{#if stop.contact_name}
 										<p class="mt-1 text-sm text-muted-foreground">{stop.contact_name}</p>
 									{/if}

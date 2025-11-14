@@ -97,9 +97,3 @@
 		</Card>
 	</div>
 </div>
-
-<style lang="postcss">
-	:global(body) {
-		background-color: #013328;
-	}
-</style>

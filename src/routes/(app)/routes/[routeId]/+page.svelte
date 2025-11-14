@@ -188,6 +188,7 @@
 				<!-- Settings Dropdown -->
 				<RouteSettingsDropdown
 					{route}
+					{driver}
 					{directionsProvider}
 					onDirectionsProviderChange={handleDirectionsProviderChange}
 				/>
@@ -237,6 +238,7 @@
 			{#if showMap}
 				<div class="relative flex-1 bg-muted/30">
 					<MapView
+						drivers={driver ? [driver] : []}
 						stops={sortedStops}
 						routes={[route]}
 						center={mapCenter}

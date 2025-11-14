@@ -1,5 +1,4 @@
 <script lang="ts">
-	import FancyButton from '$lib/components/FancyButton.svelte';
 	import Header from '$lib/components/Header.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import {
@@ -9,7 +8,7 @@
 		CardHeader,
 		CardTitle
 	} from '$lib/components/ui/card';
-	import { ArrowRight, Image, MapPin, User } from 'lucide-svelte';
+	import { ArrowRight, MapPin, User } from 'lucide-svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -85,156 +84,173 @@
 				</div>
 			</div>
 			<div class="relative flex flex-col justify-center gap-4 pt-8 sm:flex-row">
-				<Button href="/demo/mapbox" size="lg">
+				<Button href="/maps" size="lg" class="text-base">
 					<MapPin class="mr-2 h-5 w-5" />
-					Try Mapbox Demo
+					Get Started
 					<ArrowRight class="ml-2 h-4 w-4" />
 				</Button>
-				<Button href="/auth/login" variant="outline" size="lg">
+				<Button href="/auth/login" variant="outline" size="lg" class="text-base">
 					<User class="mr-2 h-5 w-5" />
-					Authentication Demo
+					Sign In
 				</Button>
 			</div>
 		</div>
 
 		<!-- Features Grid -->
-		<div class="slide-up mb-16 grid gap-8 md:grid-cols-2">
-			<Card class="shadow-lg transition-shadow hover:shadow-xl">
+		<div class="slide-up mb-24 grid gap-6 md:grid-cols-3">
+			<Card class="group border-2 shadow-sm transition-all hover:border-primary/50 hover:shadow-lg">
 				<CardHeader>
-					<CardTitle class="flex items-center">
-						<MapPin class="mr-3 h-6 w-6 text-primary" />
-						Mapbox Integration
-					</CardTitle>
-					<CardDescription class="body-medium">
-						Advanced geocoding capabilities with real-time address validation
+					<div
+						class="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 transition-colors group-hover:bg-primary/20"
+					>
+						<MapPin class="h-6 w-6 text-primary" />
+					</div>
+					<CardTitle class="text-xl">Route Optimization</CardTitle>
+					<CardDescription>
+						Advanced TSP solver with configurable fairness and time constraints
 					</CardDescription>
 				</CardHeader>
-				<CardContent class="body-medium">
-					<ul class="space-y-2 text-muted-foreground">
-						<li>• Forward and reverse geocoding</li>
-						<li>• Address autocomplete functionality</li>
-						<li>• Type-safe API integration</li>
-						<li>• Comprehensive error handling</li>
+				<CardContent>
+					<ul class="space-y-2 text-sm text-muted-foreground">
+						<li>• Multi-driver route assignment</li>
+						<li>• Real-time distance matrix calculation</li>
+						<li>• Depot-based optimization</li>
+						<li>• Drag-and-drop route editing</li>
 					</ul>
-					<FancyButton href="/demo/mapbox" class="mt-4">Explore Demo</FancyButton>
 				</CardContent>
 			</Card>
 
-			<Card class="shadow-lg transition-shadow hover:shadow-xl">
+			<Card class="group border-2 shadow-sm transition-all hover:border-primary/50 hover:shadow-lg">
 				<CardHeader>
-					<CardTitle class="flex items-center">
-						<User class="mr-3 h-6 w-6 text-primary" />
-						Authentication System
-					</CardTitle>
-					<CardDescription class="body-medium">
-						Secure user authentication powered by Lucia
-					</CardDescription>
+					<div
+						class="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 transition-colors group-hover:bg-primary/20"
+					>
+						<MapPin class="h-6 w-6 text-primary" />
+					</div>
+					<CardTitle class="text-xl">Smart Geocoding</CardTitle>
+					<CardDescription>Address normalization with automatic deduplication</CardDescription>
 				</CardHeader>
-				<CardContent class="body-medium">
-					<ul class="space-y-2 text-muted-foreground">
-						<li>• Session-based authentication</li>
-						<li>• User registration and login</li>
-						<li>• Secure password handling</li>
-						<li>• Modern UI components</li>
+				<CardContent>
+					<ul class="space-y-2 text-sm text-muted-foreground">
+						<li>• Mapbox geocoding integration</li>
+						<li>• Address hash-based deduplication</li>
+						<li>• Confidence scoring (exact/high/medium/low)</li>
+						<li>• CSV bulk import support</li>
 					</ul>
-					<FancyButton href="/auth/login" class="mt-4">Try Authentication</FancyButton>
+				</CardContent>
+			</Card>
+
+			<Card class="group border-2 shadow-sm transition-all hover:border-primary/50 hover:shadow-lg">
+				<CardHeader>
+					<div
+						class="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 transition-colors group-hover:bg-primary/20"
+					>
+						<User class="h-6 w-6 text-primary" />
+					</div>
+					<CardTitle class="text-xl">Multi-Tenant SaaS</CardTitle>
+					<CardDescription>Secure organization-based data isolation</CardDescription>
+				</CardHeader>
+				<CardContent>
+					<ul class="space-y-2 text-sm text-muted-foreground">
+						<li>• Session-based authentication</li>
+						<li>• Organization workspace management</li>
+						<li>• Drizzle ORM with PostgreSQL</li>
+						<li>• Type-safe API layer</li>
+					</ul>
 				</CardContent>
 			</Card>
 		</div>
 
-		<!-- Photo Gallery Section -->
-		<div class="slider mb-16">
-			<div class="mb-8 text-center">
-				<h2 class="headline-medium mb-4">Gallery</h2>
-				<p class="body-large text-muted-foreground">Showcase your application in action</p>
+		<!-- How It Works Section -->
+		<div class="slider mb-24">
+			<div class="mb-12 text-center">
+				<h2 class="mb-3 text-3xl font-bold">How It Works</h2>
+				<p class="mx-auto max-w-2xl text-lg text-muted-foreground">
+					Optimize your delivery routes in three simple steps
+				</p>
 			</div>
 
-			<div class="grid gap-6 md:grid-cols-3">
-				<!-- Photo Frame 1 -->
-				<Card class="overflow-hidden shadow-lg transition-shadow hover:shadow-xl">
-					<div
-						class="flex aspect-[4/3] items-center justify-center border-b border-border bg-muted/50"
-					>
-						<div class="text-center">
-							<Image class="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
-							<p class="body-small text-muted-foreground">Feature Photo 1</p>
-							<p class="body-small text-muted-foreground/70">800 x 600</p>
+			<div class="grid gap-8 md:grid-cols-3">
+				<div class="relative">
+					<div class="flex flex-col items-center text-center">
+						<div
+							class="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary/70 text-2xl font-bold text-primary-foreground shadow-lg"
+						>
+							1
 						</div>
-					</div>
-					<CardContent class="p-4">
-						<h3 class="headline-small mb-2">Interactive Maps</h3>
-						<p class="body-small text-muted-foreground">
-							Showcase the Mapbox integration with beautiful interactive maps and geocoding
-							features.
+						<h3 class="mb-3 text-xl font-semibold">Import Your Stops</h3>
+						<p class="text-muted-foreground">
+							Upload a CSV file with your delivery addresses or add them manually. Addresses are
+							automatically geocoded and deduplicated.
 						</p>
-					</CardContent>
-				</Card>
+					</div>
+				</div>
 
-				<!-- Photo Frame 2 -->
-				<Card class="overflow-hidden shadow-lg transition-shadow hover:shadow-xl">
-					<div
-						class="flex aspect-[4/3] items-center justify-center border-b border-border bg-muted/50"
-					>
-						<div class="text-center">
-							<Image class="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
-							<p class="body-small text-muted-foreground">Feature Photo 2</p>
-							<p class="body-small text-muted-foreground/70">800 x 600</p>
+				<div class="relative">
+					<div class="flex flex-col items-center text-center">
+						<div
+							class="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary/70 text-2xl font-bold text-primary-foreground shadow-lg"
+						>
+							2
 						</div>
-					</div>
-					<CardContent class="p-4">
-						<h3 class="headline-small mb-2">Secure Authentication</h3>
-						<p class="body-small text-muted-foreground">
-							Demonstrate the secure login system with modern UI components and user management.
+						<h3 class="mb-3 text-xl font-semibold">Assign Drivers</h3>
+						<p class="text-muted-foreground">
+							Add drivers to your map and set their starting depot. Configure optimization settings
+							like fairness and time limits.
 						</p>
-					</CardContent>
-				</Card>
+					</div>
+				</div>
 
-				<!-- Photo Frame 3 -->
-				<Card class="overflow-hidden shadow-lg transition-shadow hover:shadow-xl">
-					<div
-						class="flex aspect-[4/3] items-center justify-center border-b border-border bg-muted/50"
-					>
-						<div class="text-center">
-							<Image class="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
-							<p class="body-small text-muted-foreground">Feature Photo 3</p>
-							<p class="body-small text-muted-foreground/70">800 x 600</p>
+				<div class="relative">
+					<div class="flex flex-col items-center text-center">
+						<div
+							class="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary/70 text-2xl font-bold text-primary-foreground shadow-lg"
+						>
+							3
 						</div>
-					</div>
-					<CardContent class="p-4">
-						<h3 class="headline-small mb-2">Data Processing</h3>
-						<p class="body-small text-muted-foreground">
-							Show the CSV upload and parsing functionality with real-time validation and feedback.
+						<h3 class="mb-3 text-xl font-semibold">Optimize Routes</h3>
+						<p class="text-muted-foreground">
+							Click optimize to calculate the most efficient routes. View results on an interactive
+							map with turn-by-turn navigation.
 						</p>
-					</CardContent>
-				</Card>
+					</div>
+				</div>
 			</div>
 		</div>
 
 		<!-- Technology Stack -->
-		<Card class=" shadow-lg">
-			<CardHeader>
-				<CardTitle class="headline-small text-center">Built With Modern Technologies</CardTitle>
-				<CardDescription class="body-medium text-center">
+		<Card class="mb-16 border-2 shadow-sm">
+			<CardHeader class="pb-8 text-center">
+				<CardTitle class="mb-2 text-2xl font-bold">Built With Modern Technologies</CardTitle>
+				<CardDescription class="text-base">
 					Leveraging the best tools for performance, type safety, and developer experience
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
-				<div class="grid grid-cols-2 gap-4 text-center md:grid-cols-4">
-					<div class="p-4">
-						<h3 class="body-medium font-semibold">SvelteKit</h3>
-						<p class="body-small">Full-stack framework</p>
+				<div class="grid grid-cols-2 gap-6 md:grid-cols-4">
+					<div
+						class="flex flex-col items-center rounded-lg p-4 transition-colors hover:bg-muted/50"
+					>
+						<h3 class="mb-1 text-base font-semibold">SvelteKit 2</h3>
+						<p class="text-center text-sm text-muted-foreground">Full-stack framework</p>
 					</div>
-					<div class="p-4">
-						<h3 class="body-medium font-semibold">TypeScript</h3>
-						<p class="body-small">Type safety</p>
+					<div
+						class="flex flex-col items-center rounded-lg p-4 transition-colors hover:bg-muted/50"
+					>
+						<h3 class="mb-1 text-base font-semibold">PostgreSQL</h3>
+						<p class="text-center text-sm text-muted-foreground">Database</p>
 					</div>
-					<div class="p-4">
-						<h3 class="body-medium font-semibold">Tailwind CSS</h3>
-						<p class="body-small">Utility-first styling</p>
+					<div
+						class="flex flex-col items-center rounded-lg p-4 transition-colors hover:bg-muted/50"
+					>
+						<h3 class="mb-1 text-base font-semibold">Drizzle ORM</h3>
+						<p class="text-center text-sm text-muted-foreground">Type-safe queries</p>
 					</div>
-					<div class="p-4">
-						<h3 class="body-medium font-semibold">shadcn-svelte</h3>
-						<p class="body-small">UI components</p>
+					<div
+						class="flex flex-col items-center rounded-lg p-4 transition-colors hover:bg-muted/50"
+					>
+						<h3 class="mb-1 text-base font-semibold">Mapbox GL</h3>
+						<p class="text-center text-sm text-muted-foreground">Interactive maps</p>
 					</div>
 				</div>
 			</CardContent>

@@ -26,6 +26,7 @@
 		getSortedRowModel,
 		type ColumnDef,
 		type ColumnFiltersState,
+		type PaginationState,
 		type SortingState,
 		type VisibilityState
 	} from '@tanstack/table-core';
@@ -74,8 +75,10 @@
 		}
 	});
 
-	// Column helper
+	// Add types for table columns
 	const columnHelper = createColumnHelper<StopWithLocation>();
+
+	let pagination = $state<PaginationState>({ pageIndex: 0, pageSize: 10 });
 
 	// Get current sort state for a column
 	const getSortIcon = (columnId: string) => {
@@ -166,7 +169,7 @@
 			filterFn: (row, id, value) => {
 				const location = row.original.location;
 				const searchStr =
-					`${location.address_line1} ${location.city} ${location.region} ${location.postal_code}`.toLowerCase();
+					`${location.address_line_1} ${location.city} ${location.region} ${location.postal_code}`.toLowerCase();
 				return searchStr.includes(value.toLowerCase());
 			},
 			enableSorting: false
@@ -224,6 +227,13 @@
 					sorting = updater;
 				}
 			},
+			onPaginationChange: (updater) => {
+				if (typeof updater === 'function') {
+					pagination = updater(pagination);
+				} else {
+					pagination = updater;
+				}
+			},
 			onColumnFiltersChange: (updater) => {
 				if (typeof updater === 'function') {
 					columnFilters = updater(columnFilters);
@@ -257,8 +267,12 @@
 				columnFilters,
 				columnVisibility,
 				rowSelection,
-				globalFilter
+				globalFilter,
+				get pagination() {
+					return pagination;
+				}
 			},
+
 			initialState: {
 				sorting: [
 					{

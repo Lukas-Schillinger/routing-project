@@ -14,7 +14,7 @@
 
 <div class="flex items-start">
 	<div class="text-sm">
-		<div class="font-medium">{location.address_line1}</div>
+		<div class="font-medium">{location.address_line_1}</div>
 		{#if addressLine2}
 			<div class="text-muted-foreground">{addressLine2}</div>
 		{/if}

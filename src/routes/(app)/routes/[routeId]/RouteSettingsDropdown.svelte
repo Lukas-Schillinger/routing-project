@@ -1,20 +1,25 @@
 <!-- @component RouteSettingsDropdown - Settings dropdown for route detail view -->
 <script lang="ts">
 	import { browser } from '$app/environment';
+	import MetadataLabel from '$lib/components/table-actions/MetadataLabel.svelte';
 	import * as Actions from '$lib/components/TableActionsDropdown.Items';
 	import TableActionsDropdown from '$lib/components/TableActionsDropdown.svelte';
-	import type { Route as RouteType } from '$lib/schemas';
+	import * as Avatar from '$lib/components/ui/avatar';
+	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
+	import type { Driver, Route as RouteType } from '$lib/schemas';
+	import { getIdenticon } from '$lib/utils';
 	import { RotateCcw, Settings } from 'lucide-svelte';
 
 	type DirectionsProvider = 'google' | 'apple';
 
 	interface Props {
 		route: RouteType;
+		driver: Driver;
 		directionsProvider: DirectionsProvider;
 		onDirectionsProviderChange: (provider: DirectionsProvider) => void;
 	}
 
-	let { route, directionsProvider, onDirectionsProviderChange }: Props = $props();
+	let { route, driver, directionsProvider, onDirectionsProviderChange }: Props = $props();
 
 	// Local state for radio group value
 	let radioGroupValue = $state<string>(directionsProvider);
@@ -66,17 +71,26 @@
 		<span class="sr-only">Open settings</span>
 		<Settings class="h-4 w-4" />
 	{/snippet}
+	<Actions.DropdownMenu.Label class="flex">Settings</Actions.DropdownMenu.Label>
 
+	<DropdownMenu.Separator />
 	<Actions.DropdownMenu.Label class="flex">Navigation Provider</Actions.DropdownMenu.Label>
 	<Actions.DropdownMenu.RadioGroup bind:value={radioGroupValue}>
 		<Actions.DropdownMenu.RadioItem value="google">Google Maps</Actions.DropdownMenu.RadioItem>
 		<Actions.DropdownMenu.RadioItem value="apple">Apple Maps</Actions.DropdownMenu.RadioItem>
 	</Actions.DropdownMenu.RadioGroup>
-
-	<Actions.DropdownMenu.Separator />
+	<Actions.DropdownMenu.Label class="flex">Actions</Actions.DropdownMenu.Label>
 
 	<Actions.DropdownMenu.Item onclick={handleResetCompletedStops}>
-		<RotateCcw class="mr-2 h-4 w-4" />
+		<RotateCcw class="mr-2 h-4 w-4 text-black" />
 		Reset Completed Stops
 	</Actions.DropdownMenu.Item>
+
+	<MetadataLabel item={route} />
+	<div class="flex flex-col items-center gap-2 p-2">
+		<Avatar.Root class="">
+			<Avatar.Image src={getIdenticon(driver)} alt="@shadcn" />
+		</Avatar.Root>
+		<div class="text-sm text-muted-foreground">{driver.name}</div>
+	</div>
 </TableActionsDropdown>
