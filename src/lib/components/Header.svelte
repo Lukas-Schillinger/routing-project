@@ -100,7 +100,7 @@
 
 <!-- Branded Navigation Header -->
 <div
-	class="bg-opacity-40 fixed top-0 z-50 w-full rounded-b-lg border-b bg-white/55 backdrop-blur-lg dark:bg-black/55"
+	class="bg-opacity-40 fixed top-0 z-50 w-full rounded-b-lg border-b bg-white/65 backdrop-blur-lg dark:bg-black/55"
 	bind:this={headerElement}
 >
 	<header class="">
@@ -214,7 +214,9 @@
 							{@const Icon = item.icon}
 							<div>
 								<Button
-									class={page.url.pathname === item.href ? '' : 'text-muted-foreground'}
+									class={page.url.pathname === item.href
+										? ''
+										: 'w-full justify-start text-muted-foreground'}
 									variant="ghost"
 									href={item.href}
 									onclick={closeMobileMenu}
@@ -226,7 +228,9 @@
 						{/each}
 						{#if user}
 							<Button
-								class={page.url.pathname === '/auth/account' ? '' : 'text-muted-foreground'}
+								class={page.url.pathname === '/auth/account'
+									? ''
+									: 'w-full justify-start text-muted-foreground'}
 								variant="ghost"
 								size="sm"
 								href={'/auth/account'}
