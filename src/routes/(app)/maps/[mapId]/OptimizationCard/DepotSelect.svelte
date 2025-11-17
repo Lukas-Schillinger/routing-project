@@ -1,5 +1,5 @@
 <script lang="ts">
-	import EditOrCreateDepotPopover from '$lib/components/EditOrCreateDepotPopover.svelte';
+	import EditOrCreateDepotPopover from '$lib/components/EditOrCreateDepotPopover';
 	import * as Select from '$lib/components/ui/select';
 	import type { Depot, DepotWithLocationJoin } from '$lib/schemas';
 	import { Building2 } from 'lucide-svelte';
@@ -43,7 +43,7 @@
 						<div>
 							<div class="font-medium">{depot.depot.name}</div>
 							<div class="text-xs text-muted-foreground">
-								{depot.location.address_line1}
+								{depot.location.address_line_1}
 							</div>
 						</div>
 						{#if depot.depot.default_depot}

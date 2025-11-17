@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
-	import EditOrCreateDepotPopover from '$lib/components/EditOrCreateDepotPopover.svelte';
+	import EditOrCreateDepotPopover from '$lib/components/EditOrCreateDepotPopover';
 	import { Copy, Delete, MetadataLabel } from '$lib/components/TableActionsDropdown.Items';
 	import TableActionsDropdown from '$lib/components/TableActionsDropdown.svelte';
 	import { Badge } from '$lib/components/ui/badge';
@@ -96,7 +96,7 @@
 						<Table.Cell>
 							<div class="flex items-start text-sm text-muted-foreground">
 								<div>
-									<div>{depot.location.address_line1}</div>
+									<div>{depot.location.address_line_1}</div>
 									{#if depot.location.city || depot.location.region}
 										<div>
 											{[depot.location.city, depot.location.region, depot.location.postal_code]

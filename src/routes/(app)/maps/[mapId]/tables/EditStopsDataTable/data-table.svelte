@@ -8,7 +8,7 @@
 	5. Test search, sort, and filter functionality after changes
 -->
 <script lang="ts">
-	import EditOrCreateStopPopover from '$lib/components/EditOrCreateStopPopover.svelte';
+	import EditOrCreateStopPopover from '$lib/components/EditOrCreateStopPopover';
 	import { Button, buttonVariants } from '$lib/components/ui/button';
 	import * as ButtonGroup from '$lib/components/ui/button-group/index.js';
 	import * as Card from '$lib/components/ui/card';

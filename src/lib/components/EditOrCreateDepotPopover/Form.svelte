@@ -1,29 +1,25 @@
-<!-- src/lib/components/EditOrCreateDepotPopover.svelte -->
 <script lang="ts">
 	import AddressAutocomplete from '$lib/components/AddressAutocomplete.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
-	import * as Popover from '$lib/components/ui/popover';
 	import { Switch } from '$lib/components/ui/switch';
 	import type { DepotWithLocationJoin } from '$lib/schemas/depot';
 	import type { LocationCreate } from '$lib/schemas/location';
 	import { ApiError } from '$lib/services/api/base';
 	import { depotApi } from '$lib/services/api/depots';
-	import { Building2, Check, LoaderCircle, Pencil } from 'lucide-svelte';
+	import { Check, LoaderCircle } from 'lucide-svelte';
 
 	// Props
 	let {
 		mode = 'create',
 		depot = undefined,
-		triggerClass = '',
-		children,
+		open = $bindable(false),
 		onSuccess = () => {}
 	}: {
 		mode?: 'create' | 'edit';
 		depot?: DepotWithLocationJoin;
-		triggerClass?: string; // annoying hack for making the slotted component able to fill the full length of a dropdown
-		children?: any;
+		open: boolean;
 		onSuccess?: (depot: DepotWithLocationJoin) => void;
 	} = $props();
 
@@ -35,7 +31,6 @@
 	});
 
 	// State
-	let open = $state(false);
 	let isSubmitting = $state(false);
 	let error = $state<string | null>(null);
 
@@ -51,7 +46,7 @@
 			depotName = depot.depot.name;
 			isDefault = depot.depot.default_depot;
 			const loc = depot.location;
-			address = loc.address_line1;
+			address = loc.address_line_1;
 		}
 	});
 
@@ -64,7 +59,7 @@
 			selectedLocation = null;
 		} else if (depot) {
 			depotName = depot.depot.name;
-			address = depot.location.address_line1;
+			address = depot.location.address_line_1;
 			isDefault = depot.depot.default_depot;
 			selectedLocation = null;
 		}
@@ -121,7 +116,6 @@
 			}
 
 			onSuccess(updatedDepot);
-			open = false;
 			resetForm();
 		} catch (err) {
 			console.error(`Error ${mode === 'create' ? 'creating' : 'updating'} depot:`, err);
@@ -141,101 +135,75 @@
 			isSubmitting = false;
 		}
 	}
-
-	// Handle open change
-	function handleOpenChange(isOpen: boolean) {
-		open = isOpen;
-		if (!isOpen && !isSubmitting) {
-			resetForm();
-		}
-	}
 </script>
 
-<Popover.Root bind:open onOpenChange={handleOpenChange}>
-	<Popover.Trigger class={triggerClass}>
-		{#if children}
-			{@render children()}
-		{:else if mode === 'create'}
-			<Button size="sm" variant="secondary">
-				<Building2 class="mr-2 h-4 w-4" />
-				Create Depot
-			</Button>
-		{:else}
-			<Button variant="ghost" size="icon">
-				<Pencil class="h-4 w-4" />
-			</Button>
-		{/if}
-	</Popover.Trigger>
-	<Popover.Content class="w-96">
-		<form onsubmit={handleSubmit} class="space-y-4">
-			<div class="space-y-2">
-				<h3 class="text-lg font-semibold">
-					{mode === 'create' ? 'Create New Depot' : 'Edit Depot'}
-				</h3>
-				<p class="text-sm text-muted-foreground">
-					{mode === 'create'
-						? 'Add a new depot location for your organization'
-						: 'Update depot details'}
-				</p>
-			</div>
+<form onsubmit={handleSubmit} class="space-y-4">
+	<div class="space-y-2">
+		<h3 class="text-lg font-semibold">
+			{mode === 'create' ? 'Create New Depot' : 'Edit Depot'}
+		</h3>
+		<p class="text-sm text-muted-foreground">
+			{mode === 'create'
+				? 'Add a new depot location for your organization'
+				: 'Update depot details'}
+		</p>
+	</div>
 
-			{#if error}
-				<div class="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-					{error}
-				</div>
+	{#if error}
+		<div class="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+			{error}
+		</div>
+	{/if}
+
+	<div class="space-y-2">
+		<Label for="depot-name">Depot Name *</Label>
+		<Input
+			id="depot-name"
+			bind:value={depotName}
+			placeholder="e.g., Main Warehouse"
+			disabled={isSubmitting}
+			required
+		/>
+	</div>
+
+	<div class="space-y-2">
+		<Label for="depot-address">
+			Address {mode === 'create' ? '*' : '(optional - leave unchanged if empty)'}
+		</Label>
+		<AddressAutocomplete
+			bind:value={address}
+			placeholder={mode === 'create'
+				? 'Search for depot address...'
+				: 'Search to update address...'}
+			onSelect={handleAddressSelect}
+			onClear={handleAddressClear}
+			disabled={isSubmitting}
+		/>
+	</div>
+
+	<div class="flex items-center justify-between space-x-2">
+		<Label for="default-depot" class="flex-1 cursor-pointer">Set as default depot</Label>
+		<Switch id="default-depot" bind:checked={isDefault} disabled={isSubmitting} />
+	</div>
+
+	<div class="flex gap-2">
+		<Button
+			type="button"
+			variant="outline"
+			class="flex-1"
+			onclick={() => (open = false)}
+			disabled={isSubmitting}
+		>
+			Cancel
+		</Button>
+		<Button type="submit" class="flex-1" disabled={isSubmitting}>
+			{#if isSubmitting}
+				<LoaderCircle class="mr-2 h-4 w-4 animate-spin" />
+				{mode === 'create' ? 'Creating...' : 'Updating...'}
+			{:else}
+				<Check class="mr-2 h-4 w-4" />
+				{mode === 'create' ? 'Create Depot' : 'Update Depot'}
 			{/if}
-
-			<div class="space-y-2">
-				<Label for="depot-name">Depot Name *</Label>
-				<Input
-					id="depot-name"
-					bind:value={depotName}
-					placeholder="e.g., Main Warehouse"
-					disabled={isSubmitting}
-					required
-				/>
-			</div>
-
-			<div class="space-y-2">
-				<Label for="depot-address">
-					Address {mode === 'create' ? '*' : '(optional - leave unchanged if empty)'}
-				</Label>
-				<AddressAutocomplete
-					bind:value={address}
-					placeholder={mode === 'create'
-						? 'Search for depot address...'
-						: 'Search to update address...'}
-					onSelect={handleAddressSelect}
-					onClear={handleAddressClear}
-					disabled={isSubmitting}
-				/>
-			</div>
-
-			<div class="flex items-center justify-between space-x-2">
-				<Label for="default-depot" class="flex-1 cursor-pointer">Set as default depot</Label>
-				<Switch id="default-depot" bind:checked={isDefault} disabled={isSubmitting} />
-			</div>
-
-			<div class="flex gap-2">
-				<Button
-					type="button"
-					variant="outline"
-					class="flex-1"
-					onclick={() => (open = false)}
-					disabled={isSubmitting}
-				>
-					Cancel
-				</Button>
-				<Button type="submit" class="flex-1" disabled={isSubmitting}>
-					{#if isSubmitting}
-						<LoaderCircle class="mr-2 h-4 w-4 animate-spin" />
-						{mode === 'create' ? 'Creating...' : 'Updating...'}
-					{:else}
-						<Check class="mr-2 h-4 w-4" />
-						{mode === 'create' ? 'Create Depot' : 'Update Depot'}
-					{/if}
-				</Button>
-			</div>
-		</form>
-	</Popover.Content>
-</Popover.Root>
+		</Button>
+	</div>
+</form>

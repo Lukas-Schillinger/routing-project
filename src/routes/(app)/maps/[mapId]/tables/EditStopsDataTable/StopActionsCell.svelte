@@ -1,5 +1,5 @@
 <script lang="ts">
-	import EditOrCreateStopPopover from '$lib/components/EditOrCreateStopPopover.svelte';
+	import EditOrCreateStopPopover from '$lib/components/EditOrCreateStopPopover';
 	import * as Actions from '$lib/components/TableActionsDropdown.Items';
 	import TableActionsDropdown from '$lib/components/TableActionsDropdown.svelte';
 	import DropdownMenuItem from '$lib/components/ui/dropdown-menu/dropdown-menu-item.svelte';

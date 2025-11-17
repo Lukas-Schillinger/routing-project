@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
-	import EditOrCreateDepotPopover from '$lib/components/EditOrCreateDepotPopover.svelte';
-	import EditOrCreateDriverPopover from '$lib/components/EditOrCreateDriverPopover.svelte';
+	import EditOrCreateDepotPopover from '$lib/components/EditOrCreateDepotPopover';
+	import EditOrCreateDriverPopover from '$lib/components/EditOrCreateDriverPopover';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Building2, Truck } from 'lucide-svelte';

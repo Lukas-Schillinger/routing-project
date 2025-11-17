@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
-	import EditOrCreateDriverPopover from '$lib/components/EditOrCreateDriverPopover.svelte';
+	import EditOrCreateDriverPopover from '$lib/components/EditOrCreateDriverPopover';
 	import { Copy, Delete, MetadataLabel } from '$lib/components/TableActionsDropdown.Items';
 	import TableActionsDropdown from '$lib/components/TableActionsDropdown.svelte';
 	import * as Avatar from '$lib/components/ui/avatar/index.js';

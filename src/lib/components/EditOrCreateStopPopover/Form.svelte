@@ -1,31 +1,27 @@
-<!-- src/lib/components/EditOrCreateStopPopover.svelte -->
 <script lang="ts">
 	import AddressAutocomplete from '$lib/components/AddressAutocomplete.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
-	import * as Popover from '$lib/components/ui/popover';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import type { LocationCreate } from '$lib/schemas/location';
 	import type { StopWithLocation } from '$lib/schemas/stop';
 	import { ApiError } from '$lib/services/api/base';
 	import { stopApi } from '$lib/services/api/stops';
-	import { Check, LoaderCircle, Pencil, Plus } from 'lucide-svelte';
+	import { Check, LoaderCircle } from 'lucide-svelte';
 
 	// Props
 	let {
 		mode = 'create',
 		stop = undefined,
 		mapId = undefined,
-		triggerClass = '',
-		children,
+		open = $bindable(false),
 		onSuccess = () => {}
 	}: {
 		mode?: 'create' | 'edit';
 		stop?: StopWithLocation;
 		mapId?: string;
-		triggerClass?: string;
-		children?: any;
+		open: boolean;
 		onSuccess?: (stop: StopWithLocation) => void;
 	} = $props();
 
@@ -40,7 +36,6 @@
 	});
 
 	// State
-	let open = $state(false);
 	let isSubmitting = $state(false);
 	let error = $state<string | null>(null);
 
@@ -58,7 +53,7 @@
 			contactPhone = stop.stop.contact_phone || '';
 			notes = stop.stop.notes || '';
 			const loc = stop.location;
-			address = loc.address_line1;
+			address = loc.address_line_1;
 		}
 	});
 
@@ -74,7 +69,7 @@
 			contactName = stop.stop.contact_name || '';
 			contactPhone = stop.stop.contact_phone || '';
 			notes = stop.stop.notes || '';
-			address = stop.location.address_line1;
+			address = stop.location.address_line_1;
 			selectedLocation = null;
 		}
 		error = null;
@@ -128,7 +123,6 @@
 			}
 
 			onSuccess(updatedStop);
-			open = false;
 			resetForm();
 		} catch (err) {
 			console.error(`Error ${mode === 'create' ? 'creating' : 'updating'} stop:`, err);
@@ -146,112 +140,86 @@
 			isSubmitting = false;
 		}
 	}
-
-	// Handle open change
-	function handleOpenChange(isOpen: boolean) {
-		open = isOpen;
-		if (!isOpen && !isSubmitting) {
-			resetForm();
-		}
-	}
 </script>
 
-<Popover.Root bind:open onOpenChange={handleOpenChange}>
-	<Popover.Trigger class={triggerClass}>
-		{#if children}
-			{@render children()}
-		{:else if mode === 'create'}
-			<Button variant="default">
-				<Plus class="mr-2 h-4 w-4" />
-				Add Stop
-			</Button>
-		{:else}
-			<Button variant="ghost" size="icon">
-				<Pencil class="h-4 w-4" />
-			</Button>
-		{/if}
-	</Popover.Trigger>
-	<Popover.Content class="w-96">
-		<form onsubmit={handleSubmit} class="space-y-4">
-			<div class="space-y-2">
-				<h3 class="text-lg font-semibold">
-					{mode === 'create' ? 'Create Stop' : 'Edit Stop'}
-				</h3>
-				<p class="text-sm text-muted-foreground">
-					{mode === 'create' ? 'Add a new delivery stop' : 'Update stop details'}
-				</p>
-			</div>
+<form onsubmit={handleSubmit} class="space-y-4">
+	<div class="space-y-2">
+		<h3 class="text-lg font-semibold">
+			{mode === 'create' ? 'Create Stop' : 'Edit Stop'}
+		</h3>
+		<p class="text-sm text-muted-foreground">
+			{mode === 'create' ? 'Add a new delivery stop' : 'Update stop details'}
+		</p>
+	</div>
 
-			{#if error}
-				<div class="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-					{error}
-				</div>
+	{#if error}
+		<div class="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+			{error}
+		</div>
+	{/if}
+
+	<div class="space-y-2">
+		<Label for="contact-name">Contact Name</Label>
+		<Input
+			id="contact-name"
+			bind:value={contactName}
+			placeholder="e.g., John Doe"
+			disabled={isSubmitting}
+		/>
+	</div>
+
+	<div class="space-y-2">
+		<Label for="contact-phone">Contact Phone</Label>
+		<Input
+			id="contact-phone"
+			bind:value={contactPhone}
+			placeholder="e.g., (555) 123-4567"
+			disabled={isSubmitting}
+		/>
+	</div>
+
+	<div class="space-y-2">
+		<Label for="stop-address">
+			Address {mode === 'edit' ? '(optional - leave unchanged if empty)' : ''}
+		</Label>
+		<AddressAutocomplete
+			bind:value={address}
+			placeholder={mode === 'create' ? 'Search for address...' : 'Search to update address...'}
+			onSelect={handleAddressSelect}
+			onClear={handleAddressClear}
+			disabled={isSubmitting}
+		/>
+	</div>
+
+	<div class="space-y-2">
+		<Label for="notes">Notes</Label>
+		<Textarea
+			id="notes"
+			bind:value={notes}
+			placeholder="Add any delivery notes..."
+			disabled={isSubmitting}
+			rows={3}
+		/>
+	</div>
+
+	<div class="flex gap-2">
+		<Button
+			type="button"
+			variant="outline"
+			class="flex-1"
+			onclick={() => (open = false)}
+			disabled={isSubmitting}
+		>
+			Cancel
+		</Button>
+		<Button type="submit" class="flex-1" disabled={isSubmitting}>
+			{#if isSubmitting}
+				<LoaderCircle class="mr-2 h-4 w-4 animate-spin" />
+				{mode === 'create' ? 'Creating...' : 'Updating...'}
+			{:else}
+				<Check class="mr-2 h-4 w-4" />
+				{mode === 'create' ? 'Create Stop' : 'Update Stop'}
 			{/if}
-
-			<div class="space-y-2">
-				<Label for="contact-name">Contact Name</Label>
-				<Input
-					id="contact-name"
-					bind:value={contactName}
-					placeholder="e.g., John Doe"
-					disabled={isSubmitting}
-				/>
-			</div>
-
-			<div class="space-y-2">
-				<Label for="contact-phone">Contact Phone</Label>
-				<Input
-					id="contact-phone"
-					bind:value={contactPhone}
-					placeholder="e.g., (555) 123-4567"
-					disabled={isSubmitting}
-				/>
-			</div>
-
-			<div class="space-y-2">
-				<Label for="stop-address">
-					Address {mode === 'edit' ? '(optional - leave unchanged if empty)' : ''}
-				</Label>
-				<AddressAutocomplete
-					bind:value={address}
-					placeholder={mode === 'create' ? 'Search for address...' : 'Search to update address...'}
-					onSelect={handleAddressSelect}
-					onClear={handleAddressClear}
-					disabled={isSubmitting}
-				/>
-			</div>
-
-			<div class="space-y-2">
-				<Label for="notes">Notes</Label>
-				<Textarea
-					id="notes"
-					bind:value={notes}
-					placeholder="Add any delivery notes..."
-					disabled={isSubmitting}
-					rows={3}
-				/>
-			</div>
-
-			<div class="flex gap-2">
-				<Button
-					type="button"
-					variant="outline"
-					class="flex-1"
-					onclick={() => (open = false)}
-					disabled={isSubmitting}
-				>
-					Cancel
-				</Button>
-				<Button type="submit" class="flex-1" disabled={isSubmitting}>
-					{#if isSubmitting}
-						<LoaderCircle class="mr-2 h-4 w-4 animate-spin" />
-						{mode === 'create' ? 'Creating...' : 'Updating...'}
-					{:else}
-						<Check class="mr-2 h-4 w-4" />
-						{mode === 'create' ? 'Create Stop' : 'Update Stop'}
-					{/if}
-				</Button>
-			</div>
-		</form>
-	</Popover.Content>
-</Popover.Root>
+		</Button>
+	</div>
+</form>
