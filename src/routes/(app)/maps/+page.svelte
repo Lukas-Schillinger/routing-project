@@ -38,7 +38,7 @@
 	<!-- Maps Section -->
 	<section class="space-y-6">
 		<!-- Stacked List View -->
-		<div>
+		<div class="">
 			<MapsTable maps={data.maps} stops={data.stops} />
 		</div>
 	</section>
@@ -49,7 +49,7 @@
 	<div class="grid grid-cols-1 gap-6 md:grid-cols-2">
 		<!-- Drivers Section -->
 		<section>
-			<Card.Root class="h-full shadow-lg">
+			<Card.Root class="h-full">
 				<Card.Header>
 					<Card.Title class="flex items-center gap-2">
 						<Truck class="h-5 w-5 text-primary" />
@@ -70,7 +70,7 @@
 			</Card.Root>
 		</section>
 		<section>
-			<Card.Root class="h-full shadow-lg">
+			<Card.Root class="h-full">
 				<Card.Header>
 					<Card.Title class="flex items-center gap-2">
 						<Building2 class="h-5 w-5 text-primary" />

@@ -2,6 +2,7 @@
 	import MapBoxStaticMap from '$lib/components/MapBoxStaticMap.svelte';
 	import * as Actions from '$lib/components/TableActionsDropdown.Items';
 	import TableActionsDropdown from '$lib/components/TableActionsDropdown.svelte';
+	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import type { Map as MapType, StopWithLocation } from '$lib/schemas';
@@ -86,30 +87,39 @@
 		</Card.Content>
 	</Card.Root>
 {:else}
-	<div class="space-y-4">
+	<div class=" grid grid-cols-1 gap-6 sm:grid-cols-2">
 		{#each maps as map}
 			{@const mapStops = getMapStops(map.id, stops)}
 			{@const isRouted = getMapIsRouted(map.id, stops)}
 			{@const driverCount = getMapDriverCount(map.id, stops)}
-			<Card.Root class="py-0">
-				<Card.Content class="px-0">
-					<div class="">
-						<div class="flex flex-col gap-3 sm:flex-row sm:items-stretch sm:gap-0">
+			<Card.Root class="flex flex-col py-0">
+				<Card.Content class="flex flex-1 flex-col px-0">
+					<div class="flex flex-1 flex-col">
+						<div class="flex flex-1 flex-col gap-0 sm:flex-row sm:items-stretch">
 							<!-- Map thumbnail - top on mobile, left on small+ -->
-							<div class="flex-shrink-0">
+							<div class=" flex-shrink-0 sm:w-1/3">
 								<MapBoxStaticMap mapId={map.id} stops={mapStops} />
 							</div>
 
 							<!-- Content wrapper -->
 							<div
-								class="flex flex-1 flex-row gap-3 p-6 sm:flex-row sm:items-center sm:justify-between"
+								class="flex flex-1 flex-row gap-3 p-4 sm:flex-row sm:items-start sm:justify-between"
 							>
 								<!-- Left side - Main info -->
 								<div class="flex-1">
-									<div class="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-										<a href="/maps/{map.id}" class="flex items-center gap-2 hover:underline">
-											<h3 class="text-lg font-semibold">{map.title}</h3>
-										</a>
+									<div class="flex justify-between gap-2">
+										<div class="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+											<a href="/maps/{map.id}" class="flex items-center gap-2 hover:underline">
+												<h3 class=" font-semibold">{map.title}</h3>
+											</a>
+										</div>
+										<div class="">
+											<TableActionsDropdown>
+												<Actions.Copy onclick={() => handleCopyId(map.id)} label="Copy ID" />
+												<Actions.Delete onclick={() => handleDelete(map.id)} />
+												<Actions.MetadataLabel item={map} />
+											</TableActionsDropdown>
+										</div>
 									</div>
 
 									<!-- Stats row -->
@@ -117,12 +127,10 @@
 										class="flex flex-wrap items-center gap-2 text-sm text-muted-foreground sm:gap-x-6"
 									>
 										{#if isRouted}
-											<div
-												class="flex items-center gap-1 whitespace-nowrap text-secondary-foreground"
-											>
+											<Badge class="gap-2">
 												<Route class="h-4 w-4" />
-												<span>routed</span>
-											</div>
+												routed
+											</Badge>
 										{/if}
 										<div class="flex items-center gap-1 whitespace-nowrap">
 											<MapPin class="h-4 w-4" />
@@ -136,31 +144,13 @@
 										{/if}
 										<div class="flex items-center gap-1 whitespace-nowrap">
 											<Calendar class="h-4 w-4" />
-											<span class="hidden sm:inline">Created </span>
+											<span class="hidden sm:inline"></span>
 											<span>{formatDate(map.created_at)}</span>
 										</div>
 									</div>
 								</div>
 
 								<!-- Right side - Actions -->
-								<div
-									class="flex items-center justify-between gap-2 sm:flex sm:flex-shrink-0 sm:justify-end"
-								>
-									<Button
-										href="/maps/{map.id}"
-										variant="outline"
-										size="sm"
-										class="hidden flex-1 sm:flex sm:flex-none"
-									>
-										<span class="sm:hidden">View</span>
-										<span class="hidden sm:inline">View Map</span>
-									</Button>
-									<TableActionsDropdown>
-										<Actions.Copy onclick={() => handleCopyId(map.id)} label="Copy ID" />
-										<Actions.Delete onclick={() => handleDelete(map.id)} />
-										<Actions.MetadataLabel item={map} />
-									</TableActionsDropdown>
-								</div>
 							</div>
 						</div>
 					</div>
