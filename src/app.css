@@ -1,7 +1,6 @@
 @import 'tailwindcss';
 @import '@fontsource-variable/eb-garamond';
 @import '@fontsource-variable/geist';
-@import '@fontsource-variable/geist';
 
 @import 'tw-animate-css';
 
@@ -9,7 +8,7 @@
 
 /* globals.css (or any imported CSS file) */
 @theme {
-	--font: 'Geist';
+	--font: 'Geist Variable';
 
 	--color-sand-50: #faf8f5;
 	--color-sand-100: #f4f1eb;
@@ -178,7 +177,7 @@
 	body {
 		@apply bg-background text-foreground;
 		font-family:
-			'Geist',
+			'Geist Variable',
 			system-ui,
 			-apple-system,
 			sans-serif;
@@ -211,16 +210,16 @@
 	/* Body text using Geist Sans */
 	.body-large {
 		@apply text-lg leading-relaxed text-forest-950 dark:text-forest-50;
-		font-family: 'Geist Sans', system-ui, sans-serif;
+		font-family: 'Geist Variable', system-ui, sans-serif;
 	}
 
 	.body-medium {
 		@apply text-base leading-relaxed text-forest-950 dark:text-forest-50;
-		font-family: 'Geist Sans', system-ui, sans-serif;
+		font-family: 'Geist Variable', system-ui, sans-serif;
 	}
 
 	.body-small {
 		@apply text-sm leading-relaxed text-forest-950 dark:text-forest-50;
-		font-family: 'Geist Sans', system-ui, sans-serif;
+		font-family: 'Geist Variable', system-ui, sans-serif;
 	}
 }

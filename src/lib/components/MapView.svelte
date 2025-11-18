@@ -1,9 +1,10 @@
 <script lang="ts">
 	import type { Driver, Route, StopWithLocation } from '$lib/schemas';
 	import { getTextColor } from '$lib/utils';
-	import { MapPin } from 'lucide-svelte';
+	// import { MapPin } from 'lucide-svelte';
 	import type maplibregl from 'maplibre-gl';
 	import { mode } from 'mode-watcher';
+	import { MapPin } from 'phosphor-svelte';
 	import { LineLayer, MapLibre, Marker, Popup } from 'svelte-maplibre';
 	import GeoJSON from 'svelte-maplibre/GeoJSON.svelte';
 	import StopMapPopup from './StopMapPopup.svelte';
@@ -57,8 +58,8 @@
 		stops.forEach((item) => {
 			if (!item.location.lat || !item.location.lon) return;
 
-			const lat = parseFloat(item.location.lat);
-			const lon = parseFloat(item.location.lon);
+			const lat = item.location.lat;
+			const lon = item.location.lon;
 
 			if (!isNaN(lat) && !isNaN(lon)) {
 				minLng = Math.min(minLng, lon);
@@ -82,8 +83,8 @@
 			const stop = stops.find((s) => s.stop.id === focusedStopId);
 			if (!stop || !stop.location.lat || !stop.location.lon) return;
 
-			const lat = parseFloat(stop.location.lat);
-			const lon = parseFloat(stop.location.lon);
+			const lat = stop.location.lat;
+			const lon = stop.location.lon;
 
 			if (!isNaN(lat) && !isNaN(lon)) {
 				map.flyTo({
@@ -135,28 +136,27 @@
 		{#each stops as item, index}
 			{@const { stop, location } = item}
 			{#if location.lat && location.lon && !hiddenDrivers.find((e) => e.id == stop.driver_id)}
-				{@const lat = parseFloat(location.lat)}
-				{@const lon = parseFloat(location.lon)}
+				{@const lat = location.lat}
+				{@const lon = location.lon}
 				{#if !isNaN(lat) && !isNaN(lon)}
 					<Marker lngLat={[lon, lat]} class=" cursor-pointer">
 						{#if stop.delivery_index && stop.driver_id}
 							{@const color = getDriverColorById(stop.driver_id, drivers)}
-							<div class="top-24" style="fill: {color}">
-								<MapPin class="relative right-1.5 size-10 stroke-white" style="fill: {color}" />
+							<div class="relative transition-transform duration-100 hover:scale-110">
+								<MapPin class="size-8" style="fill: {color}" weight="fill" />
 								<div
-									class="relative -top-[38px] flex size-7 items-center justify-center rounded-full border-3 border-white bg-emerald-700 shadow-lg transition-all duration-50 hover:scale-[1.15] hover:shadow-xl"
+									class="absolute top-1 left-1/2 flex size-5 -translate-x-1/2 items-center justify-center rounded-full"
 									style="background-color: {color};"
 								>
-									<span
-										class="relative z-[1] font-bold text-white drop-shadow"
-										style="color: {getTextColor(color)};"
-										>{stop.delivery_index ? stop.delivery_index : ''}</span
-									>
+									<span class="text-xs font-bold" style="color: {getTextColor(color)};">
+										{stop.delivery_index}
+									</span>
 								</div>
 							</div>
 						{:else}
 							<MapPin
-								class="relative right-1.5 size-6 fill-emerald-500 duration-100 hover:scale-125 dark:fill-blue-800"
+								weight="fill"
+								class="relative right-1.5 size-6 fill-forest-600 duration-100 hover:scale-125 dark:fill-white"
 							/>
 						{/if}
 
