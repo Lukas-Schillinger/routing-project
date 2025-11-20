@@ -2,21 +2,20 @@
 	import AddressAutocomplete from '$lib/components/AddressAutocomplete.svelte';
 	import { Button, buttonVariants } from '$lib/components/ui/button';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
-	import { Checkbox } from '$lib/components/ui/checkbox';
 	import * as Popover from '$lib/components/ui/popover';
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import type { LocationCreate } from '$lib/schemas/location';
 	import { geocodingApi } from '$lib/services/api';
 	import type { GeocodeCSVResult } from '$lib/services/server/csv-import.service';
 	import {
-		AlertCircle,
-		AlertTriangle,
 		ArrowLeft,
-		CheckCircle2,
+		CircleAlert,
+		CircleCheck,
 		MapPin,
 		NotepadText,
 		Phone,
 		SquarePen,
+		TriangleAlert,
 		Upload
 	} from 'lucide-svelte';
 
@@ -32,26 +31,9 @@
 		onImport: (results: GeocodeCSVResult[]) => Promise<void>;
 	} = $props();
 
-	// Track which rows are included (default: all valid rows)
-	let includedRows = $state<Set<number>>(new Set());
 	let isImporting = $state(false);
 	let editingRowIndex = $state<number | null>(null);
 	let editAddressValue = $state('');
-	let rowsSelected = $derived(includedRows.size);
-
-	// Initialize included rows when geocoding completes
-	$effect(() => {
-		if (!isGeocoding && geocodedResults.length > 0) {
-			includedRows = new Set(
-				geocodedResults
-					.map((_, index) => index)
-					.filter((index) => {
-						const result = geocodedResults[index];
-						return result.feature != null;
-					})
-			);
-		}
-	});
 
 	function getConfidence(result: GeocodeCSVResult): 'exact' | 'high' | 'medium' | 'low' | 'none' {
 		if (!result.feature) return 'none';
@@ -71,13 +53,13 @@
 		switch (confidence) {
 			case 'exact':
 			case 'high':
-				return CheckCircle2;
+				return CircleCheck;
 			case 'medium':
-				return AlertTriangle;
+				return TriangleAlert;
 			case 'low':
-				return AlertTriangle;
+				return TriangleAlert;
 			case 'none':
-				return AlertCircle;
+				return CircleAlert;
 		}
 	}
 
@@ -93,34 +75,6 @@
 			case 'none':
 				return 'text-destructive';
 		}
-	}
-
-	function toggleRow(index: number) {
-		const result = geocodedResults[index];
-		// Don't allow toggling invalid rows
-		if (!result.feature) return;
-
-		if (includedRows.has(index)) {
-			includedRows.delete(index);
-		} else {
-			includedRows.add(index);
-		}
-
-		rowsSelected = includedRows.size; // update UI
-		includedRows = includedRows; // Trigger reactivity
-	}
-
-	function toggleAll() {
-		const validIndices = geocodedResults
-			.map((_, index) => index)
-			.filter((index) => geocodedResults[index].feature != null);
-
-		if (includedRows.size === validIndices.length) {
-			includedRows.clear();
-		} else {
-			includedRows = new Set(validIndices);
-		}
-		includedRows = includedRows; // Trigger reactivity
 	}
 
 	function startEditingAddress(index: number) {
@@ -152,11 +106,6 @@
 					raw_address: addressToGeocode,
 					feature
 				};
-				// Add to included rows if it was previously invalid
-				if (feature) {
-					includedRows.add(index);
-					includedRows = includedRows;
-				}
 			}
 		} catch (error) {
 			console.error('Failed to geocode new address:', error);
@@ -166,7 +115,7 @@
 	}
 
 	async function handleImport() {
-		const resultsToImport = geocodedResults.filter((_, index) => includedRows.has(index));
+		const resultsToImport = geocodedResults.filter((r) => r.feature != null);
 		isImporting = true;
 		try {
 			await onImport(resultsToImport);
@@ -185,8 +134,20 @@
 		}).length
 	);
 	const errorCount = $derived(geocodedResults.filter((r) => !r.feature).length);
-	const allValidSelected = $derived(
-		includedRows.size === geocodedResults.filter((r) => r.feature != null).length
+
+	// Sort results: failed and low confidence first, then medium, then high confidence
+	const sortedResults = $derived(
+		geocodedResults
+			.map((result, index) => ({ result, originalIndex: index }))
+			.sort((a, b) => {
+				const confA = getConfidence(a.result);
+				const confB = getConfidence(b.result);
+
+				// Priority order: none > low > medium > high > exact
+				const priority = { none: 0, low: 1, medium: 2, high: 3, exact: 3 };
+
+				return priority[confA] - priority[confB];
+			})
 	);
 </script>
 
@@ -198,7 +159,7 @@
 				Geocoding Results
 			</CardTitle>
 			<p class="text-sm text-muted-foreground">
-				Review geocoded addresses. Uncheck rows you don't want to import.
+				Review geocoded addresses. All valid addresses will be imported.
 			</p>
 		</CardHeader>
 		<CardContent>
@@ -222,58 +183,34 @@
 				<!-- Summary Stats -->
 				<div class="mb-4 flex flex-wrap gap-4 rounded-lg bg-muted p-3 text-sm">
 					<div class="flex items-center gap-2">
-						<CheckCircle2 class="h-4 w-4 text-green-600" />
+						<CircleCheck class="h-4 w-4 text-green-600" />
 						<span>{validRowCount} valid</span>
 					</div>
 					{#if lowConfidenceCount > 0}
 						<div class="flex items-center gap-2">
-							<AlertTriangle class="h-4 w-4 text-yellow-600" />
+							<TriangleAlert class="h-4 w-4 text-yellow-600" />
 							<span>{lowConfidenceCount} low confidence</span>
 						</div>
 					{/if}
 					{#if errorCount > 0}
 						<div class="flex items-center gap-2">
-							<AlertCircle class="h-4 w-4 text-destructive" />
+							<CircleAlert class="h-4 w-4 text-destructive" />
 							<span>{errorCount} failed</span>
 						</div>
 					{/if}
-					<div class="ml-auto">
-						<span class="font-medium">{rowsSelected}</span> of {geocodedResults.length} selected
-					</div>
-				</div>
-
-				<!-- Select All -->
-				<div class="mb-4 flex items-center gap-2 border-b pb-3">
-					<Checkbox checked={allValidSelected} onCheckedChange={toggleAll} />
-					<span class="text-sm font-medium">Select All Valid</span>
 				</div>
 
 				<!-- Results List -->
 				<div class="max-h-[600px] space-y-2 overflow-y-auto">
-					{#each geocodedResults as result, index}
+					{#each sortedResults as { result, originalIndex }}
 						{@const confidence = getConfidence(result)}
 						{@const StatusIcon = getStatusIcon(confidence)}
 						{@const statusColor = getStatusColor(confidence)}
 						{@const isInvalid = !result.feature}
-						<div
-							class="flex flex-col justify-between gap-3 rounded-lg border p-3 sm:flex-row"
-							class:bg-muted={!includedRows.has(index)}
-							class:opacity-60={!includedRows.has(index)}
-						>
+						<div class="flex flex-col justify-between gap-3 rounded-lg border p-3 sm:flex-row">
 							<div class="flex items-start gap-3 transition-colors">
-								<!-- Checkbox -->
-								{#if !isInvalid}
-									<Checkbox
-										checked={includedRows.has(index)}
-										onCheckedChange={() => {
-											toggleRow(index);
-										}}
-										disabled={isInvalid}
-									/>
-								{:else}
-									<!-- Status Icon -->
-									<StatusIcon class="mt-0.5 h-5 w-5 flex-shrink-0 {statusColor}" />
-								{/if}
+								<!-- Status Icon -->
+								<StatusIcon class="mt-0.5 h-5 w-5 flex-shrink-0 {statusColor}" />
 
 								<!-- Content -->
 								<div class="flex-1 space-y-1">
@@ -297,7 +234,7 @@
 									{:else}
 										<div class="flex items-center justify-between gap-2">
 											<div class="text-sm text-destructive">
-												<AlertCircle class="inline h-3 w-3" />
+												<CircleAlert class="inline h-3 w-3" />
 												Could not geocode this address
 											</div>
 										</div>
@@ -323,7 +260,7 @@
 							</div>
 							{#if isInvalid}
 								<Popover.Root
-									open={editingRowIndex === index}
+									open={editingRowIndex === originalIndex}
 									onOpenChange={(open) => {
 										if (!open) cancelEditingAddress();
 									}}
@@ -348,7 +285,7 @@
 											<AddressAutocomplete
 												bind:value={editAddressValue}
 												placeholder="Search for address..."
-												onSelect={(location) => handleAddressSelected(index, location)}
+												onSelect={(location) => handleAddressSelected(originalIndex, location)}
 											/>
 											<div class="flex justify-end gap-2">
 												<Button variant="outline" size="sm" onclick={cancelEditingAddress}>
@@ -370,7 +307,7 @@
 	{#if !isGeocoding && errorCount > 0}
 		<div class="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-900">
 			<div class="flex items-start gap-2">
-				<AlertCircle class="mt-0.5 h-4 w-4 flex-shrink-0" />
+				<CircleAlert class="mt-0.5 h-4 w-4 flex-shrink-0" />
 				<div>
 					<div class="font-medium">Failed to geocode {errorCount} address(es)</div>
 					<div class="mt-1 text-xs">
@@ -385,7 +322,7 @@
 	{#if !isGeocoding && lowConfidenceCount > 0}
 		<div class="rounded-md border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
 			<div class="flex items-start gap-2">
-				<AlertTriangle class="mt-0.5 h-4 w-4 flex-shrink-0" />
+				<TriangleAlert class="mt-0.5 h-4 w-4 flex-shrink-0" />
 				<div>
 					<div class="font-medium">{lowConfidenceCount} address(es) with low confidence</div>
 					<div class="mt-1 text-xs">
@@ -403,12 +340,12 @@
 			<ArrowLeft class="mr-2 h-4 w-4" />
 			Back
 		</Button>
-		<Button onclick={handleImport} disabled={isGeocoding || isImporting || includedRows.size === 0}>
+		<Button onclick={handleImport} disabled={isGeocoding || isImporting || validRowCount === 0}>
 			{#if isImporting}
 				Importing...
 			{:else}
 				<Upload class="mr-2 h-4 w-4" />
-				Import {includedRows.size} Stop(s)
+				Import {validRowCount} Stop(s)
 			{/if}
 		</Button>
 	</div>
