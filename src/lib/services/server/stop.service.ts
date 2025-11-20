@@ -199,18 +199,9 @@ export class StopService {
 	}
 
 	/**
-	 * Bulk create stops (used by geocode endpoint)
+	 * Unfortunately the createStops endpoint does a lot of db calls which makes this method inefficient.
 	 */
-	async bulkCreateStops(
-		stopsData: Array<{
-			location_id: string;
-			contact_name?: string | null;
-			contact_phone?: string | null;
-			notes?: string | null;
-		}>,
-		mapId: string,
-		organizationId: string
-	) {
+	async bulkCreateStops(stopsData: Array<CreateStop>, mapId: string, organizationId: string) {
 		// Verify map ownership
 		const [map] = await db
 			.select()
@@ -222,18 +213,9 @@ export class StopService {
 			throw ServiceError.notFound('Map not found');
 		}
 
-		const values = stopsData.map((data) => ({
-			organization_id: organizationId,
-			map_id: mapId,
-			location_id: data.location_id,
-			contact_name: data.contact_name || null,
-			contact_phone: data.contact_phone || null,
-			notes: data.notes || null
-		}));
-
-		const createdStops = await db.insert(stops).values(values).returning();
-
-		return createdStops;
+		return await Promise.all(
+			stopsData.map((stop) => this.createStop({ ...stop, map_id: mapId }, organizationId))
+		);
 	}
 }
 

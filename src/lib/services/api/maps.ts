@@ -1,7 +1,6 @@
 import type { Driver } from '$lib/schemas/driver';
 import type { CreateMap, Map, MapWithStats, UpdateMap } from '$lib/schemas/map';
-import type { Stop } from '$lib/schemas/stop';
-import type { GeocodeCSVResult } from '$lib/services/server/csv-import.service';
+import type { StopWithLocation } from '$lib/schemas/stop';
 import { apiClient } from './base';
 
 export interface DriverMembership {
@@ -68,23 +67,7 @@ class MapApiService {
 	 * Create a new map
 	 */
 	async create(data: CreateMap): Promise<{ map: Map }> {
-		return apiClient.post<{ map: Map }>('/maps', data);
-	}
-
-	/**
-	 * Create a new map from CSV geocoding results
-	 */
-	async createFromCSV(
-		mapName: string,
-		geocodeResults: GeocodeCSVResult[]
-	): Promise<{
-		map: Map;
-		stops: Stop[];
-	}> {
-		return apiClient.post('/maps/from-csv-upload', {
-			mapName,
-			geocodeResults
-		});
+		return apiClient.post<{ map: Map; stops: StopWithLocation[] }>('/maps', data);
 	}
 
 	/**
@@ -152,16 +135,6 @@ class MapApiService {
 	 */
 	async resetOptimization(mapId: string): Promise<{ success: boolean }> {
 		return apiClient.post<{ success: boolean }>(`/maps/${mapId}/reset-optimization`);
-	}
-
-	/**
-	 * Geocode CSV file and return enriched records with location data
-	 */
-	async geocodeCSV(file: File): Promise<GeocodeCSVResult[]> {
-		const formData = new FormData();
-		formData.append('csvFile', file);
-
-		return apiClient.post<GeocodeCSVResult[]>('/maps/geocode-csv', formData);
 	}
 }
 

@@ -8,6 +8,9 @@
 	import { getContext } from 'svelte';
 	import type { PageData } from './$types';
 
+	import { goto } from '$app/navigation';
+	import { mapApi } from '$lib/services/api';
+	import { geocodingFeatureToLocation } from '$lib/utils';
 	import ColumnMappingStep from './ColumnMappingStep.svelte';
 	import FileUploadStep from './FileUploadStep.svelte';
 	import GeocodeReviewStep from './GeocodeReviewStep.svelte';
@@ -107,8 +110,24 @@
 
 	async function handleImport(results: GeocodeCSVResult[]) {
 		// TODO: Implement actual import logic
-		console.log('Importing results:', results);
-		alert(`Import functionality coming soon! Would import ${results.length} stops.`);
+
+		const stops = results.map((element) => {
+			return {
+				location: element.feature ? geocodingFeatureToLocation(element.feature) : undefined,
+				contact_name: element.name,
+				contact_phone: element.phone,
+				notes: element.notes
+			};
+		});
+
+		const res = await mapApi.create({
+			title: `Map ${new Date().toLocaleDateString()}`,
+			stops: stops
+		});
+
+		goto(`/maps/${res.map.id}`);
+
+		console.log(res);
 	}
 </script>
 

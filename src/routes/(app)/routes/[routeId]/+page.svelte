@@ -73,7 +73,7 @@
 	// Responsive Map Loading
 	// ========================================
 
-	// Responsive map loading - only load on desktop, keep loaded once initialized
+	// Responsive map loading - only load on desktop, keep loaded once initialized.
 	// Causes a lot of jitter on desktop
 	$effect(() => {
 		if (!browser) return;

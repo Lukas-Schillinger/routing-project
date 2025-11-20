@@ -1,13 +1,10 @@
-import type { CreateStop } from '$lib/schemas';
-import type { CreateMap, UpdateMap } from '$lib/schemas/map';
+import type { StopWithLocation } from '$lib/schemas';
+import type { CreateMap, Map, UpdateMap } from '$lib/schemas/map';
 import { db } from '$lib/server/db';
 import { driverMapMemberships, drivers, maps, routes, stops } from '$lib/server/db/schema';
-import { geocodingFeatureToLocation } from '$lib/utils';
 import { and, eq, sql } from 'drizzle-orm';
-import type { GeocodeCSVResult } from './csv-import.service';
 import { driverService } from './driver.service';
 import { ServiceError } from './errors';
-import { locationService } from './location.service';
 import { stopService } from './stop.service';
 
 export class MapService {
@@ -48,9 +45,13 @@ export class MapService {
 	}
 
 	/**
-	 * Create a new map
+	 * Create a new map. Can optionally include Stops (without a map_id) which will be
+	 * created as well.
 	 */
-	async createMap(data: CreateMap, organizationId: string) {
+	async createMap(
+		data: CreateMap,
+		organizationId: string
+	): Promise<{ map: Map; stops: StopWithLocation[] | null }> {
 		const [map] = await db
 			.insert(maps)
 			.values({
@@ -59,41 +60,15 @@ export class MapService {
 			})
 			.returning();
 
-		return map;
-	}
+		const stops = data.stops
+			? await stopService.bulkCreateStops(
+					data.stops.map((stop) => ({ ...stop, map_id: map.id })),
+					map.id,
+					organizationId
+				)
+			: null;
 
-	/** Create a map and its associated stops and locations from the results of
-	 * csvImportService.geoCodeCSV()
-	 */
-	async createMapFromCSVUploadResult(
-		mapName: string,
-		data: GeocodeCSVResult[],
-		organizationId: string
-	) {
-		const map = await this.createMap({ title: mapName }, organizationId);
-
-		// Filter out results that don't have a feature (geocoding failed)
-		const validResults = data.filter((result) => result.feature !== null);
-
-		const stopPromises = validResults.map(async (result) => {
-			const locationData = geocodingFeatureToLocation(result.feature!); // Safe to use ! since we filtered
-			const location = await locationService.createLocation(locationData, organizationId);
-			const stop: CreateStop = {
-				location_id: location.id,
-				contact_name: result.name,
-				contact_phone: result.phone,
-				notes: result.notes,
-				map_id: map.id
-			};
-			return await stopService.createStop(stop, organizationId);
-		});
-
-		const createdStops = await Promise.all(stopPromises);
-
-		return {
-			map,
-			stops: createdStops
-		};
+		return { map, stops };
 	}
 
 	/**
