@@ -124,7 +124,7 @@
 
 									<!-- Stats row -->
 									<div
-										class="flex flex-wrap items-center gap-2 text-sm text-muted-foreground sm:gap-x-6"
+										class="flex flex-wrap items-center gap-2 text-sm text-muted-foreground sm:gap-x-3"
 									>
 										{#if isRouted}
 											<Badge class="gap-2">

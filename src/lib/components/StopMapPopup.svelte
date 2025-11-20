@@ -33,7 +33,7 @@
 	<div class="">
 		<h3 class="pb-1 text-base font-medium">{stop.contact_name || 'Unknown'}</h3>
 		<div>
-			<p class=" text-sm text-muted-foreground">{location.address_line1}</p>
+			<p class=" text-sm text-muted-foreground">{location.address_line_1}</p>
 
 			{#if location.city}
 				<p class="mb-1 text-sm text-muted-foreground">
