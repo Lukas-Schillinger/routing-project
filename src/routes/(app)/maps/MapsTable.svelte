@@ -1,4 +1,5 @@
 <script lang="ts">
+	import DateTimePopover from '$lib/components/DateTimePopover.svelte';
 	import MapBoxStaticMap from '$lib/components/MapBoxStaticMap.svelte';
 	import * as Actions from '$lib/components/TableActionsDropdown.Items';
 	import TableActionsDropdown from '$lib/components/TableActionsDropdown.svelte';
@@ -110,7 +111,7 @@
 									<div class="flex justify-between gap-2">
 										<div class="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
 											<a href="/maps/{map.id}" class="flex items-center gap-2 hover:underline">
-												<h3 class=" font-semibold">{map.title}</h3>
+												<h3 class=" line-clamp-1 font-semibold">{map.title}</h3>
 											</a>
 										</div>
 										<div class="">
@@ -131,26 +132,28 @@
 												<Route class="h-4 w-4" />
 												routed
 											</Badge>
+										{:else}
+											<Badge class="gap-2 bg-secondary text-secondary-foreground">no route</Badge>
 										{/if}
 										<div class="flex items-center gap-1 whitespace-nowrap">
 											<MapPin class="h-4 w-4" />
 											<span>{mapStops.length} stops</span>
 										</div>
-										{#if driverCount > 0}
-											<div class="flex items-center gap-1 whitespace-nowrap">
-												<Truck class="h-4 w-4" />
-												<span>{driverCount} driver{driverCount > 1 ? 's' : ''}</span>
-											</div>
-										{/if}
 										<div class="flex items-center gap-1 whitespace-nowrap">
-											<Calendar class="h-4 w-4" />
-											<span class="hidden sm:inline"></span>
-											<span>{formatDate(map.created_at)}</span>
+											<Truck class="h-4 w-4" />
+											<span
+												>{driverCount} driver{driverCount > 1 || driverCount == 0 ? 's' : ''}</span
+											>
 										</div>
+										<DateTimePopover item={map}>
+											<div class="flex items-center gap-1 whitespace-nowrap">
+												<Calendar class="h-4 w-4" />
+												<span class="hidden sm:inline"></span>
+												<span>{formatDate(map.created_at)}</span>
+											</div>
+										</DateTimePopover>
 									</div>
 								</div>
-
-								<!-- Right side - Actions -->
 							</div>
 						</div>
 					</div>

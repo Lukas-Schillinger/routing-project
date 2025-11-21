@@ -9,7 +9,6 @@
 	import * as Table from '$lib/components/ui/table';
 	import type { DepotWithLocationJoin } from '$lib/schemas/depot';
 	import { depotApi } from '$lib/services/api/depots';
-	import { formatDate } from '$lib/utils';
 	import { Building2, Pencil } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
@@ -64,7 +63,6 @@
 					<Table.Head>Name</Table.Head>
 					<Table.Head>Address</Table.Head>
 					<Table.Head>Status</Table.Head>
-					<Table.Head>Created</Table.Head>
 				</Table.Row>
 			</Table.Header>
 			<Table.Body>
@@ -111,11 +109,6 @@
 							{#if depot.depot.default_depot}
 								<Badge variant="default">Default</Badge>
 							{/if}
-						</Table.Cell>
-						<Table.Cell>
-							<div class="text-sm text-muted-foreground">
-								{formatDate(depot.depot.created_at)}
-							</div>
 						</Table.Cell>
 					</Table.Row>
 				{/each}

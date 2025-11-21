@@ -4,11 +4,10 @@
 	import MetadataLabel from '$lib/components/table-actions/MetadataLabel.svelte';
 	import * as Actions from '$lib/components/TableActionsDropdown.Items';
 	import TableActionsDropdown from '$lib/components/TableActionsDropdown.svelte';
-	import * as Avatar from '$lib/components/ui/avatar';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import type { Driver, Route as RouteType } from '$lib/schemas';
-	import { getIdenticon } from '$lib/utils';
-	import { RotateCcw, Settings } from 'lucide-svelte';
+	import { Moon, RotateCcw, Settings, Sun } from 'lucide-svelte';
+	import { mode, toggleMode } from 'mode-watcher';
 
 	type DirectionsProvider = 'google' | 'apple';
 
@@ -82,15 +81,20 @@
 	<Actions.DropdownMenu.Label class="flex">Actions</Actions.DropdownMenu.Label>
 
 	<Actions.DropdownMenu.Item onclick={handleResetCompletedStops}>
-		<RotateCcw class="mr-2 h-4 w-4 text-black" />
-		Reset Completed Stops
+		<RotateCcw class="mr-2 h-4 w-4" />
+		reset completed stops
+	</Actions.DropdownMenu.Item>
+	<Actions.DropdownMenu.Item onclick={toggleMode}>
+		<div class="mr-2">
+			{#if mode.current == 'dark'}
+				<Moon />
+			{:else}
+				<Sun />
+			{/if}
+		</div>
+
+		toggle dark mode
 	</Actions.DropdownMenu.Item>
 
 	<MetadataLabel item={route} />
-	<div class="flex flex-col items-center gap-2 p-2">
-		<Avatar.Root class="">
-			<Avatar.Image src={getIdenticon(driver)} alt="@shadcn" />
-		</Avatar.Root>
-		<div class="text-sm text-muted-foreground">{driver.name}</div>
-	</div>
 </TableActionsDropdown>

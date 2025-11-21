@@ -4,7 +4,6 @@
 	import { Button } from '$lib/components/ui/button';
 	import type { PublicUser } from '$lib/schemas';
 	import {
-		ChevronRight,
 		FileSpreadsheet,
 		Grid3x3,
 		Map,
@@ -124,29 +123,7 @@
 							{/if}
 						</div>
 						<span class="text-3xl font-extrabold tracking-tighter">wend</span>
-						{#if pageHeader.breadcrumbs && pageHeader.breadcrumbs.length > 0}
-							<ChevronRight class="mr-2 h-4 w-4 " />
-						{/if}
 					</a>
-					{#if pageHeader.breadcrumbs && pageHeader.breadcrumbs.length > 0}
-						<nav class=" flex opacity-100" aria-label="Breadcrumb">
-							<ol class="flex items-center space-x-2 text-sm">
-								{#each pageHeader.breadcrumbs as breadcrumb, index}
-									<li class="flex items-center">
-										{#if index > 0}
-											<ChevronRight class="mr-2 h-4 w-4 " />
-										{/if}
-										<a
-											href={breadcrumb.href}
-											class=" transition-colors hover:text-primary-foreground"
-										>
-											{breadcrumb.name}
-										</a>
-									</li>
-								{/each}
-							</ol>
-						</nav>
-					{/if}
 				</div>
 
 				<!-- Desktop Navigation & Theme Toggle -->
