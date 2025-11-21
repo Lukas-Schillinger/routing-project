@@ -54,7 +54,7 @@
 			contactPhone = stop.stop.contact_phone || '';
 			notes = stop.stop.notes || '';
 			const loc = stop.location;
-			address = loc.address_line1;
+			address = loc.address_line_1;
 		}
 	});
 
@@ -70,7 +70,7 @@
 			contactName = stop.stop.contact_name || '';
 			contactPhone = stop.stop.contact_phone || '';
 			notes = stop.stop.notes || '';
-			address = stop.location.address_line1;
+			address = stop.location.address_line_1;
 			selectedLocation = null;
 		}
 		error = null;

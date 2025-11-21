@@ -270,7 +270,7 @@
 													<!-- Address -->
 													<div class="mb-1">
 														<div class="text-xs text-muted-foreground">
-															{location.address_line1}
+															{location.address_line_1}
 														</div>
 														<div class="text-xs text-muted-foreground">
 															{location.city || ''}{location.city && location.region

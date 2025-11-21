@@ -138,7 +138,7 @@
 										<div class="flex items-start">
 											<div class="text-sm">
 												<div class="font-medium">
-													{location.address_line1}
+													{location.address_line_1}
 												</div>
 												<div class="text-muted-foreground">
 													{location.city || ''}{location.city && location.region

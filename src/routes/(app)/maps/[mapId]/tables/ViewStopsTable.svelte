@@ -45,7 +45,7 @@
 							<div class="flex items-start">
 								<MapPin class="mt-0.5 mr-2 h-4 w-4 flex-shrink-0 text-primary" />
 								<div class="text-sm">
-									<div class="font-medium">{location.address_line1}</div>
+									<div class="font-medium">{location.address_line_1}</div>
 									<div class="text-muted-foreground">
 										{location.city || ''}{location.city && location.region
 											? ', '

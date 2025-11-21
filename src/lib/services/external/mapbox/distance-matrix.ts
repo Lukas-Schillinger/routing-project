@@ -84,14 +84,14 @@ class MapboxDistanceMatrixService {
 			[Number(depot.location.lon), Number(depot.location.lat)]
 		];
 
-		const addresses: string[] = [depot.location.address_line1 || depot.depot.name || 'Depot'];
+		const addresses: string[] = [depot.location.address_line_1 || depot.depot.name || 'Depot'];
 
 		const locationIds: string[] = [depot.location.id];
 
 		// Add all stop coordinates in sorted order
 		for (const { location } of mapStops) {
 			coordinates.push([Number(location.lon), Number(location.lat)]);
-			addresses.push(location.address_line1 || location.name || 'Unknown');
+			addresses.push(location.address_line_1 || location.name || 'Unknown');
 			locationIds.push(location.id);
 		}
 

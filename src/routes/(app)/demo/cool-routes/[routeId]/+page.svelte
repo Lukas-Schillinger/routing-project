@@ -159,7 +159,7 @@
 														{stop.stop.contact_name || 'No contact name'}
 													</div>
 													<div class="truncate text-muted-foreground">
-														{stop.location.address_line1}
+														{stop.location.address_line_1}
 													</div>
 												</div>
 											</div>
