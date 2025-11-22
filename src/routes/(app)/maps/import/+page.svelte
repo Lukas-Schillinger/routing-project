@@ -9,6 +9,7 @@
 	import type { PageData } from './$types';
 
 	import { goto } from '$app/navigation';
+	import { Button } from '$lib/components/ui/button';
 	import { mapApi } from '$lib/services/api';
 	import { geocodingFeatureToLocation } from '$lib/utils';
 	import ColumnMappingStep from './ColumnMappingStep.svelte';
@@ -25,6 +26,7 @@
 	let selectedFile = $state<File | null>(null);
 	let geocodedResults = $state<GeocodeCSVResult[]>([]);
 	let isGeocoding = $state(false);
+	let isCreating = $state(false);
 
 	// Set page header
 	const pageHeaderContext = getContext<{ set: (header: any) => void }>('pageHeader');
@@ -39,6 +41,22 @@
 		{ number: 2, title: 'Map Columns', icon: Settings },
 		{ number: 3, title: 'Geocode', icon: FileText }
 	];
+
+	async function createEmptyMap() {
+		try {
+			isCreating = true;
+			const { map } = await mapApi.create({
+				title: `Map ${new Date().toLocaleDateString()}`
+			});
+			console.log(map.map.id);
+			await goto(`/maps/${map.map.id}`);
+		} catch (error) {
+			console.error('Failed to create map:', error);
+			alert('Failed to create map. Please try again.');
+		} finally {
+			isCreating = false;
+		}
+	}
 
 	function handleFileUploaded(file: File, headers: string[], rows: any[]) {
 		selectedFile = file;
@@ -165,6 +183,9 @@
 
 	<!-- Step Content -->
 	{#if currentStep === 1}
+		<Button class="w-full" onclick={createEmptyMap} variant="outline" disabled={isCreating}>
+			{isCreating ? 'Creating...' : 'Create empty map'}
+		</Button>
 		<FileUploadStep onFileUploaded={handleFileUploaded} />
 	{:else if currentStep === 2}
 		<ColumnMappingStep
