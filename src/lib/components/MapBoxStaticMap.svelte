@@ -100,12 +100,16 @@
 		href="/maps/{mapId}"
 		class="block h-full overflow-hidden rounded-t-lg sm:rounded-r-none sm:rounded-bl-lg"
 	>
-		<img
-			src={mapUrl}
-			class="h-28 w-full object-cover shadow transition-transform duration-300 hover:scale-110 sm:h-full sm:w-32 md:w-56 lg:w-72"
-			alt="Map showing {stops.length} stops"
-			{...restProps}
-		/>
+		{#if stops.length}
+			<img
+				src={mapUrl}
+				class="h-28 w-full object-cover shadow transition-transform duration-300 hover:scale-110 sm:h-full sm:w-32 md:w-56 lg:w-72"
+				alt="Map showing {stops.length} stops"
+				{...restProps}
+			/>
+		{:else}
+			<div class="h-full bg-secondary"></div>
+		{/if}
 	</a>
 {:else}
 	<div

@@ -15,6 +15,7 @@
 	import { getContext } from 'svelte';
 	import type { PageData } from './$types';
 	import OptimizationCard from './OptimizationCard/';
+	import OptimizationLoadingCard from './OptimizationLoading/OptimizationLoadingCard.svelte';
 	import DetailedRoutesTable from './tables/DetailedRoutesTable.svelte';
 	import EditDriversTable from './tables/EditDriversTable.svelte';
 	import EditStopsDataTable from './tables/EditStopsDataTable';
@@ -105,17 +106,15 @@
 
 <div class="space-y-6">
 	<!-- Map -->
-	{#if data.stops.length > 0}
-		<div class="h-[500px]">
-			<MapView
-				stops={data.stops}
-				routes={data.routes}
-				drivers={data.allDrivers}
-				bind:hiddenDrivers
-				bind:focusedStopId
-			/>
-		</div>
-	{/if}
+	<div class="h-[500px]">
+		<MapView
+			stops={data.stops}
+			routes={data.routes}
+			drivers={data.allDrivers}
+			bind:hiddenDrivers
+			bind:focusedStopId
+		/>
+	</div>
 	<!-- Routes Section (View Mode Only) -->
 	{#if isViewMode}
 		<!-- New Card-based Routes View -->
@@ -151,7 +150,7 @@
 	{/if}
 
 	<!-- Stops Section (Edit Mode Only) -->
-	{#if !isViewMode}
+	{#if !isViewMode && !isOptimizing}
 		<Card>
 			<CardHeader>
 				<CardTitle class="flex items-center gap-2">
@@ -173,9 +172,9 @@
 		</Card>
 	{/if}
 
-	{#if !isViewMode}
+	{#if !isViewMode && !isOptimizing}
 		<!-- Drivers Section -->
-		<Card class="shadow-lg">
+		<Card class="">
 			<CardHeader>
 				<CardTitle class="flex items-center gap-2">
 					<Truck class="h-5 w-5 text-primary" />
@@ -212,21 +211,25 @@
 	{/if}
 
 	<!-- Optimization Section -->
-	{#if !isViewMode}
+	{#if !isViewMode && !isOptimizing}
 		<OptimizationCard
 			assignedDrivers={data.assignedDrivers}
 			stops={data.stops}
 			map={data.map}
 			depots={data.depots}
-			{isOptimizing}
+			bind:isOptimizing
 			onRoutesOptimized={() => invalidateAll()}
 			onDepotCreated={() => invalidateAll()}
 		/>
-	{:else}
+	{/if}
+	{#if isViewMode}
 		<div class="flex justify-center">
 			<Button size="lg" onclick={switchToEditMode} disabled={isLoading} variant="outline">
 				Switch to Edit Mode
 			</Button>
 		</div>
+	{/if}
+	{#if isOptimizing}
+		<OptimizationLoadingCard />
 	{/if}
 </div>

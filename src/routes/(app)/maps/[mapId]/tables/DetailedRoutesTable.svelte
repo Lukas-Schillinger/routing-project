@@ -78,7 +78,7 @@
 			{@const isUnassigned = driverId === 'unassigned'}
 			{#if driverStops.length > 0}
 				<div class="mb-2 flex items-center justify-between overflow-auto">
-					<div class="flex items-center gap-3">
+					<div class="flex w-full items-center gap-3">
 						{#if isUnassigned}
 							<Package class="h-5 w-5 text-muted-foreground" />
 							<div>
@@ -89,7 +89,7 @@
 								</Card.Description>
 							</div>
 						{:else if driver}
-							<Collapsible.Root>
+							<Collapsible.Root open={true} class="w-full">
 								<div class="flex items-center gap-2">
 									<Collapsible.Trigger class={buttonVariants({ variant: 'outline', size: 'sm' })}>
 										<ChevronDown />
@@ -114,11 +114,11 @@
 									</Card.Description>
 								</div>
 								<div>
-									<Collapsible.Content forceMount class="overflow-scroll">
+									<Collapsible.Content forceMount class="w-full overflow-scroll">
 										{#snippet child({ props, open })}
 											{#if open}
 												<div {...props} transition:slide>
-													<Table.Root>
+													<Table.Root class="w-full">
 														<Table.Header>
 															<Table.Row>
 																<Table.Head class="w-12">#</Table.Head>

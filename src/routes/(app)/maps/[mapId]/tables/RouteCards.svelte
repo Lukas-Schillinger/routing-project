@@ -202,7 +202,13 @@
 											</Avatar.Root>
 										</div>
 										<div class="min-w-0 flex-1">
-											<Card.Title class="flex items-center gap-2 text-xl">
+											<Card.Title
+												class="flex items-center gap-2 text-xl {hiddenDrivers?.find(
+													(e) => e.id == driver.id
+												)
+													? 'text-muted-foreground'
+													: ''}"
+											>
 												{driver.name}
 											</Card.Title>
 											<Card.Description class="flex flex-col gap-1">

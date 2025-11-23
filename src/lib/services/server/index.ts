@@ -1,4 +1,8 @@
-// Server-side services
+/** Server-side services. These should be the only files that interact with the DB.
+ *
+ * Client access to services is mediated through $lib/services/api which calls API routes
+ * at src/routes/api.
+ */
 export {
 	CSVImportService,
 	csvImportService,

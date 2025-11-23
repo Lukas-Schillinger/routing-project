@@ -8,10 +8,10 @@
 	5. Test search, sort, and filter functionality after changes
 -->
 <script lang="ts">
+	import { invalidateAll } from '$app/navigation';
 	import EditOrCreateStopPopover from '$lib/components/EditOrCreateStopPopover';
 	import { Button, buttonVariants } from '$lib/components/ui/button';
 	import * as ButtonGroup from '$lib/components/ui/button-group/index.js';
-	import * as Card from '$lib/components/ui/card';
 	import { createSvelteTable, FlexRender, renderComponent } from '$lib/components/ui/data-table';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import * as Empty from '$lib/components/ui/empty';
@@ -286,19 +286,18 @@
 </script>
 
 {#if stops.length === 0}
-	<Card.Root>
-		<Card.Content class="p-0">
-			<Empty.Root>
-				<Empty.Media variant="icon">
-					<MapPin />
-				</Empty.Media>
-				<Empty.Content>
-					<Empty.Title>No stops yet</Empty.Title>
-					<Empty.Description>Upload a CSV file to add stops to this map.</Empty.Description>
-				</Empty.Content>
-			</Empty.Root>
-		</Card.Content>
-	</Card.Root>
+	<Empty.Root>
+		<Empty.Header>
+			<Empty.Media variant="icon">
+				<MapPin />
+			</Empty.Media>
+			<Empty.Title>No stops yet</Empty.Title>
+			<Empty.Description>Add your first stop to get started.</Empty.Description>
+		</Empty.Header>
+		<EditOrCreateStopPopover mode="create" {mapId} onSuccess={invalidateAll}>
+			<Button variant="secondary">Create your first stop</Button>
+		</EditOrCreateStopPopover>
+	</Empty.Root>
 {:else}
 	<div class="space-y-4">
 		<!-- Toolbar -->
