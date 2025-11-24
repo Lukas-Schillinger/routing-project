@@ -43,8 +43,8 @@ export const load: PageServerLoad = async (event) => {
 		// Set session cookie
 		setSessionTokenCookie(event, sessionToken, session.expires_at);
 
-		// Redirect to dashboard
-		throw redirect(302, '/dashboard');
+		// Redirect to maps page
+		throw redirect(302, '/maps');
 	} catch (err) {
 		if (err instanceof ServiceError) {
 			error(err.statusCode, err.message);

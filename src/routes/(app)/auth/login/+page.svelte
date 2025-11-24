@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import * as Alert from '$lib/components/ui/alert';
 	import { Button } from '$lib/components/ui/button';
 	import {
 		Card,
@@ -9,12 +7,13 @@
 		CardHeader,
 		CardTitle
 	} from '$lib/components/ui/card';
-	import { Input } from '$lib/components/ui/input';
-	import { Label } from '$lib/components/ui/label';
-	import { CircleAlert, Lock, Mail, User } from 'lucide-svelte';
+	import { User } from 'lucide-svelte';
 	import type { ActionData } from './$types';
+	import LoginWithPassword from './LoginWithPassword.svelte';
+	import RequestMagicLogin from './RequestMagicLogin.svelte';
 
 	let { form }: { form: ActionData } = $props();
+	let loginMethod = $state<'password' | 'magic'>('password');
 </script>
 
 <svelte:head>
@@ -33,53 +32,19 @@
 					<User class="mx-auto mb-2 h-8 w-8 " />
 				</CardTitle>
 				<CardDescription class="body-medium text-center ">
-					Enter your email and password to continue
+					{#if loginMethod === 'password'}
+						Enter your email and password to continue
+					{:else}
+						We'll send a magic link to your email
+					{/if}
 				</CardDescription>
 			</CardHeader>
 			<CardContent class="space-y-6">
-				{#if form?.message}
-					<Alert.Root variant="destructive" class="border-red-200 bg-red-50">
-						<CircleAlert class="h-4 w-4 text-red-600" />
-						<Alert.Title class="text-red-800">Error</Alert.Title>
-						<Alert.Description class="text-red-700">{form.message}</Alert.Description>
-					</Alert.Root>
+				{#if loginMethod === 'password'}
+					<LoginWithPassword {form} onRequestMagicLogin={() => (loginMethod = 'magic')} />
+				{:else}
+					<RequestMagicLogin onBack={() => (loginMethod = 'password')} />
 				{/if}
-
-				<form method="post" action="?/login" use:enhance class="space-y-4" novalidate>
-					<div class="space-y-2">
-						<Label for="email" class="body-medium text-foreground">Email</Label>
-						<div class="relative">
-							<Mail class="absolute top-2.5 left-3 h-4 w-4 " />
-							<Input
-								id="email"
-								type="email"
-								name="email"
-								placeholder="Enter your email"
-								class="pl-10"
-								required
-							/>
-						</div>
-					</div>
-
-					<div class="space-y-2">
-						<Label for="password" class="body-medium text-foreground">Password</Label>
-						<div class="relative">
-							<Lock class="absolute top-2.5 left-3 h-4 w-4 " />
-							<Input
-								id="password"
-								type="password"
-								name="password"
-								placeholder="Enter your password"
-								class="pl-10"
-								required
-							/>
-						</div>
-					</div>
-
-					<div class="grid grid-cols-1 gap-3 px-16 pt-2">
-						<Button type="submit">Sign In</Button>
-					</div>
-				</form>
 
 				<div class="text-center">
 					<p class="body-small text-muted-foreground">

@@ -25,26 +25,21 @@
 	class="flex min-h-[calc(100vh)] items-center justify-center bg-gradient-to-br from-forest-600 via-forest-700 to-forest-900 p-6"
 >
 	<div class="w-full max-w-sm">
-		<div class="mb-8 text-center">
-			<h1 class="mb-2 font-serif text-6xl font-bold text-white">Sign Up</h1>
-			<p class="body-medium text-white">Weclome to wend. Lets get started.</p>
-		</div>
-
 		<Card class="border-border bg-card shadow-xl">
 			<CardHeader class="space-y-1">
 				<CardTitle class="headline-card text-center text-foreground">
 					<User class="mx-auto mb-2 h-8 w-8 " />
 				</CardTitle>
 				<CardDescription class="body-medium text-center ">
-					Enter your email and password to continue
+					Enter an email and password to register.
 				</CardDescription>
 			</CardHeader>
 			<CardContent class="space-y-6">
 				{#if form?.message}
-					<Alert.Root variant="destructive" class="border-red-200 bg-red-50">
-						<CircleAlert class="h-4 w-4 text-red-600" />
-						<Alert.Title class="text-red-800">Error</Alert.Title>
-						<Alert.Description class="text-red-700">{form.message}</Alert.Description>
+					<Alert.Root variant="destructive" class="text-destructive">
+						<CircleAlert class="h-4 w-4" />
+						<Alert.Title class="">Error</Alert.Title>
+						<Alert.Description class="">{form.message}</Alert.Description>
 					</Alert.Root>
 				{/if}
 
@@ -96,7 +91,7 @@
 						</div>
 					</div>
 
-					<div class="grid grid-cols-1 gap-3 px-16 pt-2">
+					<div class="grid grid-cols-1 gap-3 pt-2">
 						<Button type="submit">Register</Button>
 					</div>
 				</form>

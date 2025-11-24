@@ -40,16 +40,22 @@ export const POST: RequestHandler = async ({ request, locals, url }) => {
 
 			const magicLoginData = createMagicLoginSchema.parse(body);
 
-			// Create magic login db entry
-			const { magicLogin, token } = await magicLinkService.createMagicLogin(magicLoginData);
+			try {
+				// Create magic login db entry
+				const { magicLogin, token } = await magicLinkService.createMagicLogin(magicLoginData);
 
-			// Send email
-			const loginUrl = `${url.origin}/auth/magic/redeem?token=${token}`;
-			await mailgunClient.sendMagicLoginEmail(magicLogin.email, loginUrl);
+				// Send email
+				const loginUrl = `${url.origin}/auth/magic/redeem?token=${token}`;
+				await mailgunClient.sendMagicLoginEmail(magicLogin.email, loginUrl);
+			} catch (err) {
+				// If user not found, return 204 to prevent email enumeration
+				if (err instanceof ServiceError && err.statusCode === 404) {
+					return new Response(null, { status: 204 });
+				}
+				throw err;
+			}
 
-			return json({
-				message: 'If an account with this email exists, a login link has been sent'
-			});
+			return new Response(null, { status: 204 });
 		}
 
 		error(400, 'Invalid magic link type');

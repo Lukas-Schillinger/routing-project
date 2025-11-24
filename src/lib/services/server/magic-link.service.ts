@@ -140,7 +140,9 @@ export class MagicLinkService {
 				organization_id: existingUser.organization_id,
 				type: 'login',
 				email: existingUser.email,
-				expires_at: this.getExpiry(magicLoginData.token_duration_hours),
+				expires_at: this.getExpiry(
+					magicLoginData.token_duration_hours ? magicLoginData.token_duration_hours : 720
+				),
 				user_id: existingUser.id,
 				token_hash: tokenHash
 			})

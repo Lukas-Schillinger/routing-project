@@ -26,9 +26,9 @@ export const createMagicInviteSchema = z.object({
 });
 
 export const createMagicLoginSchema = z.object({
-	type: z.literal('login'),
-	email: z.string(),
-	token_duration_hours: z.number().default(720)
+	type: z.literal('login').default('login').optional(),
+	email: emailSchema,
+	token_duration_hours: z.number().default(720).optional()
 });
 
 export const magicLinkSchema = z.object({
