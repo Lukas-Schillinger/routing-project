@@ -9,7 +9,6 @@
 	import type { GeocodeCSVResult } from '$lib/services/server/csv-import.service';
 	import {
 		ArrowLeft,
-		CircleAlert,
 		CircleCheck,
 		MapPin,
 		NotepadText,
@@ -59,7 +58,7 @@
 			case 'low':
 				return TriangleAlert;
 			case 'none':
-				return CircleAlert;
+				return TriangleAlert;
 		}
 	}
 
@@ -194,7 +193,7 @@
 					{/if}
 					{#if errorCount > 0}
 						<div class="flex items-center gap-2">
-							<CircleAlert class="h-4 w-4 text-destructive" />
+							<TriangleAlert class="h-4 w-4 text-destructive" />
 							<span>{errorCount} failed</span>
 						</div>
 					{/if}
@@ -234,7 +233,7 @@
 									{:else}
 										<div class="flex items-center justify-between gap-2">
 											<div class="text-sm text-destructive">
-												<CircleAlert class="inline h-3 w-3" />
+												<TriangleAlert class="inline h-3 w-3" />
 												Could not geocode this address
 											</div>
 										</div>
@@ -307,7 +306,7 @@
 	{#if !isGeocoding && errorCount > 0}
 		<div class="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-900">
 			<div class="flex items-start gap-2">
-				<CircleAlert class="mt-0.5 h-4 w-4 flex-shrink-0" />
+				<TriangleAlert class="mt-0.5 h-4 w-4 flex-shrink-0" />
 				<div>
 					<div class="font-medium">Failed to geocode {errorCount} address(es)</div>
 					<div class="mt-1 text-xs">

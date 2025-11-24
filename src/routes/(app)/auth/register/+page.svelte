@@ -11,7 +11,7 @@
 	} from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
-	import { CircleAlert, Lock, Mail, User } from 'lucide-svelte';
+	import { Lock, Mail, TriangleAlert, User } from 'lucide-svelte';
 	import type { ActionData } from './$types';
 
 	let { form }: { form: ActionData } = $props();
@@ -37,7 +37,7 @@
 			<CardContent class="space-y-6">
 				{#if form?.message}
 					<Alert.Root variant="destructive" class="text-destructive">
-						<CircleAlert class="h-4 w-4" />
+						<TriangleAlert class="h-4 w-4" />
 						<Alert.Title class="">Error</Alert.Title>
 						<Alert.Description class="">{form.message}</Alert.Description>
 					</Alert.Root>

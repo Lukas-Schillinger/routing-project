@@ -9,7 +9,7 @@
 	import { magicLinksApi } from '$lib/services/api/auth';
 	import { formatDate } from '$lib/utils';
 	import { Calendar, Trash2, UserPlus, Users, X } from 'lucide-svelte';
-	import CreateMagicInvitePopover from './CreateMagicInvitePopover.svelte';
+	import CreateMagicInvitePopover from './CreateMagicInvitePopover/CreateMagicInvitePopover.svelte';
 
 	// Props
 	let {

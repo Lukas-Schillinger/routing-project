@@ -68,14 +68,32 @@
 			<Table.Header>
 				<Table.Row>
 					<Table.Head />
+					<Table.Head class="w-[50px]"></Table.Head>
 					<Table.Head>Name</Table.Head>
 					<Table.Head>Phone</Table.Head>
-					<Table.Head class="w-[50px]"></Table.Head>
 				</Table.Row>
 			</Table.Header>
 			<Table.Body>
 				{#each drivers as driver}
 					<Table.Row>
+						<Table.Cell>
+							<TableActionsDropdown>
+								<EditOrCreateDriverPopover
+									triggerClass="w-full"
+									mode="edit"
+									{driver}
+									onSuccess={handleDriverSuccess}
+								>
+									<DropdownMenu.Item onSelect={(e) => e.preventDefault()} class="w-full">
+										<Pencil />
+										Edit
+									</DropdownMenu.Item>
+								</EditOrCreateDriverPopover>
+								<Copy onclick={() => copyToClipboard(driver.id)} label="Copy ID" />
+								<Delete onclick={() => handleDelete(driver)} />
+								<MetadataLabel item={driver} />
+							</TableActionsDropdown>
+						</Table.Cell>
 						<Table.Cell>
 							<Avatar.Root class="size-6">
 								<Avatar.Image src={getIdenticon(driver)} alt="avatar" />
@@ -96,25 +114,6 @@
 							{:else}
 								<span class="text-sm text-muted-foreground">—</span>
 							{/if}
-						</Table.Cell>
-
-						<Table.Cell>
-							<TableActionsDropdown>
-								<EditOrCreateDriverPopover
-									triggerClass="w-full"
-									mode="edit"
-									{driver}
-									onSuccess={handleDriverSuccess}
-								>
-									<DropdownMenu.Item onSelect={(e) => e.preventDefault()} class="w-full">
-										<Pencil />
-										Edit
-									</DropdownMenu.Item>
-								</EditOrCreateDriverPopover>
-								<Copy onclick={() => copyToClipboard(driver.id)} label="Copy ID" />
-								<Delete onclick={() => handleDelete(driver)} />
-								<MetadataLabel item={driver} />
-							</TableActionsDropdown>
 						</Table.Cell>
 					</Table.Row>
 				{/each}
