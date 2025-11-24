@@ -3,11 +3,12 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
+	import * as Empty from '$lib/components/ui/empty';
 	import type { MagicInvite } from '$lib/schemas';
 	import { ApiError } from '$lib/services/api';
 	import { magicLinksApi } from '$lib/services/api/auth';
 	import { formatDate } from '$lib/utils';
-	import { Calendar, UserPlus, Users, X } from 'lucide-svelte';
+	import { Calendar, Trash2, UserPlus, Users, X } from 'lucide-svelte';
 	import CreateMagicInvitePopover from './CreateMagicInvitePopover.svelte';
 
 	// Props
@@ -131,13 +132,17 @@
 			</div>
 
 			{#if magicInvites.length === 0}
-				<div class="rounded-lg border border-dashed p-6 text-center">
-					<UserPlus class="mx-auto h-8 w-8 text-muted-foreground" />
-					<h3 class="mt-2 text-sm font-semibold">No invitations sent</h3>
-					<p class="mt-1 text-sm text-muted-foreground">
-						Invite team members to collaborate on route optimization
-					</p>
-				</div>
+				<Empty.Root class="">
+					<Empty.Header>
+						<Empty.Media variant="icon">
+							<UserPlus class="" />
+						</Empty.Media>
+						<Empty.Title>No invitations sent</Empty.Title>
+						<Empty.Description>
+							Invite team members to collaborate on route optimization
+						</Empty.Description>
+					</Empty.Header>
+				</Empty.Root>
 			{:else}
 				<div class="space-y-3">
 					{#each sortedInvites as invite (invite.id)}
@@ -146,10 +151,13 @@
 						<div class="flex items-center justify-between py-2 {isAccepted ? 'opacity-60' : ''}">
 							<div class="flex items-center gap-3">
 								<div>
-									<p class="text-sm font-medium {isAccepted ? 'text-muted-foreground' : ''}">
+									<p class="font-medium {isAccepted ? 'text-muted-foreground' : ''}">
 										{invite.email}
 									</p>
-									<div class="flex items-center gap-2 text-xs text-muted-foreground">
+									<div class="flex items-center gap-2 text-sm text-muted-foreground">
+										<Badge variant={getStatusBadgeVariant(status)}>
+											{getStatusLabel(status)}
+										</Badge>
 										<Calendar class="h-3 w-3" />
 										{#if isAccepted}
 											Accepted {formatDate(invite.used_at || invite.created_at)}
@@ -162,10 +170,6 @@
 							</div>
 
 							<div class="flex items-center gap-2">
-								<Badge variant={getStatusBadgeVariant(status)}>
-									{getStatusLabel(status)}
-								</Badge>
-
 								{#if status === 'pending'}
 									<Button
 										variant="ghost"
@@ -181,6 +185,15 @@
 										onclick={() => handleDeleteMagicLink(invite.id)}
 									>
 										<X class="h-4 w-4" />
+									</Button>
+								{/if}
+								{#if status === 'expired'}
+									<Button
+										variant="ghost"
+										size="sm"
+										onclick={() => handleDeleteMagicLink(invite.id)}
+									>
+										<Trash2 class="h-4 w-4" />
 									</Button>
 								{/if}
 							</div>

@@ -24,6 +24,15 @@ export const POST: RequestHandler = async ({ request, locals, url }) => {
 
 			const magicInviteData = createMagicInviteSchema.parse(body);
 
+			/** This may need to be updated later. Right now, users can only send
+			 * invitations to their own organization. Admins may need the ability  to
+			 * invite users to create new organizations in the future.
+			 *
+			 * When invitee_organization_id is blank a new organization is created for
+			 * that user.
+			 */
+			magicInviteData.invitee_organization_id = user.organization_id;
+
 			// Create magic invite db entry
 			const { magicInvite, token } = await magicLinkService.createMagicInvite(
 				magicInviteData,
