@@ -7,7 +7,7 @@
 	import { ApiError } from '$lib/services/api';
 	import { magicLinksApi } from '$lib/services/api/auth';
 	import { formatDate } from '$lib/utils';
-	import { Calendar, Mail, UserPlus, Users, X } from 'lucide-svelte';
+	import { Calendar, UserPlus, Users, X } from 'lucide-svelte';
 	import CreateMagicInvitePopover from './CreateMagicInvitePopover.svelte';
 
 	// Props
@@ -143,11 +143,8 @@
 					{#each sortedInvites as invite (invite.id)}
 						{@const status = getInviteStatus(invite)}
 						{@const isAccepted = status === 'accepted'}
-						<div class="flex items-center justify-between p-2 {isAccepted ? 'opacity-60' : ''}">
+						<div class="flex items-center justify-between py-2 {isAccepted ? 'opacity-60' : ''}">
 							<div class="flex items-center gap-3">
-								<div class="rounded-full bg-muted p-2 {isAccepted ? 'opacity-70' : ''}">
-									<Mail class="h-4 w-4" />
-								</div>
 								<div>
 									<p class="text-sm font-medium {isAccepted ? 'text-muted-foreground' : ''}">
 										{invite.email}

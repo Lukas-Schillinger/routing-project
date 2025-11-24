@@ -1,7 +1,7 @@
 // POST /api/magic/request - Create magic login or invite links
 
 import { createMagicInviteSchema, createMagicLoginSchema } from '$lib/schemas';
-import { mailgunClient } from '$lib/services/external/mail';
+import { mailService } from '$lib/services/external/mail';
 import { ServiceError } from '$lib/services/server/errors';
 import { magicLinkService } from '$lib/services/server/magic-link.service';
 import { error, json } from '@sveltejs/kit';
@@ -32,7 +32,7 @@ export const POST: RequestHandler = async ({ request, locals, url }) => {
 
 			// Send email
 			const inviteUrl = `${url.origin}/auth/magic/redeem?token=${token}`;
-			await mailgunClient.sendMagicInviteEmail(magicInvite.email, inviteUrl);
+			await mailService.sendMagicInviteEmail(magicInvite.email, inviteUrl);
 
 			return json(magicInvite);
 		} else if (type === 'login') {
@@ -46,7 +46,7 @@ export const POST: RequestHandler = async ({ request, locals, url }) => {
 
 				// Send email
 				const loginUrl = `${url.origin}/auth/magic/redeem?token=${token}`;
-				await mailgunClient.sendMagicLoginEmail(magicLogin.email, loginUrl);
+				await mailService.sendMagicLoginEmail(magicLogin.email, loginUrl);
 			} catch (err) {
 				// If user not found, return 204 to prevent email enumeration
 				if (err instanceof ServiceError && err.statusCode === 404) {
