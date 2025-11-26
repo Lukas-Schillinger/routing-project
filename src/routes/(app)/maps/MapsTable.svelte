@@ -6,10 +6,11 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
+	import * as Empty from '$lib/components/ui/empty';
 	import type { Map as MapType, StopWithLocation } from '$lib/schemas';
 	import { mapApi } from '$lib/services/api';
 	import { formatDate } from '$lib/utils';
-	import { Calendar, Map, MapPin, Plus, Route, Truck } from 'lucide-svelte';
+	import { Calendar, Map, MapPin, Route, Truck } from 'lucide-svelte';
 
 	let {
 		maps = $bindable(),
@@ -81,10 +82,20 @@
 			<p class="body-medium mb-6 text-center text-muted-foreground">
 				Get started by uploading a CSV file with addresses to create your first map.
 			</p>
-			<Button href="/demo/csv">
-				<Plus class="mr-2 h-4 w-4" />
-				Upload CSV
-			</Button>
+			<Empty.Root class="border border-dashed">
+				<Empty.Header>
+					<Empty.Media variant="icon">
+						<Map />
+					</Empty.Media>
+					<Empty.Title>No maps yet</Empty.Title>
+					<Empty.Description>
+						Get started by uploading a CSV file with addresses to create your first map.
+					</Empty.Description>
+				</Empty.Header>
+				<Empty.Content>
+					<Button variant="outline" href="/maps/import">create map</Button>
+				</Empty.Content>
+			</Empty.Root>
 		</Card.Content>
 	</Card.Root>
 {:else}
