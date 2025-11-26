@@ -1,15 +1,12 @@
 import { updateStopSchema } from '$lib/schemas/stop';
 import { stopService } from '$lib/services/server';
+import { authorizeRoute } from '$lib/services/server/auth';
 import { ServiceError } from '$lib/services/server/errors';
 import { error, json, type RequestHandler } from '@sveltejs/kit';
 import { ZodError } from 'zod';
 
-export const GET: RequestHandler = async ({ locals, params }) => {
-	const user = locals.user;
-	if (!user) {
-		error(401, 'Unauthorized');
-	}
-
+export const GET: RequestHandler = async ({ params }) => {
+	const user = authorizeRoute();
 	const { stopId } = params;
 
 	if (!stopId) {
@@ -28,11 +25,8 @@ export const GET: RequestHandler = async ({ locals, params }) => {
 	}
 };
 
-export const PATCH: RequestHandler = async ({ locals, params, request }) => {
-	const user = locals.user;
-	if (!user) {
-		error(401, 'Unauthorized');
-	}
+export const PATCH: RequestHandler = async ({ params, request }) => {
+	const user = authorizeRoute();
 
 	const { stopId } = params;
 
@@ -57,11 +51,8 @@ export const PATCH: RequestHandler = async ({ locals, params, request }) => {
 	}
 };
 
-export const DELETE: RequestHandler = async ({ locals, params }) => {
-	const user = locals.user;
-	if (!user) {
-		error(401, 'Unauthorized');
-	}
+export const DELETE: RequestHandler = async ({ params }) => {
+	const user = authorizeRoute();
 
 	const { stopId } = params;
 

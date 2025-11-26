@@ -1,4 +1,5 @@
 import { mapboxGeocoding } from '$lib/services/external/mapbox';
+import { authorizeRoute } from '$lib/services/server/auth';
 import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
@@ -8,6 +9,8 @@ import type { RequestHandler } from './$types';
  * Supports proximity biasing for better local results
  */
 export const GET: RequestHandler = async ({ url }) => {
+	authorizeRoute();
+
 	const q = url.searchParams.get('q');
 	const country = url.searchParams.get('country') || 'US';
 	const limit = Number(url.searchParams.get('limit') || 8);

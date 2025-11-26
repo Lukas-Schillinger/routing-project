@@ -1,13 +1,10 @@
 import { createMapSchema } from '$lib/schemas/map';
 import { mapService, ServiceError } from '$lib/services/server';
+import { authorizeRoute } from '$lib/services/server/auth';
 import { json, type RequestHandler } from '@sveltejs/kit';
 
-export const GET: RequestHandler = async ({ locals, url }) => {
-	const user = locals.user;
-	if (!user) {
-		return json({ error: 'Unauthorized' }, { status: 401 });
-	}
-
+export const GET: RequestHandler = async ({ url }) => {
+	const user = authorizeRoute();
 	try {
 		// Parse query parameters
 		const includeStats = url.searchParams.get('includeStats') === 'true';
@@ -26,11 +23,8 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 	}
 };
 
-export const POST: RequestHandler = async ({ request, locals }) => {
-	const user = locals.user;
-	if (!user) {
-		return json({ error: 'Unauthorized' }, { status: 401 });
-	}
+export const POST: RequestHandler = async ({ request }) => {
+	const user = authorizeRoute();
 
 	try {
 		const body = await request.json();

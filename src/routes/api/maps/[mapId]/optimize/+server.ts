@@ -1,15 +1,13 @@
 // POST /api/maps/[mapId]/optimize - Optimize routes for a map using TSP solver
 
 import { optimizationService } from '$lib/services/server';
+import { authorizeRoute } from '$lib/services/server/auth';
 import { ServiceError } from '$lib/services/server/errors';
 import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
-export const POST: RequestHandler = async ({ params, request, locals }) => {
-	const user = locals.user;
-	if (!user) {
-		error(401, 'Unauthorized');
-	}
+export const POST: RequestHandler = async ({ params, request }) => {
+	const user = authorizeRoute();
 
 	const { mapId } = params;
 

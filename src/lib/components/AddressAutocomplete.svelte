@@ -36,7 +36,6 @@
 
 	const LOCATION_STORAGE_KEY = 'user_proximity_location';
 
-	// Pure functions - no side effects
 	const getFullAddress = (feature: GeocodingFeature): string =>
 		feature.properties.full_address ||
 		`${feature.properties.name}${feature.properties.place_formatted ? ', ' + feature.properties.place_formatted : ''}`;
@@ -69,7 +68,6 @@
 		}
 	}
 
-	// Async pure function - returns geocoding results
 	async function fetchAddressSuggestions(
 		query: string,
 		options: { country: string; limit: number; proximity?: [number, number] }

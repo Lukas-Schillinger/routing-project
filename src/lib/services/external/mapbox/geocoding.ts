@@ -23,35 +23,6 @@ const types = 'address,secondary_address';
  */
 export class MapboxGeocodingService {
 	/**
-	 * Forward geocoding - convert address to coordinates using v6 API
-	 */
-	async forward(
-		searchText: string,
-		options: {
-			country?: string;
-			proximity?: [number, number]; // [lon, lat]
-			limit?: number;
-		} = {}
-	): Promise<GeocodingFeature[]> {
-		const params: Record<string, string> = {
-			q: searchText,
-			limit: String(options.limit || 10),
-			country: options.country || 'US'
-		};
-
-		if (options.proximity) {
-			params.proximity = options.proximity.join(',');
-		}
-
-		params.types = types;
-
-		const response = await mapboxClient.get<unknown>('/search/geocode/v6/forward', params);
-		const validated = geocodingResponseSchema.parse(response);
-
-		return validated.features;
-	}
-
-	/**
 	 * Autocomplete - faster, optimized for autocomplete UI
 	 * Returns empty array if query is too short
 	 */

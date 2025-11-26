@@ -1,12 +1,10 @@
 import { updateMapSchema } from '$lib/schemas/map';
 import { mapService, ServiceError } from '$lib/services/server';
+import { authorizeRoute } from '$lib/services/server/auth';
 import { json, type RequestHandler } from '@sveltejs/kit';
 
-export const GET: RequestHandler = async ({ locals, params }) => {
-	const user = locals.user;
-	if (!user) {
-		return json({ error: 'Unauthorized' }, { status: 401 });
-	}
+export const GET: RequestHandler = async ({ params }) => {
+	const user = authorizeRoute();
 
 	const mapId = params.mapId;
 	if (!mapId) {
@@ -28,11 +26,8 @@ export const GET: RequestHandler = async ({ locals, params }) => {
 	}
 };
 
-export const PATCH: RequestHandler = async ({ request, locals, params }) => {
-	const user = locals.user;
-	if (!user) {
-		return json({ error: 'Unauthorized' }, { status: 401 });
-	}
+export const PATCH: RequestHandler = async ({ request, params }) => {
+	const user = authorizeRoute();
 
 	const mapId = params.mapId;
 	if (!mapId) {
@@ -57,11 +52,8 @@ export const PATCH: RequestHandler = async ({ request, locals, params }) => {
 	}
 };
 
-export const DELETE: RequestHandler = async ({ locals, params }) => {
-	const user = locals.user;
-	if (!user) {
-		return json({ error: 'Unauthorized' }, { status: 401 });
-	}
+export const DELETE: RequestHandler = async ({ params }) => {
+	const user = authorizeRoute();
 
 	const mapId = params.mapId;
 	if (!mapId) {

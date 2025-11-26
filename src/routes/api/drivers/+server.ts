@@ -2,17 +2,15 @@
 // POST /api/drivers - Create a new driver
 
 import { driverCreateSchema } from '$lib/schemas/driver';
+import { authorizeRoute } from '$lib/services/server/auth';
 import { driverService } from '$lib/services/server/driver.service';
 import { ServiceError } from '$lib/services/server/errors';
 import { error, json } from '@sveltejs/kit';
 import { ZodError } from 'zod';
 import type { RequestHandler } from './$types';
 
-export const GET: RequestHandler = async ({ locals }) => {
-	const user = locals.user;
-	if (!user) {
-		error(401, 'Unauthorized');
-	}
+export const GET: RequestHandler = async () => {
+	const user = authorizeRoute();
 
 	try {
 		const drivers = await driverService.getDrivers(user.organization_id);
@@ -26,11 +24,8 @@ export const GET: RequestHandler = async ({ locals }) => {
 	}
 };
 
-export const POST: RequestHandler = async ({ request, locals }) => {
-	const user = locals.user;
-	if (!user) {
-		error(401, 'Unauthorized');
-	}
+export const POST: RequestHandler = async ({ request }) => {
+	const user = authorizeRoute();
 
 	try {
 		const body = await request.json();

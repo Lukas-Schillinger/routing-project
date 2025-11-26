@@ -5,7 +5,7 @@ import * as table from '$lib/server/db/schema';
 import { sha256 } from '@oslojs/crypto/sha2';
 import { encodeBase64url, encodeHexLowerCase } from '@oslojs/encoding';
 import type { RequestEvent } from '@sveltejs/kit';
-import { redirect } from '@sveltejs/kit';
+import { error, redirect } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
 
 const DAY_IN_MS = 1000 * 60 * 60 * 24;
@@ -89,10 +89,20 @@ export function deleteSessionTokenCookie(event: RequestEvent) {
 	});
 }
 
+/** Used to authorize user routes */
 export function getUserOrRedirect(): PublicUser {
 	const request = getRequestEvent();
 	if (!request.locals.user) {
 		throw redirect(302, '/auth/login');
+	}
+	return request.locals.user;
+}
+
+/** Used to authorize API routes */
+export function authorizeRoute(): PublicUser {
+	const request = getRequestEvent();
+	if (!request.locals.user) {
+		error(401);
 	}
 	return request.locals.user;
 }

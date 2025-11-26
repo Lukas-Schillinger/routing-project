@@ -1,8 +1,10 @@
 import { mapboxGeocoding } from '$lib/services/external/mapbox';
+import { authorizeRoute } from '$lib/services/server/auth';
 import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ request }) => {
+	authorizeRoute();
 	try {
 		const { addresses } = await request.json();
 

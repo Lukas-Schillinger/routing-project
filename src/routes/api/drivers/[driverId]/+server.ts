@@ -3,17 +3,15 @@
 // DELETE /api/drivers/[driverId] - Delete a driver
 
 import { driverUpdateSchema } from '$lib/schemas/driver';
+import { authorizeRoute } from '$lib/services/server/auth';
 import { driverService } from '$lib/services/server/driver.service';
 import { ServiceError } from '$lib/services/server/errors';
 import { error, json } from '@sveltejs/kit';
 import { ZodError } from 'zod';
 import type { RequestHandler } from './$types';
 
-export const GET: RequestHandler = async ({ params, locals }) => {
-	const user = locals.user;
-	if (!user) {
-		error(401, 'Unauthorized');
-	}
+export const GET: RequestHandler = async ({ params }) => {
+	const user = authorizeRoute();
 
 	const { driverId } = params;
 
@@ -29,11 +27,8 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 	}
 };
 
-export const PATCH: RequestHandler = async ({ params, request, locals }) => {
-	const user = locals.user;
-	if (!user) {
-		error(401, 'Unauthorized');
-	}
+export const PATCH: RequestHandler = async ({ params, request }) => {
+	const user = authorizeRoute();
 
 	const { driverId } = params;
 
@@ -61,11 +56,8 @@ export const PATCH: RequestHandler = async ({ params, request, locals }) => {
 	}
 };
 
-export const DELETE: RequestHandler = async ({ params, locals }) => {
-	const user = locals.user;
-	if (!user) {
-		error(401, 'Unauthorized');
-	}
+export const DELETE: RequestHandler = async ({ params }) => {
+	const user = authorizeRoute();
 
 	const { driverId } = params;
 

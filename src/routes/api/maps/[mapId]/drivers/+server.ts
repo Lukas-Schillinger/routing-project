@@ -2,15 +2,13 @@
 // POST /api/maps/[mapId]/drivers - Assign a driver to a map
 
 import { mapService, ServiceError } from '$lib/services/server';
+import { authorizeRoute } from '$lib/services/server/auth';
 import { json } from '@sveltejs/kit';
 import { ZodError } from 'zod';
 import type { RequestHandler } from './$types';
 
-export const GET: RequestHandler = async ({ params, locals }) => {
-	const user = locals.user;
-	if (!user) {
-		return json({ error: 'Unauthorized' }, { status: 401 });
-	}
+export const GET: RequestHandler = async ({ params }) => {
+	const user = authorizeRoute();
 
 	const mapId = params.mapId;
 	if (!mapId) {
@@ -32,11 +30,8 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 	}
 };
 
-export const POST: RequestHandler = async ({ params, request, locals }) => {
-	const user = locals.user;
-	if (!user) {
-		return json({ error: 'Unauthorized' }, { status: 401 });
-	}
+export const POST: RequestHandler = async ({ params, request }) => {
+	const user = authorizeRoute();
 
 	const mapId = params.mapId;
 	if (!mapId) {

@@ -6,26 +6,6 @@ const RUN_METERED = env.RUN_METERED === '1';
 
 // Integration test - actually calls Mapbox Geocoding API
 describe.skipIf(!RUN_METERED)('MapboxGeocodingService Integration Tests', () => {
-	describe('forward geocoding', () => {
-		it('should geocode a well-known address', async () => {
-			const address = 'Times Square, New York, NY';
-
-			const results = await mapboxGeocoding.forward(address);
-
-			expect(results).toBeDefined();
-			expect(results.length).toBeGreaterThan(0);
-
-			const firstResult = results[0];
-			expect(firstResult.geometry.coordinates).toBeDefined();
-			expect(firstResult.geometry.coordinates).toHaveLength(2);
-
-			const [lon, lat] = firstResult.geometry.coordinates;
-			// Times Square should be roughly around these coordinates
-			expect(lon).toBeCloseTo(-73.985, 1); // longitude
-			expect(lat).toBeCloseTo(40.758, 1); // latitude
-		});
-	});
-
 	describe('batch geocoding', () => {
 		it('should batch geocode multiple well-known addresses', async () => {
 			const addresses = [
