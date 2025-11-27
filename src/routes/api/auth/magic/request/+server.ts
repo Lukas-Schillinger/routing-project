@@ -2,25 +2,21 @@
 
 import { createMagicInviteSchema, createMagicLoginSchema } from '$lib/schemas';
 import { mailService } from '$lib/services/external/mail';
+import { authorizeRoute } from '$lib/services/server/auth';
 import { ServiceError } from '$lib/services/server/errors';
 import { magicLinkService } from '$lib/services/server/magic-link.service';
 import { error, json } from '@sveltejs/kit';
 import { ZodError } from 'zod';
 import type { RequestHandler } from './$types';
 
-export const POST: RequestHandler = async ({ request, locals, url }) => {
+export const POST: RequestHandler = async ({ request, url }) => {
 	try {
 		const body = await request.json();
 		const type = body.type;
 
-		console.log(body);
-
 		if (type === 'invite') {
 			// Invites require authentication
-			const user = locals.user;
-			if (!user) {
-				error(400, 'Unauthorized');
-			}
+			const user = authorizeRoute();
 
 			const magicInviteData = createMagicInviteSchema.parse(body);
 
