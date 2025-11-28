@@ -213,6 +213,7 @@
 	<Popover.Content align="start" class="w-[var(--bits-popover-anchor-width)] p-0">
 		<Command.Root shouldFilter={false}>
 			<Command.Input
+				class="text-base"
 				{placeholder}
 				bind:value={searchQuery}
 				oninput={(e) => handleSearchInput(e.currentTarget.value)}
