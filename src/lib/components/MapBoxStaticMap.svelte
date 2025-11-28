@@ -103,12 +103,12 @@
 		{#if stops.length}
 			<img
 				src={mapUrl}
-				class="h-28 w-full object-cover shadow transition-transform duration-300 hover:scale-110 sm:h-full sm:w-32 md:w-56 lg:w-72"
+				class="h-24 w-full object-cover shadow transition-transform duration-300 hover:scale-110 sm:h-full sm:w-32 md:w-56 lg:w-72"
 				alt="Map showing {stops.length} stops"
 				{...restProps}
 			/>
 		{:else}
-			<div class="h-full bg-secondary"></div>
+			<div class="h-24 bg-secondary sm:h-full"></div>
 		{/if}
 	</a>
 {:else}

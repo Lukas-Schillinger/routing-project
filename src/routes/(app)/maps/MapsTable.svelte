@@ -10,7 +10,9 @@
 	import type { Map as MapType, StopWithLocation } from '$lib/schemas';
 	import { mapApi } from '$lib/services/api';
 	import { formatDate } from '$lib/utils';
-	import { Calendar, Map, MapPin, Route, Truck } from 'lucide-svelte';
+	import { Calendar, ChevronLeft, ChevronRight, Map, MapPin, Route, Truck } from 'lucide-svelte';
+	import { toast } from 'svelte-sonner';
+	import { MediaQuery } from 'svelte/reactivity';
 
 	let {
 		maps = $bindable(),
@@ -19,6 +21,31 @@
 		maps: MapType[];
 		stops: StopWithLocation[];
 	} = $props();
+
+	let currentPage = $state(1);
+	const pageSize = $derived(new MediaQuery('(min-width: 640px)').current ? 10 : 4);
+
+	const totalPages = $derived(Math.ceil(maps.length / pageSize));
+	const paginatedMaps = $derived(maps.slice((currentPage - 1) * pageSize, currentPage * pageSize));
+
+	// Reset to page 1 if maps change and current page is out of bounds
+	$effect(() => {
+		if (currentPage > totalPages && totalPages > 0) {
+			currentPage = totalPages;
+		}
+	});
+
+	function goToPreviousPage() {
+		if (currentPage > 1) {
+			currentPage--;
+		}
+	}
+
+	function goToNextPage() {
+		if (currentPage < totalPages) {
+			currentPage++;
+		}
+	}
 
 	const handleDelete = async (id: string) => {
 		if (!confirm('Are you sure you want to delete this map?')) {
@@ -29,9 +56,11 @@
 			await mapApi.delete(id);
 			// Remove from local array
 			maps = maps.filter((map) => map.id !== id);
+			toast.success('Map deleted');
 		} catch (error) {
-			console.error('Failed to delete map:', error);
-			alert('Failed to delete map. Please try again.');
+			toast.error('Error deleting map', {
+				description: error instanceof Error ? error.message : 'unknown error'
+			});
 		}
 	};
 
@@ -99,8 +128,8 @@
 		</Card.Content>
 	</Card.Root>
 {:else}
-	<div class=" grid grid-cols-1 gap-6 sm:grid-cols-2">
-		{#each maps as map}
+	<div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+		{#each paginatedMaps as map}
 			{@const mapStops = getMapStops(map.id, stops)}
 			{@const isRouted = getMapIsRouted(map.id, stops)}
 			{@const driverCount = getMapDriverCount(map.id, stops)}
@@ -172,4 +201,33 @@
 			</Card.Root>
 		{/each}
 	</div>
+
+	<!-- Pagination controls -->
+	{#if totalPages > 1}
+		<div class="mt-6 flex items-center justify-between">
+			<div class="flex w-full items-center justify-center gap-2">
+				<Button
+					class="grow sm:grow-0"
+					variant="outline"
+					size="icon"
+					onclick={goToPreviousPage}
+					disabled={currentPage === 1}
+				>
+					<ChevronLeft class="h-4 w-4" />
+				</Button>
+				<span class="text-sm whitespace-nowrap tabular-nums">
+					Page {currentPage} of {totalPages}
+				</span>
+				<Button
+					class="grow sm:grow-0"
+					variant="outline"
+					size="icon"
+					onclick={goToNextPage}
+					disabled={currentPage === totalPages}
+				>
+					<ChevronRight class="h-4 w-4" />
+				</Button>
+			</div>
+		</div>
+	{/if}
 {/if}
