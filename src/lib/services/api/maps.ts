@@ -1,5 +1,11 @@
 import type { Driver } from '$lib/schemas/driver';
-import type { CreateMap, Map, MapWithStats, UpdateMap } from '$lib/schemas/map';
+import type {
+	CreateMap,
+	Map,
+	MapWithStats,
+	OptimizationOptions,
+	UpdateMap
+} from '$lib/schemas/map';
 import type { StopWithLocation } from '$lib/schemas/stop';
 import { apiClient } from './base';
 
@@ -12,17 +18,6 @@ export interface DriverMembership {
 		updated_at: Date;
 	};
 	driver: Driver;
-}
-
-/**
- * Options for route optimization using TSP solver
- */
-export interface OptimizationOptions {
-	depotId: string;
-	fairness?: 'high' | 'medium' | 'low';
-	timeLimitSec?: number;
-	startAtDepot?: boolean;
-	endAtDepot?: boolean;
 }
 
 /**
@@ -120,14 +115,7 @@ class MapApiService {
 	 * Optimize routes for a map using TSP solver
 	 */
 	async optimize(mapId: string, options: OptimizationOptions): Promise<OptimizationResult> {
-		const body = {
-			depotId: options.depotId,
-			fairness: options.fairness || 'medium',
-			timeLimitSec: options.timeLimitSec || 30,
-			startAtDepot: options.startAtDepot !== false,
-			endAtDepot: options.endAtDepot !== false
-		};
-		return apiClient.post<OptimizationResult>(`/maps/${mapId}/optimize`, body);
+		return apiClient.post<OptimizationResult>(`/maps/${mapId}/optimize`, options);
 	}
 
 	/**

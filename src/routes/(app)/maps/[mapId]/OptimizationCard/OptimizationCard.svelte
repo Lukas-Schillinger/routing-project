@@ -69,10 +69,7 @@
 			console.log('Starting Optimization');
 			const res = await mapApi.optimize(map.id, {
 				depotId: selectedDepotId,
-				fairness: fairness, // Options: 'high', 'medium', 'low'
-				timeLimitSec: 30, // Optimization time limit
-				startAtDepot: true, // Routes start at depot
-				endAtDepot: true // Routes end at depot
+				fairness
 			});
 
 			console.log('Optimization Finished');

@@ -15,10 +15,6 @@ export { ServiceError } from './errors';
 export { FileService, fileService } from './file.service';
 export { LocationService, locationService } from './location.service';
 export { MapService, mapService } from './map.service';
-export {
-	OptimizationService,
-	optimizationService,
-	type OptimizationOptions
-} from './optimization.service';
+export { OptimizationService, optimizationService } from './optimization.service';
 export { RouteService, routeService } from './route.service';
 export { StopService, stopService } from './stop.service';

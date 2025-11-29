@@ -58,8 +58,17 @@ export const mapWithStatsSchema = mapSchema.extend({
 	})
 });
 
+/**
+ * Optimization options schema - used by client API, server route, and optimization service
+ */
+export const optimizationOptionsSchema = z.object({
+	depotId: z.string().uuid(),
+	fairness: z.enum(['high', 'medium', 'low']).default('medium')
+});
+
 // Type exports
 export type CreateMap = z.infer<typeof createMapSchema>;
 export type UpdateMap = z.infer<typeof updateMapSchema>;
 export type Map = z.infer<typeof mapSchema>;
 export type MapWithStats = z.infer<typeof mapWithStatsSchema>;
+export type OptimizationOptions = z.infer<typeof optimizationOptionsSchema>;

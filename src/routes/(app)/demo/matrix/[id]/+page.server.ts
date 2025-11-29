@@ -26,11 +26,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 		const result = await mapboxDistanceMatrix.createDistanceMatrix(
 			mapId,
 			firstDepot.depot.id,
-			user.organization_id,
-			{
-				profile: 'mapbox/driving',
-				annotations: 'duration,distance'
-			}
+			user.organization_id
 		);
 
 		return {

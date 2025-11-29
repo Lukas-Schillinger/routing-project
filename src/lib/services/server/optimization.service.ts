@@ -1,3 +1,4 @@
+import type { OptimizationOptions } from '$lib/schemas/map';
 import { db } from '$lib/server/db';
 import { driverMapMemberships, drivers, locations, matrices, stops } from '$lib/server/db/schema';
 import { createHash } from 'crypto';
@@ -6,20 +7,10 @@ import { mapboxDistanceMatrix, mapboxNavigation } from '../external/mapbox';
 import type { DistanceMatrixResult } from '../external/mapbox/distance-matrix';
 import type { Coordinate, MatrixResponse } from '../external/mapbox/types';
 import { tspSolverOptimization } from '../external/tsp_solver';
-import type { OptimizationConfig, OptimizationResult } from '../external/tsp_solver/types';
+import type { OptimizationResult } from '../external/tsp_solver/types';
 import { depotService } from './depot.service';
 import { ServiceError } from './errors';
 import { routeService } from './route.service';
-
-/**
- * Options for map optimization
- */
-export interface OptimizationOptions {
-	/** Required depot ID for route start/end location */
-	depotId: string;
-	/** Optimization configuration */
-	config: OptimizationConfig;
-}
 
 /**
  * Optimization Service
@@ -32,7 +23,7 @@ export class OptimizationService {
 	 *
 	 * @param mapId - Map ID to optimize
 	 * @param organizationId - Organization ID for access control
-	 * @param options - Optimization options including depot and config
+	 * @param options - Optimization options (depotId and fairness)
 	 * @returns Optimization result
 	 */
 	async optimizeMap(
@@ -64,12 +55,17 @@ export class OptimizationService {
 		// 4. Extract driver IDs
 		const vehicleIds = assignedDrivers.map((d) => d.driver.id);
 
-		// 5. Call TSP solver
+		// 5. Call TSP solver with internal config defaults
 		const result = await tspSolverOptimization.optimize(
 			cleanedMatrix,
 			matrixResult.locationIds,
 			vehicleIds,
-			options.config
+			{
+				fairness: options.fairness,
+				time_limit_sec: 30,
+				start_at_depot: true,
+				end_at_depot: true
+			}
 		);
 
 		if (!result.success) {
