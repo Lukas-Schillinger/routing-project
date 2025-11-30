@@ -1,10 +1,17 @@
-import { db } from '$lib/server/db';
-import { locations, stops } from '$lib/server/db/schema';
-import { eq } from 'drizzle-orm';
-import { depotService } from '../../server/depot.service';
-import { ServiceError } from '../../server/errors';
+import { ServiceError } from '$lib/services/server/errors';
 import { mapboxClient } from './client';
 import { matrixResponseSchema, type MatrixResponse } from './types';
+
+/**
+ * Coordinates data for distance matrix computation
+ * Pre-fetched by the optimization service to avoid duplicate DB queries
+ */
+export interface CoordinatesData {
+	/** Ordered coordinates array (depot first, then stops) */
+	coordinates: [number, number][];
+	/** Ordered array of location IDs corresponding to addresses */
+	locationIds: string[];
+}
 
 /**
  * Result returned from distance matrix service
@@ -12,12 +19,8 @@ import { matrixResponseSchema, type MatrixResponse } from './types';
 export interface DistanceMatrixResult {
 	/** Distance matrix in seconds (row-major: [source][destination]) */
 	matrix: number[][];
-	/** Ordered array of addresses (depot first, then stops) */
-	addresses: string[];
 	/** Ordered array of location IDs corresponding to addresses */
 	locationIds: string[];
-	/** Raw Mapbox API response */
-	rawResponse: MatrixResponse;
 }
 
 /**
@@ -26,74 +29,13 @@ export interface DistanceMatrixResult {
  */
 class MapboxDistanceMatrixService {
 	/**
-	 * Create a distance matrix for a map with a depot
+	 * Create a distance matrix from pre-fetched coordinates
 	 *
-	 * @param mapId - The map ID containing stops
-	 * @param depotId - The depot ID (will be first in matrix)
-	 * @param organizationId - Organization ID for access control
-	 * @param options - Matrix computation options
+	 * @param coordinatesData - Pre-fetched coordinates, addresses, and location IDs
 	 * @returns Distance matrix with depot first, followed by stops
 	 */
-	async createDistanceMatrix(
-		mapId: string,
-		depotId: string,
-		organizationId: string
-	): Promise<DistanceMatrixResult> {
-		// Fetch depot with location
-		const depot = await depotService.getDepotById(depotId, organizationId);
-
-		if (!depot.location.lon || !depot.location.lat) {
-			throw ServiceError.validation(
-				'Depot location has no coordinates. Please update the depot with valid coordinates.'
-			);
-		}
-
-		// Fetch all stops with their locations for this map
-		const mapStops = await db
-			.select({
-				stop: stops,
-				location: locations
-			})
-			.from(stops)
-			.innerJoin(locations, eq(stops.location_id, locations.id))
-			.where(eq(stops.map_id, mapId));
-
-		if (mapStops.length === 0) {
-			throw ServiceError.validation('No stops found for this map');
-		}
-
-		// Sort stops by address_hash for deterministic ordering. This allows reuse of the matrix
-		// in the optimization service
-		mapStops.sort((a, b) => {
-			const hashA = a.location.address_hash || '';
-			const hashB = b.location.address_hash || '';
-			return hashA.localeCompare(hashB);
-		});
-
-		// Validate all stops have coordinates
-		for (const { stop, location } of mapStops) {
-			if (!location.lon || !location.lat) {
-				throw ServiceError.validation(
-					`Stop "${location.name || stop.id}" has no coordinates. Geocode all stops before creating distance matrix.`
-				);
-			}
-		}
-
-		// Build coordinates array with depot first
-		const coordinates: [number, number][] = [
-			[Number(depot.location.lon), Number(depot.location.lat)]
-		];
-
-		const addresses: string[] = [depot.location.address_line_1 || depot.depot.name || 'Depot'];
-
-		const locationIds: string[] = [depot.location.id];
-
-		// Add all stop coordinates in sorted order
-		for (const { location } of mapStops) {
-			coordinates.push([Number(location.lon), Number(location.lat)]);
-			addresses.push(location.address_line_1 || location.name || 'Unknown');
-			locationIds.push(location.id);
-		}
+	async createDistanceMatrix(coordinatesData: CoordinatesData): Promise<DistanceMatrixResult> {
+		const { coordinates, locationIds } = coordinatesData;
 
 		// Validate coordinate count (Mapbox limit: 2-25 for most profiles, 2-10 for driving-traffic)
 		const profile = 'mapbox/driving';
@@ -134,10 +76,8 @@ class MapboxDistanceMatrixService {
 		}
 
 		return {
-			matrix: validatedResponse.durations || [],
-			addresses,
-			locationIds,
-			rawResponse: validatedResponse
+			matrix: validatedResponse.durations,
+			locationIds
 		};
 	}
 }

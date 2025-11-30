@@ -2,10 +2,10 @@ import type { OptimizationOptions } from '$lib/schemas/map';
 import { db } from '$lib/server/db';
 import { driverMapMemberships, drivers, locations, matrices, stops } from '$lib/server/db/schema';
 import { createHash } from 'crypto';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import { mapboxDistanceMatrix, mapboxNavigation } from '../external/mapbox';
-import type { DistanceMatrixResult } from '../external/mapbox/distance-matrix';
-import type { Coordinate, MatrixResponse } from '../external/mapbox/types';
+import type { CoordinatesData, DistanceMatrixResult } from '../external/mapbox/distance-matrix';
+import type { Coordinate } from '../external/mapbox/types';
 import { tspSolverOptimization } from '../external/tsp_solver';
 import type { OptimizationResult } from '../external/tsp_solver/types';
 import { depotService } from './depot.service';
@@ -40,16 +40,18 @@ export class OptimizationService {
 			);
 		}
 
-		// 2. Get or create distance matrix (with caching)
-		const matrixResult = await this.getOrCreateDistanceMatrix(
+		// 2. Get coordinates data (fetches depot once, reused throughout)
+		const { coordinatesData, depotCoord, locationCoordMap } = await this.getCoordinatesData(
 			mapId,
 			options.depotId,
 			organizationId
 		);
 
-		// 3. Prepare matrix (handle null values for unreachable locations)
-		const cleanedMatrix = matrixResult.matrix.map((row: (number | null)[]) =>
-			row.map((value: number | null) => (value === null ? 999999 : value))
+		// 3. Get or create distance matrix (with caching)
+		const matrixResult = await this.getOrCreateDistanceMatrix(
+			organizationId,
+			mapId,
+			coordinatesData
 		);
 
 		// 4. Extract driver IDs
@@ -57,7 +59,7 @@ export class OptimizationService {
 
 		// 5. Call TSP solver with internal config defaults
 		const result = await tspSolverOptimization.optimize(
-			cleanedMatrix,
+			matrixResult.matrix,
 			matrixResult.locationIds,
 			vehicleIds,
 			{
@@ -75,11 +77,18 @@ export class OptimizationService {
 		// 6. Clear existing driver assignments
 		await this.clearStopAssignments(mapId);
 
-		// 7. Apply optimized routes to database
+		// 7. Apply optimized routes to database (batched)
 		await this.applyOptimizedRoutes(mapId, result);
 
-		// 8. Compute and save route geometries in parallel
-		await this.computeAndSaveRoutes(mapId, organizationId, options.depotId, result);
+		// 8. Compute and save route geometries
+		await this.computeAndSaveRoutes(
+			mapId,
+			organizationId,
+			options.depotId,
+			result,
+			depotCoord,
+			locationCoordMap
+		);
 
 		return result;
 	}
@@ -122,15 +131,12 @@ export class OptimizationService {
 	 * Checks for existing matrix with matching input hash before creating new one
 	 */
 	private async getOrCreateDistanceMatrix(
+		organizationId: string,
 		mapId: string,
-		depotId: string,
-		organizationId: string
+		coordinatesData: CoordinatesData
 	): Promise<DistanceMatrixResult> {
-		// Get coordinates and create input hash
-		const coordinatesData = await this.getCoordinatesData(mapId, depotId, organizationId);
 		const inputHash = this.createInputHash(coordinatesData);
 
-		console.log('DO I NEED TO CREATE A MATRIX?');
 		// Check for existing matrix with same input hash
 		const existingMatrix = await db
 			.select()
@@ -139,32 +145,16 @@ export class OptimizationService {
 			.limit(1);
 
 		if (existingMatrix.length > 0) {
-			console.log('----------------------NO');
-
-			// Return cached matrix (create a mock MatrixResponse for compatibility)
+			// Return cached matrix
 			const cached = existingMatrix[0];
-			const mockResponse: MatrixResponse = {
-				code: 'Ok',
-				durations: cached.matrix,
-				sources: [],
-				destinations: []
-			};
-
 			return {
 				matrix: cached.matrix as number[][],
-				addresses: coordinatesData.addresses,
-				locationIds: coordinatesData.locationIds,
-				rawResponse: mockResponse
+				locationIds: coordinatesData.locationIds
 			};
 		}
-		console.log('----------------------YES');
 
-		// Create new matrix via API
-		const matrixResult = await mapboxDistanceMatrix.createDistanceMatrix(
-			mapId,
-			depotId,
-			organizationId
-		);
+		// Create new matrix via API using pre-fetched coordinates
+		const matrixResult = await mapboxDistanceMatrix.createDistanceMatrix(coordinatesData);
 
 		// Save matrix to database
 		await db.insert(matrices).values({
@@ -180,8 +170,16 @@ export class OptimizationService {
 	/**
 	 * Get coordinates data for depot and stops
 	 */
-	private async getCoordinatesData(mapId: string, depotId: string, organizationId: string) {
-		// Fetch depot with location
+	private async getCoordinatesData(
+		mapId: string,
+		depotId: string,
+		organizationId: string
+	): Promise<{
+		coordinatesData: CoordinatesData;
+		depotCoord: Coordinate;
+		locationCoordMap: Map<string, Coordinate>;
+	}> {
+		// Fetch depot with location (cached for reuse in computeAndSaveRoutes)
 		const depot = await depotService.getDepotById(depotId, organizationId);
 
 		if (!depot.location.lon || !depot.location.lat) {
@@ -189,6 +187,8 @@ export class OptimizationService {
 				'Depot location has no coordinates. Please update the depot with valid coordinates.'
 			);
 		}
+
+		const depotCoord: Coordinate = [Number(depot.location.lon), Number(depot.location.lat)];
 
 		// Fetch all stops with their locations for this map
 		const mapStops = await db
@@ -212,24 +212,25 @@ export class OptimizationService {
 		});
 
 		// Build coordinates array with depot first
-		const coordinates: [number, number][] = [
-			[Number(depot.location.lon), Number(depot.location.lat)]
-		];
-
-		const addresses: string[] = [depot.location.address_line_1 || depot.depot.name || 'Depot'];
+		const coordinates: [number, number][] = [depotCoord];
 		const locationIds: string[] = [depot.location.id];
+
+		// Build location → coordinate map for quick lookup in computeAndSaveRoutes
+		const locationCoordMap = new Map<string, Coordinate>();
+		locationCoordMap.set(depot.location.id, depotCoord);
 
 		// Add all stop coordinates in sorted order
 		for (const { location } of mapStops) {
-			coordinates.push([Number(location.lon), Number(location.lat)]);
-			addresses.push(location.address_line_1 || 'Unknown');
+			const coord: Coordinate = [Number(location.lon), Number(location.lat)];
+			coordinates.push(coord);
 			locationIds.push(location.id);
+			locationCoordMap.set(location.id, coord);
 		}
 
 		return {
-			coordinates,
-			addresses,
-			locationIds
+			coordinatesData: { coordinates, locationIds },
+			depotCoord,
+			locationCoordMap
 		};
 	}
 
@@ -243,7 +244,9 @@ export class OptimizationService {
 			.map((coord) => `${coord[0].toFixed(6)},${coord[1].toFixed(6)}`)
 			.join('|');
 		return createHash('sha256').update(coordsString).digest('hex');
-	} /**
+	}
+
+	/**
 	 * Clear driver assignments for all stops in the map
 	 */
 	private async clearStopAssignments(mapId: string): Promise<void> {
@@ -258,77 +261,85 @@ export class OptimizationService {
 	}
 
 	/**
-	 * Apply optimized routes to stops in the database
+	 * Set driver_id and deliver_index on stops in the map
 	 */
-	private async applyOptimizedRoutes(mapId: string, result: OptimizationResult): Promise<number> {
-		let updatedCount = 0;
+	private async applyOptimizedRoutes(
+		mapId: string,
+		optimizationResult: OptimizationResult
+	): Promise<void> {
+		// Collect all location_ids from routes to fetch stops in one query
+		const allLocationIds = optimizationResult.routes.flatMap((route) =>
+			route.legs.map((leg) => leg.stop_id)
+		);
 
-		for (const route of result.routes) {
+		if (allLocationIds.length === 0) return;
+
+		// Fetch all stops for this map that match the location_ids
+		const matchingStops = await db
+			.select({ id: stops.id, location_id: stops.location_id })
+			.from(stops)
+			.where(and(eq(stops.map_id, mapId), inArray(stops.location_id, allLocationIds)));
+
+		// Build location_id → stop_id map
+		const locationToStopId = new Map(matchingStops.map((s) => [s.location_id, s.id]));
+
+		// Build updates array
+		const updates: { stopId: string; driverId: string; deliveryIndex: number }[] = [];
+
+		for (const route of optimizationResult.routes) {
 			for (let i = 0; i < route.legs.length; i++) {
 				const leg = route.legs[i];
-
-				// Find the stop by location_id
-				const [stop] = await db
-					.select()
-					.from(stops)
-					.where(and(eq(stops.map_id, mapId), eq(stops.location_id, leg.stop_id)))
-					.limit(1);
-
-				if (stop) {
-					await db
-						.update(stops)
-						.set({
-							driver_id: route.driver_id,
-							delivery_index: i, // Use sequence order in route
-							updated_at: new Date()
-						})
-						.where(eq(stops.id, stop.id));
-
-					updatedCount++;
+				const stopId = locationToStopId.get(leg.stop_id);
+				if (stopId) {
+					updates.push({
+						stopId,
+						driverId: route.driver_id,
+						deliveryIndex: i
+					});
 				}
 			}
 		}
 
-		return updatedCount;
+		// Execute all updates in a transaction
+		const now = new Date();
+		await db.transaction(async (tx) => {
+			for (const update of updates) {
+				await tx
+					.update(stops)
+					.set({
+						driver_id: update.driverId,
+						delivery_index: update.deliveryIndex,
+						updated_at: now
+					})
+					.where(eq(stops.id, update.stopId));
+			}
+		});
 	}
 
 	/**
 	 * Compute route geometries using Mapbox Directions API and save to database
-	 * Makes parallel API calls for all driver routes
+	 * Uses pre-fetched coordinates to avoid re-querying stops
 	 */
 	private async computeAndSaveRoutes(
 		mapId: string,
 		organizationId: string,
 		depotId: string,
-		result: OptimizationResult
+		result: OptimizationResult,
+		depotCoord: Coordinate,
+		locationCoordMap: Map<string, Coordinate>
 	): Promise<void> {
-		// Get depot location
-		const depot = await depotService.getDepotById(depotId, organizationId);
-		const depotCoord: Coordinate = [depot.location.lon!, depot.location.lat!];
-
 		// Prepare all route computations in parallel
 		const routePromises = result.routes.map(async (route) => {
 			try {
-				// Get stops for this driver in order
-				const driverStops = await db
-					.select({
-						stop: stops,
-						location: locations
-					})
-					.from(stops)
-					.innerJoin(locations, eq(stops.location_id, locations.id))
-					.where(and(eq(stops.map_id, mapId), eq(stops.driver_id, route.driver_id)))
-					.orderBy(stops.delivery_index);
-
-				if (driverStops.length === 0) {
+				if (route.legs.length === 0) {
 					console.warn(`No stops found for driver ${route.driver_id}`);
 					return null;
 				}
 
-				// Build coordinate sequence: depot → stops → depot
+				// Build coordinate sequence from cached data: depot → stops → depot
 				const coordinates: Coordinate[] = [
 					depotCoord,
-					...driverStops.map((s) => [s.location.lon!, s.location.lat!] as Coordinate),
+					...route.legs.map((leg) => locationCoordMap.get(leg.stop_id)!),
 					depotCoord
 				];
 
@@ -342,7 +353,7 @@ export class OptimizationService {
 
 				const bestRoute = directions.routes[0];
 
-				// Save route to database (geometry is always GeoJSON when using mapboxNavigation)
+				// Save route to database
 				await routeService.upsertRoute({
 					organization_id: organizationId,
 					map_id: mapId,
@@ -377,5 +388,4 @@ export class OptimizationService {
 	}
 }
 
-// Singleton instance
 export const optimizationService = new OptimizationService();
