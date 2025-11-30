@@ -97,7 +97,7 @@
 		<div class="space-y-8">
 			<div class="space-y-2">
 				<Label>Depot</Label>
-				<DepotSelect onDepotCreated={() => invalidateAll()} {depots} {selectedDepotId} />
+				<DepotSelect onDepotCreated={() => invalidateAll()} {depots} bind:selectedDepotId />
 			</div>
 
 			<div class="">

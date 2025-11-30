@@ -4,7 +4,6 @@ import { matrixResponseSchema, type MatrixResponse } from './types';
 
 /**
  * Coordinates data for distance matrix computation
- * Pre-fetched by the optimization service to avoid duplicate DB queries
  */
 export interface CoordinatesData {
 	/** Ordered coordinates array (depot first, then stops) */
@@ -25,7 +24,6 @@ export interface DistanceMatrixResult {
 
 /**
  * Mapbox Distance Matrix API service
- * Computes travel times and distances between multiple locations
  */
 class MapboxDistanceMatrixService {
 	/**
