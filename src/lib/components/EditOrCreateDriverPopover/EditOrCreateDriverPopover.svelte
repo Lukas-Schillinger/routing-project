@@ -11,12 +11,14 @@
 	let {
 		mode = 'create',
 		driver = undefined,
+		mapId = undefined,
 		triggerClass = '',
 		children,
 		onSuccess = () => {}
 	}: {
 		mode?: 'create' | 'edit';
 		driver?: Driver;
+		mapId?: string;
 		triggerClass?: string;
 		children?: any;
 		onSuccess?: (driver: Driver) => void;
@@ -105,6 +107,7 @@
 				bind:open
 				{driver}
 				{mode}
+				{mapId}
 				onSuccess={(driver) => {
 					open = false;
 					onSuccess(driver);
@@ -134,6 +137,7 @@
 					bind:open
 					{driver}
 					{mode}
+					{mapId}
 					onSuccess={(driver) => {
 						open = false;
 						onSuccess(driver);

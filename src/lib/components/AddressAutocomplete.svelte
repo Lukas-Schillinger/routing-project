@@ -26,7 +26,7 @@
 	} = $props();
 
 	// State
-	let open = $state(false);
+	let open = $state(true);
 	let searchQuery = $state('');
 	let suggestions = $state<GeocodingFeature[]>([]);
 	let isSearching = $state(false);
@@ -151,7 +151,7 @@
 			clearTimeout(searchTimeout);
 		}
 
-		searchTimeout = setTimeout(() => performSearch(query), 300);
+		searchTimeout = setTimeout(() => performSearch(query), 100);
 	}
 
 	// Event handler for address selection
@@ -245,7 +245,15 @@
 							<div class="min-w-0 flex-1">
 								<div class="truncate font-medium">{feature.properties.name}</div>
 								<div class="truncate text-sm text-muted-foreground">
-									{fullAddress}
+									{[
+										feature.properties.context?.place?.name,
+										feature.properties.context?.region?.region_code
+									]
+										.filter(Boolean)
+										.join(' ')}
+									{#if feature.properties.context?.postcode?.name}
+										, {feature.properties.context.postcode.name}
+									{/if}
 								</div>
 							</div>
 							{#if selectedFeature?.id === feature.id}

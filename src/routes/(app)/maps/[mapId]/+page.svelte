@@ -41,6 +41,12 @@
 	let focusedStopId = $state<string | null>(null);
 	let hiddenDrivers = $state<Driver[]>([]);
 
+	// Derive page state from isViewMode and isOptimizing
+	type PageState = 'viewing' | 'optimizing' | 'editing';
+	let pageState: PageState = $derived(
+		isViewMode ? 'viewing' : isOptimizing ? 'optimizing' : 'editing'
+	);
+
 	// Update view mode when data changes
 	$effect(() => {
 		isViewMode = data.isViewMode ?? false;
@@ -105,7 +111,7 @@
 </svelte:head>
 
 <div class="space-y-6">
-	<!-- Map -->
+	<!-- Map (shown in all states) -->
 	<div class="h-[500px]">
 		<MapView
 			stops={data.stops}
@@ -115,21 +121,18 @@
 			bind:focusedStopId
 		/>
 	</div>
-	<!-- Routes Section (View Mode Only) -->
-	{#if isViewMode}
-		<!-- New Card-based Routes View -->
-		<div class="space-y-6">
-			<div>
-				<RouteCards
-					bind:focusedStopId
-					bind:hiddenDrivers
-					stops={data.stops}
-					assignedDrivers={data.assignedDrivers}
-					routes={data.routes}
-				/>
-			</div>
 
-			<!-- Original Table View -->
+	<!-- Page State: Viewing -->
+	{#if pageState === 'viewing'}
+		<div class="space-y-6">
+			<RouteCards
+				bind:focusedStopId
+				bind:hiddenDrivers
+				stops={data.stops}
+				assignedDrivers={data.assignedDrivers}
+				routes={data.routes}
+			/>
+
 			<Card>
 				<CardHeader>
 					<CardTitle class="flex items-center gap-2">
@@ -146,11 +149,20 @@
 					/>
 				</CardContent>
 			</Card>
-		</div>
-	{/if}
 
-	<!-- Stops Section (Edit Mode Only) -->
-	{#if !isViewMode && !isOptimizing}
+			<div class="flex justify-center">
+				<Button size="lg" onclick={switchToEditMode} disabled={isLoading} variant="outline">
+					Switch to Edit Mode
+				</Button>
+			</div>
+		</div>
+
+		<!-- Page State: Optimizing -->
+	{:else if pageState === 'optimizing'}
+		<OptimizationLoadingCard />
+
+		<!-- Page State: Editing -->
+	{:else}
 		<Card>
 			<CardHeader>
 				<CardTitle class="flex items-center gap-2">
@@ -170,26 +182,16 @@
 				/>
 			</CardContent>
 		</Card>
-	{/if}
 
-	{#if !isViewMode && !isOptimizing}
-		<!-- Drivers Section -->
-		<Card class="">
+		<Card>
 			<CardHeader>
 				<CardTitle class="flex items-center gap-2">
 					<Truck class="h-5 w-5 text-primary" />
 					Drivers
 				</CardTitle>
-				<CardDescription>
-					{#if isViewMode}
-						Drivers assigned to this optimized map
-					{:else}
-						Assign drivers to this map for route optimization
-					{/if}
-				</CardDescription>
+				<CardDescription>Assign drivers to this map for route optimization</CardDescription>
 			</CardHeader>
 			<CardContent class="space-y-4">
-				<!-- Error Message -->
 				{#if errorMessage}
 					<div
 						class="rounded-md border border-destructive bg-destructive/10 p-3 text-sm text-destructive"
@@ -198,7 +200,6 @@
 					</div>
 				{/if}
 
-				<!-- Drivers Table -->
 				<EditDriversTable
 					assignedDrivers={data.assignedDrivers}
 					allDrivers={data.allDrivers}
@@ -208,10 +209,7 @@
 				/>
 			</CardContent>
 		</Card>
-	{/if}
 
-	<!-- Optimization Section -->
-	{#if !isViewMode && !isOptimizing}
 		<OptimizationCard
 			assignedDrivers={data.assignedDrivers}
 			stops={data.stops}
@@ -221,15 +219,5 @@
 			onRoutesOptimized={() => invalidateAll()}
 			onDepotCreated={() => invalidateAll()}
 		/>
-	{/if}
-	{#if isViewMode}
-		<div class="flex justify-center">
-			<Button size="lg" onclick={switchToEditMode} disabled={isLoading} variant="outline">
-				Switch to Edit Mode
-			</Button>
-		</div>
-	{/if}
-	{#if isOptimizing}
-		<OptimizationLoadingCard />
 	{/if}
 </div>

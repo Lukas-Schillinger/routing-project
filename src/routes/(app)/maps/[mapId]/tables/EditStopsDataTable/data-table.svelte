@@ -295,7 +295,7 @@
 			<Empty.Description>Add your first stop to get started.</Empty.Description>
 		</Empty.Header>
 		<EditOrCreateStopPopover mode="create" {mapId} onSuccess={invalidateAll}>
-			<Button variant="secondary">Create your first stop</Button>
+			<Button variant="secondary">Create Stop</Button>
 		</EditOrCreateStopPopover>
 	</Empty.Root>
 {:else}

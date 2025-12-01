@@ -6,6 +6,7 @@
 	import type { Driver } from '$lib/schemas/driver';
 	import { ApiError } from '$lib/services/api/base';
 	import { driverApi } from '$lib/services/api/drivers';
+	import { mapApi } from '$lib/services/api/maps';
 	import { generateRandomColor } from '$lib/utils';
 	import { Check, LoaderCircle, RefreshCw } from 'lucide-svelte';
 
@@ -13,11 +14,13 @@
 	let {
 		mode = 'create',
 		driver = undefined,
+		mapId = undefined,
 		open = $bindable(false),
 		onSuccess = () => {}
 	}: {
 		mode?: 'create' | 'edit';
 		driver?: Driver;
+		mapId?: string;
 		open: boolean;
 		onSuccess?: (driver: Driver) => void;
 	} = $props();
@@ -97,6 +100,11 @@
 					temporary: isTemporary,
 					color: color
 				});
+
+				// Add driver to map if mapId is provided
+				if (mapId) {
+					await mapApi.addDriver(mapId, updatedDriver.id);
+				}
 			} else {
 				updatedDriver = await driverApi.update(driver!.id, {
 					name: driverName.trim(),
