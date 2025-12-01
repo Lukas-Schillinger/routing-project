@@ -12,6 +12,7 @@
 		mode = 'create',
 		driver = undefined,
 		mapId = undefined,
+		temporaryDriver = false,
 		triggerClass = '',
 		children,
 		onSuccess = () => {}
@@ -19,6 +20,7 @@
 		mode?: 'create' | 'edit';
 		driver?: Driver;
 		mapId?: string;
+		temporaryDriver?: boolean;
 		triggerClass?: string;
 		children?: any;
 		onSuccess?: (driver: Driver) => void;
@@ -34,60 +36,10 @@
 	// State
 	const isDesktop = new MediaQuery('(min-width: 768px)');
 	let open = $state(false);
-	let isSubmitting = $state(false);
-	let error = $state<string | null>(null);
-
-	// Form fields
-	let driverName = $state('');
-	let phone = $state('');
-	let notes = $state('');
-	let isActive = $state(true);
-	let isTemporary = $state(false);
-	let color = $state('');
-
-	// Initialize form with existing data in edit mode
-	$effect(() => {
-		if (mode === 'edit' && driver && open) {
-			driverName = driver.name;
-			phone = driver.phone || '';
-			notes = driver.notes || '';
-			isActive = driver.active;
-			isTemporary = driver.temporary;
-			color = driver.color;
-		}
-	});
-
-	// Reset form
-	function resetForm() {
-		if (mode === 'create') {
-			driverName = '';
-			phone = '';
-			notes = '';
-			isActive = true;
-			isTemporary = false;
-			color = '';
-		} else if (driver) {
-			driverName = driver.name;
-			phone = driver.phone || '';
-			notes = driver.notes || '';
-			isActive = driver.active;
-			isTemporary = driver.temporary;
-			color = driver.color;
-		}
-		error = null;
-	}
-
-	// Handle open change
-	function handleOpenChange(isOpen: boolean) {
-		open = isOpen;
-		if (!isOpen && !isSubmitting) {
-			resetForm();
-		}
-	}
 </script>
 
 {#if isDesktop.current}
-	<Popover.Root bind:open onOpenChange={handleOpenChange}>
+	<Popover.Root bind:open>
 		<Popover.Trigger class={triggerClass}>
 			{#if children}
 				{@render children()}
@@ -108,6 +60,7 @@
 				{driver}
 				{mode}
 				{mapId}
+				{temporaryDriver}
 				onSuccess={(driver) => {
 					open = false;
 					onSuccess(driver);
@@ -116,7 +69,7 @@
 		</Popover.Content>
 	</Popover.Root>
 {:else}
-	<Drawer.Root bind:open onOpenChange={handleOpenChange}>
+	<Drawer.Root bind:open>
 		<Drawer.Trigger class={triggerClass}>
 			{#if children}
 				{@render children()}
@@ -138,6 +91,7 @@
 					{driver}
 					{mode}
 					{mapId}
+					{temporaryDriver}
 					onSuccess={(driver) => {
 						open = false;
 						onSuccess(driver);

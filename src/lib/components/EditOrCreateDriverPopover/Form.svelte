@@ -15,15 +15,25 @@
 		mode = 'create',
 		driver = undefined,
 		mapId = undefined,
+		temporaryDriver = false,
 		open = $bindable(false),
 		onSuccess = () => {}
 	}: {
 		mode?: 'create' | 'edit';
-		driver?: Driver;
-		mapId?: string;
+		driver?: Driver; // Required when mode === 'edit'
+		mapId?: string; // Add the driver to the specified map by creating a driverMapMembership
+		temporaryDriver?: boolean; // Create a temporary driver with auto-generated name
 		open: boolean;
 		onSuccess?: (driver: Driver) => void;
 	} = $props();
+
+	// Generate random driver name for temporary drivers
+	function generateDriverName(): string {
+		const randomNum = Math.floor(Math.random() * 100000)
+			.toString()
+			.padStart(5, '0');
+		return `driver-${randomNum}`;
+	}
 
 	// Validation
 	$effect(() => {
@@ -36,12 +46,12 @@
 	let isSubmitting = $state(false);
 	let error = $state<string | null>(null);
 
-	// Form fields
-	let driverName = $state('');
+	// Form fields - initialize with temporary driver values if applicable
+	let driverName = $state(temporaryDriver ? generateDriverName() : '');
 	let phone = $state('');
 	let notes = $state('');
 	let isActive = $state(true);
-	let isTemporary = $state(false);
+	let isTemporary = $state(temporaryDriver);
 	let color = $state(generateRandomColor());
 
 	// Initialize form with existing data in edit mode
@@ -59,11 +69,11 @@
 	// Reset form
 	function resetForm() {
 		if (mode === 'create') {
-			driverName = '';
+			driverName = temporaryDriver ? generateDriverName() : '';
 			phone = '';
 			notes = '';
 			isActive = true;
-			isTemporary = false;
+			isTemporary = temporaryDriver;
 			color = generateRandomColor();
 		} else if (driver) {
 			driverName = driver.name;
@@ -160,9 +170,12 @@
 			id="driver-name"
 			bind:value={driverName}
 			placeholder="e.g., John Smith"
-			disabled={isSubmitting}
+			disabled={isSubmitting || temporaryDriver}
 			required
 		/>
+		{#if temporaryDriver}
+			<p class="text-xs text-muted-foreground">Name is auto-generated for temporary drivers</p>
+		{/if}
 	</div>
 
 	<div class="space-y-2">

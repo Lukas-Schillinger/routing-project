@@ -1,18 +1,18 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
+	import EditOrCreateDriverPopover from '$lib/components/EditOrCreateDriverPopover';
 	import * as Avatar from '$lib/components/ui/avatar';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Command from '$lib/components/ui/command';
 	import * as Empty from '$lib/components/ui/empty';
-	import { Input } from '$lib/components/ui/input';
-	import { Label } from '$lib/components/ui/label';
 	import * as Popover from '$lib/components/ui/popover';
 	import * as Table from '$lib/components/ui/table';
 	import type { Driver } from '$lib/schemas/driver';
-	import { ApiError, driverApi, mapApi } from '$lib/services/api';
-	import { generateRandomColor, getIdenticon } from '$lib/utils';
-	import { ChevronsUpDown, Phone, Plus, RefreshCw, Trash2, Truck, UserPlus } from 'lucide-svelte';
+	import { ApiError, mapApi } from '$lib/services/api';
+	import { getIdenticon } from '$lib/utils';
+	import { ChevronsUpDown, Phone, Trash2, Truck } from 'lucide-svelte';
+	import { toast } from 'svelte-sonner';
 
 	interface Props {
 		assignedDrivers: Driver[];
@@ -26,8 +26,6 @@
 
 	// Local state
 	let open = $state(false);
-	let openNewDriver = $state(false);
-	let newDriverPhone = $state('');
 	let localIsLoading = $state(false);
 	let errorMessage = $state('');
 
@@ -39,17 +37,6 @@
 
 	// Derived state for available drivers
 	const availableDrivers = $derived(getExistingDriverOptions(allDrivers, assignedDrivers));
-
-	// Generate random driver name
-	function generateDriverName(): string {
-		const randomNum = Math.floor(Math.random() * 10000)
-			.toString()
-			.padStart(4, '0');
-		return `driver-${randomNum}`;
-	}
-
-	let newDriverName = $state(generateDriverName());
-	let newDriverColor = $state(generateRandomColor());
 
 	// Close and reset the combobox
 	function closeAndReset() {
@@ -72,43 +59,7 @@
 			closeAndReset();
 		} catch (err) {
 			errorMessage = err instanceof ApiError ? err.message : 'Failed to assign driver';
-			console.error('Error assigning driver:', err);
-		} finally {
-			localIsLoading = false;
-		}
-	}
-
-	async function addTemporaryDriver() {
-		if (!newDriverName.trim() || localIsLoading) return;
-
-		localIsLoading = true;
-		errorMessage = '';
-
-		try {
-			// First, create the temporary driver
-			const newDriver = await driverApi.create({
-				name: newDriverName.trim(),
-				phone: newDriverPhone.trim() || null,
-				color: newDriverColor,
-				temporary: true,
-				active: true
-			});
-
-			// Then assign the driver to this map
-			await mapApi.addDriver(mapId, newDriver.id);
-
-			// Refresh the page data
-			await invalidateAll();
-
-			// Reset form
-			newDriverName = generateDriverName();
-			newDriverColor = generateRandomColor();
-			newDriverPhone = '';
-			openNewDriver = false;
-			errorMessage = '';
-		} catch (err) {
-			errorMessage = err instanceof ApiError ? err.message : 'Failed to create temporary driver';
-			console.error('Error creating temporary driver:', err);
+			toast.error('Error adding driver to map', { description: errorMessage });
 		} finally {
 			localIsLoading = false;
 		}
@@ -117,12 +68,12 @@
 
 <div class="space-y-4">
 	<!-- Action Buttons -->
-	<div class="flex items-center justify-start gap-2">
+	<div class="flex flex-col items-center justify-start gap-2 sm:flex-row">
 		<!-- Combobox for selecting existing driver -->
 		<Popover.Root bind:open>
 			<Popover.Trigger
 				disabled={localIsLoading || isLoading}
-				class="flex w-40 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground hover:bg-accent hover:text-accent-foreground focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+				class="flex w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground hover:bg-accent hover:text-accent-foreground focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 sm:w-40"
 			>
 				Add driver...
 				<ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -153,65 +104,18 @@
 		</Popover.Root>
 
 		<!-- Popover to create temporary driver -->
-		<Popover.Root bind:open={openNewDriver}>
-			<Popover.Trigger>
-				<Button variant="outline" disabled={localIsLoading || isLoading}>
-					<UserPlus class="mr-2 h-4 w-4" />
-					Temporary Driver
-				</Button>
-			</Popover.Trigger>
-			<Popover.Content class="w-80">
-				<div class="space-y-4">
-					<div class="space-y-2">
-						<h4 class="leading-none font-medium">Create Temporary Driver</h4>
-						<p class="text-sm text-muted-foreground">
-							Add a one-time driver with an auto-generated name
-						</p>
-					</div>
-					<div class="space-y-3">
-						<div class="space-y-2">
-							<Label for="temp-driver-name">Driver Name</Label>
-							<Input
-								id="temp-driver-name"
-								type="text"
-								bind:value={newDriverName}
-								placeholder="driver-123456"
-								disabled={true}
-							/>
-						</div>
-						<div class="space-y-2">
-							<Label for="driver-color">Color</Label>
-							<div class="flex gap-2">
-								<Input type="color" id="driver-color" bind:value={newDriverColor} />
-								<Button
-									onclick={() => (newDriverColor = generateRandomColor())}
-									variant="ghost"
-									size="icon"><RefreshCw /></Button
-								>
-							</div>
-						</div>
-						<div class="space-y-2">
-							<Label for="temp-driver-phone">Phone Number (optional)</Label>
-							<Input
-								id="temp-driver-phone"
-								type="tel"
-								placeholder="Enter phone number"
-								bind:value={newDriverPhone}
-								disabled={localIsLoading}
-							/>
-						</div>
-						<Button
-							class="w-full"
-							onclick={addTemporaryDriver}
-							disabled={!newDriverName.trim() || localIsLoading}
-						>
-							<Plus class="mr-2 h-4 w-4" />
-							{localIsLoading ? 'Creating...' : 'Create and Add'}
-						</Button>
-					</div>
-				</div>
-			</Popover.Content>
-		</Popover.Root>
+		<div class="flex w-full gap-2">
+			<EditOrCreateDriverPopover mode="create" {mapId} onSuccess={(driver) => invalidateAll()} />
+			<EditOrCreateDriverPopover
+				triggerClass={'w-full sm:w-fit'}
+				mode="create"
+				{mapId}
+				onSuccess={(driver) => invalidateAll()}
+				temporaryDriver={true}
+			>
+				<Button class="w-full " variant="secondary">Create Temporary Driver</Button>
+			</EditOrCreateDriverPopover>
+		</div>
 	</div>
 
 	<!-- Error Message -->
