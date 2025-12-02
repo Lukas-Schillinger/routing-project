@@ -4,14 +4,13 @@
 	import { Copy, Delete, MetadataLabel } from '$lib/components/TableActionsDropdown.Items';
 	import TableActionsDropdown from '$lib/components/TableActionsDropdown.svelte';
 	import * as Avatar from '$lib/components/ui/avatar/index.js';
+	import { Button } from '$lib/components/ui/button';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import * as Empty from '$lib/components/ui/empty';
 	import * as Table from '$lib/components/ui/table';
 	import type { Driver } from '$lib/schemas/driver';
 	import { driverApi } from '$lib/services/api/drivers';
 	import { getIdenticon } from '$lib/utils';
-	import { createAvatar } from '@dicebear/core';
-	import * as style from '@dicebear/identicon';
 	import { Pencil, Phone, Truck } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
@@ -20,13 +19,6 @@
 	}: {
 		drivers: Driver[];
 	} = $props();
-
-	function getAvatar(driver: Driver) {
-		return createAvatar(style, {
-			seed: driver.id,
-			rowColor: [driver.color.slice(1)]
-		}).toDataUri();
-	}
 
 	async function handleDriverSuccess() {
 		await invalidateAll();
@@ -62,7 +54,7 @@
 			<Empty.Description>Add drivers to assign them to routes.</Empty.Description>
 		</Empty.Content>
 	</Empty.Root>
-{:else}
+{:else if false}
 	<div class="">
 		<Table.Root>
 			<Table.Header>
@@ -121,3 +113,23 @@
 		</Table.Root>
 	</div>
 {/if}
+<div class="grid grid-cols-2 gap-2">
+	{#each drivers as driver}
+		<EditOrCreateDriverPopover mode="edit" {driver}>
+			<Button class="flex w-full justify-between px-2" variant="outline" size="lg">
+				<div class="flex items-center gap-2">
+					<Avatar.Root class="size-6">
+						<Avatar.Image src={getIdenticon(driver)} alt="@shadcn" />
+						<Avatar.Fallback>CN</Avatar.Fallback>
+					</Avatar.Root>
+					{driver.name}
+				</div>
+				<div class="text-muted-foreground">
+					{#if driver.phone}
+						<Phone />
+					{/if}
+				</div>
+			</Button>
+		</EditOrCreateDriverPopover>
+	{/each}
+</div>
