@@ -127,7 +127,7 @@
 				</div>
 
 				<!-- Desktop Navigation & Theme Toggle -->
-				<div class="hidden items-center space-x-4 sm:flex">
+				<div class="flex items-center space-x-4">
 					<nav class="flex items-center space-x-1">
 						{#each navigation as item}
 							<Button
@@ -171,7 +171,7 @@
 				</div>
 
 				<!-- Mobile menu button & Theme Toggle -->
-				<div class="flex items-center space-x-2 sm:hidden">
+				<div class="hidden items-center space-x-2">
 					<ThemeToggle variant="inverse" />
 					<Button variant="ghost" size="sm" onclick={toggleMobileMenu} class="h-9 w-9 p-0 ">
 						{#if mobileMenuOpen}

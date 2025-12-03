@@ -5,6 +5,7 @@
 	import { Settings } from 'lucide-svelte';
 	import type { PageData } from './$types';
 	import MagicInvitesCard from './MagicInvitesCard.svelte';
+	import OrganizationCard from './OrganizationCard.svelte';
 	import ProfileInformationCard from './ProfileInformationCard.svelte';
 
 	let { data }: { data: PageData } = $props();
@@ -31,7 +32,7 @@
 		<Separator />
 
 		<!-- Organization Section -->
-		<!-- 		<OrganizationCard organization={data.organization} /> -->
+		<OrganizationCard organization={data.organization} organizationUsers={data.organizationUsers} />
 
 		<!-- Magic Invites Section -->
 		<MagicInvitesCard

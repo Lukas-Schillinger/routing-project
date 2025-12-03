@@ -30,7 +30,20 @@ export class UserService {
 		};
 	}
 
-	/** Does not validate requester organization ID! */
+	async getPublicUsers(organizationId: string): Promise<PublicUser[]> {
+		return await db
+			.select({
+				id: users.id,
+				created_at: users.created_at,
+				updated_at: users.updated_at,
+				organization_id: users.organization_id,
+				email: users.email
+			})
+			.from(users)
+			.where(eq(users.organization_id, organizationId));
+	}
+
+	/** Does not validate requester organization ID! Used by magic links service */
 	async getAnyUser(userId: string): Promise<User | null> {
 		const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
 		return user;
