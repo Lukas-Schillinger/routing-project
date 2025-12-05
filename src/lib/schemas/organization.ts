@@ -20,6 +20,6 @@ export const organizationSchema = z.object({
 });
 
 // Type exports
-export type CreateOrganizationInput = z.infer<typeof createOrganizationSchema>;
-export type UpdateOrganizationInput = z.infer<typeof updateOrganizationSchema>;
+export type CreateOrganization = z.infer<typeof createOrganizationSchema>;
+export type UpdateOrganization = z.infer<typeof updateOrganizationSchema>;
 export type Organization = z.infer<typeof organizationSchema>;

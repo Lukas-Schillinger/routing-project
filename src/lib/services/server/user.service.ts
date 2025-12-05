@@ -1,4 +1,4 @@
-import type { Organization, PublicUser, User } from '$lib/schemas';
+import type { Organization, PublicUser, UpdateOrganization, User } from '$lib/schemas';
 import { db } from '$lib/server/db';
 import { organizations, users } from '$lib/server/db/schema';
 import { and, eq } from 'drizzle-orm';
@@ -103,11 +103,29 @@ export class OrganizationService {
 			throw ServiceError.notFound('Organization not found');
 		}
 
-		if (organization.id !== requesterId) {
-			throw ServiceError.forbidden('Access denied');
+		return organization;
+	}
+
+	async updateOrganization(requestedId: string, data: UpdateOrganization, requesterId: string) {
+		const [organization] = await db
+			.select()
+			.from(organizations)
+			.where(and(eq(organizations.id, requestedId), eq(organizations.id, requesterId)));
+
+		if (!organization) {
+			throw ServiceError.notFound('Organization not found');
 		}
 
-		return organization;
+		const [updatedOrganization] = await db
+			.update(organizations)
+			.set({
+				name: data.name ? data.name : organization.name,
+				updated_at: new Date()
+			})
+			.where(eq(organizations.id, requestedId))
+			.returning();
+
+		return updatedOrganization;
 	}
 }
 

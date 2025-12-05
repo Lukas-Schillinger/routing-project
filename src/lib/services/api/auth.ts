@@ -1,4 +1,10 @@
-import type { CreateMagicInvite, CreateMagicLogin, MagicInvite, MagicLogin } from '$lib/schemas';
+import type {
+	CreateMagicInvite,
+	CreateMagicLogin,
+	MagicInvite,
+	MagicLogin,
+	UpdateOrganization
+} from '$lib/schemas';
 import { apiClient } from './base';
 
 class MagicApiService {
@@ -18,12 +24,19 @@ class MagicApiService {
 	}
 }
 
-class authApiService {
+class AuthApiService {
 	async logout() {
 		return apiClient.post<{ success: true }>('/auth/logout');
 	}
 }
 
+class OrganizationApiService {
+	async updateMapSchema(requestedId: string, data: UpdateOrganization) {
+		return apiClient.patch(`/auth/organizations/${requestedId}`, data);
+	}
+}
+
 // Singleton instance
 export const magicLinksApi = new MagicApiService();
-export const authApi = new authApiService();
+export const authApi = new AuthApiService();
+export const organizationApi = new OrganizationApiService();
