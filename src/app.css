@@ -1,6 +1,7 @@
 @import 'tailwindcss';
 @import '@fontsource-variable/eb-garamond';
 @import '@fontsource-variable/geist';
+@import '@fontsource/instrument-serif';
 
 @import 'tw-animate-css';
 
@@ -39,10 +40,10 @@
 	--radius: 0.625rem;
 
 	/* Surfaces & text (light) */
-	--background: var(--color-sand-50);
-	--foreground: var(--color-black);
+	--background: #fffbf4; /* #FFFBF4 ≈ hsl(38,100%,97%) */
+	--foreground: #26211f; /* #26211F ≈ hsl(20,10%,15%) */
 
-	--card: var(--color-sand-50);
+	--card: #fffcf6;
 	--card-foreground: var(--color-sand-900);
 
 	--popover: var(--color-sand-50);
@@ -171,7 +172,7 @@
 
 	:root {
 		/* Override Tailwind's default serif font */
-		--font-serif: 'EB Garamond', serif;
+		--font-serif: 'Instrument Serif', serif;
 	}
 
 	body {
