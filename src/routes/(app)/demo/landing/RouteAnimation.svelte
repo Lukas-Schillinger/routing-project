@@ -28,7 +28,7 @@
 	// Reference to scroll container
 	let scrollContainer: HTMLDivElement | undefined = $state();
 
-	// Scroll to specific stop index
+	// Scroll to specific stop index (contained within the scroll container)
 	function scrollToIndex(index: number) {
 		if (!scrollContainer || index < 0 || index >= stops.length) return;
 
@@ -36,9 +36,22 @@
 		const targetElement = stopElements[index] as HTMLElement;
 
 		if (targetElement) {
-			targetElement.scrollIntoView({
-				behavior: 'smooth',
-				block: 'nearest'
+			// Use getBoundingClientRect for accurate positioning
+			const containerRect = scrollContainer.getBoundingClientRect();
+			const elementRect = targetElement.getBoundingClientRect();
+
+			// Calculate where the element is relative to the container's current scroll
+			const elementTopRelativeToContainer =
+				elementRect.top - containerRect.top + scrollContainer.scrollTop;
+			const containerHeight = scrollContainer.clientHeight;
+			const elementHeight = targetElement.offsetHeight;
+
+			// Center the element in the container
+			const scrollTop = elementTopRelativeToContainer - containerHeight / 2 + elementHeight / 2;
+
+			scrollContainer.scrollTo({
+				top: Math.max(0, scrollTop),
+				behavior: 'smooth'
 			});
 		}
 	}

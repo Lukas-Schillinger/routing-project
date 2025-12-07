@@ -3,6 +3,7 @@
 	import { ArrowRight } from 'lucide-svelte';
 	import type { PageData } from './$types';
 	import Bento from './Bento.svelte';
+	import Features from './Features.svelte';
 	import RouteAnimation from './RouteAnimation.svelte';
 
 	let { data }: { data: PageData } = $props();
@@ -25,7 +26,7 @@
 				<ArrowRight />
 			</Button>
 		</div>
-		<div class="relative flex justify-center py-24">
+		<div class="relative flex justify-center py-48">
 			<div class="h-96 w-full max-w-[900px]">
 				<RouteAnimation stops={data.stops} route={data.route} />
 			</div>
@@ -42,6 +43,9 @@
 				></div>
 			</div>
 		</div>
-		<Bento />
+		<div class="py-48"><Bento /></div>
+		<div class="py-48">
+			<Features />
+		</div>
 	</div>
 </div>
