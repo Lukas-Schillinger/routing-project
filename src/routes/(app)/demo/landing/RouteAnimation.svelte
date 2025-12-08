@@ -110,18 +110,30 @@
 	<!-- Table Format -->
 	<div class="h-full rounded-lg border bg-background">
 		<div class="border-b p-3">
-			<ul class="flex gap-4 text-sm text-muted-foreground">
-				<li class="flex items-center gap-1"><MapPin class="size-4" />{stops.length}</li>
-				<li class="flex items-center gap-1">
-					<Clock class="size-4" />{Math.floor(Number(route.duration) / 60)}m
-				</li>
-				<li class="flex items-center gap-1">
-					<Calendar class="size-4" />
-					{formatDate(route.updated_at)}
-				</li>
-			</ul>
+			<div class="flex justify-between">
+				<div>
+					<div class="pb-2 font-medium">Tuesday Morning Dropoffs</div>
+					<ul class="flex gap-4 text-sm text-muted-foreground">
+						<li class="flex items-center gap-1"><MapPin class="size-4" />{stops.length}</li>
+						<li class="flex items-center gap-1">
+							<Clock class="size-4" />{Math.floor(Number(route.duration) / 60)}m
+						</li>
+						<li class="flex items-center gap-1">
+							<Calendar class="size-4" />
+							{formatDate(route.updated_at)}
+						</li>
+					</ul>
+				</div>
+				<div
+					class="text-4xl font-medium diagonal-fractions {currentIndex == stops.length
+						? 'text-green-800'
+						: ''}"
+				>
+					{currentIndex}/{stops.length}
+				</div>
+			</div>
 		</div>
-		<div class="h-full max-h-[calc(100%-4rem)] overflow-y-auto" bind:this={scrollContainer}>
+		<div class="h-full max-h-[calc(100%-5rem)] overflow-y-auto" bind:this={scrollContainer}>
 			{#each stops as { stop, location }, index}
 				{@const isCompleted = completedIndices.has(index)}
 				{@const isCurrent = index === currentIndex && !isCompleted}
@@ -162,11 +174,6 @@
 									{/if}
 								</div>
 							</div>
-						</div>
-						<div class="flex items-center gap-2">
-							{#if isCompleted}
-								<Check class="h-4 w-4 text-green-600" />
-							{/if}
 						</div>
 					</div>
 				</div>

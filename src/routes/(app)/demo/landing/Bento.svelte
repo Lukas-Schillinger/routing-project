@@ -4,15 +4,15 @@
 </script>
 
 <div class="flex">
-	<div class="bg-texture min-w-12 flex-1 border border-r-0">&nbsp;</div>
-	<div class="grid grid-cols-5 grid-rows-4">
-		<div class="col-span-3 row-span-4 border p-8">
-			<div class="text-7xl font-medium">Find the best route every time</div>
-			<div class="pt-2 text-2xl font-extralight">
+	<div class="bg-texture hidden min-w-6 flex-1 border border-r-0 md:block">&nbsp;</div>
+	<div class="grid grid-cols-2 md:grid-cols-5 md:grid-rows-4">
+		<div class="col-span-2 border border-b-0 p-8 md:col-span-3 md:row-span-4 md:border-b">
+			<div class="text-6xl font-medium md:text-7xl">Find the best route every time</div>
+			<div class="pt-2 text-xl font-extralight md:text-2xl">
 				Optimize routes between up to 14 drivers and 100 stops
 			</div>
 			<div class="pt-4">
-				<div class="font-serif text-xl italic">need more?</div>
+				<div class="font-serif text-lg italic md:text-xl">need more?</div>
 				<Button class="flex justify-between gap-8">
 					contact us
 					<ArrowRight />
@@ -20,15 +20,25 @@
 			</div>
 		</div>
 		<div
-			class="col-span-2 col-start-4 row-span-2 border border-b-0 border-l-0 p-8 text-xl font-medium tracking-tighter"
+			class="col-span-1 flex justify-center border border-l p-8 text-xl font-medium tracking-tighter sm:border-l-0 md:col-span-2 md:col-start-4 md:row-span-2 md:items-center md:justify-start md:border-b-0"
 		>
-			<span class="text-9xl font-medium tracking-tighter">14</span> <span>drivers</span>
+			<div
+				class="flex flex-col items-center gap-0 md:flex-row md:items-baseline md:justify-center md:gap-2"
+			>
+				<span class="text-7xl font-medium tracking-tighter md:text-8xl">14</span>
+				<span class="">drivers</span>
+			</div>
 		</div>
 		<div
-			class="col-span-2 col-start-4 row-span-2 row-start-3 border border-l-0 p-8 text-xl font-medium tracking-tighter"
+			class="col-span-1 flex justify-center border border-l-0 p-8 text-xl font-medium tracking-tighter md:col-span-2 md:col-start-4 md:row-span-2 md:row-start-3 md:items-center md:justify-start"
 		>
-			<span class="text-9xl font-medium tracking-tighter">100</span> <span>stops</span>
+			<div
+				class="flex flex-col items-center gap-0 md:flex-row md:items-baseline md:justify-center md:gap-2"
+			>
+				<span class="text-7xl font-medium tracking-tighter md:text-8xl">100</span>
+				<span class="">stops</span>
+			</div>
 		</div>
 	</div>
-	<div class="bg-texture min-w-12 flex-1 border border-l-0">&nbsp;</div>
+	<div class="bg-texture hidden min-w-6 flex-1 border border-l-0 md:block">&nbsp;</div>
 </div>

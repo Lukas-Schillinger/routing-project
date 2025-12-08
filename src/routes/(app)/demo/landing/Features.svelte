@@ -25,15 +25,16 @@
 	];
 </script>
 
+<div class="pb-12 text-center text-8xl font-medium">why wend?</div>
 <div>
 	{#each features as feature, index}
-		<div class="grid grid-cols-3 last:border-b">
+		<div class="grid grid-cols-8 last:border-b sm:grid-cols-3">
 			{#if index % 2 === 1}
 				<div class="bg-texture col-span-1 border-t border-l">&nbsp;</div>
 			{/if}
-			<div class="col-span-2 border border-b-0 p-8">
+			<div class="col-span-7 border border-b-0 p-8 sm:col-span-2">
 				<div class="flex items-center gap-4 font-serif text-5xl">
-					<feature.icon weight="light" />
+					<feature.icon class="shrink-0" weight="light" />
 					{feature.title}
 				</div>
 				<div class="pt-4 pl-16 text-2xl font-light">

@@ -1,22 +1,23 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
 	import { ArrowRight } from 'lucide-svelte';
-	import type { PageData } from './$types';
 	import Bento from './Bento.svelte';
 	import Features from './Features.svelte';
+	import Pricing from './Pricing.svelte';
 	import RouteAnimation from './RouteAnimation.svelte';
+	import JSONData from './landing-data.json';
 
-	let { data }: { data: PageData } = $props();
+	let data = JSONData;
 </script>
 
-<div class="flex justify-center">
-	<div class=" max-w-4xl">
-		<div class="pt-24 text-center font-serif text-9xl leading-tight">
+<div class="flex justify-center px-0 md:px-4">
+	<div class=" max-w-5xl border-x">
+		<div class="pt-24 text-center font-serif text-7xl leading-tight sm:text-8xl md:text-9xl">
 			<div>Effortless routes</div>
 			<div>from</div>
 			<div>start <span class="italic">to</span> finish</div>
 		</div>
-		<div class="px-36 py-4 text-center text-2xl font-extralight">
+		<div class="px-0 py-4 text-center text-2xl font-extralight sm:px-18 md:px-36">
 			Multi stop route optimization in seconds. Share routes with your team and track progress in
 			real-time.
 		</div>
@@ -26,26 +27,33 @@
 				<ArrowRight />
 			</Button>
 		</div>
-		<div class="relative flex justify-center py-48">
-			<div class="h-96 w-full max-w-[900px]">
-				<RouteAnimation stops={data.stops} route={data.route} />
-			</div>
-			<div
-				class="pointer-events-none absolute inset-0 -z-10 flex items-center justify-center"
-				aria-hidden="true"
-			>
+		<div class="pt-12 sm:pt-18">
+			<div class="relative flex justify-center">
+				<div class="h-96 w-full max-w-[700px]">
+					<RouteAnimation stops={data.stops} route={data.route} />
+				</div>
 				<div
-					class="size-48 rounded-full"
-					style="
-                    background: #064314;
-                    box-shadow: 0px 0px 168px 100px rgba(6,67,20,0.9);
-                    "
-				></div>
+					class="pointer-events-none absolute inset-0 -z-10 flex items-center justify-center"
+					aria-hidden="true"
+				>
+					<div
+						class="size-64 rounded-full"
+						style="
+	                    background: #064314;
+	                    box-shadow: 0px 0px 168px 100px rgba(6,67,20,0.9);
+	                    "
+					></div>
+				</div>
 			</div>
 		</div>
-		<div class="py-48"><Bento /></div>
-		<div class="py-48">
+		<div class="pt-24 pb-24">
+			<Bento />
+		</div>
+		<div class="py-12">
 			<Features />
+		</div>
+		<div class="py-12">
+			<Pricing />
 		</div>
 	</div>
 </div>
