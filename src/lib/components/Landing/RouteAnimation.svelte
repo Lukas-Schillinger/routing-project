@@ -112,7 +112,9 @@
 		<div class="border-b p-3">
 			<div class="flex justify-between">
 				<div>
-					<div class="pb-2 font-medium">Tuesday Morning Dropoffs</div>
+					<div class="pb-2 font-medium">
+						{new Date().toLocaleDateString('en-us', { weekday: 'long' })} Morning Dropoffs
+					</div>
 					<ul class="flex gap-4 text-sm text-muted-foreground">
 						<li class="flex items-center gap-1"><MapPin class="size-4" />{stops.length}</li>
 						<li class="flex items-center gap-1">

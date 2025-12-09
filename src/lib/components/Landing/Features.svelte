@@ -25,24 +25,31 @@
 	];
 </script>
 
-<div class="pb-12 text-center text-8xl font-medium">why wend?</div>
-<div>
+<div class="pb-12">
+	<div class="text-center text-6xl font-medium tracking-tighter sm:text-7xl">
+		Delivery planning made simple
+	</div>
+	<div class="px-0 py-4 text-center text-2xl font-extralight sm:px-18 md:px-36">
+		Upload to final delivery, streamlined in one platflorm.
+	</div>
+</div>
+<div class="border-y">
 	{#each features as feature, index}
-		<div class="grid grid-cols-8 last:border-b sm:grid-cols-3">
+		<div class="grid grid-cols-8 border-t first:border-t-0 sm:grid-cols-3">
 			{#if index % 2 === 1}
-				<div class="bg-texture col-span-1 border-t border-l">&nbsp;</div>
+				<div class="bg-texture col-span-1 border-r">&nbsp;</div>
 			{/if}
-			<div class="col-span-7 border border-b-0 p-8 sm:col-span-2">
-				<div class="flex items-center gap-4 font-serif text-5xl">
+			<div class="col-span-7 p-8 sm:col-span-2">
+				<div class="flex items-center gap-4 font-serif text-4xl">
 					<feature.icon class="shrink-0" weight="light" />
 					{feature.title}
 				</div>
-				<div class="pt-4 pl-16 text-2xl font-light">
+				<div class="pt-2 pl-14 text-xl font-light">
 					{feature.desc}
 				</div>
 			</div>
 			{#if index % 2 === 0}
-				<div class="bg-texture col-span-1 border-t border-r">&nbsp;</div>
+				<div class="bg-texture col-span-1 border-l">&nbsp;</div>
 			{/if}
 		</div>
 	{/each}

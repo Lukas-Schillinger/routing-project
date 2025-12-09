@@ -35,16 +35,22 @@
 	];
 </script>
 
-<div class="pb-8 text-center text-8xl font-medium">plans & pricing</div>
-<div class="flex justify-center pb-12">
+<div class="pb-12">
+	<div class="text-center text-6xl font-medium tracking-tighter sm:text-7xl">plans & pricing</div>
+	<div class="px-0 py-4 text-center text-2xl font-extralight sm:px-18 md:px-36">
+		Find the right solution for your team.
+	</div>
+</div>
+<div class="relative flex justify-center pb-12">
 	<Tabs.Root bind:value={pricingPeriod} class="">
 		<Tabs.List>
 			<Tabs.Trigger class="w-56" value="annual">Annual</Tabs.Trigger>
 			<Tabs.Trigger value="monthly">Monthly</Tabs.Trigger>
 		</Tabs.List>
 	</Tabs.Root>
+	<div class="absolute top-4 -z-10 w-full border-b"></div>
 </div>
-<div class="bg-texture border">
+<div class="bg-texture border-x border-y sm:border-x-0">
 	<div class="grid gap-6 px-6 sm:grid-cols-3">
 		{#each plans as plan, index}
 			<div class="border-x bg-background p-6 even:bg-foreground even:text-primary-foreground">
