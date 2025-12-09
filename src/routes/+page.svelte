@@ -15,7 +15,7 @@
 	<div class=" max-w-5xl sm:border-x">
 		<Header />
 		<div
-			class="pt-24 text-center font-serif text-7xl leading-none tracking-normal sm:text-8xl sm:leading-tight md:text-9xl"
+			class="px-2 pt-24 text-center font-serif text-7xl leading-none tracking-normal sm:px-0 sm:text-8xl sm:leading-tight md:text-9xl"
 		>
 			<div>Effortless routes</div>
 			<div>from</div>
