@@ -16,7 +16,7 @@
 		{
 			name: 'Business',
 			priceMonthly: '$8',
-			priceAnnual: '$6',
+			priceAnnual: '$36',
 			buttonText: 'get started',
 			features: ['up to 100 users', 'unlimited stops', 'unlimited optimizations']
 		},
@@ -56,7 +56,7 @@
 			<div class="border-x bg-background p-6 even:bg-foreground even:text-primary-foreground">
 				<div class="font-serif text-4xl">{plan.name}</div>
 				<div class="pt-18 pb-12">
-					<span class="text-6xl">
+					<span class="text-4xl md:text-5xl">
 						{pricingPeriod == 'annual' ? plan.priceAnnual : plan.priceMonthly}
 					</span>
 					<div class="text-muted-foreground">
