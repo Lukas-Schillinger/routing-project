@@ -64,9 +64,13 @@
 					</div>
 				</div>
 				<div>
-					<Button size="sm" class="w-full {index % 2 === 1 ? 'bg-background text-foreground' : ''}"
-						>{plan.buttonText}</Button
+					<Button
+						size="sm"
+						href="/auth/register"
+						class="w-full {index % 2 === 1 ? 'bg-background text-foreground' : ''}"
 					>
+						{plan.buttonText}
+					</Button>
 				</div>
 				<div class="pt-8">
 					<ul class="">

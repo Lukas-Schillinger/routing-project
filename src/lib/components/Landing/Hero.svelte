@@ -19,7 +19,7 @@
 	real-time.
 </div>
 <div class="flex justify-center">
-	<Button class="flex justify-between gap-8 bg-foreground">
+	<Button class="flex justify-between gap-8 bg-foreground" href="/auth/register">
 		Start your first map
 		<ArrowRight />
 	</Button>

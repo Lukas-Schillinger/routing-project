@@ -9,7 +9,7 @@
 			<div class="pb-8 text-6xl font-medium sm:text-7xl">Start routing the easy way</div>
 			<div>
 				<Button variant="outline">contact us</Button>
-				<Button class="gap-8">Get started for free <ArrowRight /></Button>
+				<Button class="gap-8" href="/auth/register">Get started for free <ArrowRight /></Button>
 			</div>
 		</div>
 	</div>

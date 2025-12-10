@@ -1,6 +1,5 @@
 <script lang="ts">
-	import { Separator } from '$lib/components/ui/separator';
-	import { MapPin } from 'lucide-svelte';
+	import { mode } from 'mode-watcher';
 </script>
 
 <footer class="mt-auto border-t bg-muted/40 py-12">
@@ -8,10 +7,21 @@
 		<div class="grid gap-8 md:grid-cols-4 lg:grid-cols-5">
 			<div class="md:col-span-2">
 				<div class="mb-4 flex items-center space-x-2">
-					<div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-						<MapPin class="h-5 w-5 text-primary-foreground" />
+					<div class="mt-2 flex size-12 items-center justify-center rounded-lg">
+						{#if mode.current == 'light'}
+							<img
+								src="https://storage-public.wend-routing.com/cdn-cgi/image/width=100,height=100,fit=cover,format=webp,quality=100/logo/logo_black.png"
+								alt=""
+							/>
+						{:else}
+							<img
+								class=""
+								src="https://pub-7210daee28ba4cac82595c41b998d12f.r2.dev/logo/logo_white.png"
+								alt=""
+							/>
+						{/if}
 					</div>
-					<span class="text-xl font-bold tracking-tight">Routing Project</span>
+					<span class="text-2xl font-bold tracking-tight">wend</span>
 				</div>
 				<p class="max-w-xs text-sm text-muted-foreground">
 					Advanced route optimization and fleet management for modern logistics teams.
@@ -62,14 +72,6 @@
 					</li>
 				</ul>
 			</div>
-		</div>
-
-		<Separator class="my-8" />
-
-		<div
-			class="flex flex-col items-center justify-between gap-4 text-sm text-muted-foreground md:flex-row"
-		>
-			<p>© 2025 Routing Project. All rights reserved.</p>
 		</div>
 	</div>
 </footer>
