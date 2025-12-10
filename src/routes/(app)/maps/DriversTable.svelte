@@ -115,7 +115,7 @@
 {/if}
 <div class="grid grid-cols-2 gap-2">
 	{#each drivers as driver}
-		<EditOrCreateDriverPopover mode="edit" {driver}>
+		<EditOrCreateDriverPopover mode="edit" {driver} onSuccess={invalidateAll}>
 			<Button class="flex w-full justify-between px-2" variant="outline" size="lg">
 				<div class="flex items-center gap-2">
 					<Avatar.Root class="size-6">

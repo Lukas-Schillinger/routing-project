@@ -105,13 +105,8 @@
 
 {#if maps.length === 0}
 	<Card.Root>
-		<Card.Content class="flex flex-col items-center justify-center py-16">
-			<Map class="mb-4 h-16 w-16 text-muted-foreground" />
-			<h3 class="headline-small mb-2">No Maps Yet</h3>
-			<p class="body-medium mb-6 text-center text-muted-foreground">
-				Get started by uploading a CSV file with addresses to create your first map.
-			</p>
-			<Empty.Root class="border border-dashed">
+		<Card.Content class="flex flex-col items-center justify-center">
+			<Empty.Root>
 				<Empty.Header>
 					<Empty.Media variant="icon">
 						<Map />
@@ -122,7 +117,7 @@
 					</Empty.Description>
 				</Empty.Header>
 				<Empty.Content>
-					<Button variant="outline" href="/maps/import">create map</Button>
+					<Button href="/maps/import">create map</Button>
 				</Empty.Content>
 			</Empty.Root>
 		</Card.Content>

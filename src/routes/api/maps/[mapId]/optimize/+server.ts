@@ -1,9 +1,9 @@
 // POST /api/maps/[mapId]/optimize - Optimize routes for a map using TSP solver
 
 import { optimizationOptionsSchema } from '$lib/schemas/map';
-import { optimizationService } from '$lib/services/server';
 import { authorizeRoute } from '$lib/services/server/auth';
 import { ServiceError } from '$lib/services/server/errors';
+import { newOptimizationService } from '$lib/services/server/optimization.service';
 import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
@@ -19,7 +19,11 @@ export const POST: RequestHandler = async ({ params, request }) => {
 			error(400, `Invalid optimization options: ${parsed.error.message}`);
 		}
 
-		const result = await optimizationService.optimizeMap(mapId, user.organization_id, parsed.data);
+		const result = await newOptimizationService.queueOptimization(
+			mapId,
+			user.organization_id,
+			parsed.data
+		);
 		return json(result);
 	} catch (err) {
 		console.error('Error optimizing routes:', err);

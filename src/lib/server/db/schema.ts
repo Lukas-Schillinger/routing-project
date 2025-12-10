@@ -263,6 +263,23 @@ export const files = pgTable(
 	]
 );
 
+export const optimizationJobs = pgTable('optimization_jobs', {
+	id,
+	organization_id: orgId.references(() => organizations.id, { onDelete: 'cascade' }),
+	status: varchar('status', { length: 20 })
+		.notNull()
+		.$type<'pending' | 'running' | 'completing' | 'completed' | 'failed'>(),
+	matrix_id: uuid()
+		.references(() => matrices.id, { onDelete: 'cascade' })
+		.notNull(),
+	map_id: uuid()
+		.references(() => maps.id, { onDelete: 'cascade' })
+		.notNull(),
+	error_message: text('error_message'),
+	created_at: ts('created_at'),
+	updated_at: ts('updated_at')
+});
+
 /***************************************************************************************
  *
  * 									Relations
