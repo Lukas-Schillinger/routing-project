@@ -482,6 +482,24 @@ export class NewOptimizationService {
 		return job[0];
 	}
 
+	async completeOptimization(result: OptimizationResult) {
+		// 6. Clear existing driver assignments
+		await this.clearStopAssignments(mapId);
+
+		// 7. Apply optimized routes to database (batched)
+		await this.applyOptimizedRoutes(mapId, result);
+
+		// 8. Compute and save route geometries
+		await this.computeAndSaveRoutes(
+			mapId,
+			organizationId,
+			options.depotId,
+			result,
+			depotCoord,
+			locationCoordMap
+		);
+	}
+
 	/**
 	 * Get or create a distance matrix with caching
 	 * Checks for existing matrix with matching input hash before creating new one
