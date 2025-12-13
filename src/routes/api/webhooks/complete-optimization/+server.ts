@@ -1,6 +1,8 @@
 import { env } from '$env/dynamic/private';
-import { optimizationResultSchema } from '$lib/services/external/tsp_solver/types';
-import { newOptimizationService } from '$lib/services/server/optimization.service';
+import {
+	optimizationResultSchema,
+	optimizationService
+} from '$lib/services/server/optimization.service';
 import { json } from '@sveltejs/kit';
 import { z } from 'zod';
 import type { RequestHandler } from './$types';
@@ -26,7 +28,7 @@ export const POST: RequestHandler = async ({ request }) => {
 		const validatedData = optimizationResultSchema.parse(body);
 
 		// Process the optimization result
-		await newOptimizationService.completeOptimization(validatedData);
+		await optimizationService.completeOptimization(validatedData);
 
 		return json({ success: true });
 	} catch (error) {

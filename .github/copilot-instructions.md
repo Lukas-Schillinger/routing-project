@@ -223,7 +223,7 @@ Never allow cross-tenant access - validate ownership before any mutation.
 - Services: `src/lib/services/server/[entity].service.ts`
 - API routes: `src/routes/api/[resource]/+server.ts`
 - Optimization: `src/lib/services/server/optimization.service.ts`
-- External services: `src/lib/services/external/tsp_solver/`, `src/lib/services/external/mapbox/`
+- External services: `src/lib/services/external/mapbox/`
 
 ## Code Style
 
