@@ -14,26 +14,19 @@ import { createHash } from 'crypto';
 import { and, eq, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 import { mapboxDistanceMatrix, mapboxNavigation } from '../external/mapbox';
-import type { CoordinatesData, DistanceMatrixResult } from '../external/mapbox/distance-matrix';
+import type { CoordinatesData } from '../external/mapbox/distance-matrix';
 import type { Coordinate } from '../external/mapbox/types';
 import { depotService } from './depot.service';
 import { ServiceError } from './errors';
 import { routeService } from './route.service';
 
-/**
- * TSP Solver API Types and Schemas
- * Matches the FastAPI endpoint schemas
- */
-
-// Optimization configuration
 export const optimizationConfigSchema = z.object({
 	fairness: z.enum(['high', 'medium', 'low']).default('medium'),
 	time_limit_sec: z.number().int().positive().default(10),
-	start_at_depot: z.boolean().default(true), // Depot should be the first element in the matrix
+	start_at_depot: z.boolean().default(true),
 	end_at_depot: z.boolean().default(false)
 });
 
-// Request payload
 export const matrixPayloadSchema = z.object({
 	matrix: z.array(z.array(z.number())),
 	stop_ids: z.array(z.string()),
@@ -41,20 +34,17 @@ export const matrixPayloadSchema = z.object({
 	config: optimizationConfigSchema
 });
 
-// Response leg (individual stop in a route)
 export const legSchema = z.object({
 	stop_id: z.string(),
 	stop_index: z.number().int()
 });
 
-// Response route (one driver's route)
 export const routeSchema = z.object({
 	driver_id: z.string(),
 	cost: z.number().int(),
 	legs: z.array(legSchema)
 });
 
-// Complete optimization result
 export const optimizationResultSchema = z.object({
 	job_id: z.string().uuid(),
 	success: z.boolean(),
@@ -62,7 +52,6 @@ export const optimizationResultSchema = z.object({
 	total_cost: z.number().int().nullable()
 });
 
-// Type exports
 export type OptimizationConfig = z.infer<typeof optimizationConfigSchema>;
 export type MatrixPayload = z.infer<typeof matrixPayloadSchema>;
 export type Leg = z.infer<typeof legSchema>;
@@ -77,6 +66,11 @@ export type OptimizationResult = z.infer<typeof optimizationResultSchema>;
 export class OptimizationService {
 	private sqsClient: SQSClient;
 	private queueUrl: string;
+	private readonly DEFAULT_CONFIG = {
+		time_limit_sec: 30,
+		start_at_depot: true,
+		end_at_depot: true
+	} as const;
 
 	constructor() {
 		this.sqsClient = new SQSClient({
@@ -88,14 +82,7 @@ export class OptimizationService {
 		});
 		this.queueUrl = env.OPTIMIZATION_QUEUE_URL;
 	}
-	/**
-	 * Optimize routes for a map
-	 *
-	 * @param mapId - Map ID to optimize
-	 * @param organizationId - Organization ID for access control
-	 * @param options - Optimization options (depotId and fairness)
-	 * @returns Optimization result
-	 */
+
 	async queueOptimization(mapId: string, organizationId: string, options: OptimizationOptions) {
 		const assignedDrivers = await this.fetchAssignedDrivers(mapId, organizationId);
 
@@ -105,25 +92,21 @@ export class OptimizationService {
 			);
 		}
 
-		// 2. Get coordinates data (fetches depot once, reused throughout)
 		const { coordinatesData } = await this.getCoordinatesData(
 			mapId,
 			options.depotId,
 			organizationId
 		);
 
-		// 3. Get or create distance matrix (with caching)
 		const matrixResult = await this.getOrCreateDistanceMatrix(
 			organizationId,
 			mapId,
 			coordinatesData
 		);
 
-		// 4. Extract driver IDs
 		const vehicleIds = assignedDrivers.map((d) => d.driver.id);
 
-		// 5. Create optimization job
-		const job = await db
+		const [job] = await db
 			.insert(optimizationJobs)
 			.values({
 				organization_id: organizationId,
@@ -134,124 +117,80 @@ export class OptimizationService {
 			})
 			.returning();
 
-		// 6. Send to SQS queue with job_id
 		const payload = {
-			job_id: job[0].id,
+			job_id: job.id,
 			matrix: matrixResult.matrix,
 			stop_ids: coordinatesData.locationIds,
 			vehicle_ids: vehicleIds,
 			config: {
-				fairness: options.fairness,
-				time_limit_sec: 30,
-				start_at_depot: true,
-				end_at_depot: true
+				...this.DEFAULT_CONFIG,
+				fairness: options.fairness
 			}
 		};
 
-		const command = new SendMessageCommand({
-			QueueUrl: this.queueUrl,
-			MessageBody: JSON.stringify(payload)
-		});
-
 		try {
-			await this.sqsClient.send(command);
+			await this.sqsClient.send(
+				new SendMessageCommand({
+					QueueUrl: this.queueUrl,
+					MessageBody: JSON.stringify(payload)
+				})
+			);
 		} catch (error) {
 			console.error('Failed to send message to SQS:', error);
-			// Mark job as failed
-			await db
-				.update(optimizationJobs)
-				.set({
-					status: 'failed',
-					error_message: 'Failed to queue optimization job',
-					updated_at: new Date()
-				})
-				.where(eq(optimizationJobs.id, job[0].id));
+			await this.updateJobStatus(job.id, 'failed', 'Failed to queue optimization job');
 			throw ServiceError.internal('Failed to queue optimization job');
 		}
 
-		return job[0];
+		return job;
 	}
 
 	async completeOptimization(result: OptimizationResult) {
 		try {
-			// 1. Look up the job to get map_id, organization_id, depot_id
-			const job = await db
+			const [job] = await db
 				.select()
 				.from(optimizationJobs)
 				.where(eq(optimizationJobs.id, result.job_id))
 				.limit(1);
 
-			if (job.length === 0) {
+			if (!job) {
 				throw ServiceError.validation(`Optimization job ${result.job_id} not found`);
 			}
 
-			const jobData = job[0];
-			const { map_id: mapId, organization_id: organizationId, depot_id: depotId } = jobData;
+			const { map_id: mapId, organization_id: organizationId, depot_id: depotId } = job;
 
-			// 2. Update job status to 'completing'
-			await db
-				.update(optimizationJobs)
-				.set({
-					status: 'completing',
-					updated_at: new Date()
-				})
-				.where(eq(optimizationJobs.id, result.job_id));
+			await this.updateJobStatus(result.job_id, 'completing');
 
-			// 3. Check if optimization was successful
 			if (!result.success) {
-				await db
-					.update(optimizationJobs)
-					.set({
-						status: 'failed',
-						error_message: 'Optimization solver returned failure',
-						updated_at: new Date()
-					})
-					.where(eq(optimizationJobs.id, result.job_id));
+				await this.updateJobStatus(result.job_id, 'failed', 'Optimization solver returned failure');
 				throw ServiceError.internal('Optimization failed');
 			}
 
-			// 4. Get coordinates data for route computation
 			const { depotCoord, locationCoordMap } = await this.getCoordinatesData(
 				mapId,
 				depotId,
 				organizationId
 			);
 
-			// 5. Clear existing driver assignments
 			await this.clearStopAssignments(mapId);
-
-			// 6. Apply optimized routes to database (batched)
 			await this.applyOptimizedRoutes(mapId, result);
+			await this.computeAndSaveRoutes(
+				mapId,
+				organizationId,
+				depotId,
+				result,
+				depotCoord,
+				locationCoordMap
+			);
 
-			// 7. Compute and save route geometries
-			await this.computeAndSaveRoutes(mapId, organizationId, depotId, result, depotCoord, locationCoordMap);
-
-			// 8. Update job status to 'completed'
-			await db
-				.update(optimizationJobs)
-				.set({
-					status: 'completed',
-					updated_at: new Date()
-				})
-				.where(eq(optimizationJobs.id, result.job_id));
+			await this.updateJobStatus(result.job_id, 'completed');
 		} catch (error) {
 			console.error('Error completing optimization:', error);
-			// Mark job as failed
-			await db
-				.update(optimizationJobs)
-				.set({
-					status: 'failed',
-					error_message: error instanceof Error ? error.message : 'Unknown error',
-					updated_at: new Date()
-				})
-				.where(eq(optimizationJobs.id, result.job_id));
+			const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+			await this.updateJobStatus(result.job_id, 'failed', errorMessage);
 			throw error;
 		}
 	}
 
-	/**
-	 * Clear driver assignments for all stops in the map
-	 */
 	private async clearStopAssignments(mapId: string): Promise<void> {
 		await db
 			.update(stops)
@@ -263,66 +202,50 @@ export class OptimizationService {
 			.where(eq(stops.map_id, mapId));
 	}
 
-	/**
-	 * Set driver_id and deliver_index on stops in the map
-	 */
 	private async applyOptimizedRoutes(
 		mapId: string,
 		optimizationResult: OptimizationResult
 	): Promise<void> {
-		// Collect all location_ids from routes to fetch stops in one query
 		const allLocationIds = optimizationResult.routes.flatMap((route) =>
 			route.legs.map((leg) => leg.stop_id)
 		);
 
 		if (allLocationIds.length === 0) return;
 
-		// Fetch all stops for this map that match the location_ids
 		const matchingStops = await db
 			.select({ id: stops.id, location_id: stops.location_id })
 			.from(stops)
 			.where(and(eq(stops.map_id, mapId), inArray(stops.location_id, allLocationIds)));
 
-		// Build location_id → stop_id map
 		const locationToStopId = new Map(matchingStops.map((s) => [s.location_id, s.id]));
 
-		// Build updates array
-		const updates: { stopId: string; driverId: string; deliveryIndex: number }[] = [];
+		const updates = optimizationResult.routes
+			.flatMap((route) =>
+				route.legs.map((leg, i) => ({
+					stopId: locationToStopId.get(leg.stop_id),
+					driverId: route.driver_id,
+					deliveryIndex: i
+				}))
+			)
+			.filter((update) => update.stopId);
 
-		for (const route of optimizationResult.routes) {
-			for (let i = 0; i < route.legs.length; i++) {
-				const leg = route.legs[i];
-				const stopId = locationToStopId.get(leg.stop_id);
-				if (stopId) {
-					updates.push({
-						stopId,
-						driverId: route.driver_id,
-						deliveryIndex: i
-					});
-				}
-			}
-		}
-
-		// Execute all updates in a transaction
 		const now = new Date();
 		await db.transaction(async (tx) => {
-			for (const update of updates) {
-				await tx
-					.update(stops)
-					.set({
-						driver_id: update.driverId,
-						delivery_index: update.deliveryIndex,
-						updated_at: now
-					})
-					.where(eq(stops.id, update.stopId));
-			}
+			await Promise.all(
+				updates.map((update) =>
+					tx
+						.update(stops)
+						.set({
+							driver_id: update.driverId,
+							delivery_index: update.deliveryIndex,
+							updated_at: now
+						})
+						.where(eq(stops.id, update.stopId!))
+				)
+			);
 		});
 	}
 
-	/**
-	 * Compute route geometries using Mapbox Directions API and save to database
-	 * Uses pre-fetched coordinates to avoid re-querying stops
-	 */
 	private async computeAndSaveRoutes(
 		mapId: string,
 		organizationId: string,
@@ -331,7 +254,6 @@ export class OptimizationService {
 		depotCoord: Coordinate,
 		locationCoordMap: Map<string, Coordinate>
 	): Promise<void> {
-		// Prepare all route computations in parallel
 		const routePromises = result.routes.map(async (route) => {
 			try {
 				if (route.legs.length === 0) {
@@ -339,61 +261,61 @@ export class OptimizationService {
 					return null;
 				}
 
-				// Build coordinate sequence from cached data: depot → stops → depot
-				const coordinates: Coordinate[] = [
+				const directions = await mapboxNavigation.getDirections([
 					depotCoord,
 					...route.legs.map((leg) => locationCoordMap.get(leg.stop_id)!),
 					depotCoord
-				];
-
-				// Call Mapbox Directions API
-				const directions = await mapboxNavigation.getDirections(coordinates);
+				]);
 
 				if (directions.routes.length === 0) {
 					console.warn(`No route found for driver ${route.driver_id}`);
 					return null;
 				}
 
-				const bestRoute = directions.routes[0];
+				const { geometry, duration } = directions.routes[0];
 
-				// Save route to database
 				await routeService.upsertRoute({
 					organization_id: organizationId,
 					map_id: mapId,
 					driver_id: route.driver_id,
 					depot_id: depotId,
-					geometry: bestRoute.geometry,
-					duration: bestRoute.duration
+					geometry,
+					duration
 				});
 
-				return {
-					driver_id: route.driver_id,
-					success: true
-				};
+				return { driver_id: route.driver_id, success: true };
 			} catch (error) {
 				console.error(`Error computing route for driver ${route.driver_id}:`, error);
-				return {
-					driver_id: route.driver_id,
-					success: false,
-					error
-				};
+				return { driver_id: route.driver_id, success: false, error };
 			}
 		});
 
-		// Execute all route computations in parallel
 		const results = await Promise.all(routePromises);
-
-		// Log any failures
 		const failures = results.filter((r) => r && !r.success);
 		if (failures.length > 0) {
 			console.warn(`Failed to compute ${failures.length} route(s)`);
 		}
 	}
 
-	/**
-	 * Get or create a distance matrix with caching
-	 * Checks for existing matrix with matching input hash before creating new one
-	 */
+	private async updateJobStatus(
+		jobId: string,
+		status: 'pending' | 'completing' | 'completed' | 'failed',
+		errorMessage?: string
+	): Promise<void> {
+		await db
+			.update(optimizationJobs)
+			.set({
+				status,
+				...(errorMessage && { error_message: errorMessage }),
+				updated_at: new Date()
+			})
+			.where(eq(optimizationJobs.id, jobId));
+	}
+
+	private toCoordinate(lon: string | number, lat: string | number): Coordinate {
+		return [Number(lon), Number(lat)];
+	}
+
 	private async getOrCreateDistanceMatrix(
 		organizationId: string,
 		mapId: string,
@@ -429,14 +351,9 @@ export class OptimizationService {
 		return matrix[0];
 	}
 
-	/**
-	 * Fetch active drivers assigned to the map
-	 */
 	private async fetchAssignedDrivers(mapId: string, organizationId: string) {
 		return await db
-			.select({
-				driver: drivers
-			})
+			.select({ driver: drivers })
 			.from(driverMapMemberships)
 			.innerJoin(drivers, eq(driverMapMemberships.driver_id, drivers.id))
 			.where(
@@ -448,9 +365,6 @@ export class OptimizationService {
 			);
 	}
 
-	/**
-	 * Get coordinates data for depot and stops
-	 */
 	private async getCoordinatesData(
 		mapId: string,
 		depotId: string,
@@ -460,18 +374,14 @@ export class OptimizationService {
 		depotCoord: Coordinate;
 		locationCoordMap: Map<string, Coordinate>;
 	}> {
-		// Fetch depot with location (cached for reuse in computeAndSaveRoutes)
 		const depot = await depotService.getDepotById(depotId, organizationId);
 
 		if (!depot.location.lon || !depot.location.lat) {
-			throw ServiceError.validation(
-				'Depot location has no coordinates. Please update the depot with valid coordinates.'
-			);
+			throw ServiceError.validation('Depot location missing coordinates');
 		}
 
-		const depotCoord: Coordinate = [Number(depot.location.lon), Number(depot.location.lat)];
+		const depotCoord = this.toCoordinate(depot.location.lon, depot.location.lat);
 
-		// Fetch all stops with their locations for this map
 		const mapStops = await db
 			.select({
 				stop: stops,
@@ -485,24 +395,17 @@ export class OptimizationService {
 			throw ServiceError.validation('No stops found for this map');
 		}
 
-		// Sort stops by address_hash for deterministic ordering
-		mapStops.sort((a, b) => {
-			const hashA = a.location.address_hash || '';
-			const hashB = b.location.address_hash || '';
-			return hashA.localeCompare(hashB);
-		});
+		mapStops.sort((a, b) =>
+			(a.location.address_hash ?? '').localeCompare(b.location.address_hash ?? '')
+		);
 
-		// Build coordinates array with depot first
 		const coordinates: [number, number][] = [depotCoord];
 		const locationIds: string[] = [depot.location.id];
-
-		// Build location → coordinate map for quick lookup in computeAndSaveRoutes
 		const locationCoordMap = new Map<string, Coordinate>();
 		locationCoordMap.set(depot.location.id, depotCoord);
 
-		// Add all stop coordinates in sorted order
 		for (const { location } of mapStops) {
-			const coord: Coordinate = [Number(location.lon), Number(location.lat)];
+			const coord = this.toCoordinate(location.lon, location.lat);
 			coordinates.push(coord);
 			locationIds.push(location.id);
 			locationCoordMap.set(location.id, coord);
@@ -515,12 +418,7 @@ export class OptimizationService {
 		};
 	}
 
-	/**
-	 * Create a deterministic hash from coordinates
-	 */
 	private createInputHash(coordinatesData: { coordinates: [number, number][] }): string {
-		// Keep coordinates in order - depot first, then stops ordered by address_hash
-		// This preserves the matrix index mapping across cache hits
 		const coordsString = coordinatesData.coordinates
 			.map((coord) => `${coord[0].toFixed(6)},${coord[1].toFixed(6)}`)
 			.join('|');
