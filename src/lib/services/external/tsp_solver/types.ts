@@ -36,6 +36,7 @@ export const routeSchema = z.object({
 
 // Complete optimization result
 export const optimizationResultSchema = z.object({
+	job_id: z.string().uuid(),
 	success: z.boolean(),
 	routes: z.array(routeSchema),
 	total_cost: z.number().int().nullable()

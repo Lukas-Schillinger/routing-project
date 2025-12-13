@@ -445,17 +445,21 @@ export class NewOptimizationService {
 		// 4. Extract driver IDs
 		const vehicleIds = assignedDrivers.map((d) => d.driver.id);
 
+		// 5. Create optimization job
 		const job = await db
 			.insert(optimizationJobs)
 			.values({
 				organization_id: organizationId,
 				status: 'pending',
 				matrix_id: matrixResult.id,
-				map_id: mapId
+				map_id: mapId,
+				depot_id: options.depotId
 			})
 			.returning();
 
+		// 6. Send to SQS queue with job_id
 		const payload = {
+			job_id: job[0].id,
 			matrix: matrixResult.matrix,
 			stop_ids: coordinatesData.locationIds,
 			vehicle_ids: vehicleIds,
@@ -476,6 +480,15 @@ export class NewOptimizationService {
 			await this.sqsClient.send(command);
 		} catch (error) {
 			console.error('Failed to send message to SQS:', error);
+			// Mark job as failed
+			await db
+				.update(optimizationJobs)
+				.set({
+					status: 'failed',
+					error_message: 'Failed to queue optimization job',
+					updated_at: new Date()
+				})
+				.where(eq(optimizationJobs.id, job[0].id));
 			throw ServiceError.internal('Failed to queue optimization job');
 		}
 
@@ -483,21 +496,221 @@ export class NewOptimizationService {
 	}
 
 	async completeOptimization(result: OptimizationResult) {
-		// 6. Clear existing driver assignments
-		await this.clearStopAssignments(mapId);
+		try {
+			// 1. Look up the job to get map_id, organization_id, depot_id
+			const job = await db
+				.select()
+				.from(optimizationJobs)
+				.where(eq(optimizationJobs.id, result.job_id))
+				.limit(1);
 
-		// 7. Apply optimized routes to database (batched)
-		await this.applyOptimizedRoutes(mapId, result);
+			if (job.length === 0) {
+				throw ServiceError.validation(`Optimization job ${result.job_id} not found`);
+			}
 
-		// 8. Compute and save route geometries
-		await this.computeAndSaveRoutes(
-			mapId,
-			organizationId,
-			options.depotId,
-			result,
-			depotCoord,
-			locationCoordMap
+			const jobData = job[0];
+			const { map_id: mapId, organization_id: organizationId, depot_id: depotId } = jobData;
+
+			// 2. Update job status to 'completing'
+			await db
+				.update(optimizationJobs)
+				.set({
+					status: 'completing',
+					updated_at: new Date()
+				})
+				.where(eq(optimizationJobs.id, result.job_id));
+
+			// 3. Check if optimization was successful
+			if (!result.success) {
+				await db
+					.update(optimizationJobs)
+					.set({
+						status: 'failed',
+						error_message: 'Optimization solver returned failure',
+						updated_at: new Date()
+					})
+					.where(eq(optimizationJobs.id, result.job_id));
+				throw ServiceError.internal('Optimization failed');
+			}
+
+			// 4. Get coordinates data for route computation
+			const { depotCoord, locationCoordMap } = await this.getCoordinatesData(
+				mapId,
+				depotId,
+				organizationId
+			);
+
+			// 5. Clear existing driver assignments
+			await this.clearStopAssignments(mapId);
+
+			// 6. Apply optimized routes to database (batched)
+			await this.applyOptimizedRoutes(mapId, result);
+
+			// 7. Compute and save route geometries
+			await this.computeAndSaveRoutes(mapId, organizationId, depotId, result, depotCoord, locationCoordMap);
+
+			// 8. Update job status to 'completed'
+			await db
+				.update(optimizationJobs)
+				.set({
+					status: 'completed',
+					updated_at: new Date()
+				})
+				.where(eq(optimizationJobs.id, result.job_id));
+		} catch (error) {
+			console.error('Error completing optimization:', error);
+			// Mark job as failed
+			await db
+				.update(optimizationJobs)
+				.set({
+					status: 'failed',
+					error_message: error instanceof Error ? error.message : 'Unknown error',
+					updated_at: new Date()
+				})
+				.where(eq(optimizationJobs.id, result.job_id));
+			throw error;
+		}
+	}
+
+	/**
+	 * Clear driver assignments for all stops in the map
+	 */
+	private async clearStopAssignments(mapId: string): Promise<void> {
+		await db
+			.update(stops)
+			.set({
+				driver_id: null,
+				delivery_index: null,
+				updated_at: new Date()
+			})
+			.where(eq(stops.map_id, mapId));
+	}
+
+	/**
+	 * Set driver_id and deliver_index on stops in the map
+	 */
+	private async applyOptimizedRoutes(
+		mapId: string,
+		optimizationResult: OptimizationResult
+	): Promise<void> {
+		// Collect all location_ids from routes to fetch stops in one query
+		const allLocationIds = optimizationResult.routes.flatMap((route) =>
+			route.legs.map((leg) => leg.stop_id)
 		);
+
+		if (allLocationIds.length === 0) return;
+
+		// Fetch all stops for this map that match the location_ids
+		const matchingStops = await db
+			.select({ id: stops.id, location_id: stops.location_id })
+			.from(stops)
+			.where(and(eq(stops.map_id, mapId), inArray(stops.location_id, allLocationIds)));
+
+		// Build location_id → stop_id map
+		const locationToStopId = new Map(matchingStops.map((s) => [s.location_id, s.id]));
+
+		// Build updates array
+		const updates: { stopId: string; driverId: string; deliveryIndex: number }[] = [];
+
+		for (const route of optimizationResult.routes) {
+			for (let i = 0; i < route.legs.length; i++) {
+				const leg = route.legs[i];
+				const stopId = locationToStopId.get(leg.stop_id);
+				if (stopId) {
+					updates.push({
+						stopId,
+						driverId: route.driver_id,
+						deliveryIndex: i
+					});
+				}
+			}
+		}
+
+		// Execute all updates in a transaction
+		const now = new Date();
+		await db.transaction(async (tx) => {
+			for (const update of updates) {
+				await tx
+					.update(stops)
+					.set({
+						driver_id: update.driverId,
+						delivery_index: update.deliveryIndex,
+						updated_at: now
+					})
+					.where(eq(stops.id, update.stopId));
+			}
+		});
+	}
+
+	/**
+	 * Compute route geometries using Mapbox Directions API and save to database
+	 * Uses pre-fetched coordinates to avoid re-querying stops
+	 */
+	private async computeAndSaveRoutes(
+		mapId: string,
+		organizationId: string,
+		depotId: string,
+		result: OptimizationResult,
+		depotCoord: Coordinate,
+		locationCoordMap: Map<string, Coordinate>
+	): Promise<void> {
+		// Prepare all route computations in parallel
+		const routePromises = result.routes.map(async (route) => {
+			try {
+				if (route.legs.length === 0) {
+					console.warn(`No stops found for driver ${route.driver_id}`);
+					return null;
+				}
+
+				// Build coordinate sequence from cached data: depot → stops → depot
+				const coordinates: Coordinate[] = [
+					depotCoord,
+					...route.legs.map((leg) => locationCoordMap.get(leg.stop_id)!),
+					depotCoord
+				];
+
+				// Call Mapbox Directions API
+				const directions = await mapboxNavigation.getDirections(coordinates);
+
+				if (directions.routes.length === 0) {
+					console.warn(`No route found for driver ${route.driver_id}`);
+					return null;
+				}
+
+				const bestRoute = directions.routes[0];
+
+				// Save route to database
+				await routeService.upsertRoute({
+					organization_id: organizationId,
+					map_id: mapId,
+					driver_id: route.driver_id,
+					depot_id: depotId,
+					geometry: bestRoute.geometry,
+					duration: bestRoute.duration
+				});
+
+				return {
+					driver_id: route.driver_id,
+					success: true
+				};
+			} catch (error) {
+				console.error(`Error computing route for driver ${route.driver_id}:`, error);
+				return {
+					driver_id: route.driver_id,
+					success: false,
+					error
+				};
+			}
+		});
+
+		// Execute all route computations in parallel
+		const results = await Promise.all(routePromises);
+
+		// Log any failures
+		const failures = results.filter((r) => r && !r.success);
+		if (failures.length > 0) {
+			console.warn(`Failed to compute ${failures.length} route(s)`);
+		}
 	}
 
 	/**

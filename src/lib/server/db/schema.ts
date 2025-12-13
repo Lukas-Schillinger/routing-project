@@ -275,6 +275,9 @@ export const optimizationJobs = pgTable('optimization_jobs', {
 	map_id: uuid()
 		.references(() => maps.id, { onDelete: 'cascade' })
 		.notNull(),
+	depot_id: uuid()
+		.references(() => depots.id, { onDelete: 'cascade' })
+		.notNull(),
 	error_message: text('error_message'),
 	created_at: ts('created_at'),
 	updated_at: ts('updated_at')
