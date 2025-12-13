@@ -11,10 +11,10 @@ export const POST: RequestHandler = async ({ request }) => {
 	try {
 		// Verify webhook authentication
 		const authHeader = request.headers.get('authorization');
-		const expectedToken = env.WEBHOOK_SECRET;
+		const expectedToken = env.OPTIMIZATION_WEBHOOK_SECRET;
 
 		if (!expectedToken) {
-			console.error('WEBHOOK_SECRET not configured');
+			console.error('OPTIMIZATION_WEBHOOK_SECRET not configured');
 			return json({ success: false, error: 'Server configuration error' }, { status: 500 });
 		}
 
