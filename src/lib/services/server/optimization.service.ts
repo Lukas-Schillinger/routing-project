@@ -83,6 +83,23 @@ export class OptimizationService {
 		this.queueUrl = env.OPTIMIZATION_QUEUE_URL;
 	}
 
+	async getActiveJobForMap(mapId: string, organizationId: string) {
+		const [job] = await db
+			.select()
+			.from(optimizationJobs)
+			.where(
+				and(
+					eq(optimizationJobs.map_id, mapId),
+					eq(optimizationJobs.organization_id, organizationId),
+					inArray(optimizationJobs.status, ['pending', 'running', 'completing'])
+				)
+			)
+			.orderBy(optimizationJobs.created_at)
+			.limit(1);
+
+		return job ?? null;
+	}
+
 	async queueOptimization(mapId: string, organizationId: string, options: OptimizationOptions) {
 		const assignedDrivers = await this.fetchAssignedDrivers(mapId, organizationId);
 

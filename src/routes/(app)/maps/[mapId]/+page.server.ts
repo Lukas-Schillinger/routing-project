@@ -2,6 +2,7 @@ import {
 	depotService,
 	driverService,
 	mapService,
+	optimizationService,
 	routeService,
 	ServiceError,
 	stopService
@@ -21,14 +22,16 @@ export const load: PageServerLoad = async ({ params }) => {
 
 	try {
 		// Fetch all data in parallel since they're independent
-		const [map, mapStops, orgDrivers, assignedDriversData, depots, routes] = await Promise.all([
-			mapService.getMapById(mapId, user.organization_id),
-			stopService.getStopsByMap(mapId, user.organization_id),
-			driverService.getDrivers(user.organization_id),
-			mapService.getDriversForMap(mapId, user.organization_id),
-			depotService.getDepots(user.organization_id),
-			routeService.getRoutesByMap(mapId, user.organization_id)
-		]);
+		const [map, mapStops, orgDrivers, assignedDriversData, depots, routes, activeJob] =
+			await Promise.all([
+				mapService.getMapById(mapId, user.organization_id),
+				stopService.getStopsByMap(mapId, user.organization_id),
+				driverService.getDrivers(user.organization_id),
+				mapService.getDriversForMap(mapId, user.organization_id),
+				depotService.getDepots(user.organization_id),
+				routeService.getRoutesByMap(mapId, user.organization_id),
+				optimizationService.getActiveJobForMap(mapId, user.organization_id)
+			]);
 
 		const assignedDrivers = assignedDriversData.map((d) => d.driver);
 
@@ -43,7 +46,8 @@ export const load: PageServerLoad = async ({ params }) => {
 			assignedDrivers,
 			depots,
 			routes,
-			isViewMode
+			isViewMode,
+			activeJob
 		};
 	} catch (err) {
 		if (err instanceof ServiceError) {

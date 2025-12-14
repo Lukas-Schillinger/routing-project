@@ -3,6 +3,7 @@ import type {
 	CreateMap,
 	Map,
 	MapWithStats,
+	OptimizationJob,
 	OptimizationOptions,
 	UpdateMap
 } from '$lib/schemas/map';
@@ -110,6 +111,13 @@ class MapApiService {
 	}
 
 	// Optimization Methods
+
+	/**
+	 * Get current optimization job status for a map
+	 */
+	async getOptimizationStatus(mapId: string): Promise<{ job: OptimizationJob | null }> {
+		return apiClient.get<{ job: OptimizationJob | null }>(`/maps/${mapId}/optimize`);
+	}
 
 	/**
 	 * Optimize routes for a map using TSP solver

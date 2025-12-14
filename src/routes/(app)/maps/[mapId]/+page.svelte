@@ -12,7 +12,7 @@
 	import type { Driver } from '$lib/schemas';
 	import { ApiError, mapApi } from '$lib/services/api';
 	import { MapPin, Route, Truck } from 'lucide-svelte';
-	import { getContext } from 'svelte';
+	import { getContext, onDestroy } from 'svelte';
 	import type { PageData } from './$types';
 	import OptimizationCard from './OptimizationCard/';
 	import OptimizationLoadingCard from './OptimizationLoading/OptimizationLoadingCard.svelte';
@@ -36,10 +36,12 @@
 	let isLoading = $state(false);
 	let errorMessage = $state('');
 	let isOptimizing = $state(false);
-	let isViewMode = $state((data as any).isViewMode ?? false);
-	let selectedDepotId = $state<string | undefined>(undefined);
+	let isViewMode = $state(data.isViewMode ?? false);
 	let focusedStopId = $state<string | null>(null);
 	let hiddenDrivers = $state<Driver[]>([]);
+	let pollInterval: ReturnType<typeof setInterval> | null = null;
+	let pollCount = 0;
+	const MAX_POLL_COUNT = 150; // 5 minutes at 2 second intervals
 
 	// Derive page state from isViewMode and isOptimizing
 	type PageState = 'viewing' | 'optimizing' | 'editing';
@@ -47,9 +49,67 @@
 		isViewMode ? 'viewing' : isOptimizing ? 'optimizing' : 'editing'
 	);
 
+	// Check for active optimization job on load and when data changes
+	$effect(() => {
+		const activeJob = data.activeJob;
+		if (activeJob && ['pending', 'running', 'completing'].includes(activeJob.status)) {
+			isOptimizing = true;
+			startPolling();
+		} else {
+			isOptimizing = false;
+			stopPolling();
+		}
+	});
+
 	// Update view mode when data changes
 	$effect(() => {
 		isViewMode = data.isViewMode ?? false;
+	});
+
+	function startPolling() {
+		if (pollInterval) return;
+		pollCount = 0;
+		pollInterval = setInterval(pollOptimizationStatus, 2000);
+	}
+
+	function stopPolling() {
+		if (pollInterval) {
+			clearInterval(pollInterval);
+			pollInterval = null;
+		}
+		pollCount = 0;
+	}
+
+	async function pollOptimizationStatus() {
+		pollCount++;
+
+		if (pollCount >= MAX_POLL_COUNT) {
+			stopPolling();
+			isOptimizing = false;
+			errorMessage = 'Optimization timed out. Please try again.';
+			return;
+		}
+
+		try {
+			const { job } = await mapApi.getOptimizationStatus(data.map.id);
+
+			if (!job || job.status === 'completed') {
+				stopPolling();
+				isOptimizing = false;
+				await invalidateAll();
+			} else if (job.status === 'failed') {
+				stopPolling();
+				isOptimizing = false;
+				errorMessage = job.error_message || 'Optimization failed';
+				await invalidateAll();
+			}
+		} catch (err) {
+			console.error('Error polling optimization status:', err);
+		}
+	}
+
+	onDestroy(() => {
+		stopPolling();
 	});
 
 	async function removeDriver(routeId: string) {

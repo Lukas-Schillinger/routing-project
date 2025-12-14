@@ -2,10 +2,11 @@
 	import { invalidateAll } from '$app/navigation';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
+	import * as Empty from '$lib/components/ui/empty';
 	import Label from '$lib/components/ui/label/label.svelte';
 	import type { DepotWithLocationJoin, Driver, Map, StopWithLocation } from '$lib/schemas';
 	import { mapApi } from '$lib/services/api';
-	import { Building2, Sparkles } from 'lucide-svelte';
+	import { AlertCircle, Building2, Sparkles } from 'lucide-svelte';
 	import DepotSelect from './DepotSelect.svelte';
 	import FairnessSlider from './FairnessSlider.svelte';
 
@@ -66,19 +67,16 @@
 		optimizationError = '';
 
 		try {
-			console.log('Starting Optimization');
-			const res = await mapApi.optimize(map.id, {
+			// Queue the optimization job - polling is handled by the parent page
+			await mapApi.optimize(map.id, {
 				depotId: selectedDepotId,
 				fairness
 			});
-
-			console.log('Optimization Finished');
-			console.log(res.result);
+			// The parent page will detect the active job and start polling
 			onRoutesOptimized();
 		} catch (err) {
 			optimizationError = err instanceof Error ? err.message : 'Failed to optimize routes';
 			console.error('Error optimizing routes:', err);
-		} finally {
 			isOptimizing = false;
 		}
 	}
@@ -93,6 +91,18 @@
 		<Card.Description>Configure and optimize delivery routes</Card.Description>
 	</Card.Header>
 	<Card.Content class="space-y-8">
+		{#if optimizationError}
+			<Empty.Root>
+				<Empty.Media variant="icon" class="bg-destructive/10 text-destructive">
+					<AlertCircle />
+				</Empty.Media>
+				<Empty.Content>
+					<Empty.Title>Optimization Error</Empty.Title>
+					<Empty.Description>{optimizationError}</Empty.Description>
+				</Empty.Content>
+			</Empty.Root>
+		{/if}
+
 		<!-- Depot Selection -->
 		<div class="space-y-8">
 			<div class="space-y-2">
@@ -133,16 +143,4 @@
 			</Button>
 		</div>
 	</Card.Content>
-
-	<!-- Optimization Error -->
-	{#if optimizationError}
-		<Card.Root class="border-destructive shadow-lg">
-			<Card.Content class="pt-6">
-				<div class="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-					<strong>Optimization Error:</strong>
-					{optimizationError}
-				</div>
-			</Card.Content>
-		</Card.Root>
-	{/if}
 </Card.Root>

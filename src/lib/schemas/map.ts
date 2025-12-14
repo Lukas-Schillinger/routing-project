@@ -66,9 +66,25 @@ export const optimizationOptionsSchema = z.object({
 	fairness: z.enum(['high', 'medium', 'low']).default('medium')
 });
 
+/**
+ * Optimization job schema - represents a queued/running optimization job
+ */
+export const optimizationJobSchema = z.object({
+	id: z.string().uuid(),
+	organization_id: z.string().uuid(),
+	status: z.enum(['pending', 'running', 'completing', 'completed', 'failed']),
+	matrix_id: z.string().uuid(),
+	map_id: z.string().uuid(),
+	depot_id: z.string().uuid(),
+	error_message: z.string().nullable(),
+	created_at: z.coerce.date(),
+	updated_at: z.coerce.date()
+});
+
 // Type exports
 export type CreateMap = z.infer<typeof createMapSchema>;
 export type UpdateMap = z.infer<typeof updateMapSchema>;
 export type Map = z.infer<typeof mapSchema>;
 export type MapWithStats = z.infer<typeof mapWithStatsSchema>;
 export type OptimizationOptions = z.infer<typeof optimizationOptionsSchema>;
+export type OptimizationJob = z.infer<typeof optimizationJobSchema>;
