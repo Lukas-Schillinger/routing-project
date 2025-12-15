@@ -1,6 +1,6 @@
 import type { Driver, DriverCreate, DriverUpdate } from '$lib/schemas/driver';
 import { db } from '$lib/server/db';
-import { drivers } from '$lib/server/db/schema';
+import { drivers, stops } from '$lib/server/db/schema';
 import { desc, eq } from 'drizzle-orm';
 import { ServiceError } from './errors';
 
@@ -88,6 +88,12 @@ export class DriverService {
 	async deleteDriver(driverId: string, organizationId: string): Promise<{ success: boolean }> {
 		// Verify driver ownership
 		await this.getDriverById(driverId, organizationId);
+
+		// Check if the driver is assigned to any maps
+		const assignedStops = await db.select().from(stops).where(eq(stops.driver_id, driverId));
+		if (assignedStops.length > 0) {
+			throw ServiceError.validation('Drivers cannot be deleted when assigned to stops');
+		}
 
 		await db.delete(drivers).where(eq(drivers.id, driverId));
 
