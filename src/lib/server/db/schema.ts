@@ -270,7 +270,7 @@ export const optimizationJobs = pgTable('optimization_jobs', {
 	organization_id: orgId.references(() => organizations.id, { onDelete: 'cascade' }),
 	status: varchar('status', { length: 20 })
 		.notNull()
-		.$type<'pending' | 'running' | 'completing' | 'completed' | 'failed'>(),
+		.$type<'pending' | 'running' | 'completing' | 'completed' | 'failed' | 'cancelled'>(),
 	matrix_id: uuid()
 		.references(() => matrices.id, { onDelete: 'cascade' })
 		.notNull(),

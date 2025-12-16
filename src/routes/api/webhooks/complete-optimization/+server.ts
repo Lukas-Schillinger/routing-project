@@ -1,6 +1,6 @@
 import { env } from '$env/dynamic/private';
 import {
-	optimizationResultSchema,
+	optimizationResponseSchema,
 	optimizationService
 } from '$lib/services/server/optimization.service';
 import { json } from '@sveltejs/kit';
@@ -25,7 +25,7 @@ export const POST: RequestHandler = async ({ request }) => {
 
 		// Parse and validate request body
 		const body = await request.json();
-		const validatedData = optimizationResultSchema.parse(body);
+		const validatedData = optimizationResponseSchema.parse(body);
 
 		// Process the optimization result
 		await optimizationService.completeOptimization(validatedData);

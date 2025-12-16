@@ -46,10 +46,15 @@ export const routeSchema = z.object({
 });
 
 export const optimizationResultSchema = z.object({
-	job_id: z.string().uuid(),
-	success: z.boolean(),
 	routes: z.array(routeSchema),
 	total_cost: z.number().int().nullable()
+});
+
+export const optimizationResponseSchema = z.object({
+	success: z.boolean(),
+	job_id: z.string().uuid(),
+	error_message: z.string().optional(),
+	result: optimizationResultSchema.optional()
 });
 
 export type OptimizationConfig = z.infer<typeof optimizationConfigSchema>;
@@ -57,6 +62,7 @@ export type MatrixPayload = z.infer<typeof matrixPayloadSchema>;
 export type Leg = z.infer<typeof legSchema>;
 export type Route = z.infer<typeof routeSchema>;
 export type OptimizationResult = z.infer<typeof optimizationResultSchema>;
+export type OptimizationResponse = z.infer<typeof optimizationResponseSchema>;
 
 /**
  * Optimization Service
@@ -161,29 +167,42 @@ export class OptimizationService {
 		return job;
 	}
 
-	async completeOptimization(result: OptimizationResult) {
+	async completeOptimization(response: OptimizationResponse) {
 		try {
 			const [job] = await db
 				.select()
 				.from(optimizationJobs)
-				.where(eq(optimizationJobs.id, result.job_id))
+				.where(eq(optimizationJobs.id, response.job_id))
 				.limit(1);
 
 			if (!job) {
-				throw ServiceError.validation(`Optimization job ${result.job_id} not found`);
+				throw ServiceError.validation(`Optimization job ${response.job_id} not found`);
 			}
 
 			if (job.status === 'cancelled') {
-				console.log(`Optimization job ${result.job_id} was cancelled, skipping completion`);
+				console.log(`Optimization job ${response.job_id} was cancelled, skipping completion`);
 				return;
 			}
 
 			const { map_id: mapId, organization_id: organizationId, depot_id: depotId } = job;
 
-			await this.updateJobStatus(result.job_id, 'completing');
+			await this.updateJobStatus(response.job_id, 'completing');
 
-			if (!result.success) {
-				await this.updateJobStatus(result.job_id, 'failed', 'Optimization solver returned failure');
+			if (!response.success) {
+				await this.updateJobStatus(
+					response.job_id,
+					'failed',
+					response.error_message ? response.error_message : 'No error message'
+				);
+				throw ServiceError.internal('Optimization failed');
+			}
+
+			if (!response.result) {
+				await this.updateJobStatus(
+					response.job_id,
+					'failed',
+					'Job reported success with empty result'
+				);
 				throw ServiceError.internal('Optimization failed');
 			}
 
@@ -194,21 +213,21 @@ export class OptimizationService {
 			);
 
 			await this.clearStopAssignments(mapId);
-			await this.applyOptimizedRoutes(mapId, result);
+			await this.applyOptimizedRoutes(mapId, response.result);
 			await this.computeAndSaveRoutes(
 				mapId,
 				organizationId,
 				depotId,
-				result,
+				response.result,
 				depotCoord,
 				locationCoordMap
 			);
 
-			await this.updateJobStatus(result.job_id, 'completed');
+			await this.updateJobStatus(response.job_id, 'completed');
 		} catch (error) {
 			console.error('Error completing optimization:', error);
 			const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-			await this.updateJobStatus(result.job_id, 'failed', errorMessage);
+			await this.updateJobStatus(response.job_id, 'failed', errorMessage);
 			throw error;
 		}
 	}

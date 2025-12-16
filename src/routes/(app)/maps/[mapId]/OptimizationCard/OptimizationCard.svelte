@@ -42,7 +42,7 @@
 		}
 	});
 
-	async function optimizeRoutes() {
+	async function queueOptimization() {
 		if (isOptimizing) return;
 
 		// Check if a depot is selected
@@ -68,7 +68,7 @@
 
 		try {
 			// Queue the optimization job - polling is handled by the parent page
-			await mapApi.optimize(map.id, {
+			await mapApi.queueOptimization(map.id, {
 				depotId: selectedDepotId,
 				fairness
 			});
@@ -125,7 +125,7 @@
 		<div class="flex justify-center pt-2">
 			<Button
 				size="default"
-				onclick={optimizeRoutes}
+				onclick={queueOptimization}
 				disabled={isOptimizing ||
 					!selectedDepotId ||
 					depots.length === 0 ||

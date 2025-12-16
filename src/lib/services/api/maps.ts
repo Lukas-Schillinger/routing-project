@@ -8,6 +8,7 @@ import type {
 	UpdateMap
 } from '$lib/schemas/map';
 import type { StopWithLocation } from '$lib/schemas/stop';
+import type { OptimizationResult } from '$lib/services/server/optimization.service';
 import { apiClient } from './base';
 
 export interface DriverMembership {
@@ -19,28 +20,6 @@ export interface DriverMembership {
 		updated_at: Date;
 	};
 	driver: Driver;
-}
-
-/**
- * Optimization result from TSP solver
- */
-export interface OptimizationResult {
-	result: {
-		success: boolean;
-		routes: Array<{
-			driver_id: string;
-			total_distance: number;
-			total_duration: number;
-			legs: Array<{
-				stop_id: string;
-				distance: number;
-				duration: number;
-			}>;
-		}>;
-		total_distance: number;
-		total_duration: number;
-		computation_time: number;
-	};
 }
 
 class MapApiService {
@@ -122,7 +101,10 @@ class MapApiService {
 	/**
 	 * Optimize routes for a map using TSP solver
 	 */
-	async optimize(mapId: string, options: OptimizationOptions): Promise<OptimizationResult> {
+	async queueOptimization(
+		mapId: string,
+		options: OptimizationOptions
+	): Promise<OptimizationResult> {
 		return apiClient.post<OptimizationResult>(`/maps/${mapId}/optimize`, options);
 	}
 
