@@ -26,12 +26,9 @@
 </svelte:head>
 
 <div class="min-h-screen">
-	<Header {pageHeader} user={data.user} />
-	<main
-		style="padding-top: var(--header-height, 64px);"
-		class="mx-auto max-w-7xl px-4 pt-36 pb-12 sm:px-6 lg:px-8"
-	>
-		<div class="pt-6">{@render children?.()}</div>
+	<Header user={data.user} />
+	<main class="mx-auto max-w-7xl px-2 pt-9 pb-12 sm:px-6 lg:px-8">
+		{@render children?.()}
 	</main>
 	<Footer />
 </div>

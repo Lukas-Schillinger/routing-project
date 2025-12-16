@@ -1,16 +1,19 @@
 <script lang="ts">
 	import Footer from '$lib/components/Footer.svelte';
+	import Header from '$lib/components/Header.svelte';
 	import Bento from '$lib/components/Landing/Bento.svelte';
 	import CallToAction from '$lib/components/Landing/CallToAction.svelte';
 	import Features from '$lib/components/Landing/Features.svelte';
-	import Header from '$lib/components/Landing/Header.svelte';
 	import Hero from '$lib/components/Landing/Hero.svelte';
 	import Pricing from '$lib/components/Landing/Pricing.svelte';
+	import type { PageData } from './$types';
+
+	let { data }: { data: PageData } = $props();
 </script>
 
 <div class="flex justify-center px-0 md:px-4">
 	<div class=" max-w-5xl sm:border-x">
-		<Header />
+		<Header showLines user={data.user} />
 		<div class="py-12">
 			<Hero />
 		</div>
