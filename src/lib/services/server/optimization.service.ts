@@ -53,7 +53,7 @@ export const optimizationResultSchema = z.object({
 export const optimizationResponseSchema = z.object({
 	success: z.boolean(),
 	job_id: z.string().uuid(),
-	error_message: z.string().optional(),
+	error_message: z.string().optional().nullable(),
 	result: optimizationResultSchema.optional()
 });
 
