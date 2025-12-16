@@ -62,7 +62,7 @@ class MapApiService {
 	/**
 	 * Create a new map
 	 */
-	async create(data: CreateMap): Promise<{ map: Map }> {
+	async create(data: CreateMap): Promise<{ map: Map; stops: StopWithLocation[] | null }> {
 		return apiClient.post<{ map: Map; stops: StopWithLocation[] | null }>('/maps', data);
 	}
 

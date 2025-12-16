@@ -30,9 +30,9 @@ export const POST: RequestHandler = async ({ request }) => {
 		const body = await request.json();
 		const data = createMapSchema.parse(body);
 
-		const map = await mapService.createMap(data, user.organization_id);
+		const result = await mapService.createMap(data, user.organization_id);
 
-		return json({ map }, { status: 201 });
+		return json(result, { status: 201 });
 	} catch (error) {
 		console.error('Create map error:', error);
 

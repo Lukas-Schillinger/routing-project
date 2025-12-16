@@ -48,8 +48,7 @@
 			const { map } = await mapApi.create({
 				title: `Map ${new Date().toLocaleDateString()}`
 			});
-			console.log(map.map.id);
-			await goto(`/maps/${map.map.id}`);
+			await goto(`/maps/${map.id}`);
 		} catch (error) {
 			console.error('Failed to create map:', error);
 			alert('Failed to create map. Please try again.');
@@ -127,8 +126,6 @@
 	}
 
 	async function handleImport(results: GeocodeCSVResult[]) {
-		// TODO: Implement actual import logic
-
 		const stops = results.map((element) => {
 			return {
 				location: element.feature ? geocodingFeatureToLocation(element.feature) : undefined,
@@ -144,8 +141,6 @@
 		});
 
 		goto(`/maps/${res.map.id}`);
-
-		console.log(res);
 	}
 </script>
 
