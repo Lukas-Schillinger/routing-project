@@ -102,10 +102,19 @@
 				isOptimizing = false;
 				errorMessage = job.error_message || 'Optimization failed';
 				await invalidateAll();
+			} else if (job.status === 'cancelled') {
+				stopPolling();
+				isOptimizing = false;
+				await invalidateAll();
 			}
 		} catch (err) {
 			console.error('Error polling optimization status:', err);
 		}
+	}
+
+	function handleOptimizationCancelled() {
+		stopPolling();
+		isOptimizing = false;
 	}
 
 	onDestroy(() => {
@@ -219,7 +228,7 @@
 
 		<!-- Page State: Optimizing -->
 	{:else if pageState === 'optimizing'}
-		<OptimizationLoadingCard />
+		<OptimizationLoadingCard mapId={data.map.id} onCancel={handleOptimizationCancelled} />
 
 		<!-- Page State: Editing -->
 	{:else}

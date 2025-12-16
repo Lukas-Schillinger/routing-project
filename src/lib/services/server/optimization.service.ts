@@ -173,6 +173,11 @@ export class OptimizationService {
 				throw ServiceError.validation(`Optimization job ${result.job_id} not found`);
 			}
 
+			if (job.status === 'cancelled') {
+				console.log(`Optimization job ${result.job_id} was cancelled, skipping completion`);
+				return;
+			}
+
 			const { map_id: mapId, organization_id: organizationId, depot_id: depotId } = job;
 
 			await this.updateJobStatus(result.job_id, 'completing');
@@ -314,9 +319,20 @@ export class OptimizationService {
 		}
 	}
 
+	async cancelOptimization(mapId: string, organizationId: string) {
+		const job = await this.getActiveJobForMap(mapId, organizationId);
+
+		if (!job) {
+			throw ServiceError.validation('No active optimization job found for this map');
+		}
+
+		await this.updateJobStatus(job.id, 'cancelled');
+		return { success: true };
+	}
+
 	private async updateJobStatus(
 		jobId: string,
-		status: 'pending' | 'completing' | 'completed' | 'failed',
+		status: 'pending' | 'completing' | 'completed' | 'failed' | 'cancelled',
 		errorMessage?: string
 	): Promise<void> {
 		await db

@@ -2,7 +2,26 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import * as Empty from '$lib/components/ui/empty/index.js';
+	import { mapApi } from '$lib/services/api';
 	import SphereGridLoader from './SphereGridLoader.svelte';
+
+	let { mapId, onCancel }: { mapId: string; onCancel?: () => void } = $props();
+
+	let isCancelling = $state(false);
+
+	async function handleCancel() {
+		if (isCancelling) return;
+
+		isCancelling = true;
+		try {
+			await mapApi.cancelOptimization(mapId);
+			onCancel?.();
+		} catch (err) {
+			console.error('Error cancelling optimization:', err);
+		} finally {
+			isCancelling = false;
+		}
+	}
 </script>
 
 <Card.Root>
@@ -19,7 +38,9 @@
 			</Empty.Header>
 			<Empty.Content>
 				<div class="flex gap-2">
-					<Button variant="outline">cancel</Button>
+					<Button variant="outline" onclick={handleCancel} disabled={isCancelling}>
+						{isCancelling ? 'Cancelling...' : 'Cancel'}
+					</Button>
 				</div>
 			</Empty.Content>
 		</Empty.Root>

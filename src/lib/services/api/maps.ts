@@ -132,6 +132,13 @@ class MapApiService {
 	async resetOptimization(mapId: string): Promise<{ success: boolean }> {
 		return apiClient.post<{ success: boolean }>(`/maps/${mapId}/reset-optimization`);
 	}
+
+	/**
+	 * Cancel an active optimization job for a map
+	 */
+	async cancelOptimization(mapId: string): Promise<{ success: boolean }> {
+		return apiClient.post<{ success: boolean }>(`/maps/${mapId}/cancel-optimization`);
+	}
 }
 
 export const mapApi = new MapApiService();
