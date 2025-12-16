@@ -74,7 +74,7 @@ export class OptimizationService {
 
 	constructor() {
 		this.sqsClient = new SQSClient({
-			region: 'us-east-1',
+			region: env.AWS_REGION || '',
 			credentials: {
 				accessKeyId: env.AWS_ACCESS_KEY_ID || '',
 				secretAccessKey: env.AWS_SECRET_ACCESS_KEY || ''

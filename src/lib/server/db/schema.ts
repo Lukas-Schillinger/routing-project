@@ -52,12 +52,12 @@ export const session = pgTable('session', {
 });
 
 export const magicLinks = pgTable('magic_links', {
-	id: id,
+	id,
 	organization_id: orgId,
 	created_at: ts('created_at'),
 	updated_at: ts('updated_at').$onUpdate(() => new Date()),
 
-	expires_at: ts('expires_at').notNull(),
+	expires_at: ts('expires_at'),
 	type: text('type').$type<'invite' | 'login'>().notNull(),
 
 	invitee_organization_id: uuid('invitee_organization_id').references(() => organizations.id, {
@@ -137,25 +137,27 @@ export const locations = pgTable(
 	]
 );
 
-export const stops = pgTable('stops', {
-	id: uuid('id').primaryKey().defaultRandom(),
-	organization_id: uuid('organization_id')
-		.notNull()
-		.references(() => organizations.id, { onDelete: 'cascade' }),
-	map_id: uuid('map_id')
-		.notNull()
-		.references(() => maps.id, { onDelete: 'cascade' }),
-	location_id: uuid('location_id')
-		.notNull()
-		.references(() => locations.id, { onDelete: 'cascade' }),
-	driver_id: uuid('driver_id').references(() => drivers.id, { onDelete: 'set null' }),
-	delivery_index: integer('delivery_index'),
-	contact_name: varchar('contact_name', { length: 200 }),
-	contact_phone: varchar('contact_phone', { length: 32 }),
-	notes: text('notes'),
-	created_at: timestamp('created_at').defaultNow().notNull(),
-	updated_at: timestamp('updated_at').defaultNow().notNull()
-});
+export const stops = pgTable(
+	'stops',
+	{
+		id,
+		organization_id: orgId.references(() => organizations.id, { onDelete: 'cascade' }),
+		map_id: uuid('map_id')
+			.notNull()
+			.references(() => maps.id, { onDelete: 'cascade' }),
+		location_id: uuid('location_id')
+			.notNull()
+			.references(() => locations.id, { onDelete: 'cascade' }),
+		driver_id: uuid('driver_id').references(() => drivers.id, { onDelete: 'set null' }),
+		delivery_index: integer('delivery_index'),
+		contact_name: varchar('contact_name', { length: 200 }),
+		contact_phone: varchar('contact_phone', { length: 32 }),
+		notes: text('notes'),
+		created_at: ts('created_at'),
+		updated_at: ts('updated_at')
+	},
+	(t) => [index('stops_org_idx').on(t.organization_id), index('stops_map_idx').on(t.map_id)]
+);
 
 export const depots = pgTable(
 	'depots',
@@ -299,7 +301,8 @@ export const organizationsRelations = relations(organizations, ({ many }) => ({
 	depots: many(depots),
 	routes: many(routes),
 	matrices: many(matrices),
-	files: many(files)
+	files: many(files),
+	optimizationJobs: many(optimizationJobs)
 }));
 
 export const usersRelations = relations(users, ({ one, many }) => ({
@@ -328,7 +331,8 @@ export const mapsRelations = relations(maps, ({ one, many }) => ({
 	stops: many(stops),
 	driverMemberships: many(driverMapMemberships),
 	routes: many(routes),
-	matrices: many(matrices)
+	matrices: many(matrices),
+	optimizationJobs: many(optimizationJobs)
 }));
 
 export const locationsRelations = relations(locations, ({ one, many }) => ({
@@ -383,7 +387,8 @@ export const depotsRelations = relations(depots, ({ one, many }) => ({
 		fields: [depots.location_id],
 		references: [locations.id]
 	}),
-	routes: many(routes)
+	routes: many(routes),
+	optimizationJobs: many(optimizationJobs)
 }));
 
 export const routesRelations = relations(routes, ({ one }) => ({
@@ -416,7 +421,7 @@ export const filesRelations = relations(files, ({ one }) => ({
 	})
 }));
 
-export const matricesRelations = relations(matrices, ({ one }) => ({
+export const matricesRelations = relations(matrices, ({ one, many }) => ({
 	organization: one(organizations, {
 		fields: [matrices.organization_id],
 		references: [organizations.id]
@@ -424,5 +429,25 @@ export const matricesRelations = relations(matrices, ({ one }) => ({
 	map: one(maps, {
 		fields: [matrices.map_id],
 		references: [maps.id]
+	}),
+	optimizationJobs: many(optimizationJobs)
+}));
+
+export const optimizationJobsRelations = relations(optimizationJobs, ({ one }) => ({
+	organization: one(organizations, {
+		fields: [optimizationJobs.organization_id],
+		references: [organizations.id]
+	}),
+	matrix: one(matrices, {
+		fields: [optimizationJobs.matrix_id],
+		references: [matrices.id]
+	}),
+	map: one(maps, {
+		fields: [optimizationJobs.map_id],
+		references: [maps.id]
+	}),
+	depot: one(depots, {
+		fields: [optimizationJobs.depot_id],
+		references: [depots.id]
 	})
 }));
