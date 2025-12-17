@@ -1,3 +1,41 @@
+# wend
+
+Effortless routing from start to finish
+
+Wend is a multistop optimization program with delivery management features.
+
+## Stack
+
+### Core
+
+- **Svelte 5 & SvelteKit** - Full-stack framework
+- **TypeScript** - Type safety
+
+### Database & ORM
+
+- **PostgreSQL** - Database (Supabase in production)
+- **Drizzle ORM** - Type-safe database access
+- **Zod** - Schema validation
+
+### UI & Styling
+
+- **Tailwind CSS** - Utility-first CSS
+- **shadcn-svelte** - Component library
+- **TanStack Table** - Data tables
+
+### Maps & Routing
+
+- **MapLibre GL** via svelte-maplibre - Map rendering
+- **Maptiler** - Map tiles
+- **Mapbox** - Distance matrix & navigation
+
+### Infrastructure
+
+- **Vercel** - Hosting
+- **Cloudflare R2** - Static asset storage
+- **AWS SQS & Lambda** - Background jobs
+- **Resend** - Transactional email
+
 # sv
 
 Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).

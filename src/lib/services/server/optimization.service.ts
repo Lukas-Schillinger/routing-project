@@ -54,7 +54,7 @@ export const optimizationResponseSchema = z.object({
 	success: z.boolean(),
 	job_id: z.string().uuid(),
 	error_message: z.string().optional().nullable(),
-	result: optimizationResultSchema.optional()
+	result: optimizationResultSchema.optional().nullable()
 });
 
 export type OptimizationConfig = z.infer<typeof optimizationConfigSchema>;
