@@ -11,29 +11,34 @@ import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async (event) => {
 	const token = event.url.searchParams.get('token');
+	const email = event.url.searchParams.get('email');
 
 	if (!token) {
 		error(400, 'Missing token parameter');
 	}
 
 	try {
-		// Get magic link from token
-		const magicLink = await magicLinkService.getMagicLinkFromToken(token);
+		// Get magic link from token (with email if provided for login links)
+		const magicLink = await magicLinkService.getMagicLinkFromToken(token, email ?? undefined);
 
 		if (!magicLink) {
-			error(400, 'Invalid or expired magic link');
+			error(400, 'Invalid or expired link');
 		}
 
 		let user;
 
-		if (magicLink.type === 'invite') {
-			// Create new user account
+		if (magicLink.type === 'login') {
+			// Login requires email parameter
+			if (!email) {
+				error(400, 'Missing email parameter');
+			}
+			// Validate login and get user
+			user = await magicLinkService.validateMagicLogin(token, email);
+		} else if (magicLink.type === 'invite') {
+			// Create new user account from invite
 			user = await magicLinkService.useMagicInvite(token);
-		} else if (magicLink.type === 'login') {
-			// Validate existing user login
-			user = await magicLinkService.validateMagicLogin(token);
 		} else {
-			error(400, 'Invalid magic link type');
+			error(400, 'Invalid link type');
 		}
 
 		// Create session
@@ -44,7 +49,7 @@ export const load: PageServerLoad = async (event) => {
 		setSessionTokenCookie(event, sessionToken, session.expires_at);
 
 		// Redirect to maps page
-		throw redirect(302, '/maps');
+		redirect(302, '/maps');
 	} catch (err) {
 		if (err instanceof ServiceError) {
 			error(err.statusCode, err.message);
@@ -55,7 +60,7 @@ export const load: PageServerLoad = async (event) => {
 			throw err;
 		}
 
-		console.error('Error redeeming magic link:', err);
-		error(500, 'Failed to redeem magic link');
+		console.error('Error redeeming link:', err);
+		error(500, 'Failed to redeem link');
 	}
 };

@@ -49,9 +49,8 @@ export const POST: RequestHandler = async ({ request, url }) => {
 				// Create magic login db entry
 				const { magicLogin, token } = await magicLinkService.createMagicLogin(magicLoginData);
 
-				// Send email
-				const loginUrl = `${url.origin}/auth/magic/redeem?token=${token}`;
-				await mailService.sendMagicLoginEmail(magicLogin.email, loginUrl);
+				// Send OTP code and magic link via email
+				await mailService.sendMagicLoginEmail(magicLogin.email, token, url.origin);
 			} catch (err) {
 				// If user not found, return 204 to prevent email enumeration
 				if (err instanceof ServiceError && err.statusCode === 404) {

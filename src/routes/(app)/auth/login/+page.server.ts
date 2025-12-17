@@ -1,7 +1,9 @@
-import { loginSchema } from '$lib/schemas/auth';
+import { loginSchema, verifyOTPSchema } from '$lib/schemas/auth';
 import { db } from '$lib/server/db';
 import * as table from '$lib/server/db/schema';
 import * as auth from '$lib/services/server/auth';
+import { ServiceError } from '$lib/services/server/errors';
+import { magicLinkService } from '$lib/services/server/magic-link.service';
 import { verify } from '@node-rs/argon2';
 import { fail, redirect } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
@@ -58,5 +60,35 @@ export const actions: Actions = {
 		auth.setSessionTokenCookie(event, sessionToken, session.expires_at);
 
 		return redirect(302, '/auth/account');
+	},
+
+	verifyOTP: async (event) => {
+		const formData = await event.request.formData();
+		const email = formData.get('email');
+		const code = formData.get('code');
+
+		const validation = verifyOTPSchema.safeParse({ email, code });
+		if (!validation.success) {
+			const errors = validation.error.issues;
+			const firstError = errors[0];
+			return fail(400, { message: firstError.message });
+		}
+
+		const { email: validEmail, code: validCode } = validation.data;
+
+		try {
+			const user = await magicLinkService.validateMagicLogin(validCode, validEmail);
+
+			const sessionToken = auth.generateSessionToken();
+			const session = await auth.createSession(sessionToken, user.id);
+			auth.setSessionTokenCookie(event, sessionToken, session.expires_at);
+
+			return redirect(302, '/auth/account');
+		} catch (err) {
+			if (err instanceof ServiceError) {
+				return fail(err.statusCode, { message: err.message });
+			}
+			throw err;
+		}
 	}
 };

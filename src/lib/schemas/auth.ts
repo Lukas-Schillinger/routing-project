@@ -31,6 +31,11 @@ export const createMagicLoginSchema = z.object({
 	token_duration_hours: z.number().default(720).optional()
 });
 
+export const verifyOTPSchema = z.object({
+	email: emailSchema,
+	code: z.string().length(6)
+});
+
 export const magicLinkSchema = z.object({
 	id: z.string(),
 	organization_id: z.string(),
@@ -65,6 +70,7 @@ export type RegisterInput = z.infer<typeof registerSchema>;
 
 export type CreateMagicLogin = z.infer<typeof createMagicLoginSchema>;
 export type CreateMagicInvite = z.infer<typeof createMagicInviteSchema>;
+export type VerifyOTP = z.infer<typeof verifyOTPSchema>;
 export type MagicInvite = z.infer<typeof magicInviteSchema>;
 export type MagicLogin = z.infer<typeof magicLoginSchema>;
 export type MagicLink = z.infer<typeof magicLinkSchema>;

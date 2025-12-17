@@ -26,13 +26,19 @@ export class ResendClient {
 		});
 	}
 
-	async sendMagicLoginEmail(email: string, loginUrl: string): Promise<CreateEmailResponse> {
+	async sendMagicLoginEmail(
+		email: string,
+		token: string,
+		origin: string
+	): Promise<CreateEmailResponse> {
+		const loginUrl = `${origin}/auth/magic/redeem?token=${token}&email=${encodeURIComponent(email)}`;
 		return this.resend.emails.send({
 			from: env.EMAIL_FROM,
 			to: email,
 			template: {
 				id: 'magic-login',
 				variables: {
+					token,
 					login_url: loginUrl
 				}
 			}

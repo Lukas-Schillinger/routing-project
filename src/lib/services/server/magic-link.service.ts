@@ -13,7 +13,7 @@ import { db } from '$lib/server/db';
 import { magicLinks } from '$lib/server/db/schema';
 import { sha256 } from '@oslojs/crypto/sha2';
 import { encodeHexLowerCase } from '@oslojs/encoding';
-import { randomUUID } from 'crypto';
+import { randomInt } from 'crypto';
 import { and, eq } from 'drizzle-orm';
 import { ServiceError } from './errors';
 import { userService } from './user.service';
@@ -57,13 +57,22 @@ export class MagicLinkService {
 		return encodeHexLowerCase(sha256(new TextEncoder().encode(raw)));
 	}
 
-	async getMagicLinkFromToken(token: string): Promise<MagicLink | null> {
+	private generateOTPCode(): string {
+		return Array.from({ length: 6 }, () => randomInt(0, 10)).join('');
+	}
+
+	async getMagicLinkFromToken(token: string, email?: string): Promise<MagicLink | null> {
 		const hashed = await this.hashToken(token);
+
+		const conditions = [eq(magicLinks.token_hash, hashed)];
+		if (email) {
+			conditions.push(eq(magicLinks.email, email));
+		}
 
 		const [magicLink] = await db
 			.select()
 			.from(magicLinks)
-			.where(eq(magicLinks.token_hash, hashed))
+			.where(and(...conditions))
 			.limit(1);
 
 		if (!magicLink) {
@@ -105,7 +114,7 @@ export class MagicLinkService {
 			throw ServiceError.conflict('An invitation has already been sent to this email');
 		}
 
-		const token = randomUUID();
+		const token = this.generateOTPCode();
 		const tokenHash = await this.hashToken(token);
 		const [newMagicInvite] = await db
 			.insert(magicLinks)
@@ -115,7 +124,7 @@ export class MagicLinkService {
 				email: magicInviteData.email,
 				expires_at: this.getExpiry(magicInviteData.token_duration_hours),
 				invitee_organization_id: magicInviteData.invitee_organization_id,
-				token_hash: tokenHash // Store hash of secret only
+				token_hash: tokenHash
 			})
 			.returning();
 
@@ -131,7 +140,7 @@ export class MagicLinkService {
 			throw ServiceError.notFound('User with that email could not be found');
 		}
 
-		const token = randomUUID();
+		const token = this.generateOTPCode();
 		const tokenHash = await this.hashToken(token);
 
 		const [magicLogin] = await db
@@ -140,9 +149,7 @@ export class MagicLinkService {
 				organization_id: existingUser.organization_id,
 				type: 'login',
 				email: existingUser.email,
-				expires_at: this.getExpiry(
-					magicLoginData.token_duration_hours ? magicLoginData.token_duration_hours : 720
-				),
+				expires_at: this.getExpiry(0.25), // 15 minutes for OTP
 				user_id: existingUser.id,
 				token_hash: tokenHash
 			})
@@ -192,8 +199,8 @@ export class MagicLinkService {
 		});
 	}
 
-	async validateMagicLogin(token: string): Promise<PublicUser> {
-		const magicLink = await this.getMagicLinkFromToken(token);
+	async validateMagicLogin(token: string, email: string): Promise<PublicUser> {
+		const magicLink = await this.getMagicLinkFromToken(token, email);
 
 		if (!magicLink) {
 			throw ServiceError.notFound("Couldn't find a login matching that token");
@@ -202,7 +209,7 @@ export class MagicLinkService {
 		const magicLogin = magicLoginSchema.parse(magicLink);
 
 		if (this.isExpired(magicLogin.expires_at)) {
-			throw ServiceError.forbidden('Login link expired');
+			throw ServiceError.forbidden('Login token expired');
 		}
 
 		const user = await userService.getPublicUser(magicLogin.user_id, magicLogin.organization_id);
