@@ -376,7 +376,17 @@
 										<SquareArrowOutUpRight class="size-4" />
 										Route Page
 									</Button>
-									<Button class="flex gap-2" disabled size="sm" variant="ghost">
+									<Button
+										class="flex gap-2"
+										href={`/routes/${
+											routes.find((e) => {
+												return e.driver_id == driver?.id;
+											})?.id
+										}/printable`}
+										target="_blank"
+										size="sm"
+										variant="ghost"
+									>
 										<Printer class="size-4" />
 										Print
 									</Button>
