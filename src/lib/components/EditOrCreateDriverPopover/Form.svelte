@@ -1,4 +1,5 @@
 <script lang="ts">
+	import PhoneInput from '$lib/components/PhoneInput.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
@@ -180,13 +181,7 @@
 
 	<div class="space-y-2">
 		<Label for="driver-phone">Phone Number</Label>
-		<Input
-			id="driver-phone"
-			type="tel"
-			bind:value={phone}
-			placeholder="e.g., (555) 123-4567"
-			disabled={isSubmitting}
-		/>
+		<PhoneInput id="driver-phone" bind:value={phone} disabled={isSubmitting} />
 	</div>
 
 	<div class="space-y-2">

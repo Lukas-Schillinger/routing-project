@@ -1,5 +1,6 @@
 <script lang="ts">
 	import AddressAutocomplete from '$lib/components/AddressAutocomplete.svelte';
+	import PhoneInput from '$lib/components/PhoneInput.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
@@ -170,12 +171,7 @@
 
 	<div class="space-y-2">
 		<Label for="contact-phone">Contact Phone</Label>
-		<Input
-			id="contact-phone"
-			bind:value={contactPhone}
-			placeholder="e.g., (555) 123-4567"
-			disabled={isSubmitting}
-		/>
+		<PhoneInput id="contact-phone" bind:value={contactPhone} disabled={isSubmitting} />
 	</div>
 
 	<div class="space-y-2">
