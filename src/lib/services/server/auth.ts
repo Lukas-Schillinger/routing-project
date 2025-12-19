@@ -1,11 +1,8 @@
-import { getRequestEvent } from '$app/server';
-import type { PublicUser } from '$lib/schemas';
 import { db } from '$lib/server/db';
 import * as table from '$lib/server/db/schema';
 import { sha256 } from '@oslojs/crypto/sha2';
 import { encodeBase64url, encodeHexLowerCase } from '@oslojs/encoding';
 import type { RequestEvent } from '@sveltejs/kit';
-import { error, redirect } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
 
 const DAY_IN_MS = 1000 * 60 * 60 * 24;
@@ -38,6 +35,7 @@ export async function validateSessionToken(token: string) {
 				id: table.users.id,
 				email: table.users.email,
 				organization_id: table.users.organization_id,
+				role: table.users.role,
 				updated_at: table.users.updated_at,
 				created_at: table.users.created_at
 			},
@@ -87,22 +85,4 @@ export function deleteSessionTokenCookie(event: RequestEvent) {
 	event.cookies.delete(sessionCookieName, {
 		path: '/'
 	});
-}
-
-/** Used to authorize user routes */
-export function getUserOrRedirect(): PublicUser {
-	const request = getRequestEvent();
-	if (!request.locals.user) {
-		throw redirect(302, '/auth/login');
-	}
-	return request.locals.user;
-}
-
-/** Used to authorize API routes */
-export function authorizeRoute(): PublicUser {
-	const request = getRequestEvent();
-	if (!request.locals.user) {
-		error(401);
-	}
-	return request.locals.user;
 }

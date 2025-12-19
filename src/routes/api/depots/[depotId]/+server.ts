@@ -3,15 +3,15 @@
 // DELETE /api/depots/[depotId] - Delete a depot
 
 import { depotUpdateSchema } from '$lib/schemas/depot';
-import { authorizeRoute } from '$lib/services/server/auth';
 import { depotService } from '$lib/services/server/depot.service';
 import { ServiceError } from '$lib/services/server/errors';
+import { requirePermissionApi } from '$lib/services/server/permissions';
 import { error, json } from '@sveltejs/kit';
 import { ZodError } from 'zod';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ params }) => {
-	const user = authorizeRoute();
+	const user = requirePermissionApi('resources:read');
 
 	const { depotId } = params;
 
@@ -28,7 +28,7 @@ export const GET: RequestHandler = async ({ params }) => {
 };
 
 export const PATCH: RequestHandler = async ({ params, request }) => {
-	const user = authorizeRoute();
+	const user = requirePermissionApi('resources:update');
 
 	const { depotId } = params;
 
@@ -57,7 +57,7 @@ export const PATCH: RequestHandler = async ({ params, request }) => {
 };
 
 export const DELETE: RequestHandler = async ({ params }) => {
-	const user = authorizeRoute();
+	const user = requirePermissionApi('resources:delete');
 
 	const { depotId } = params;
 

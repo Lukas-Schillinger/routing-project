@@ -1,10 +1,10 @@
 import { mapService, ServiceError } from '$lib/services/server';
-import { authorizeRoute } from '$lib/services/server/auth';
+import { requirePermissionApi } from '$lib/services/server/permissions';
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ params }) => {
-	const user = authorizeRoute();
+	const user = requirePermissionApi('resources:update');
 
 	const { mapId } = params;
 

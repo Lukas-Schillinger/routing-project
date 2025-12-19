@@ -1,9 +1,9 @@
 import { depotService, driverService, mapService, stopService } from '$lib/services/server';
-import { getUserOrRedirect } from '$lib/services/server/auth';
+import { requirePermission } from '$lib/services/server/permissions';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
-	const user = getUserOrRedirect();
+	const user = requirePermission('resources:read');
 
 	// Fetch all data in parallel since they're independent
 	const [userMaps, userDepots, userDrivers, stops] = await Promise.all([

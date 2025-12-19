@@ -1,24 +1,28 @@
 import { z } from 'zod';
 import { emailSchema, timestampSchema, uuidSchema } from './common.js';
 
+// Role enum - used across user schemas
+export const roleEnum = z.enum(['admin', 'member', 'viewer', 'driver']);
+export type Role = z.infer<typeof roleEnum>;
+
 // User creation schema
 export const createUserSchema = z.object({
 	email: emailSchema,
 	passwordHash: z.string().min(1, 'Password hash is required').nullable(),
 	organization_id: uuidSchema.optional(),
-	role: z.enum(['admin', 'member', 'viewer']).default('member')
+	role: roleEnum.default('member')
 });
 
 // User update schema
 export const updateUserSchema = z.object({
 	email: emailSchema.optional(),
-	role: z.enum(['admin', 'member', 'viewer']).optional()
+	role: roleEnum.optional()
 });
 
 // User query/filter schema
 export const userFilterSchema = z.object({
 	organization_id: uuidSchema.optional(),
-	role: z.enum(['admin', 'member', 'viewer']).optional(),
+	role: roleEnum.optional(),
 	search: z.string().optional()
 });
 
@@ -28,7 +32,7 @@ export const userSchema = z.object({
 	organization_id: uuidSchema,
 	email: emailSchema,
 	passwordHash: z.string().nullable(),
-	// role: z.enum(['admin', 'member', 'viewer']),
+	role: roleEnum,
 	created_at: timestampSchema,
 	updated_at: timestampSchema
 });

@@ -2,14 +2,14 @@
 // POST /api/maps/[mapId]/optimize - Optimize routes for a map using TSP solver
 
 import { optimizationOptionsSchema } from '$lib/schemas/map';
-import { authorizeRoute } from '$lib/services/server/auth';
 import { ServiceError } from '$lib/services/server/errors';
 import { optimizationService } from '$lib/services/server/optimization.service';
+import { requirePermissionApi } from '$lib/services/server/permissions';
 import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ params }) => {
-	const user = authorizeRoute();
+	const user = requirePermissionApi('resources:read');
 	const { mapId } = params;
 
 	try {
@@ -27,7 +27,7 @@ export const GET: RequestHandler = async ({ params }) => {
 };
 
 export const POST: RequestHandler = async ({ params, request }) => {
-	const user = authorizeRoute();
+	const user = requirePermissionApi('resources:create');
 	const { mapId } = params;
 
 	try {

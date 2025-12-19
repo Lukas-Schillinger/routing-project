@@ -1,10 +1,8 @@
-// POST /api/magic/request - Create magic login or invite links
-
 import { createMagicInviteSchema, createMagicLoginSchema } from '$lib/schemas';
 import { mailService } from '$lib/services/external/mail';
-import { authorizeRoute } from '$lib/services/server/auth';
 import { ServiceError } from '$lib/services/server/errors';
 import { magicLinkService } from '$lib/services/server/magic-link.service';
+import { requirePermissionApi } from '$lib/services/server/permissions';
 import { error, json } from '@sveltejs/kit';
 import { ZodError } from 'zod';
 import type { RequestHandler } from './$types';
@@ -15,8 +13,7 @@ export const POST: RequestHandler = async ({ request, url }) => {
 		const type = body.type;
 
 		if (type === 'invite') {
-			// Invites require authentication
-			const user = authorizeRoute();
+			const user = requirePermissionApi('users:create');
 
 			const magicInviteData = createMagicInviteSchema.parse(body);
 
@@ -41,8 +38,6 @@ export const POST: RequestHandler = async ({ request, url }) => {
 
 			return json(magicInvite);
 		} else if (type === 'login') {
-			// Login links don't require authentication
-
 			const magicLoginData = createMagicLoginSchema.parse(body);
 
 			try {

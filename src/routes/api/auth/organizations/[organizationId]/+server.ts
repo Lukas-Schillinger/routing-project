@@ -1,16 +1,15 @@
-// GET /api/depots - List all depots for the organization
-// POST /api/depots - Create a new depot
+// PATCH /api/auth/organizations/[organizationId] - Update organization settings
 
 import { updateOrganizationSchema } from '$lib/schemas';
-import { authorizeRoute } from '$lib/services/server/auth';
 import { ServiceError } from '$lib/services/server/errors';
+import { requirePermissionApi } from '$lib/services/server/permissions';
 import { organizationService } from '$lib/services/server/user.service';
 import { error, json } from '@sveltejs/kit';
 import { ZodError } from 'zod';
 import type { RequestHandler } from './$types';
 
 export const PATCH: RequestHandler = async ({ params, request }) => {
-	const user = authorizeRoute();
+	const user = requirePermissionApi('users:update');
 
 	const { organizationId } = params;
 

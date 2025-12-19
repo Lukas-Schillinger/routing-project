@@ -1,12 +1,12 @@
 // DELETE /api/maps/[mapId]/drivers/[driverId] - Remove a driver from a map
 
 import { mapService, ServiceError } from '$lib/services/server';
-import { authorizeRoute } from '$lib/services/server/auth';
+import { requirePermissionApi } from '$lib/services/server/permissions';
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
 export const DELETE: RequestHandler = async ({ params }) => {
-	const user = authorizeRoute();
+	const user = requirePermissionApi('resources:delete');
 
 	const mapId = params.mapId;
 	const driverId = params.driverId;

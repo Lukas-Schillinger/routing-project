@@ -1,8 +1,8 @@
-import { getUserOrRedirect } from '$lib/services/server/auth';
+import { requirePermission } from '$lib/services/server/permissions';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
-	const user = getUserOrRedirect();
+	const user = requirePermission('resources:create');
 
 	return {
 		user

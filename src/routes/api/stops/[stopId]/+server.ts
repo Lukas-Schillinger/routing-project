@@ -1,12 +1,12 @@
 import { updateStopSchema } from '$lib/schemas/stop';
 import { stopService } from '$lib/services/server';
-import { authorizeRoute } from '$lib/services/server/auth';
 import { ServiceError } from '$lib/services/server/errors';
+import { requirePermissionApi } from '$lib/services/server/permissions';
 import { error, json, type RequestHandler } from '@sveltejs/kit';
 import { ZodError } from 'zod';
 
 export const GET: RequestHandler = async ({ params }) => {
-	const user = authorizeRoute();
+	const user = requirePermissionApi('resources:read');
 	const { stopId } = params;
 
 	if (!stopId) {
@@ -26,7 +26,7 @@ export const GET: RequestHandler = async ({ params }) => {
 };
 
 export const PATCH: RequestHandler = async ({ params, request }) => {
-	const user = authorizeRoute();
+	const user = requirePermissionApi('resources:update');
 
 	const { stopId } = params;
 
@@ -52,7 +52,7 @@ export const PATCH: RequestHandler = async ({ params, request }) => {
 };
 
 export const DELETE: RequestHandler = async ({ params }) => {
-	const user = authorizeRoute();
+	const user = requirePermissionApi('resources:delete');
 
 	const { stopId } = params;
 

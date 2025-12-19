@@ -1,10 +1,10 @@
 import { createMapSchema } from '$lib/schemas/map';
 import { mapService, ServiceError } from '$lib/services/server';
-import { authorizeRoute } from '$lib/services/server/auth';
+import { requirePermissionApi } from '$lib/services/server/permissions';
 import { json, type RequestHandler } from '@sveltejs/kit';
 
 export const GET: RequestHandler = async ({ url }) => {
-	const user = authorizeRoute();
+	const user = requirePermissionApi('resources:read');
 	try {
 		// Parse query parameters
 		const includeStats = url.searchParams.get('includeStats') === 'true';
@@ -24,7 +24,7 @@ export const GET: RequestHandler = async ({ url }) => {
 };
 
 export const POST: RequestHandler = async ({ request }) => {
-	const user = authorizeRoute();
+	const user = requirePermissionApi('resources:create');
 
 	try {
 		const body = await request.json();

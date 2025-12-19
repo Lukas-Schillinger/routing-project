@@ -1,13 +1,13 @@
 // POST /api/maps/[mapId]/cancel-optimization - Cancel an active optimization job
 
-import { authorizeRoute } from '$lib/services/server/auth';
 import { ServiceError } from '$lib/services/server/errors';
 import { optimizationService } from '$lib/services/server/optimization.service';
+import { requirePermissionApi } from '$lib/services/server/permissions';
 import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ params }) => {
-	const user = authorizeRoute();
+	const user = requirePermissionApi('resources:update');
 	const { mapId } = params;
 
 	try {

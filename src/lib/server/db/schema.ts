@@ -33,7 +33,10 @@ export const users = pgTable(
 		organization_id: orgId.references(() => organizations.id, { onDelete: 'cascade' }),
 		email: text('email').notNull().unique(),
 		passwordHash: text('password_hash'),
-		role: varchar('role', { length: 32 }).default('member').notNull(),
+		role: varchar('role', { length: 32 })
+			.$type<'admin' | 'member' | 'viewer' | 'driver'>()
+			.default('member')
+			.notNull(),
 		created_at: ts('created_at'),
 		updated_at: ts('updated_at')
 	},
@@ -77,6 +80,7 @@ export const drivers = pgTable(
 	{
 		id,
 		organization_id: orgId.references(() => organizations.id, { onDelete: 'cascade' }),
+		user_id: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
 		name: varchar('name', { length: 200 }).notNull(),
 		phone: varchar('phone', { length: 32 }),
 		notes: text('notes'),
@@ -86,7 +90,10 @@ export const drivers = pgTable(
 		created_at: ts('created_at'),
 		updated_at: ts('updated_at')
 	},
-	(t) => [index('drivers_org_idx').on(t.organization_id)]
+	(t) => [
+		index('drivers_org_idx').on(t.organization_id),
+		uniqueIndex('drivers_user_idx').on(t.user_id).where(sql`${t.user_id} IS NOT NULL`)
+	]
 );
 
 export const maps = pgTable(
@@ -310,13 +317,21 @@ export const usersRelations = relations(users, ({ one, many }) => ({
 		fields: [users.organization_id],
 		references: [organizations.id]
 	}),
-	uploadedFiles: many(files)
+	uploadedFiles: many(files),
+	driver: one(drivers, {
+		fields: [users.id],
+		references: [drivers.user_id]
+	})
 }));
 
 export const driversRelations = relations(drivers, ({ one, many }) => ({
 	organization: one(organizations, {
 		fields: [drivers.organization_id],
 		references: [organizations.id]
+	}),
+	user: one(users, {
+		fields: [drivers.user_id],
+		references: [users.id]
 	}),
 	mapMemberships: many(driverMapMemberships),
 	stops: many(stops),

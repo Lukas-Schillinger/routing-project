@@ -1,8 +1,9 @@
-import type { CreateRoute, Route } from '$lib/schemas';
+import type { CreateRoute, PublicUser, Route } from '$lib/schemas';
 import { db } from '$lib/server/db';
-import { routes } from '$lib/server/db/schema';
+import { drivers, routes } from '$lib/server/db/schema';
 import { and, eq } from 'drizzle-orm';
 import { ServiceError } from './errors';
+import { getDriverForUser } from './permissions';
 
 export class RouteService {
 	/**
@@ -128,6 +129,59 @@ export class RouteService {
 			console.error('Error deleting route:', error);
 			throw new ServiceError('Failed to delete route', 'INTERNAL_ERROR', 500);
 		}
+	}
+
+	/**
+	 * Check if a route is public (belongs to a temporary driver)
+	 */
+	async isRoutePublic(routeId: string): Promise<boolean> {
+		const [result] = await db
+			.select({ temporary: drivers.temporary })
+			.from(routes)
+			.innerJoin(drivers, eq(routes.driver_id, drivers.id))
+			.where(eq(routes.id, routeId))
+			.limit(1);
+
+		return result?.temporary === true;
+	}
+
+	/**
+	 * Get routes accessible to a user based on their role
+	 * - Admin/Member/Viewer: All routes in organization
+	 * - Driver: Only routes assigned to their driver record
+	 */
+	async getRoutesForUser(user: PublicUser): Promise<Route[]> {
+		if (user.role === 'driver') {
+			const driver = await getDriverForUser(user.id, user.organization_id);
+			if (!driver) {
+				return []; // Driver user with no linked driver record
+			}
+			return (await db
+				.select()
+				.from(routes)
+				.where(
+					and(eq(routes.organization_id, user.organization_id), eq(routes.driver_id, driver.id))
+				)) as Route[];
+		}
+
+		// Non-driver roles see all org routes
+		return this.getRoutes(user.organization_id);
+	}
+
+	/**
+	 * Get a route with role-based access check
+	 */
+	async getRouteByIdForUser(routeId: string, user: PublicUser): Promise<Route> {
+		const route = await this.verifyRouteOwnership(routeId, user.organization_id);
+
+		if (user.role === 'driver') {
+			const driver = await getDriverForUser(user.id, user.organization_id);
+			if (!driver || route.driver_id !== driver.id) {
+				throw ServiceError.forbidden('You can only access your own routes');
+			}
+		}
+
+		return route;
 	}
 }
 

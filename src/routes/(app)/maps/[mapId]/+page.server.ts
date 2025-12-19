@@ -7,12 +7,12 @@ import {
 	ServiceError,
 	stopService
 } from '$lib/services/server';
-import { getUserOrRedirect } from '$lib/services/server/auth';
+import { requirePermission } from '$lib/services/server/permissions';
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params }) => {
-	const user = getUserOrRedirect();
+	const user = requirePermission('resources:read');
 
 	const { mapId } = params;
 

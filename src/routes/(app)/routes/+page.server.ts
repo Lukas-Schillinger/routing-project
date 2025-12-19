@@ -1,11 +1,11 @@
 import { routeService } from '$lib/services/server';
-import { getUserOrRedirect } from '$lib/services/server/auth';
+import { requirePermission } from '$lib/services/server/permissions';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
-	const user = getUserOrRedirect();
+	const user = requirePermission('routes:read');
 
-	const routes = await routeService.getRoutes(user.organization_id);
+	const routes = await routeService.getRoutesForUser(user);
 
 	return { routes };
 };

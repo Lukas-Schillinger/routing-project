@@ -1,6 +1,6 @@
 import { createStopSchema } from '$lib/schemas/stop';
 import { stopService } from '$lib/services/server';
-import { authorizeRoute } from '$lib/services/server/auth';
+import { requirePermissionApi } from '$lib/services/server/permissions';
 import { error } from '@sveltejs/kit';
 import { ZodError } from 'zod';
 import type { RequestHandler } from './$types';
@@ -10,7 +10,7 @@ import type { RequestHandler } from './$types';
  * Create a new stop
  */
 export const POST: RequestHandler = async ({ request }) => {
-	const user = authorizeRoute();
+	const user = requirePermissionApi('resources:create');
 
 	try {
 		const body = await request.json();

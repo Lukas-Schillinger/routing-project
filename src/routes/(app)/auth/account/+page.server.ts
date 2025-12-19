@@ -1,10 +1,10 @@
-import { getUserOrRedirect } from '$lib/services/server/auth';
 import { magicLinkService } from '$lib/services/server/magic-link.service';
+import { requireAuth } from '$lib/services/server/permissions';
 import { organizationService, userService } from '$lib/services/server/user.service';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
-	const user = getUserOrRedirect();
+	const user = requireAuth();
 
 	// Fetch all data in parallel since they're independent
 	const [organization, magicInvites, orginizationUsers] = await Promise.all([
