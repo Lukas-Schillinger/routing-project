@@ -1,6 +1,7 @@
 import { createAvatar } from '@dicebear/core';
 import * as style from '@dicebear/identicon';
 import { clsx, type ClassValue } from 'clsx';
+import type { Permission } from './services/server/permissions';
 import TimeAgo from 'javascript-time-ago';
 import en from 'javascript-time-ago/locale/en';
 import { twMerge } from 'tailwind-merge';
@@ -176,3 +177,10 @@ export type WithoutChild<T> = T extends { child?: any } ? Omit<T, 'child'> : T;
 export type WithoutChildren<T> = T extends { children?: any } ? Omit<T, 'children'> : T;
 export type WithoutChildrenOrChild<T> = WithoutChildren<WithoutChild<T>>;
 export type WithElementRef<T, U extends HTMLElement = HTMLElement> = T & { ref?: U | null };
+
+/**
+ * Check if the given permissions array includes the specified permission
+ */
+export function checkPermission(permissions: Permission[], permission: Permission): boolean {
+	return permissions.includes(permission);
+}

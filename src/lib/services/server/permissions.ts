@@ -19,7 +19,7 @@ export type Permission =
 	| 'resources:delete'
 	| 'routes:read';
 
-const rolePermissions: Record<Role, Permission[]> = {
+export const rolePermissions: Record<Role, Permission[]> = {
 	admin: [
 		'users:read',
 		'users:create',
@@ -41,13 +41,6 @@ const rolePermissions: Record<Role, Permission[]> = {
  */
 export function hasPermission(role: Role, permission: Permission): boolean {
 	return rolePermissions[role]?.includes(permission) ?? false;
-}
-
-/**
- * Check if user has any of the specified roles
- */
-export function hasRole(userRole: Role, allowedRoles: Role[]): boolean {
-	return allowedRoles.includes(userRole);
 }
 
 /**

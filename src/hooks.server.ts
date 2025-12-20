@@ -1,4 +1,5 @@
 import * as auth from '$lib/services/server/auth';
+import { rolePermissions } from '$lib/services/server/permissions';
 import type { Handle } from '@sveltejs/kit';
 
 const handleAuth: Handle = async ({ event, resolve }) => {
@@ -7,6 +8,7 @@ const handleAuth: Handle = async ({ event, resolve }) => {
 	if (!sessionToken) {
 		event.locals.user = null;
 		event.locals.session = null;
+		event.locals.permissions = [];
 		return resolve(event);
 	}
 
@@ -20,6 +22,9 @@ const handleAuth: Handle = async ({ event, resolve }) => {
 
 	event.locals.user = user;
 	event.locals.session = session;
+	if (user) {
+		event.locals.permissions = rolePermissions[user.role];
+	}
 	return resolve(event);
 };
 
