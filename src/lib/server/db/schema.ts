@@ -39,6 +39,7 @@ export const users = pgTable(
 		updated_at: ts('updated_at'),
 		updated_by: uuid('updated_by'),
 
+		name: varchar('name', { length: 200 }),
 		email: text('email').notNull().unique(),
 		passwordHash: text('password_hash'),
 		role: varchar('role', { length: 32 })

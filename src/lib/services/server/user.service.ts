@@ -27,7 +27,8 @@ export class UserService {
 			updated_at: user.updated_at,
 			organization_id: user.organization_id,
 			email: user.email,
-			role: user.role
+			role: user.role,
+			name: user.name
 		};
 	}
 
@@ -39,7 +40,8 @@ export class UserService {
 				updated_at: users.updated_at,
 				organization_id: users.organization_id,
 				email: users.email,
-				role: users.role
+				role: users.role,
+				name: users.name
 			})
 			.from(users)
 			.where(eq(users.organization_id, organizationId));
@@ -61,7 +63,8 @@ export class UserService {
 		email: string,
 		passwordHash?: string,
 		organizationId?: string | null,
-		createdByUserId?: string | null
+		createdByUserId?: string | null,
+		name?: string | null
 	): Promise<User> {
 		// If no organization ID provided, create a new organization with a random name
 		let orgId = organizationId;
@@ -88,7 +91,8 @@ export class UserService {
 				passwordHash,
 				organization_id: orgId,
 				created_by: createdByUserId,
-				updated_by: createdByUserId
+				updated_by: createdByUserId,
+				name
 			})
 			.returning();
 

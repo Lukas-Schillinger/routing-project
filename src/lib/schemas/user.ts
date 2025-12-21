@@ -7,6 +7,7 @@ export type Role = z.infer<typeof roleEnum>;
 
 // User creation schema
 export const createUserSchema = z.object({
+	name: z.string().max(200).nullish(),
 	email: emailSchema,
 	passwordHash: z.string().min(1, 'Password hash is required').nullable(),
 	organization_id: uuidSchema.optional(),
@@ -15,6 +16,7 @@ export const createUserSchema = z.object({
 
 // User update schema
 export const updateUserSchema = z.object({
+	name: z.string().max(200).nullish(),
 	email: emailSchema.optional(),
 	role: roleEnum.optional()
 });
@@ -30,6 +32,7 @@ export const userFilterSchema = z.object({
 export const userSchema = z.object({
 	id: uuidSchema,
 	organization_id: uuidSchema,
+	name: z.string().max(200).nullable(),
 	email: emailSchema,
 	passwordHash: z.string().nullable(),
 	role: roleEnum,
