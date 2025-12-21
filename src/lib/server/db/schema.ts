@@ -21,9 +21,12 @@ const ts = (c: string) => timestamp(c, { withTimezone: true }).defaultNow().notN
 
 export const organizations = pgTable('organizations', {
 	id,
-	name: varchar('name', { length: 200 }).notNull(),
 	created_at: ts('created_at'),
-	updated_at: ts('updated_at')
+	created_by: uuid('created_by'),
+	updated_at: ts('updated_at'),
+	updated_by: uuid('updated_by'),
+
+	name: varchar('name', { length: 200 }).notNull()
 });
 
 export const users = pgTable(
@@ -31,14 +34,17 @@ export const users = pgTable(
 	{
 		id,
 		organization_id: orgId.references(() => organizations.id, { onDelete: 'cascade' }),
+		created_at: ts('created_at'),
+		created_by: uuid('created_by'),
+		updated_at: ts('updated_at'),
+		updated_by: uuid('updated_by'),
+
 		email: text('email').notNull().unique(),
 		passwordHash: text('password_hash'),
 		role: varchar('role', { length: 32 })
 			.$type<'admin' | 'member' | 'viewer' | 'driver'>()
 			.default('member')
-			.notNull(),
-		created_at: ts('created_at'),
-		updated_at: ts('updated_at')
+			.notNull()
 	},
 	(t) => [
 		uniqueIndex('users_user_org_uidx').on(t.organization_id, t.id),
@@ -58,7 +64,9 @@ export const magicLinks = pgTable('magic_links', {
 	id,
 	organization_id: orgId,
 	created_at: ts('created_at'),
+	created_by: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
 	updated_at: ts('updated_at').$onUpdate(() => new Date()),
+	updated_by: uuid('updated_by').references(() => users.id, { onDelete: 'set null' }),
 
 	expires_at: ts('expires_at'),
 	type: text('type').$type<'invite' | 'login'>().notNull(),
@@ -80,15 +88,18 @@ export const drivers = pgTable(
 	{
 		id,
 		organization_id: orgId.references(() => organizations.id, { onDelete: 'cascade' }),
+		created_at: ts('created_at'),
+		created_by: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
+		updated_at: ts('updated_at'),
+		updated_by: uuid('updated_by').references(() => users.id, { onDelete: 'set null' }),
+
 		user_id: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
 		name: varchar('name', { length: 200 }).notNull(),
 		phone: varchar('phone', { length: 32 }),
 		notes: text('notes'),
 		active: boolean('active').default(true).notNull(),
 		temporary: boolean('temporary').default(false).notNull(), // Temporary drivers are deleted when removed from a map
-		color: varchar('color', { length: 7 }).notNull(),
-		created_at: ts('created_at'),
-		updated_at: ts('updated_at')
+		color: varchar('color', { length: 7 }).notNull()
 	},
 	(t) => [
 		index('drivers_org_idx').on(t.organization_id),
@@ -101,9 +112,12 @@ export const maps = pgTable(
 	{
 		id,
 		organization_id: orgId.references(() => organizations.id, { onDelete: 'cascade' }),
-		title: varchar('title', { length: 200 }).notNull(),
 		created_at: ts('created_at'),
-		updated_at: ts('updated_at')
+		created_by: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
+		updated_at: ts('updated_at'),
+		updated_by: uuid('updated_by').references(() => users.id, { onDelete: 'set null' }),
+
+		title: varchar('title', { length: 200 }).notNull()
 	},
 	(t) => [index('maps_org_idx').on(t.organization_id)]
 );
@@ -149,6 +163,11 @@ export const stops = pgTable(
 	{
 		id,
 		organization_id: orgId.references(() => organizations.id, { onDelete: 'cascade' }),
+		created_at: ts('created_at'),
+		created_by: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
+		updated_at: ts('updated_at'),
+		updated_by: uuid('updated_by').references(() => users.id, { onDelete: 'set null' }),
+
 		map_id: uuid('map_id')
 			.notNull()
 			.references(() => maps.id, { onDelete: 'cascade' }),
@@ -159,9 +178,7 @@ export const stops = pgTable(
 		delivery_index: integer('delivery_index'),
 		contact_name: varchar('contact_name', { length: 200 }),
 		contact_phone: varchar('contact_phone', { length: 32 }),
-		notes: text('notes'),
-		created_at: ts('created_at'),
-		updated_at: ts('updated_at')
+		notes: text('notes')
 	},
 	(t) => [index('stops_org_idx').on(t.organization_id), index('stops_map_idx').on(t.map_id)]
 );
@@ -171,13 +188,16 @@ export const depots = pgTable(
 	{
 		id,
 		organization_id: orgId.references(() => organizations.id, { onDelete: 'cascade' }),
+		created_at: ts('created_at'),
+		created_by: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
+		updated_at: ts('updated_at'),
+		updated_by: uuid('updated_by').references(() => users.id, { onDelete: 'set null' }),
+
 		location_id: uuid('location_id')
 			.notNull()
 			.references(() => locations.id, { onDelete: 'cascade' }),
 		name: varchar('name', { length: 200 }).notNull(),
-		default_depot: boolean('default_depot').default(false).notNull(),
-		created_at: ts('created_at'),
-		updated_at: ts('updated_at')
+		default_depot: boolean('default_depot').default(false).notNull()
 	},
 	(t) => [
 		index('depots_org_idx').on(t.organization_id),

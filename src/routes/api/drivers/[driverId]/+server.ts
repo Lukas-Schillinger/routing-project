@@ -39,7 +39,8 @@ export const PATCH: RequestHandler = async ({ params, request }) => {
 		const updatedDriver = await driverService.updateDriver(
 			driverId,
 			validatedData,
-			user.organization_id
+			user.organization_id,
+			user.id
 		);
 
 		return json(updatedDriver);

@@ -89,7 +89,8 @@ export class MagicLinkService {
 
 	async createMagicInvite(
 		magicInviteData: CreateMagicInvite,
-		organization_id: string
+		organization_id: string,
+		userId: string
 	): Promise<{ magicInvite: MagicInvite; token: string }> {
 		if (
 			magicInviteData.invitee_organization_id &&
@@ -120,6 +121,8 @@ export class MagicLinkService {
 			.insert(magicLinks)
 			.values({
 				organization_id: organization_id,
+				created_by: userId,
+				updated_by: userId,
 				type: 'invite',
 				email: magicInviteData.email,
 				expires_at: this.getExpiry(magicInviteData.token_duration_hours),

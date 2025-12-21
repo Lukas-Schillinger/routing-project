@@ -20,7 +20,11 @@ export class DepotService {
 	 * Create a new depot with location
 	 * Handles location creation, default depot management, and permissions
 	 */
-	async createDepot(data: DepotCreate, organizationId: string): Promise<DepotWithLocationJoin> {
+	async createDepot(
+		data: DepotCreate,
+		organizationId: string,
+		userId: string
+	): Promise<DepotWithLocationJoin> {
 		// Create or verify location
 		const locationId = await locationService.createOrVerifyLocation(
 			data.location_id,
@@ -38,6 +42,8 @@ export class DepotService {
 			.insert(depots)
 			.values({
 				organization_id: organizationId,
+				created_by: userId,
+				updated_by: userId,
 				location_id: locationId,
 				name: data.name.trim(),
 				default_depot: data.default_depot
@@ -103,7 +109,8 @@ export class DepotService {
 	async updateDepot(
 		depotId: string,
 		data: DepotUpdate,
-		organizationId: string
+		organizationId: string,
+		userId: string
 	): Promise<DepotWithLocationJoin> {
 		// Verify depot ownership
 		const existingDepot = await this.getDepotById(depotId, organizationId);
@@ -130,7 +137,8 @@ export class DepotService {
 				name: data.name?.trim(),
 				location_id: locationId,
 				default_depot: data.default_depot,
-				updated_at: new Date()
+				updated_at: new Date(),
+				updated_by: userId
 			})
 			.where(eq(depots.id, depotId))
 			.returning();

@@ -39,7 +39,8 @@ export const PATCH: RequestHandler = async ({ params, request }) => {
 		const depotWithLocation = await depotService.updateDepot(
 			depotId,
 			validatedData,
-			user.organization_id
+			user.organization_id,
+			user.id
 		);
 
 		return json(depotWithLocation);

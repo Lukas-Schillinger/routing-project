@@ -37,7 +37,7 @@ export const PATCH: RequestHandler = async ({ params, request }) => {
 	try {
 		const body = await request.json();
 		const data = updateStopSchema.parse(body);
-		const stop = await stopService.updateStop(stopId, data, user.organization_id);
+		const stop = await stopService.updateStop(stopId, data, user.organization_id, user.id);
 		return json(stop);
 	} catch (err) {
 		if (err instanceof ZodError) {

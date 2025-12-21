@@ -14,7 +14,7 @@ export const POST: RequestHandler = async ({ params }) => {
 
 	try {
 		// Reset optimization using the map service
-		await mapService.resetOptimization(mapId, user.organization_id);
+		await mapService.resetOptimization(mapId, user.organization_id, user.id);
 
 		return json({ success: true });
 	} catch (error) {

@@ -20,7 +20,8 @@ export const PATCH: RequestHandler = async ({ params, request }) => {
 		const organization = await organizationService.updateOrganization(
 			organizationId,
 			validatedData,
-			user.organization_id
+			user.organization_id,
+			user.id
 		);
 
 		return json(organization);

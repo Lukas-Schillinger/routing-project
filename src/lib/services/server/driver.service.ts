@@ -36,11 +36,13 @@ export class DriverService {
 	/**
 	 * Create a new driver
 	 */
-	async createDriver(data: DriverCreate, organizationId: string): Promise<Driver> {
+	async createDriver(data: DriverCreate, organizationId: string, userId: string): Promise<Driver> {
 		const [newDriver] = await db
 			.insert(drivers)
 			.values({
 				organization_id: organizationId,
+				created_by: userId,
+				updated_by: userId,
 				name: data.name.trim(),
 				color: data.color,
 				phone: data.phone || null,
@@ -59,7 +61,8 @@ export class DriverService {
 	async updateDriver(
 		driverId: string,
 		data: DriverUpdate,
-		organizationId: string
+		organizationId: string,
+		userId: string
 	): Promise<Driver> {
 		// Verify driver ownership
 		await this.getDriverById(driverId, organizationId);
@@ -74,6 +77,7 @@ export class DriverService {
 				active: data.active,
 				temporary: data.temporary,
 				updated_at: new Date(),
+				updated_by: userId,
 				color: data.color
 			})
 			.where(eq(drivers.id, driverId))

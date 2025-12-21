@@ -50,12 +50,15 @@ export class MapService {
 	 */
 	async createMap(
 		data: CreateMap,
-		organizationId: string
+		organizationId: string,
+		userId: string
 	): Promise<{ map: Map; stops: StopWithLocation[] | null }> {
 		const [map] = await db
 			.insert(maps)
 			.values({
 				organization_id: organizationId,
+				created_by: userId,
+				updated_by: userId,
 				title: data.title
 			})
 			.returning();
@@ -64,7 +67,8 @@ export class MapService {
 			? await stopService.bulkCreateStops(
 					data.stops.map((stop) => ({ ...stop, map_id: map.id })),
 					map.id,
-					organizationId
+					organizationId,
+					userId
 				)
 			: null;
 
@@ -74,14 +78,15 @@ export class MapService {
 	/**
 	 * Update a map
 	 */
-	async updateMap(mapId: string, data: UpdateMap, organizationId: string) {
+	async updateMap(mapId: string, data: UpdateMap, organizationId: string, userId: string) {
 		await this.verifyMapOwnership(mapId, organizationId);
 
 		const [updatedMap] = await db
 			.update(maps)
 			.set({
 				...data,
-				updated_at: new Date()
+				updated_at: new Date(),
+				updated_by: userId
 			})
 			.where(eq(maps.id, mapId))
 			.returning();
@@ -103,7 +108,7 @@ export class MapService {
 	/**
 	 * Reset optimization for a map (clear driver assignments)
 	 */
-	async resetOptimization(mapId: string, organizationId: string) {
+	async resetOptimization(mapId: string, organizationId: string, userId: string) {
 		await this.verifyMapOwnership(mapId, organizationId);
 
 		await db
@@ -111,7 +116,8 @@ export class MapService {
 			.set({
 				driver_id: null,
 				delivery_index: null,
-				updated_at: new Date()
+				updated_at: new Date(),
+				updated_by: userId
 			})
 			.where(eq(stops.map_id, mapId));
 

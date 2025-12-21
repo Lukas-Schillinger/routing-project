@@ -26,7 +26,8 @@ export class UserService {
 			created_at: user.created_at,
 			updated_at: user.updated_at,
 			organization_id: user.organization_id,
-			email: user.email
+			email: user.email,
+			role: user.role
 		};
 	}
 
@@ -37,7 +38,8 @@ export class UserService {
 				created_at: users.created_at,
 				updated_at: users.updated_at,
 				organization_id: users.organization_id,
-				email: users.email
+				email: users.email,
+				role: users.role
 			})
 			.from(users)
 			.where(eq(users.organization_id, organizationId));
@@ -58,7 +60,8 @@ export class UserService {
 	async createUser(
 		email: string,
 		passwordHash?: string,
-		organizationId?: string | null
+		organizationId?: string | null,
+		createdByUserId?: string | null
 	): Promise<User> {
 		// If no organization ID provided, create a new organization with a random name
 		let orgId = organizationId;
@@ -83,7 +86,9 @@ export class UserService {
 			.values({
 				email,
 				passwordHash,
-				organization_id: orgId
+				organization_id: orgId,
+				created_by: createdByUserId,
+				updated_by: createdByUserId
 			})
 			.returning();
 
@@ -106,7 +111,12 @@ export class OrganizationService {
 		return organization;
 	}
 
-	async updateOrganization(requestedId: string, data: UpdateOrganization, requesterId: string) {
+	async updateOrganization(
+		requestedId: string,
+		data: UpdateOrganization,
+		requesterId: string,
+		userId: string
+	) {
 		const [organization] = await db
 			.select()
 			.from(organizations)
@@ -120,7 +130,8 @@ export class OrganizationService {
 			.update(organizations)
 			.set({
 				name: data.name ? data.name : organization.name,
-				updated_at: new Date()
+				updated_at: new Date(),
+				updated_by: userId
 			})
 			.where(eq(organizations.id, requestedId))
 			.returning();

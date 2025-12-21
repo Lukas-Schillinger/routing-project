@@ -29,7 +29,8 @@ export const POST: RequestHandler = async ({ request, url }) => {
 			// Create magic invite db entry
 			const { magicInvite, token } = await magicLinkService.createMagicInvite(
 				magicInviteData,
-				user.organization_id
+				user.organization_id,
+				user.id
 			);
 
 			// Send email

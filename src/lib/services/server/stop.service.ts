@@ -103,7 +103,11 @@ export class StopService {
 	 * Create a new stop
 	 * Can create location first if location data is provided
 	 */
-	async createStop(data: CreateStop, organizationId: string): Promise<StopWithLocation> {
+	async createStop(
+		data: CreateStop,
+		organizationId: string,
+		userId: string
+	): Promise<StopWithLocation> {
 		let locationId = data.location_id;
 
 		// Create location if data is provided
@@ -134,6 +138,8 @@ export class StopService {
 			.insert(stops)
 			.values({
 				organization_id: organizationId,
+				created_by: userId,
+				updated_by: userId,
 				map_id: data.map_id,
 				location_id: locationId,
 				contact_name: data.contact_name || null,
@@ -153,7 +159,8 @@ export class StopService {
 	async updateStop(
 		stopId: string,
 		data: UpdateStop,
-		organizationId: string
+		organizationId: string,
+		userId: string
 	): Promise<StopWithLocation> {
 		const stop = await this.verifyStopOwnership(stopId, organizationId);
 		let locationId = stop.location_id;
@@ -168,15 +175,18 @@ export class StopService {
 			locationId = data.location_id;
 		}
 
-		const updateData: Partial<typeof stops.$inferInsert> & { updated_at: Date } = {
-			location_id: locationId,
-			driver_id: data.driver_id !== undefined ? data.driver_id : stop.driver_id,
-			delivery_index: data.delivery_index !== undefined ? data.delivery_index : stop.delivery_index,
-			contact_name: data.contact_name !== undefined ? data.contact_name : stop.contact_name,
-			contact_phone: data.contact_phone !== undefined ? data.contact_phone : stop.contact_phone,
-			notes: data.notes !== undefined ? data.notes : stop.notes,
-			updated_at: new Date()
-		};
+		const updateData: Partial<typeof stops.$inferInsert> & { updated_at: Date; updated_by: string } =
+			{
+				location_id: locationId,
+				driver_id: data.driver_id !== undefined ? data.driver_id : stop.driver_id,
+				delivery_index:
+					data.delivery_index !== undefined ? data.delivery_index : stop.delivery_index,
+				contact_name: data.contact_name !== undefined ? data.contact_name : stop.contact_name,
+				contact_phone: data.contact_phone !== undefined ? data.contact_phone : stop.contact_phone,
+				notes: data.notes !== undefined ? data.notes : stop.notes,
+				updated_at: new Date(),
+				updated_by: userId
+			};
 
 		const [updatedStop] = await db
 			.update(stops)
@@ -201,7 +211,12 @@ export class StopService {
 	/**
 	 * Unfortunately the createStops endpoint does a lot of db calls which makes this method inefficient.
 	 */
-	async bulkCreateStops(stopsData: Array<CreateStop>, mapId: string, organizationId: string) {
+	async bulkCreateStops(
+		stopsData: Array<CreateStop>,
+		mapId: string,
+		organizationId: string,
+		userId: string
+	) {
 		// Verify map ownership
 		const [map] = await db
 			.select()
@@ -214,7 +229,7 @@ export class StopService {
 		}
 
 		return await Promise.all(
-			stopsData.map((stop) => this.createStop({ ...stop, map_id: mapId }, organizationId))
+			stopsData.map((stop) => this.createStop({ ...stop, map_id: mapId }, organizationId, userId))
 		);
 	}
 }
