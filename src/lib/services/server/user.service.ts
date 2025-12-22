@@ -1,4 +1,11 @@
-import type { Organization, PublicUser, UpdateOrganization, UpdateUser, User } from '$lib/schemas';
+import type {
+	Organization,
+	PublicUser,
+	UpdateOrganization,
+	UpdateUser,
+	UpdateUserRole,
+	User
+} from '$lib/schemas';
 import { db } from '$lib/server/db';
 import { organizations, users } from '$lib/server/db/schema';
 import { and, eq } from 'drizzle-orm';
@@ -72,6 +79,35 @@ export class UserService {
 				name: data.name !== undefined ? data.name : user.name,
 				updated_at: new Date(),
 				updated_by: userId
+			})
+			.where(and(eq(users.id, userId), eq(users.organization_id, organizationId)))
+			.returning();
+
+		return {
+			id: updatedUser.id,
+			created_at: updatedUser.created_at,
+			updated_at: updatedUser.updated_at,
+			organization_id: updatedUser.organization_id,
+			name: updatedUser.name,
+			email: updatedUser.email,
+			role: updatedUser.role
+		};
+	}
+
+	async updateUserRole(
+		userId: string,
+		organizationId: string,
+		data: UpdateUserRole,
+		updatedByUserId: string
+	): Promise<PublicUser> {
+		await this.getUser(userId, organizationId);
+
+		const [updatedUser] = await db
+			.update(users)
+			.set({
+				role: data.role,
+				updated_at: new Date(),
+				updated_by: updatedByUserId
 			})
 			.where(and(eq(users.id, userId), eq(users.organization_id, organizationId)))
 			.returning();

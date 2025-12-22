@@ -14,9 +14,14 @@ export const createUserSchema = z.object({
 	role: roleEnum.default('member')
 });
 
-// User update schema
+// User update schema (self-update)
 export const updateUserSchema = z.object({
 	name: z.string().max(200).nullish()
+});
+
+// Admin update schema (for updating other users)
+export const updateUserRoleSchema = z.object({
+	role: roleEnum
 });
 
 // User query/filter schema
@@ -44,6 +49,7 @@ export const publicUserSchema = userSchema.omit({ passwordHash: true });
 // Type exports
 export type CreateUse = z.infer<typeof createUserSchema>;
 export type UpdateUser = z.infer<typeof updateUserSchema>;
+export type UpdateUserRole = z.infer<typeof updateUserRoleSchema>;
 export type UserFilter = z.infer<typeof userFilterSchema>;
 export type User = z.infer<typeof userSchema>;
 export type PublicUser = z.infer<typeof publicUserSchema>;

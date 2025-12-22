@@ -1,12 +1,14 @@
 <!-- @component Organization card for account page -->
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
+	import { ConfirmDeleteDialog } from '$lib/components/ConfirmDeleteDialog';
 	import Badge from '$lib/components/ui/badge/badge.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input';
+	import * as Select from '$lib/components/ui/select';
 	import * as Table from '$lib/components/ui/table';
-	import type { Organization, PublicUser } from '$lib/schemas';
+	import type { Organization, PublicUser, Role } from '$lib/schemas';
 	import { organizationApi, usersApi } from '$lib/services/api/auth';
 	import type { Permission } from '$lib/services/server/permissions';
 	import { checkPermission, formatDate } from '$lib/utils';
@@ -16,7 +18,7 @@
 	// Props
 	let {
 		organization = $bindable(),
-		organizationUsers,
+		organizationUsers = $bindable(),
 		currentUser,
 		permissions
 	}: {
@@ -27,6 +29,14 @@
 	} = $props();
 
 	const canDeleteUsers = $derived(checkPermission(permissions, 'users:delete'));
+	const canUpdateUsers = $derived(checkPermission(permissions, 'users:update'));
+
+	const roles = [
+		{ name: 'admin', desc: 'set permissions, invite users' },
+		{ name: 'member', desc: 'modify and share maps' },
+		{ name: 'viewer', desc: 'view maps without modifying' },
+		{ name: 'driver', desc: 'view and update assigned routes' }
+	];
 
 	// Form state
 	let nameValue = $state(organization.name);
@@ -68,26 +78,28 @@
 	}
 
 	// Delete user
-	let deletingUserId = $state<string | null>(null);
-
 	async function handleDeleteUser(userId: string) {
-		deletingUserId = userId;
+		await usersApi.delete(userId);
+		await invalidateAll();
+		toast.success('User deleted');
+	}
+
+	// Update user role
+	async function handleRoleChange(userId: string, newRole: Role) {
 		try {
-			await usersApi.delete(userId);
-			await invalidateAll();
-			toast.success('User deleted');
+			const updatedUser = await usersApi.updateRole(userId, { role: newRole });
+			organizationUsers = organizationUsers.map((u) => (u.id === userId ? updatedUser : u));
+			toast.success('Role updated');
 		} catch (error) {
-			console.error('Failed to delete user:', error);
-			toast.error('Failed to delete user');
-		} finally {
-			deletingUserId = null;
+			console.error('Failed to update role:', error);
+			toast.error('Failed to update role');
+			await invalidateAll();
 		}
 	}
 </script>
 
 <Card.Root>
 	<Card.Header>
-		{canDeleteUsers}
 		<Card.Title>Organization</Card.Title>
 		<Card.Description>Manage your organization settings and information</Card.Description>
 	</Card.Header>
@@ -140,9 +152,10 @@
 					<Table.Row class="p-0">
 						<Table.Head class="p-0 text-sm font-semibold text-muted-foreground">email</Table.Head>
 						<Table.Head class="p-0 text-sm text-muted-foreground">role</Table.Head>
-						<Table.Head class="p-0 text-sm text-muted-foreground">joined</Table.Head>
+						<Table.Head class="hidden p-0 text-sm text-muted-foreground sm:block">joined</Table.Head
+						>
 						{#if canDeleteUsers}
-							<Table.Head class="w-10 p-0"></Table.Head>
+							<Table.Head class="w-8 p-0"></Table.Head>
 						{/if}
 					</Table.Row>
 				</Table.Header>
@@ -151,25 +164,54 @@
 						<Table.Row>
 							<Table.Cell class="px-0 text-card-foreground">{user.email}</Table.Cell>
 							<Table.Cell class="px-0">
-								<Badge class="w-20 justify-center" variant="secondary">
-									{user.role}
-								</Badge>
+								{#if canUpdateUsers && user.id !== currentUser.id}
+									<Select.Root
+										type="single"
+										value={user.role}
+										onValueChange={(value) => value && handleRoleChange(user.id, value as Role)}
+									>
+										<Select.Trigger class="h-7 w-24 text-xs">
+											{user.role}
+										</Select.Trigger>
+										<Select.Content>
+											{#each roles as role}
+												<Select.Item value={role.name} class="flex flex-col items-start gap-1">
+													<div class="text-sm">{role.name}</div>
+													<div class="text-xs text-muted-foreground">
+														{role.desc}
+													</div>
+												</Select.Item>
+											{/each}
+										</Select.Content>
+									</Select.Root>
+								{:else}
+									<Badge class="w-20 justify-center" variant="secondary">
+										{user.role}
+									</Badge>
+								{/if}
 							</Table.Cell>
-							<Table.Cell class="px-0 text-sm text-muted-foreground">
+							<Table.Cell class="hidden px-0 text-sm text-muted-foreground sm:block">
 								{formatDate(user.created_at)}
 							</Table.Cell>
 							{#if canDeleteUsers}
 								<Table.Cell class="px-0">
 									{#if user.id !== currentUser.id}
-										<Button
-											variant="ghost"
-											size="icon"
-											class="h-8 w-8 text-muted-foreground hover:text-destructive"
-											onclick={() => handleDeleteUser(user.id)}
-											disabled={deletingUserId === user.id}
+										<ConfirmDeleteDialog
+											title="Delete User"
+											description="Are you sure you want to remove {user.email} from this organization? This action cannot be undone."
+											onConfirm={() => handleDeleteUser(user.id)}
 										>
-											<Trash2 class="h-4 w-4" />
-										</Button>
+											{#snippet trigger({ props })}
+												<Button
+													{...props}
+													variant="ghost"
+													size="icon"
+													class="h-8 w-8 text-muted-foreground hover:text-destructive"
+												>
+													<Trash2 class="h-4 w-4" />
+												</Button>
+											{/snippet}
+										</ConfirmDeleteDialog>
 									{/if}
 								</Table.Cell>
 							{/if}

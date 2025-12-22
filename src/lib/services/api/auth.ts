@@ -6,7 +6,8 @@ import type {
 	Organization,
 	PublicUser,
 	UpdateOrganization,
-	UpdateUser
+	UpdateUser,
+	UpdateUserRole
 } from '$lib/schemas';
 import { apiClient } from './base';
 
@@ -36,6 +37,10 @@ class AuthApiService {
 class UsersApiService {
 	async updateMe(data: UpdateUser): Promise<PublicUser> {
 		return apiClient.patch<PublicUser>('/auth/users/me', data);
+	}
+
+	async updateRole(userId: string, data: UpdateUserRole): Promise<PublicUser> {
+		return apiClient.patch<PublicUser>(`/auth/users/${userId}`, data);
 	}
 
 	async delete(userId: string): Promise<{ success: true }> {
