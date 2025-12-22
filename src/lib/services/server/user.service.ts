@@ -87,6 +87,17 @@ export class UserService {
 		};
 	}
 
+	async deleteUser(userId: string, organizationId: string): Promise<{ success: true }> {
+		// Verify user exists and belongs to organization
+		await this.getUser(userId, organizationId);
+
+		await db
+			.delete(users)
+			.where(and(eq(users.id, userId), eq(users.organization_id, organizationId)));
+
+		return { success: true };
+	}
+
 	async createUser(
 		email: string,
 		passwordHash?: string,

@@ -32,7 +32,12 @@
 		<Separator />
 
 		<!-- Organization Section -->
-		<OrganizationCard organization={data.organization} organizationUsers={data.organizationUsers} />
+		<OrganizationCard
+			organization={data.organization}
+			organizationUsers={data.organizationUsers}
+			currentUser={data.user}
+			permissions={data.permissions}
+		/>
 
 		<!-- Magic Invites Section -->
 		<MagicInvitesCard

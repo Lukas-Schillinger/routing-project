@@ -2,22 +2,31 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
 	import Badge from '$lib/components/ui/badge/badge.svelte';
+	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input';
 	import * as Table from '$lib/components/ui/table';
 	import type { Organization, PublicUser } from '$lib/schemas';
-	import { organizationApi } from '$lib/services/api/auth';
-	import { formatDate } from '$lib/utils';
+	import { organizationApi, usersApi } from '$lib/services/api/auth';
+	import type { Permission } from '$lib/services/server/permissions';
+	import { checkPermission, formatDate } from '$lib/utils';
+	import { Trash2 } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
 	// Props
 	let {
 		organization = $bindable(),
-		organizationUsers
+		organizationUsers,
+		currentUser,
+		permissions
 	}: {
 		organization: Organization;
 		organizationUsers: PublicUser[];
+		currentUser: PublicUser;
+		permissions: Permission[];
 	} = $props();
+
+	const canDeleteUsers = $derived(checkPermission(permissions, 'users:delete'));
 
 	// Form state
 	let nameValue = $state(organization.name);
@@ -57,10 +66,28 @@
 		}
 		saveName();
 	}
+
+	// Delete user
+	let deletingUserId = $state<string | null>(null);
+
+	async function handleDeleteUser(userId: string) {
+		deletingUserId = userId;
+		try {
+			await usersApi.delete(userId);
+			await invalidateAll();
+			toast.success('User deleted');
+		} catch (error) {
+			console.error('Failed to delete user:', error);
+			toast.error('Failed to delete user');
+		} finally {
+			deletingUserId = null;
+		}
+	}
 </script>
 
 <Card.Root>
 	<Card.Header>
+		{canDeleteUsers}
 		<Card.Title>Organization</Card.Title>
 		<Card.Description>Manage your organization settings and information</Card.Description>
 	</Card.Header>
@@ -114,6 +141,9 @@
 						<Table.Head class="p-0 text-sm font-semibold text-muted-foreground">email</Table.Head>
 						<Table.Head class="p-0 text-sm text-muted-foreground">role</Table.Head>
 						<Table.Head class="p-0 text-sm text-muted-foreground">joined</Table.Head>
+						{#if canDeleteUsers}
+							<Table.Head class="w-10 p-0"></Table.Head>
+						{/if}
 					</Table.Row>
 				</Table.Header>
 				<Table.Body class="text-sm text-muted-foreground">
@@ -128,10 +158,28 @@
 							<Table.Cell class="px-0 text-sm text-muted-foreground">
 								{formatDate(user.created_at)}
 							</Table.Cell>
+							{#if canDeleteUsers}
+								<Table.Cell class="px-0">
+									{#if user.id !== currentUser.id}
+										<Button
+											variant="ghost"
+											size="icon"
+											class="h-8 w-8 text-muted-foreground hover:text-destructive"
+											onclick={() => handleDeleteUser(user.id)}
+											disabled={deletingUserId === user.id}
+										>
+											<Trash2 class="h-4 w-4" />
+										</Button>
+									{/if}
+								</Table.Cell>
+							{/if}
 						</Table.Row>
 					{:else}
 						<Table.Row>
-							<Table.Cell colspan={2} class="text-center text-muted-foreground">
+							<Table.Cell
+								colspan={canDeleteUsers ? 4 : 3}
+								class="text-center text-muted-foreground"
+							>
 								No users in this organization
 							</Table.Cell>
 						</Table.Row>
