@@ -1,17 +1,17 @@
 <!-- @component Profile Information card for account page -->
 <script lang="ts">
-	import { goto } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input';
-	import { Label } from '$lib/components/ui/label';
 	import Separator from '$lib/components/ui/separator/separator.svelte';
 	import type { PublicUser } from '$lib/schemas';
-	import { authApi } from '$lib/services/api/auth';
+	import { authApi, usersApi } from '$lib/services/api/auth';
 	import { formatDate } from '$lib/utils';
-	import { Calendar, Mail, MoonIcon, Shield, SunIcon, User } from 'lucide-svelte';
+	import { MoonIcon, SunIcon } from 'lucide-svelte';
 	import { toggleMode } from 'mode-watcher';
+	import { toast } from 'svelte-sonner';
 
 	// Props
 	let {
@@ -20,134 +20,125 @@
 		user: PublicUser;
 	} = $props();
 
-	// Local state for editing
-	let isEditingProfile = $state(false);
+	// Form state
+	let nameValue = $state(user.name ?? '');
+	let isSavingName = $state(false);
+	let nameTimeout: ReturnType<typeof setTimeout> | null = null;
 
-	// Form data
-	let profileForm = $state({
-		email: user.email
-	});
-
-	// Functions for handling form submissions (disabled for now)
-	function handleProfileSave() {
-		// TODO: Implement profile update
-		console.log('Profile save not implemented yet');
-		isEditingProfile = false;
+	// Debounced save for name field
+	function handleNameInput() {
+		if (nameTimeout) clearTimeout(nameTimeout);
+		nameTimeout = setTimeout(() => saveName(), 800);
 	}
 
-	function handleCancelEdit() {
-		isEditingProfile = false;
-		// Reset form
-		profileForm.email = user.email;
+	async function saveName() {
+		const newName = nameValue.trim() || null;
+		if (newName === user.name) return;
+
+		isSavingName = true;
+		try {
+			await usersApi.updateMe({ name: newName });
+			await invalidateAll();
+			toast.success('Profile updated');
+		} catch (error) {
+			console.error('Failed to update profile:', error);
+			toast.error('Failed to update profile');
+			nameValue = user.name ?? '';
+		} finally {
+			isSavingName = false;
+		}
+	}
+
+	// Save on blur (in case user tabs away before debounce)
+	function handleNameBlur() {
+		if (nameTimeout) {
+			clearTimeout(nameTimeout);
+			nameTimeout = null;
+		}
+		saveName();
 	}
 
 	async function handleLogout() {
 		await authApi.logout();
 		goto('/auth/login');
 	}
-
-	// Get user role badge variant
-	function getRoleBadgeVariant(role?: string) {
-		switch (role) {
-			case 'admin':
-				return 'destructive';
-			case 'member':
-				return 'default';
-			case 'viewer':
-				return 'secondary';
-			default:
-				return 'outline';
-		}
-	}
 </script>
 
 <Card.Root>
 	<Card.Header>
-		<div class="flex items-center justify-between">
-			<div class="flex items-center gap-3">
-				<User class="h-5 w-5" />
-				<Card.Title>Profile Information</Card.Title>
-			</div>
-			{#if !isEditingProfile}
-				<Button variant="outline" size="sm" onclick={() => (isEditingProfile = true)} disabled>
-					Edit Profile
-				</Button>
-			{/if}
-		</div>
+		<Card.Title>Profile Information</Card.Title>
 		<Card.Description>Manage your personal account information</Card.Description>
 	</Card.Header>
-	<Card.Content class="space-y-4">
-		{#if isEditingProfile}
-			<!-- Edit Mode -->
-			<div class="space-y-4">
-				<div class="space-y-2">
-					<Label for="email">Email Address</Label>
-					<div class="flex items-center gap-2">
-						<Mail class="h-4 w-4 text-muted-foreground" />
-						<Input
-							id="email"
-							type="email"
-							bind:value={profileForm.email}
-							placeholder="Enter email address"
-						/>
-					</div>
-				</div>
-
-				<div class="flex items-center gap-2">
-					<Button onclick={handleProfileSave} disabled size="sm">Save Changes</Button>
-					<Button variant="outline" onclick={handleCancelEdit} size="sm">Cancel</Button>
-				</div>
+	<Card.Content class="space-y-1">
+		<!-- Name (editable) -->
+		<div
+			class="flex flex-col gap-1 border-b py-4 md:flex-row md:items-center md:justify-between md:gap-4"
+		>
+			<div class="shrink-0 md:w-48">
+				<p class="text-sm font-medium">Name</p>
 			</div>
-		{:else}
-			<!-- View Mode -->
-			<div class="space-y-4">
-				<div class="flex items-center gap-3">
-					<Mail class="h-4 w-4 text-muted-foreground" />
-					<div>
-						<Label class="text-sm font-medium">Email Address</Label>
-						<p class="text-sm text-muted-foreground">{user.email}</p>
-					</div>
-				</div>
+			<Input
+				type="text"
+				bind:value={nameValue}
+				oninput={handleNameInput}
+				onblur={handleNameBlur}
+				placeholder="Enter your name"
+				disabled={isSavingName}
+				class="max-w-xs"
+			/>
+		</div>
 
-				<div class="flex items-center gap-3">
-					<Calendar class="h-4 w-4 text-muted-foreground" />
-					<div>
-						<Label class="text-sm font-medium">Member Since</Label>
-						<p class="text-sm text-muted-foreground">{formatDate(user.created_at)}</p>
-					</div>
-				</div>
-
-				<div class="flex items-center gap-3">
-					<Shield class="h-4 w-4 text-muted-foreground" />
-					<div>
-						<Label class="text-sm font-medium">Account Role</Label>
-						<div class="mt-1">
-							<Badge variant={getRoleBadgeVariant('member')}>Member</Badge>
-						</div>
-					</div>
-				</div>
-
-				<div class="flex items-center gap-3">
-					<div class="mt-1">
-						<Button onclick={toggleMode} variant="outline">
-							<div class="relative">
-								<SunIcon
-									class="h-[1.2rem] w-[1.2rem] scale-100 rotate-0 !transition-all dark:scale-0 dark:-rotate-90"
-								/>
-								<MoonIcon
-									class="absolute top-0 h-[1.2rem] w-[1.2rem] scale-0 rotate-90 !transition-all dark:scale-100 dark:rotate-0"
-								/>
-							</div>
-							<span>Toggle Theme</span>
-						</Button>
-					</div>
-					<div></div>
-				</div>
+		<!-- Email (read-only) -->
+		<div
+			class="flex flex-col gap-1 border-b py-4 md:flex-row md:items-center md:justify-between md:gap-4"
+		>
+			<div class="shrink-0 md:w-48">
+				<p class="text-sm font-medium">Email</p>
 			</div>
-		{/if}
+			<p class="text-sm text-muted-foreground">{user.email}</p>
+		</div>
+
+		<!-- Member Since (read-only) -->
+		<div
+			class="flex flex-col gap-1 border-b py-4 md:flex-row md:items-center md:justify-between md:gap-4"
+		>
+			<div class="shrink-0 md:w-48">
+				<p class="text-sm font-medium">Member since</p>
+			</div>
+			<p class="text-sm text-muted-foreground">{formatDate(user.created_at)}</p>
+		</div>
+
+		<!-- Role (read-only) -->
+		<div
+			class="flex flex-col gap-1 border-b py-4 md:flex-row md:items-center md:justify-between md:gap-4"
+		>
+			<div class="shrink-0 pb-2 md:w-48 md:pb-0">
+				<p class="text-sm font-medium">Role</p>
+			</div>
+			<Badge class="max-w-fit" variant="secondary">{user.role}</Badge>
+		</div>
+
+		<!-- Theme toggle -->
+		<div class="flex flex-col gap-1 py-4 md:flex-row md:items-center md:justify-between md:gap-4">
+			<div class="shrink-0 pb-2 md:pb-0">
+				<p class="text-sm font-medium">Theme</p>
+				<p class="text-sm text-muted-foreground">Toggle between light and dark mode</p>
+			</div>
+			<Button onclick={toggleMode} variant="outline" size="sm">
+				<div class="relative">
+					<SunIcon
+						class="h-[1.2rem] w-[1.2rem] scale-100 rotate-0 !transition-all dark:scale-0 dark:-rotate-90"
+					/>
+					<MoonIcon
+						class="absolute top-0 h-[1.2rem] w-[1.2rem] scale-0 rotate-90 !transition-all dark:scale-100 dark:rotate-0"
+					/>
+				</div>
+				<span>Toggle theme</span>
+			</Button>
+		</div>
+		<Separator />
 	</Card.Content>
-	<Separator />
-	<Card.Footer>
+	<Card.Footer class="">
 		<Button onclick={handleLogout} variant="destructive">Logout</Button>
 	</Card.Footer>
 </Card.Root>

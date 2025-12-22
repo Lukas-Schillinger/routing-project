@@ -1,4 +1,4 @@
-import type { Organization, PublicUser, UpdateOrganization, User } from '$lib/schemas';
+import type { Organization, PublicUser, UpdateOrganization, UpdateUser, User } from '$lib/schemas';
 import { db } from '$lib/server/db';
 import { organizations, users } from '$lib/server/db/schema';
 import { and, eq } from 'drizzle-orm';
@@ -59,6 +59,34 @@ export class UserService {
 		return user;
 	}
 
+	async updateUser(
+		userId: string,
+		organizationId: string,
+		data: UpdateUser
+	): Promise<PublicUser> {
+		const user = await this.getUser(userId, organizationId);
+
+		const [updatedUser] = await db
+			.update(users)
+			.set({
+				name: data.name !== undefined ? data.name : user.name,
+				updated_at: new Date(),
+				updated_by: userId
+			})
+			.where(and(eq(users.id, userId), eq(users.organization_id, organizationId)))
+			.returning();
+
+		return {
+			id: updatedUser.id,
+			created_at: updatedUser.created_at,
+			updated_at: updatedUser.updated_at,
+			organization_id: updatedUser.organization_id,
+			name: updatedUser.name,
+			email: updatedUser.email,
+			role: updatedUser.role
+		};
+	}
+
 	async createUser(
 		email: string,
 		passwordHash?: string,
@@ -67,9 +95,7 @@ export class UserService {
 		name?: string | null
 	): Promise<User> {
 		// If no organization ID provided, create a new organization with a random name
-		let orgId = organizationId;
-
-		if (!orgId) {
+		if (!organizationId) {
 			// Generate a random organization name
 			const timestamp = Date.now();
 			const randomSuffix = Math.random().toString(36).substring(2, 8);
@@ -80,7 +106,7 @@ export class UserService {
 				.insert(organizations)
 				.values({ name: orgName })
 				.returning({ id: organizations.id });
-			orgId = orgResult[0].id;
+			organizationId = orgResult[0].id;
 		}
 
 		// Create the user with the organization ID
@@ -89,7 +115,7 @@ export class UserService {
 			.values({
 				email,
 				passwordHash,
-				organization_id: orgId,
+				organization_id: organizationId,
 				created_by: createdByUserId,
 				updated_by: createdByUserId,
 				name

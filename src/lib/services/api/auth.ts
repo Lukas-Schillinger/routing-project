@@ -3,7 +3,10 @@ import type {
 	CreateMagicLogin,
 	MagicInvite,
 	MagicLogin,
-	UpdateOrganization
+	Organization,
+	PublicUser,
+	UpdateOrganization,
+	UpdateUser
 } from '$lib/schemas';
 import { apiClient } from './base';
 
@@ -30,9 +33,15 @@ class AuthApiService {
 	}
 }
 
+class UsersApiService {
+	async updateMe(data: UpdateUser): Promise<PublicUser> {
+		return apiClient.patch<PublicUser>('/auth/users/me', data);
+	}
+}
+
 class OrganizationApiService {
-	async updateMapSchema(requestedId: string, data: UpdateOrganization) {
-		return apiClient.patch(`/auth/organizations/${requestedId}`, data);
+	async update(organizationId: string, data: UpdateOrganization): Promise<Organization> {
+		return apiClient.patch<Organization>(`/auth/organizations/${organizationId}`, data);
 	}
 }
 
@@ -40,3 +49,4 @@ class OrganizationApiService {
 export const magicLinksApi = new MagicApiService();
 export const authApi = new AuthApiService();
 export const organizationApi = new OrganizationApiService();
+export const usersApi = new UsersApiService();

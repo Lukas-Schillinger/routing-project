@@ -16,9 +16,7 @@ export const createUserSchema = z.object({
 
 // User update schema
 export const updateUserSchema = z.object({
-	name: z.string().max(200).nullish(),
-	email: emailSchema.optional(),
-	role: roleEnum.optional()
+	name: z.string().max(200).nullish()
 });
 
 // User query/filter schema
@@ -44,8 +42,8 @@ export const userSchema = z.object({
 export const publicUserSchema = userSchema.omit({ passwordHash: true });
 
 // Type exports
-export type CreateUserInput = z.infer<typeof createUserSchema>;
-export type UpdateUserInput = z.infer<typeof updateUserSchema>;
+export type CreateUse = z.infer<typeof createUserSchema>;
+export type UpdateUser = z.infer<typeof updateUserSchema>;
 export type UserFilter = z.infer<typeof userFilterSchema>;
 export type User = z.infer<typeof userSchema>;
 export type PublicUser = z.infer<typeof publicUserSchema>;

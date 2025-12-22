@@ -51,7 +51,7 @@
 		isSubmitting = true;
 
 		try {
-			const updatedOrganization = await organizationApi.updateMapSchema(organization.id, {
+			const updatedOrganization = await organizationApi.update(organization.id, {
 				name: organizationName.trim()
 			});
 

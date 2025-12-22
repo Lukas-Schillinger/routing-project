@@ -1,3 +1,4 @@
+import type { PublicUser } from '$lib/schemas';
 import { db } from '$lib/server/db';
 import * as table from '$lib/server/db/schema';
 import { sha256 } from '@oslojs/crypto/sha2';
@@ -26,18 +27,21 @@ export async function createSession(token: string, userId: string) {
 	return session;
 }
 
-export async function validateSessionToken(token: string) {
+export async function validateSessionToken(
+	token: string
+): Promise<{ session: typeof table.session.$inferSelect | null; user: PublicUser | null }> {
 	const sessionId = encodeHexLowerCase(sha256(new TextEncoder().encode(token)));
 	const [result] = await db
 		.select({
 			// Adjust user table here to tweak returned data
 			user: {
 				id: table.users.id,
-				email: table.users.email,
 				organization_id: table.users.organization_id,
+				name: table.users.name,
+				email: table.users.email,
 				role: table.users.role,
-				updated_at: table.users.updated_at,
-				created_at: table.users.created_at
+				created_at: table.users.created_at,
+				updated_at: table.users.updated_at
 			},
 			session: table.session
 		})
