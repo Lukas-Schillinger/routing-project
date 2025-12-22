@@ -1,12 +1,6 @@
 import { getRequestEvent } from '$app/server';
 import type { PublicUser, Role } from '$lib/schemas/user';
-import { db } from '$lib/server/db';
-import { drivers } from '$lib/server/db/schema';
 import { error, redirect } from '@sveltejs/kit';
-import { and, eq } from 'drizzle-orm';
-// Note: This import creates a circular dependency with route.service.ts
-// but it works at runtime because both modules export different things
-import { routeService } from './route.service';
 
 export type Permission =
 	| 'users:read'
@@ -90,76 +84,4 @@ export function requirePermissionApi(permission: Permission): PublicUser {
 	}
 
 	return user;
-}
-
-/**
- * Get user OR allow access if route is public (temp driver) - for API routes
- * Returns 'public' if route belongs to a temporary driver
- * Returns PublicUser if user is authenticated
- * Throws 401 if neither
- */
-export async function authorizeRouteAccessApi(routeId: string): Promise<PublicUser | 'public'> {
-	if (await routeService.isRoutePublic(routeId)) {
-		return 'public';
-	}
-
-	const request = getRequestEvent();
-	if (!request.locals.user) {
-		throw error(401, 'Unauthorized');
-	}
-	return request.locals.user as PublicUser;
-}
-
-/**
- * Get user OR allow access if route is public (temp driver) - for page routes
- * Returns 'public' if route belongs to a temporary driver
- * Returns PublicUser if user is authenticated
- * Redirects to login if neither
- */
-export async function authorizeRouteAccess(routeId: string): Promise<PublicUser | 'public'> {
-	if (await routeService.isRoutePublic(routeId)) {
-		return 'public';
-	}
-
-	const request = getRequestEvent();
-	if (!request.locals.user) {
-		throw redirect(302, '/auth/login');
-	}
-	return request.locals.user as PublicUser;
-}
-
-/**
- * For driver role: Get the driver record linked to this user
- * Returns null if user is not linked to a driver
- */
-export async function getDriverForUser(
-	userId: string,
-	organizationId: string
-): Promise<typeof drivers.$inferSelect | null> {
-	const [driver] = await db
-		.select()
-		.from(drivers)
-		.where(and(eq(drivers.user_id, userId), eq(drivers.organization_id, organizationId)))
-		.limit(1);
-
-	return driver ?? null;
-}
-
-/**
- * Check if a driver user can access a specific route
- */
-export async function canDriverAccessRoute(
-	userId: string,
-	organizationId: string,
-	routeId: string
-): Promise<boolean> {
-	const driver = await getDriverForUser(userId, organizationId);
-	if (!driver) return false;
-
-	try {
-		const route = await routeService.getRouteById(routeId, organizationId);
-		return route.driver_id === driver.id;
-	} catch {
-		return false;
-	}
 }

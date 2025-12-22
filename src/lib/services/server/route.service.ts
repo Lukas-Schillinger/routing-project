@@ -3,7 +3,6 @@ import { db } from '$lib/server/db';
 import { drivers, routes } from '$lib/server/db/schema';
 import { and, eq } from 'drizzle-orm';
 import { ServiceError } from './errors';
-import { getDriverForUser } from './permissions';
 
 export class RouteService {
 	/**
@@ -132,17 +131,18 @@ export class RouteService {
 	}
 
 	/**
-	 * Check if a route is public (belongs to a temporary driver)
+	 * Get a route if it's public (belongs to a temporary driver)
+	 * Returns null if route doesn't exist or isn't public
 	 */
-	async isRoutePublic(routeId: string): Promise<boolean> {
+	async getPublicRoute(routeId: string): Promise<Route | null> {
 		const [result] = await db
-			.select({ temporary: drivers.temporary })
+			.select()
 			.from(routes)
 			.innerJoin(drivers, eq(routes.driver_id, drivers.id))
-			.where(eq(routes.id, routeId))
+			.where(and(eq(routes.id, routeId), eq(drivers.temporary, true)))
 			.limit(1);
 
-		return result?.temporary === true;
+		return (result?.routes as Route) ?? null;
 	}
 
 	/**
@@ -152,7 +152,7 @@ export class RouteService {
 	 */
 	async getRoutesForUser(user: PublicUser): Promise<Route[]> {
 		if (user.role === 'driver') {
-			const driver = await getDriverForUser(user.id, user.organization_id);
+			const driver = await this.getDriverForUser(user.id, user.organization_id);
 			if (!driver) {
 				return []; // Driver user with no linked driver record
 			}
@@ -175,13 +175,30 @@ export class RouteService {
 		const route = await this.verifyRouteOwnership(routeId, user.organization_id);
 
 		if (user.role === 'driver') {
-			const driver = await getDriverForUser(user.id, user.organization_id);
+			const driver = await this.getDriverForUser(user.id, user.organization_id);
 			if (!driver || route.driver_id !== driver.id) {
 				throw ServiceError.forbidden('You can only access your own routes');
 			}
 		}
 
 		return route;
+	}
+
+	/**
+	 * For driver role: Get the driver record linked to this user
+	 * Returns null if user is not linked to a driver
+	 */
+	async getDriverForUser(
+		userId: string,
+		organizationId: string
+	): Promise<typeof drivers.$inferSelect | null> {
+		const [driver] = await db
+			.select()
+			.from(drivers)
+			.where(and(eq(drivers.user_id, userId), eq(drivers.organization_id, organizationId)))
+			.limit(1);
+
+		return driver ?? null;
 	}
 }
 

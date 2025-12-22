@@ -1,17 +1,19 @@
 import { mapService, routeService, ServiceError, stopService } from '$lib/services/server';
-import { authorizeRouteAccess } from '$lib/services/server/permissions';
+import { requirePermission } from '$lib/services/server/permissions';
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params }) => {
-	const auth = await authorizeRouteAccess(params.routeId);
+	// Check if route is public (temp driver) - no auth required
+	const publicRoute = await routeService.getPublicRoute(params.routeId);
 
-	const route =
-		auth === 'public'
-			? await routeService.getRouteById(params.routeId)
-			: await routeService.getRouteByIdForUser(params.routeId, auth);
+	// If not public, require authentication and use org-scoped access
+	const route = publicRoute ?? (await routeService.getRouteByIdForUser(
+		params.routeId,
+		requirePermission('routes:read')
+	));
 
-	const orgId = auth === 'public' ? route.organization_id : auth.organization_id;
+	const orgId = route.organization_id;
 
 	try {
 		const [map, mapStops, assignedDriversData] = await Promise.all([
