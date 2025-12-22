@@ -1,4 +1,5 @@
 import { env } from '$env/dynamic/private';
+import { ServiceError } from '$lib/services/server/errors.js';
 import type { CreateEmailResponse } from 'resend';
 import { Resend } from 'resend';
 import { renderClient } from './render.js';
@@ -16,13 +17,19 @@ export class ResendClient {
 
 	async sendMagicInviteEmail(email: string, inviteUrl: string): Promise<CreateEmailResponse> {
 		const { html, text } = await renderClient.renderMagicInvite(inviteUrl);
-		return this.resend.emails.send({
+		const res = await this.resend.emails.send({
 			from: env.EMAIL_FROM,
 			to: email,
 			subject: 'You have been invited',
 			html,
 			text
 		});
+
+		if (res.error) {
+			throw ServiceError.internal(res.error.message);
+		}
+
+		return res;
 	}
 
 	async sendMagicLoginEmail(
@@ -32,13 +39,19 @@ export class ResendClient {
 	): Promise<CreateEmailResponse> {
 		const loginUrl = `${origin}/auth/magic/redeem?token=${token}&email=${encodeURIComponent(email)}`;
 		const { html, text } = await renderClient.renderMagicLink(token, loginUrl);
-		return this.resend.emails.send({
+		const res = await this.resend.emails.send({
 			from: env.EMAIL_FROM,
 			to: email,
 			subject: 'Your login link',
 			html,
 			text
 		});
+
+		if (res.error) {
+			throw ServiceError.internal(res.error.message);
+		}
+
+		return res;
 	}
 }
 

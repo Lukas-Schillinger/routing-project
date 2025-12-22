@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { emailSchema, passwordSchema } from './common.js';
+import { roleEnum } from './user.js';
 
 // Authentication input schemas
 export const loginSchema = z.object({
@@ -21,6 +22,7 @@ export const registerSchema = z
 export const createMagicInviteSchema = z.object({
 	type: z.literal('invite'),
 	email: z.string().email(),
+	role: roleEnum,
 	token_duration_hours: z.number().default(720),
 	invitee_organization_id: z.string().nullable().optional()
 });

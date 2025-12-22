@@ -3,8 +3,10 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
-	import type { MagicInvite } from '$lib/schemas';
+	import * as Select from '$lib/components/ui/select';
+	import { createMagicInviteSchema, type MagicInvite } from '$lib/schemas';
 	import { magicLinksApi } from '$lib/services/api/auth';
+	import { roleDescriptions } from '$lib/services/server/permissions';
 	import { Check, LoaderCircle, Mail, TriangleAlert } from 'lucide-svelte';
 
 	// Props
@@ -22,10 +24,12 @@
 
 	// Form fields
 	let email = $state('');
+	let role = $state('');
 
 	// Reset form
 	function resetForm() {
 		email = '';
+		role = '';
 		error = null;
 	}
 
@@ -53,11 +57,14 @@
 
 		isSubmitting = true;
 
+		const data = createMagicInviteSchema.parse({ type: 'invite', email, role });
+
 		try {
 			// Create the magic invite using the API service
 			const newInvite = await magicLinksApi.requestInvite({
 				type: 'invite',
 				email: email.trim(),
+				role: data.role,
 				token_duration_hours: 168 // 7 days
 			});
 
@@ -107,6 +114,24 @@
 			autocomplete="email"
 		/>
 		<p class="text-xs text-muted-foreground">The invitation will be sent to this email address</p>
+	</div>
+	<div class="space-y-2">
+		<Label for="invite-role">Role</Label>
+		<Select.Root type="single" value={role} onValueChange={(value) => (role = value)}>
+			<Select.Trigger class="h-7 w-full">
+				{role ? role : 'select role'}
+			</Select.Trigger>
+			<Select.Content>
+				{#each roleDescriptions as role}
+					<Select.Item value={role.name} class="flex flex-col items-start gap-1">
+						<div class="text-sm">{role.name}</div>
+						<div class="text-xs text-muted-foreground">
+							{role.desc}
+						</div>
+					</Select.Item>
+				{/each}
+			</Select.Content>
+		</Select.Root>
 	</div>
 
 	<div class="flex gap-2">

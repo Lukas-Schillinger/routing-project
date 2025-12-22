@@ -50,6 +50,13 @@
       "when": 1766355453391,
       "tag": "0006_good_johnny_blaze",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1766437240335,
+      "tag": "0007_silent_wolfpack",
+      "breakpoints": true
     }
   ]
 }

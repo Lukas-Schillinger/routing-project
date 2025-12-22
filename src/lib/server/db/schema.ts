@@ -73,11 +73,10 @@ export const magicLinks = pgTable('magic_links', {
 	type: text('type').$type<'invite' | 'login'>().notNull(),
 
 	invitee_organization_id: uuid('invitee_organization_id').references(() => organizations.id, {
-		onDelete: 'set null'
+		onDelete: 'cascade'
 	}), // used for invite
 	email: text('email').notNull(), // used for invite
-	// role needs to be added eventually
-
+	role: varchar('role', { length: 32 }).$type<'admin' | 'member' | 'viewer' | 'driver'>(), // used for invite
 	user_id: uuid('user_id').references(() => users.id, { onDelete: 'set null' }), // used for login
 
 	used_at: timestamp('used_at'), // used for invite
@@ -104,7 +103,9 @@ export const drivers = pgTable(
 	},
 	(t) => [
 		index('drivers_org_idx').on(t.organization_id),
-		uniqueIndex('drivers_user_idx').on(t.user_id).where(sql`${t.user_id} IS NOT NULL`)
+		uniqueIndex('drivers_user_idx')
+			.on(t.user_id)
+			.where(sql`${t.user_id} IS NOT NULL`)
 	]
 );
 

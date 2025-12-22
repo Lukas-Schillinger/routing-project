@@ -7,7 +7,7 @@ import type {
 	User
 } from '$lib/schemas';
 import { db } from '$lib/server/db';
-import { organizations, users } from '$lib/server/db/schema';
+import { magicLinks, organizations, users } from '$lib/server/db/schema';
 import { and, eq } from 'drizzle-orm';
 import { ServiceError } from './errors';
 
@@ -66,11 +66,7 @@ export class UserService {
 		return user;
 	}
 
-	async updateUser(
-		userId: string,
-		organizationId: string,
-		data: UpdateUser
-	): Promise<PublicUser> {
+	async updateUser(userId: string, organizationId: string, data: UpdateUser): Promise<PublicUser> {
 		const user = await this.getUser(userId, organizationId);
 
 		const [updatedUser] = await db
@@ -125,11 +121,14 @@ export class UserService {
 
 	async deleteUser(userId: string, organizationId: string): Promise<{ success: true }> {
 		// Verify user exists and belongs to organization
-		await this.getUser(userId, organizationId);
+		const user = await this.getUser(userId, organizationId);
 
 		await db
 			.delete(users)
 			.where(and(eq(users.id, userId), eq(users.organization_id, organizationId)));
+
+		// delete their invitations so they can be invited again
+		await db.delete(magicLinks).where(eq(magicLinks.email, user.email));
 
 		return { success: true };
 	}

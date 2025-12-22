@@ -30,6 +30,13 @@ export const rolePermissions: Record<Role, Permission[]> = {
 	driver: ['routes:read']
 };
 
+export const roleDescriptions = [
+	{ name: 'admin', desc: 'set permissions, invite users' },
+	{ name: 'member', desc: 'modify and share maps' },
+	{ name: 'viewer', desc: 'view maps without modifying' },
+	{ name: 'driver', desc: 'view and update assigned routes' }
+];
+
 /**
  * Check if a role has a specific permission
  */

@@ -11,6 +11,7 @@
 	import type { Organization, PublicUser, Role } from '$lib/schemas';
 	import { organizationApi, usersApi } from '$lib/services/api/auth';
 	import type { Permission } from '$lib/services/server/permissions';
+	import { roleDescriptions } from '$lib/services/server/permissions';
 	import { checkPermission, formatDate } from '$lib/utils';
 	import { Trash2 } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
@@ -30,13 +31,6 @@
 
 	const canDeleteUsers = $derived(checkPermission(permissions, 'users:delete'));
 	const canUpdateUsers = $derived(checkPermission(permissions, 'users:update'));
-
-	const roles = [
-		{ name: 'admin', desc: 'set permissions, invite users' },
-		{ name: 'member', desc: 'modify and share maps' },
-		{ name: 'viewer', desc: 'view maps without modifying' },
-		{ name: 'driver', desc: 'view and update assigned routes' }
-	];
 
 	// Form state
 	let nameValue = $state(organization.name);
@@ -174,7 +168,7 @@
 											{user.role}
 										</Select.Trigger>
 										<Select.Content>
-											{#each roles as role}
+											{#each roleDescriptions as role}
 												<Select.Item value={role.name} class="flex flex-col items-start gap-1">
 													<div class="text-sm">{role.name}</div>
 													<div class="text-xs text-muted-foreground">

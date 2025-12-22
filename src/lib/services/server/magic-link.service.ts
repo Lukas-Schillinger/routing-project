@@ -127,7 +127,8 @@ export class MagicLinkService {
 				email: magicInviteData.email,
 				expires_at: this.getExpiry(magicInviteData.token_duration_hours),
 				invitee_organization_id: magicInviteData.invitee_organization_id,
-				token_hash: tokenHash
+				token_hash: tokenHash,
+				role: magicInviteData.role
 			})
 			.returning();
 
