@@ -1,19 +1,26 @@
 import { env } from '$env/dynamic/private';
 
+export type MagicLinkData = {
+	token: string;
+	login_url: string;
+};
+
 // Request types
 type MagicLinkRequest = {
 	template_id: 'magic_link';
-	props: {
-		token: string;
-		login_url: string;
-	};
+	props: MagicLinkData;
+};
+
+export type MagicInviteData = {
+	invite_url: string;
+	inviter_name?: string | null;
+	inviter_email: string;
+	organization_name: string;
 };
 
 type MagicInviteRequest = {
 	template_id: 'magic_invite';
-	props: {
-		invite_url: string;
-	};
+	props: MagicInviteData;
 };
 
 type RenderRequest = MagicLinkRequest | MagicInviteRequest;
@@ -81,11 +88,7 @@ export class RenderClient {
 
 		if (!response.ok) {
 			const error = await response.json().catch(() => ({}));
-			throw new RenderApiError(
-				`Render API error: ${response.statusText}`,
-				response.status,
-				error
-			);
+			throw new RenderApiError(`Render API error: ${response.statusText}`, response.status, error);
 		}
 
 		const data: RenderResponse = await response.json();
@@ -101,22 +104,17 @@ export class RenderClient {
 		return data.results;
 	}
 
-	async renderMagicLink(token: string, loginUrl: string): Promise<RenderedEmail> {
+	async renderMagicLink(data: MagicLinkData): Promise<RenderedEmail> {
 		return this.post({
 			template_id: 'magic_link',
-			props: {
-				token,
-				login_url: loginUrl
-			}
+			props: data
 		});
 	}
 
-	async renderMagicInvite(inviteUrl: string): Promise<RenderedEmail> {
+	async renderMagicInvite(data: MagicInviteData): Promise<RenderedEmail> {
 		return this.post({
 			template_id: 'magic_invite',
-			props: {
-				invite_url: inviteUrl
-			}
+			props: data
 		});
 	}
 }

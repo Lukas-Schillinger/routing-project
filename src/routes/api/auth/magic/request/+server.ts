@@ -33,9 +33,7 @@ export const POST: RequestHandler = async ({ request, url }) => {
 				user.id
 			);
 
-			// Send email
-			const inviteUrl = `${url.origin}/auth/magic/redeem?token=${token}`;
-			await mailService.sendMagicInviteEmail(magicInvite.email, inviteUrl);
+			await mailService.sendMagicInviteEmail(magicInvite, token, url.origin);
 
 			return json(magicInvite);
 		} else if (type === 'login') {
@@ -46,7 +44,7 @@ export const POST: RequestHandler = async ({ request, url }) => {
 				const { magicLogin, token } = await magicLinkService.createMagicLogin(magicLoginData);
 
 				// Send OTP code and magic link via email
-				await mailService.sendMagicLoginEmail(magicLogin.email, token, url.origin);
+				await mailService.sendMagicLoginEmail(magicLogin, token, url.origin);
 			} catch (err) {
 				// If user not found, return 204 to prevent email enumeration
 				if (err instanceof ServiceError && err.statusCode === 404) {

@@ -1,5 +1,7 @@
 import { env } from '$env/dynamic/private';
+import type { MagicInvite, MagicLogin } from '$lib/schemas/auth.js';
 import { ServiceError } from '$lib/services/server/errors.js';
+import { organizationService, userService } from '$lib/services/server/user.service.js';
 import type { CreateEmailResponse } from 'resend';
 import { Resend } from 'resend';
 import { renderClient } from './render.js';
@@ -15,12 +17,30 @@ export class ResendClient {
 		this.resend = new Resend(key);
 	}
 
-	async sendMagicInviteEmail(email: string, inviteUrl: string): Promise<CreateEmailResponse> {
-		const { html, text } = await renderClient.renderMagicInvite(inviteUrl);
+	async sendMagicInviteEmail(
+		magicInvite: MagicInvite,
+		token: string,
+		origin: string
+	): Promise<CreateEmailResponse> {
+		if (!magicInvite.created_by)
+			throw ServiceError.internal('Magic Invite missing created_by attribution');
+
+		const [user, organization] = await Promise.all([
+			userService.getUser(magicInvite.created_by, magicInvite.organization_id),
+			organizationService.getOrganization(magicInvite.organization_id, magicInvite.organization_id)
+		]);
+
+		const { html, text } = await renderClient.renderMagicInvite({
+			invite_url: `${origin}/auth/magic/redeem?token=${token}`,
+			inviter_name: user.name,
+			inviter_email: user.email,
+			organization_name: organization.name
+		});
+
 		const res = await this.resend.emails.send({
 			from: env.EMAIL_FROM,
-			to: email,
-			subject: 'You have been invited',
+			to: magicInvite.email,
+			subject: 'Welcome to Wend!',
 			html,
 			text
 		});
@@ -33,16 +53,21 @@ export class ResendClient {
 	}
 
 	async sendMagicLoginEmail(
-		email: string,
+		magicLogin: MagicLogin,
 		token: string,
 		origin: string
 	): Promise<CreateEmailResponse> {
-		const loginUrl = `${origin}/auth/magic/redeem?token=${token}&email=${encodeURIComponent(email)}`;
-		const { html, text } = await renderClient.renderMagicLink(token, loginUrl);
+		const loginUrl = `${origin}/auth/magic/redeem?token=${token}&email=${encodeURIComponent(magicLogin.email)}`;
+
+		const { html, text } = await renderClient.renderMagicLink({
+			login_url: loginUrl,
+			token
+		});
+
 		const res = await this.resend.emails.send({
 			from: env.EMAIL_FROM,
-			to: email,
-			subject: 'Your login link',
+			to: magicLogin.email,
+			subject: 'Wend login link',
 			html,
 			text
 		});

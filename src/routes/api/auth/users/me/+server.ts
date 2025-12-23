@@ -2,24 +2,20 @@
 
 import { updateUserSchema } from '$lib/schemas';
 import { ServiceError } from '$lib/services/server/errors';
-import { requirePermissionApi } from '$lib/services/server/permissions';
+import { requireAuth } from '$lib/services/server/permissions';
 import { userService } from '$lib/services/server/user.service';
 import { error, json } from '@sveltejs/kit';
 import { ZodError } from 'zod';
 import type { RequestHandler } from './$types';
 
 export const PATCH: RequestHandler = async ({ request }) => {
-	const user = requirePermissionApi('users:read');
+	const user = requireAuth();
 
 	try {
 		const body = await request.json();
 		const validatedData = updateUserSchema.parse(body);
 
-		const updatedUser = await userService.updateUser(
-			user.id,
-			user.organization_id,
-			validatedData
-		);
+		const updatedUser = await userService.updateUser(user.id, user.organization_id, validatedData);
 
 		return json(updatedUser);
 	} catch (err) {

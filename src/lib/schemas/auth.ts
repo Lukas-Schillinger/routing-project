@@ -42,6 +42,8 @@ export const magicLinkSchema = z.object({
 	id: z.string(),
 	organization_id: z.string(),
 	updated_at: z.date(),
+	updated_by: z.string().nullable(),
+	created_by: z.string().nullable(),
 	created_at: z.date(),
 
 	expires_at: z.date(),
