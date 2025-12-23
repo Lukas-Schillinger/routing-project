@@ -1,4 +1,6 @@
 @import 'tailwindcss';
+@import 'tailwindcss/themes';
+
 @import '@fontsource-variable/eb-garamond';
 @import '@fontsource-variable/geist';
 @import '@fontsource/instrument-serif';
