@@ -4,7 +4,7 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
-	import type { MagicInvite } from '$lib/schemas';
+	import type { MagicInvite, MailRecord } from '$lib/schemas';
 	import { ApiError } from '$lib/services/api';
 	import { magicLinksApi } from '$lib/services/api/auth';
 	import { formatDate } from '$lib/utils';
@@ -14,11 +14,11 @@
 
 	// Props
 	let {
-		magicInvites,
+		magicInvitesWithMailRecord,
 		onCreateMagicInvite = () => {},
 		onDeleteMagicInvite = () => {}
 	}: {
-		magicInvites: MagicInvite[];
+		magicInvitesWithMailRecord: { magicInvite: MagicInvite; mailRecord: MailRecord }[];
 		onCreateMagicInvite: (magicInvite: MagicInvite) => void;
 		onDeleteMagicInvite: () => void;
 	} = $props();
@@ -58,9 +58,9 @@
 
 	// Sort invites: pending first, then expired, then accepted
 	const sortedInvites = $derived(
-		[...magicInvites].sort((a, b) => {
-			const aStatus = getInviteStatus(a);
-			const bStatus = getInviteStatus(b);
+		[...magicInvitesWithMailRecord].sort((a, b) => {
+			const aStatus = getInviteStatus(a.magicInvite);
+			const bStatus = getInviteStatus(b.magicInvite);
 
 			const order = { pending: 0, expired: 1, accepted: 2 };
 			if (order[aStatus] !== order[bStatus]) {
@@ -68,12 +68,15 @@
 			}
 
 			// Within same status, newest first
-			return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+			return (
+				new Date(b.magicInvite.created_at).getTime() - new Date(a.magicInvite.created_at).getTime()
+			);
 		})
 	);
 
 	const pendingCount = $derived(
-		magicInvites.filter((invite) => getInviteStatus(invite) === 'pending').length
+		magicInvitesWithMailRecord.filter((invite) => getInviteStatus(invite.magicInvite) === 'pending')
+			.length
 	);
 </script>
 
@@ -97,27 +100,40 @@
 			<!-- Pending count summary -->
 			<div class="border-b py-4">
 				<p class="text-sm text-muted-foreground">
-					{pendingCount} pending, {magicInvites.length - pendingCount} accepted/expired
+					{pendingCount} pending, {magicInvitesWithMailRecord.length - pendingCount} accepted/expired
 				</p>
 			</div>
 
 			<!-- Invitations list -->
-			{#each sortedInvites as invite (invite.id)}
-				{@const status = getInviteStatus(invite)}
+			{#each sortedInvites as invite (invite.magicInvite.id)}
+				{@const status = getInviteStatus(invite.magicInvite)}
 				<div class="flex items-center justify-between gap-4 border-b py-4 last:border-b-0">
 					<div class="min-w-0 flex-1">
-						<p class="truncate text-sm font-medium">{invite.email}</p>
+						<p class="truncate text-sm font-medium">{invite.magicInvite.email}</p>
 						<div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
 							<Badge variant={getStatusBadgeVariant(status)} class="text-xs">
 								{status}
 							</Badge>
 							<span class="text-xs text-muted-foreground">
 								{#if status === 'accepted'}
-									Joined {formatDate(invite.used_at || invite.created_at)}
+									Joined {formatDate(invite.magicInvite.used_at || invite.magicInvite.created_at)}
 								{:else if status === 'expired'}
-									Expired {formatDate(invite.expires_at)}
+									Expired {formatDate(invite.magicInvite.expires_at)}
 								{:else}
-									Sent {formatDate(invite.created_at)} · Expires {formatDate(invite.expires_at)}
+									Sent {formatDate(invite.magicInvite.created_at)} · Expires {formatDate(
+										invite.magicInvite.expires_at
+									)}
+								{/if}
+								{#if invite.mailRecord.status === 'delivered'}
+									· <span class="text-green-600 dark:text-green-400">Delivered</span>
+								{:else if invite.mailRecord.status === 'bounced'}
+									· <span class="text-destructive">Bounced</span>
+								{:else if invite.mailRecord.status === 'failed'}
+									· <span class="text-destructive">Failed</span>
+								{:else if invite.mailRecord.status === 'complained'}
+									· <span class="text-destructive">Marked as spam</span>
+								{:else if invite.mailRecord.status === 'delivery_delayed'}
+									· <span class="text-yellow-600 dark:text-yellow-400">Delayed</span>
 								{/if}
 							</span>
 						</div>
@@ -127,9 +143,10 @@
 						<div class="shrink-0 pr-0">
 							<ConfirmDeleteDialog
 								title="Revoke Invitation"
-								description="Are you sure you want to revoke the invitation for {invite.email}? The email link will no longer work."
+								description="Are you sure you want to revoke the invitation for {invite.magicInvite
+									.email}? The email link will no longer work."
 								confirmText="Revoke"
-								onConfirm={() => handleDeleteMagicLink(invite.id)}
+								onConfirm={() => handleDeleteMagicLink(invite.magicInvite.id)}
 							>
 								{#snippet trigger({ props })}
 									<Button

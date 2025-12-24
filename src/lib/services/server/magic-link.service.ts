@@ -6,11 +6,12 @@ import {
 	type MagicInvite,
 	type MagicLink,
 	type MagicLogin,
+	type MailRecord,
 	type PublicUser,
 	type User
 } from '$lib/schemas';
 import { db } from '$lib/server/db';
-import { magicLinks } from '$lib/server/db/schema';
+import { magicLinks, mailRecords } from '$lib/server/db/schema';
 import { sha256 } from '@oslojs/crypto/sha2';
 import { encodeHexLowerCase } from '@oslojs/encoding';
 import { randomInt } from 'crypto';
@@ -44,6 +45,20 @@ export class MagicLinkService {
 				and(eq(magicLinks.organization_id, organizationId), eq(magicLinks.type, 'invite'))
 			)) as MagicInvite[];
 		return invites;
+	}
+
+	async getMagicInvitesWithMailRecord(
+		organizationId: string
+	): Promise<{ magicInvite: MagicInvite; mailRecord: MailRecord }[]> {
+		const results = await db
+			.select({ magicInvite: magicLinks, mailRecord: mailRecords })
+			.from(magicLinks)
+			.innerJoin(mailRecords, eq(magicLinks.mail_record_id, mailRecords.id))
+			.where(and(eq(magicLinks.organization_id, organizationId), eq(magicLinks.type, 'invite')));
+
+		// Unfortunate type casting. Magic links and magic invites being the same db object
+		// seemed like a good idea at one point.
+		return results as { magicInvite: MagicInvite; mailRecord: MailRecord }[];
 	}
 
 	async deleteMagicLink(magicLinkId: string, organization_id: string) {
