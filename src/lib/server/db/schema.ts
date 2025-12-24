@@ -80,7 +80,8 @@ export const magicLinks = pgTable('magic_links', {
 	user_id: uuid('user_id').references(() => users.id, { onDelete: 'set null' }), // used for login
 
 	used_at: timestamp('used_at'), // used for invite
-	token_hash: text('token_hash').notNull()
+	token_hash: text('token_hash').notNull(),
+	mail_record_id: uuid('mail_record_id').references(() => mailRecords.id, { onDelete: 'set null' })
 });
 
 export const drivers = pgTable(
@@ -314,6 +315,34 @@ export const optimizationJobs = pgTable('optimization_jobs', {
 	updated_at: ts('updated_at')
 });
 
+export const mailRecords = pgTable(
+	'mail_records',
+	{
+		id,
+		organization_id: orgId.references(() => organizations.id, { onDelete: 'cascade' }),
+		created_at: ts('created_at'),
+
+		resend_id: varchar('resend_id', { length: 64 }).notNull().unique(),
+		type: varchar('type', { length: 32 }).$type<'magic_invite' | 'magic_login'>().notNull(),
+		to_email: text('to_email').notNull(),
+		from_email: text('from_email').notNull(),
+		subject: varchar('subject', { length: 500 }),
+		status: varchar('status', { length: 32 })
+			.$type<'sent' | 'delivered' | 'bounced' | 'complained' | 'delivery_delayed' | 'failed'>()
+			.default('sent')
+			.notNull(),
+		delivered_at: timestamp('delivered_at', { withTimezone: true }),
+		bounced_at: timestamp('bounced_at', { withTimezone: true }),
+		error: text('error')
+	},
+	(t) => [
+		index('mail_records_org_idx').on(t.organization_id),
+		index('mail_records_resend_id_idx').on(t.resend_id),
+		index('mail_records_type_idx').on(t.type),
+		index('mail_records_status_idx').on(t.status)
+	]
+);
+
 /***************************************************************************************
  *
  * 									Relations
@@ -331,7 +360,8 @@ export const organizationsRelations = relations(organizations, ({ many }) => ({
 	routes: many(routes),
 	matrices: many(matrices),
 	files: many(files),
-	optimizationJobs: many(optimizationJobs)
+	optimizationJobs: many(optimizationJobs),
+	mailRecords: many(mailRecords)
 }));
 
 export const usersRelations = relations(users, ({ one, many }) => ({
@@ -486,5 +516,24 @@ export const optimizationJobsRelations = relations(optimizationJobs, ({ one }) =
 	depot: one(depots, {
 		fields: [optimizationJobs.depot_id],
 		references: [depots.id]
+	})
+}));
+
+export const mailRecordsRelations = relations(mailRecords, ({ one, many }) => ({
+	organization: one(organizations, {
+		fields: [mailRecords.organization_id],
+		references: [organizations.id]
+	}),
+	magicLinks: many(magicLinks)
+}));
+
+export const magicLinksRelations = relations(magicLinks, ({ one }) => ({
+	organization: one(organizations, {
+		fields: [magicLinks.organization_id],
+		references: [organizations.id]
+	}),
+	mailRecord: one(mailRecords, {
+		fields: [magicLinks.mail_record_id],
+		references: [mailRecords.id]
 	})
 }));

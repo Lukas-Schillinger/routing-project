@@ -111,7 +111,7 @@
 				oninput={handleNameInput}
 				onblur={handleNameBlur}
 				placeholder="Enter organization name"
-				disabled={isSavingName}
+				disabled={isSavingName || !canUpdateUsers}
 				class="max-w-xs"
 			/>
 		</div>

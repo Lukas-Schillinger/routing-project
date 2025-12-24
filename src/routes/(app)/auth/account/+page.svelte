@@ -39,12 +39,14 @@
 			permissions={data.permissions}
 		/>
 
-		<!-- Magic Invites Section -->
-		<MagicInvitesCard
-			magicInvites={data.magicInvites}
-			onCreateMagicInvite={() => invalidateAll()}
-			onDeleteMagicInvite={() => invalidateAll()}
-		/>
+		{#if data.permissions.includes('users:update')}
+			<!-- Magic Invites Section -->
+			<MagicInvitesCard
+				magicInvites={data.magicInvites}
+				onCreateMagicInvite={() => invalidateAll()}
+				onDeleteMagicInvite={() => invalidateAll()}
+			/>
+		{/if}
 
 		<!-- Preferences Section -->
 		<!-- 		<PreferencesCard /> -->

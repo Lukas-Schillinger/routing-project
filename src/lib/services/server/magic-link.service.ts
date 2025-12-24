@@ -220,6 +220,13 @@ export class MagicLinkService {
 
 		return user;
 	}
+
+	async setMailRecordId(magicLinkId: string, mailRecordId: string): Promise<void> {
+		await db
+			.update(magicLinks)
+			.set({ mail_record_id: mailRecordId })
+			.where(eq(magicLinks.id, magicLinkId));
+	}
 }
 
 export const magicLinkService = new MagicLinkService();

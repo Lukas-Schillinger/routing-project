@@ -1,0 +1,1 @@
+ALTER TABLE "mail_records" ADD COLUMN "error" text;

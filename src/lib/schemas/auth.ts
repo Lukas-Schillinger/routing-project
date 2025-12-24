@@ -55,7 +55,8 @@ export const magicLinkSchema = z.object({
 	user_id: z.string().nullable(),
 
 	used_at: z.date().nullable(),
-	token_hash: z.string()
+	token_hash: z.string(),
+	mail_record_id: z.string().nullable()
 });
 
 export const magicInviteSchema = magicLinkSchema.extend({

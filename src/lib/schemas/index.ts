@@ -6,6 +6,7 @@ export * from './driver.js';
 export * from './driverMapMembership.js';
 export * from './file.js';
 export * from './location.js';
+export * from './mail-record.js';
 export * from './map.js';
 export * from './organization.js';
 export * from './route.js';

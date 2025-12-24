@@ -1,5 +1,4 @@
 @import 'tailwindcss';
-@import 'tailwindcss/themes';
 
 @import '@fontsource-variable/eb-garamond';
 @import '@fontsource-variable/geist';
@@ -197,38 +196,38 @@
 
 	/* Headlines using EB Garamond */
 	.headline-large {
-		@apply text-4xl leading-tight font-semibold text-forest-950 md:text-5xl dark:text-forest-50;
+		@apply text-forest-950 dark:text-forest-50 text-4xl font-semibold leading-tight md:text-5xl;
 		font-family: 'EB Garamond', serif;
 	}
 
 	.headline-medium {
-		@apply text-3xl leading-tight font-semibold text-forest-950 md:text-4xl dark:text-forest-50;
+		@apply text-forest-950 dark:text-forest-50 text-3xl font-semibold leading-tight md:text-4xl;
 		font-family: 'EB Garamond', serif;
 	}
 
 	.headline-small {
-		@apply text-xl leading-snug font-semibold text-forest-950 md:text-2xl dark:text-forest-50;
+		@apply text-forest-950 dark:text-forest-50 text-xl font-semibold leading-snug md:text-2xl;
 		font-family: 'EB Garamond', serif;
 	}
 
 	.headline-card {
-		@apply text-2xl leading-snug font-semibold text-forest-950 dark:text-forest-50;
+		@apply text-forest-950 dark:text-forest-50 text-2xl font-semibold leading-snug;
 		font-family: 'EB Garamond', serif;
 	}
 
 	/* Body text using Geist Sans */
 	.body-large {
-		@apply text-lg leading-relaxed text-forest-950 dark:text-forest-50;
+		@apply text-forest-950 dark:text-forest-50 text-lg leading-relaxed;
 		font-family: 'Geist Variable', system-ui, sans-serif;
 	}
 
 	.body-medium {
-		@apply text-base leading-relaxed text-forest-950 dark:text-forest-50;
+		@apply text-forest-950 dark:text-forest-50 text-base leading-relaxed;
 		font-family: 'Geist Variable', system-ui, sans-serif;
 	}
 
 	.body-small {
-		@apply text-sm leading-relaxed text-forest-950 dark:text-forest-50;
+		@apply text-forest-950 dark:text-forest-50 text-sm leading-relaxed;
 		font-family: 'Geist Variable', system-ui, sans-serif;
 	}
 }
