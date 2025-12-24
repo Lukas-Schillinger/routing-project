@@ -1,4 +1,5 @@
 // src/routes/(app)/auth/magic/redeem/+page.server.ts
+import type { MagicInvite } from '$lib/schemas';
 import {
 	createSession,
 	generateSessionToken,
@@ -36,7 +37,8 @@ export const load: PageServerLoad = async (event) => {
 			user = await magicLinkService.validateMagicLogin(token, email);
 		} else if (magicLink.type === 'invite') {
 			// Create new user account from invite
-			user = await magicLinkService.useMagicInvite(token);
+			const uglyTypeHack = magicLink as MagicInvite;
+			user = await magicLinkService.useMagicInvite(uglyTypeHack);
 		} else {
 			error(400, 'Invalid link type');
 		}

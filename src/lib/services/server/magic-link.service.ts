@@ -1,5 +1,4 @@
 import {
-	magicInviteSchema,
 	magicLoginSchema,
 	type CreateMagicInvite,
 	type CreateMagicLogin,
@@ -182,15 +181,7 @@ export class MagicLinkService {
 	}
 
 	// use invite link
-	async useMagicInvite(token: string): Promise<User> {
-		const magicLink = await this.getMagicLinkFromToken(token);
-
-		if (!magicLink) {
-			throw ServiceError.notFound("Couldn't find an invitation matching that token. ");
-		}
-
-		const magicInvite = magicInviteSchema.parse(magicLink);
-
+	async useMagicInvite(magicInvite: MagicInvite): Promise<User> {
 		if (this.isExpired(magicInvite.expires_at)) {
 			throw ServiceError.forbidden('Invitation expired');
 		}
@@ -208,11 +199,13 @@ export class MagicLinkService {
 				.where(eq(magicLinks.id, magicInvite.id));
 
 			// Create user
-			const user = await userService.createUser(
-				magicInvite.email,
-				undefined, // password
-				magicInvite.invitee_organization_id
-			);
+			const user = await userService.createUser({
+				email: magicInvite.email,
+				role: magicInvite.role,
+				organization_id: magicInvite.invitee_organization_id,
+				passwordHash: null,
+				name: null
+			});
 
 			return user;
 		});

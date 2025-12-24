@@ -9,8 +9,8 @@ export type Role = z.infer<typeof roleEnum>;
 export const createUserSchema = z.object({
 	name: z.string().max(200).nullish(),
 	email: emailSchema,
-	passwordHash: z.string().min(1, 'Password hash is required').nullable(),
-	organization_id: uuidSchema.optional(),
+	passwordHash: z.string().min(1, 'Password hash is required').nullish(),
+	organization_id: uuidSchema.nullish(),
 	role: roleEnum.default('member')
 });
 
@@ -22,13 +22,6 @@ export const updateUserSchema = z.object({
 // Admin update schema (for updating other users)
 export const updateUserRoleSchema = z.object({
 	role: roleEnum
-});
-
-// User query/filter schema
-export const userFilterSchema = z.object({
-	organization_id: uuidSchema.optional(),
-	role: roleEnum.optional(),
-	search: z.string().optional()
 });
 
 // Full user schema (what comes from DB)
@@ -47,9 +40,8 @@ export const userSchema = z.object({
 export const publicUserSchema = userSchema.omit({ passwordHash: true });
 
 // Type exports
-export type CreateUse = z.infer<typeof createUserSchema>;
+export type CreateUser = z.infer<typeof createUserSchema>;
 export type UpdateUser = z.infer<typeof updateUserSchema>;
 export type UpdateUserRole = z.infer<typeof updateUserRoleSchema>;
-export type UserFilter = z.infer<typeof userFilterSchema>;
 export type User = z.infer<typeof userSchema>;
 export type PublicUser = z.infer<typeof publicUserSchema>;

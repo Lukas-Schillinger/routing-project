@@ -1,4 +1,5 @@
 import type {
+	CreateUser,
 	Organization,
 	PublicUser,
 	UpdateOrganization,
@@ -133,38 +134,29 @@ export class UserService {
 		return { success: true };
 	}
 
-	async createUser(
-		email: string,
-		passwordHash?: string,
-		organizationId?: string | null,
-		createdByUserId?: string | null,
-		name?: string | null
-	): Promise<User> {
-		// If no organization ID provided, create a new organization with a random name
-		if (!organizationId) {
-			// Generate a random organization name
-			const timestamp = Date.now();
-			const randomSuffix = Math.random().toString(36).substring(2, 8);
-			const orgName = `Organization-${timestamp}-${randomSuffix}`;
+	private async generateOrganization() {
+		const timestamp = Date.now();
+		const randomSuffix = Math.random().toString(36).substring(2, 8);
+		const orgName = `Organization-${timestamp}-${randomSuffix}`;
 
-			// Create a new organization
-			const orgResult = await db
-				.insert(organizations)
-				.values({ name: orgName })
-				.returning({ id: organizations.id });
-			organizationId = orgResult[0].id;
-		}
+		// Create a new organization
+		const res = await db
+			.insert(organizations)
+			.values({ name: orgName })
+			.returning({ id: organizations.id });
+		return res[0].id;
+	}
+
+	async createUser(data: CreateUser): Promise<User> {
+		// If no organization ID provided, create a new organization with a random name
+		const orgId = data.organization_id ? data.organization_id : await this.generateOrganization();
 
 		// Create the user with the organization ID
 		const [result] = await db
 			.insert(users)
 			.values({
-				email,
-				passwordHash,
-				organization_id: organizationId,
-				created_by: createdByUserId,
-				updated_by: createdByUserId,
-				name
+				...data,
+				organization_id: orgId
 			})
 			.returning();
 

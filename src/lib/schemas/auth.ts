@@ -61,7 +61,8 @@ export const magicLinkSchema = z.object({
 
 export const magicInviteSchema = magicLinkSchema.extend({
 	type: z.literal('invite'),
-	user_id: z.null()
+	user_id: z.null(),
+	role: roleEnum
 });
 
 export const magicLoginSchema = magicLinkSchema.extend({

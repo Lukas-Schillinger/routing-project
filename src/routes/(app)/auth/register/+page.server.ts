@@ -41,7 +41,11 @@ export const actions: Actions = {
 		});
 
 		try {
-			const user = await userService.createUser(validEmail, passwordHash);
+			const user = await userService.createUser({
+				email: validEmail,
+				passwordHash: passwordHash,
+				role: 'admin' // A new organization is created for every user registering of which they are the admin of.
+			});
 			const userId = user.id;
 
 			const sessionToken = auth.generateSessionToken();
