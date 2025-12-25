@@ -8,7 +8,7 @@ import type {
 	User
 } from '$lib/schemas';
 import { db } from '$lib/server/db';
-import { magicLinks, organizations, users } from '$lib/server/db/schema';
+import { invitations, organizations, users } from '$lib/server/db/schema';
 import { and, eq } from 'drizzle-orm';
 import { ServiceError } from './errors';
 
@@ -129,7 +129,7 @@ export class UserService {
 			.where(and(eq(users.id, userId), eq(users.organization_id, organizationId)));
 
 		// delete their invitations so they can be invited again
-		await db.delete(magicLinks).where(eq(magicLinks.email, user.email));
+		await db.delete(invitations).where(eq(invitations.email, user.email));
 
 		return { success: true };
 	}

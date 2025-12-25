@@ -61,28 +61,47 @@ export const session = pgTable('session', {
 	updated_at: ts('updated_at')
 });
 
-export const magicLinks = pgTable('magic_links', {
-	id,
-	organization_id: orgId,
-	created_at: ts('created_at'),
-	created_by: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
-	updated_at: ts('updated_at').$onUpdate(() => new Date()),
-	updated_by: uuid('updated_by').references(() => users.id, { onDelete: 'set null' }),
+export const invitations = pgTable(
+	'invitations',
+	{
+		id,
+		organization_id: orgId.references(() => organizations.id, { onDelete: 'cascade' }),
+		created_at: ts('created_at'),
+		created_by: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
+		updated_at: ts('updated_at').$onUpdate(() => new Date()),
+		updated_by: uuid('updated_by').references(() => users.id, { onDelete: 'set null' }),
 
-	expires_at: ts('expires_at'),
-	type: text('type').$type<'invite' | 'login'>().notNull(),
+		email: text('email').notNull(),
+		role: varchar('role', { length: 32 })
+			.$type<'admin' | 'member' | 'viewer' | 'driver'>()
+			.notNull(),
+		token_hash: text('token_hash').notNull(),
+		expires_at: ts('expires_at'),
+		used_at: timestamp('used_at', { withTimezone: true }),
+		mail_record_id: uuid('mail_record_id').references(() => mailRecords.id, { onDelete: 'set null' })
+	},
+	(t) => [
+		index('invitations_org_idx').on(t.organization_id),
+		index('invitations_email_idx').on(t.email)
+	]
+);
 
-	invitee_organization_id: uuid('invitee_organization_id').references(() => organizations.id, {
-		onDelete: 'cascade'
-	}), // used for invite
-	email: text('email').notNull(), // used for invite
-	role: varchar('role', { length: 32 }).$type<'admin' | 'member' | 'viewer' | 'driver'>(), // used for invite
-	user_id: uuid('user_id').references(() => users.id, { onDelete: 'set null' }), // used for login
+export const loginTokens = pgTable(
+	'login_tokens',
+	{
+		id,
+		organization_id: orgId.references(() => organizations.id, { onDelete: 'cascade' }),
+		created_at: ts('created_at'),
 
-	used_at: timestamp('used_at'), // used for invite
-	token_hash: text('token_hash').notNull(),
-	mail_record_id: uuid('mail_record_id').references(() => mailRecords.id, { onDelete: 'set null' })
-});
+		user_id: uuid('user_id')
+			.references(() => users.id, { onDelete: 'cascade' })
+			.notNull(),
+		token_hash: text('token_hash').notNull(),
+		expires_at: ts('expires_at'),
+		mail_record_id: uuid('mail_record_id').references(() => mailRecords.id, { onDelete: 'set null' })
+	},
+	(t) => [index('login_tokens_org_idx').on(t.organization_id), index('login_tokens_user_idx').on(t.user_id)]
+);
 
 export const drivers = pgTable(
 	'drivers',
@@ -323,7 +342,7 @@ export const mailRecords = pgTable(
 		created_at: ts('created_at'),
 
 		resend_id: varchar('resend_id', { length: 64 }).notNull().unique(),
-		type: varchar('type', { length: 32 }).$type<'magic_invite' | 'magic_login'>().notNull(),
+		type: varchar('type', { length: 32 }).$type<'invitation' | 'login_token'>().notNull(),
 		to_email: text('to_email').notNull(),
 		from_email: text('from_email').notNull(),
 		subject: varchar('subject', { length: 500 }),
@@ -524,16 +543,32 @@ export const mailRecordsRelations = relations(mailRecords, ({ one, many }) => ({
 		fields: [mailRecords.organization_id],
 		references: [organizations.id]
 	}),
-	magicLinks: many(magicLinks)
+	invitations: many(invitations),
+	loginTokens: many(loginTokens)
 }));
 
-export const magicLinksRelations = relations(magicLinks, ({ one }) => ({
+export const invitationsRelations = relations(invitations, ({ one }) => ({
 	organization: one(organizations, {
-		fields: [magicLinks.organization_id],
+		fields: [invitations.organization_id],
 		references: [organizations.id]
 	}),
 	mailRecord: one(mailRecords, {
-		fields: [magicLinks.mail_record_id],
+		fields: [invitations.mail_record_id],
+		references: [mailRecords.id]
+	})
+}));
+
+export const loginTokensRelations = relations(loginTokens, ({ one }) => ({
+	organization: one(organizations, {
+		fields: [loginTokens.organization_id],
+		references: [organizations.id]
+	}),
+	user: one(users, {
+		fields: [loginTokens.user_id],
+		references: [users.id]
+	}),
+	mailRecord: one(mailRecords, {
+		fields: [loginTokens.mail_record_id],
 		references: [mailRecords.id]
 	})
 }));

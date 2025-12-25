@@ -3,7 +3,7 @@ import { db } from '$lib/server/db';
 import * as table from '$lib/server/db/schema';
 import * as auth from '$lib/services/server/auth';
 import { ServiceError } from '$lib/services/server/errors';
-import { magicLinkService } from '$lib/services/server/magic-link.service';
+import { loginTokenService } from '$lib/services/server/login-token.service';
 import { verify } from '@node-rs/argon2';
 import { fail, redirect } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
@@ -77,7 +77,7 @@ export const actions: Actions = {
 		const { email: validEmail, code: validCode } = validation.data;
 
 		try {
-			const user = await magicLinkService.validateMagicLogin(validCode, validEmail);
+			const user = await loginTokenService.validateLoginToken(validCode, validEmail);
 
 			const sessionToken = auth.generateSessionToken();
 			const session = await auth.createSession(sessionToken, user.id);

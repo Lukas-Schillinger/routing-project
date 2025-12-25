@@ -71,6 +71,13 @@
       "when": 1766600156556,
       "tag": "0009_lowly_dracula",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1766697126458,
+      "tag": "0010_brainy_black_bolt",
+      "breakpoints": true
     }
   ]
 }

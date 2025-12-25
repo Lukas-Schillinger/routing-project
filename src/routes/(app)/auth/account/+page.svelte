@@ -4,7 +4,7 @@
 	import { Separator } from '$lib/components/ui/separator';
 	import { Settings } from 'lucide-svelte';
 	import type { PageData } from './$types';
-	import MagicInvitesCard from './MagicInvitesCard.svelte';
+	import InvitationsCard from './InvitationsCard.svelte';
 	import OrganizationCard from './OrganizationCard.svelte';
 	import ProfileInformationCard from './ProfileInformationCard.svelte';
 
@@ -41,11 +41,11 @@
 			/>
 
 			{#if data.permissions.includes('users:update')}
-				<!-- Magic Invites Section -->
-				<MagicInvitesCard
-					magicInvitesWithMailRecord={data.magicInvites}
-					onCreateMagicInvite={() => invalidateAll()}
-					onDeleteMagicInvite={() => invalidateAll()}
+				<!-- Invitations Section -->
+				<InvitationsCard
+					invitationsWithMailRecord={data.invitationsWithMailRecord}
+					onCreateInvitation={() => invalidateAll()}
+					onDeleteInvitation={() => invalidateAll()}
 				/>
 			{/if}
 

@@ -1,18 +1,18 @@
-<!-- @component Create Magic Invite Popover for sending team invitations -->
+<!-- @component Create Invitation Popover for sending team invitations -->
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
 	import * as Drawer from '$lib/components/ui/drawer';
 	import * as Popover from '$lib/components/ui/popover';
-	import type { MagicInvite } from '$lib/schemas';
+	import type { Invitation } from '$lib/schemas';
 	import { Plus } from 'lucide-svelte';
 	import { MediaQuery } from 'svelte/reactivity';
 	import Form from './Form.svelte';
 
 	// Props
 	let {
-		onCreateMagicInvite = () => {}
+		onCreateInvitation = () => {}
 	}: {
-		onCreateMagicInvite?: (magicInvite: MagicInvite) => void;
+		onCreateInvitation?: (invitation: Invitation) => void;
 	} = $props();
 
 	// State
@@ -34,7 +34,7 @@
 			</Button>
 		</Popover.Trigger>
 		<Popover.Content class="w-96">
-			<Form bind:open {onCreateMagicInvite} />
+			<Form bind:open {onCreateInvitation} />
 		</Popover.Content>
 	</Popover.Root>
 {:else}
@@ -47,7 +47,7 @@
 		</Drawer.Trigger>
 		<Drawer.Content>
 			<div class="p-4">
-				<Form bind:open {onCreateMagicInvite} />
+				<Form bind:open {onCreateInvitation} />
 			</div>
 		</Drawer.Content>
 	</Drawer.Root>

@@ -1,16 +1,16 @@
-// src/routes/(app)/auth/magic/redeem/+page.server.ts
-import type { MagicInvite } from '$lib/schemas';
 import {
 	createSession,
 	generateSessionToken,
 	setSessionTokenCookie
 } from '$lib/services/server/auth';
 import { ServiceError } from '$lib/services/server/errors';
-import { magicLinkService } from '$lib/services/server/magic-link.service';
+import { loginTokenService } from '$lib/services/server/login-token.service';
 import { error, redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async (event) => {
+	const loggedInUser = event.locals.user;
+
 	const token = event.url.searchParams.get('token');
 	const email = event.url.searchParams.get('email');
 
@@ -18,30 +18,18 @@ export const load: PageServerLoad = async (event) => {
 		error(400, 'Missing token parameter');
 	}
 
+	if (!email) {
+		error(400, 'Missing email parameter');
+	}
+
 	try {
-		// Get magic link from token (with email if provided for login links)
-		const magicLink = await magicLinkService.getMagicLinkFromToken(token, email ?? undefined);
-
-		if (!magicLink) {
-			error(400, 'Invalid or expired link');
+		// The user is logging in again to their own account
+		if (loggedInUser && loggedInUser.email === email) {
+			redirect(302, '/maps');
 		}
 
-		let user;
-
-		if (magicLink.type === 'login') {
-			// Login requires email parameter
-			if (!email) {
-				error(400, 'Missing email parameter');
-			}
-			// Validate login and get user
-			user = await magicLinkService.validateMagicLogin(token, email);
-		} else if (magicLink.type === 'invite') {
-			// Create new user account from invite
-			const uglyTypeHack = magicLink as MagicInvite;
-			user = await magicLinkService.useMagicInvite(uglyTypeHack);
-		} else {
-			error(400, 'Invalid link type');
-		}
+		// Validate login token and get user
+		const user = await loginTokenService.validateLoginToken(token, email);
 
 		// Create session
 		const sessionToken = generateSessionToken();
@@ -62,7 +50,7 @@ export const load: PageServerLoad = async (event) => {
 			throw err;
 		}
 
-		console.error('Error redeeming link:', err);
-		error(500, 'Failed to redeem link');
+		console.error('Error redeeming login token:', err);
+		error(500, 'Failed to redeem login token');
 	}
 };

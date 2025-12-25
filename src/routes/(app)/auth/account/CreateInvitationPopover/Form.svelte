@@ -4,18 +4,18 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import * as Select from '$lib/components/ui/select';
-	import { createMagicInviteSchema, type MagicInvite } from '$lib/schemas';
-	import { magicLinksApi } from '$lib/services/api/auth';
+	import { createInvitationSchema, type Invitation } from '$lib/schemas';
+	import { invitationsApi } from '$lib/services/api/auth';
 	import { roleDescriptions } from '$lib/services/server/permissions';
 	import { Check, LoaderCircle, Mail, TriangleAlert } from 'lucide-svelte';
 
 	// Props
 	let {
 		open = $bindable(false),
-		onCreateMagicInvite = () => {}
+		onCreateInvitation = () => {}
 	}: {
 		open: boolean;
-		onCreateMagicInvite?: (magicInvite: MagicInvite) => void;
+		onCreateInvitation?: (invitation: Invitation) => void;
 	} = $props();
 
 	// State
@@ -57,25 +57,23 @@
 
 		isSubmitting = true;
 
-		const data = createMagicInviteSchema.parse({ type: 'invite', email, role });
+		const data = createInvitationSchema.parse({ email, role });
 
 		try {
-			// Create the magic invite using the API service
-			const newInvite = await magicLinksApi.requestInvite({
-				type: 'invite',
+			// Create the invitation using the API service
+			const newInvitation = await invitationsApi.createInvitation({
 				email: email.trim(),
-				role: data.role,
-				token_duration_hours: 168 // 7 days
+				role: data.role
 			});
 
 			// Call success callback
-			onCreateMagicInvite(newInvite);
+			onCreateInvitation(newInvitation);
 
 			// Close popover and reset form
 			open = false;
 			resetForm();
 		} catch (err) {
-			console.error('Error creating magic invite:', err);
+			console.error('Error creating invitation:', err);
 			error = err instanceof Error ? err.message : 'An unexpected error occurred';
 		} finally {
 			isSubmitting = false;

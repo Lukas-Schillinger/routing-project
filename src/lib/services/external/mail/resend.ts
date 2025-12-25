@@ -1,8 +1,9 @@
 import { env } from '$env/dynamic/private';
-import type { MagicInvite, MagicLogin } from '$lib/schemas/auth.js';
+import type { Invitation, LoginToken } from '$lib/schemas/auth.js';
 import type { MailRecordType } from '$lib/schemas/mail-record.js';
 import { ServiceError } from '$lib/services/server/errors.js';
-import { magicLinkService } from '$lib/services/server/magic-link.service.js';
+import { invitationService } from '$lib/services/server/invitation.service.js';
+import { loginTokenService } from '$lib/services/server/login-token.service.js';
 import { mailRecordService } from '$lib/services/server/mail-record.service.js';
 import { organizationService, userService } from '$lib/services/server/user.service.js';
 import { Resend } from 'resend';
@@ -64,41 +65,37 @@ export class ResendClient {
 		return mailRecord.id;
 	}
 
-	async sendMagicInviteEmail(
-		magicInvite: MagicInvite,
-		token: string,
-		origin: string
-	): Promise<void> {
-		if (!magicInvite.created_by)
-			throw ServiceError.internal('Magic Invite missing created_by attribution');
+	async sendInvitationEmail(invitation: Invitation, token: string, origin: string): Promise<void> {
+		if (!invitation.created_by)
+			throw ServiceError.internal('Invitation missing created_by attribution');
 
 		const [user, organization] = await Promise.all([
-			userService.getUser(magicInvite.created_by, magicInvite.organization_id),
-			organizationService.getOrganization(magicInvite.organization_id, magicInvite.organization_id)
+			userService.getUser(invitation.created_by, invitation.organization_id),
+			organizationService.getOrganization(invitation.organization_id, invitation.organization_id)
 		]);
 
 		const { html, text } = await renderClient.renderMagicInvite({
-			invite_url: `${origin}/auth/magic/redeem?token=${token}`,
+			invite_url: `${origin}/auth/redeem/invitation?token=${token}&email=${encodeURIComponent(invitation.email)}`,
 			inviter_name: user.name,
 			inviter_email: user.email,
 			organization_name: organization.name
 		});
 
 		const mailRecordId = await this.sendEmail({
-			organizationId: magicInvite.organization_id,
-			type: 'magic_invite',
-			to: magicInvite.email,
+			organizationId: invitation.organization_id,
+			type: 'invitation',
+			to: invitation.email,
 			subject: 'Welcome to Wend!',
 			html,
 			text
 		});
 
-		// Link mail record to magic invite
-		await magicLinkService.setMailRecordId(magicInvite.id, mailRecordId);
+		// Link mail record to invitation
+		await invitationService.setMailRecordId(invitation.id, mailRecordId);
 	}
 
-	async sendMagicLoginEmail(magicLogin: MagicLogin, token: string, origin: string): Promise<void> {
-		const loginUrl = `${origin}/auth/magic/redeem?token=${token}&email=${encodeURIComponent(magicLogin.email)}`;
+	async sendLoginEmail(loginToken: LoginToken, email: string, token: string, origin: string): Promise<void> {
+		const loginUrl = `${origin}/auth/redeem/login-token?token=${token}&email=${encodeURIComponent(email)}`;
 
 		const { html, text } = await renderClient.renderMagicLink({
 			login_url: loginUrl,
@@ -106,16 +103,16 @@ export class ResendClient {
 		});
 
 		const mailRecordId = await this.sendEmail({
-			organizationId: magicLogin.organization_id,
-			type: 'magic_login',
-			to: magicLogin.email,
+			organizationId: loginToken.organization_id,
+			type: 'login_token',
+			to: email,
 			subject: 'Wend login link',
 			html,
 			text
 		});
 
-		// Link mail record to magic login
-		await magicLinkService.setMailRecordId(magicLogin.id, mailRecordId);
+		// Link mail record to login token
+		await loginTokenService.setMailRecordId(loginToken.id, mailRecordId);
 	}
 }
 

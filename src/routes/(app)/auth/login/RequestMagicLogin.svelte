@@ -4,7 +4,7 @@
 	import { Input } from '$lib/components/ui/input';
 	import * as InputOTP from '$lib/components/ui/input-otp';
 	import { Label } from '$lib/components/ui/label';
-	import { magicLinksApi } from '$lib/services/api/auth';
+	import { loginTokensApi } from '$lib/services/api/auth';
 	import { enhance } from '$app/forms';
 	import { ArrowLeft, CircleCheck, Mail, TriangleAlert } from 'lucide-svelte';
 
@@ -31,10 +31,7 @@
 		successMessage = null;
 
 		try {
-			await magicLinksApi.requestLogin({
-				email,
-				type: 'login'
-			});
+			await loginTokensApi.requestLoginToken({ email });
 			successMessage = 'A login code has been sent if an account matching that email exists.';
 			otpSent = true;
 		} catch (err) {

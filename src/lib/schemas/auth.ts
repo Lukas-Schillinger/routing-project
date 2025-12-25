@@ -19,18 +19,14 @@ export const registerSchema = z
 		path: ['passwordConfirm']
 	});
 
-export const createMagicInviteSchema = z.object({
-	type: z.literal('invite'),
+export const createInvitationSchema = z.object({
 	email: z.string().email(),
-	role: roleEnum,
-	token_duration_hours: z.number().default(720),
-	invitee_organization_id: z.string().nullable().optional()
+	role: roleEnum
 });
 
-export const createMagicLoginSchema = z.object({
-	type: z.literal('login').default('login').optional(),
+export const createLoginTokenSchema = z.object({
 	email: emailSchema,
-	token_duration_hours: z.number().default(720).optional()
+	token_duration_hours: z.number().default(0.25).optional() // 15 minutes default for OTP
 });
 
 export const verifyOTPSchema = z.object({
@@ -38,45 +34,39 @@ export const verifyOTPSchema = z.object({
 	code: z.string().length(6)
 });
 
-export const magicLinkSchema = z.object({
+export const invitationSchema = z.object({
 	id: z.string(),
 	organization_id: z.string(),
+	created_at: z.date(),
+	created_by: z.string().nullable(),
 	updated_at: z.date(),
 	updated_by: z.string().nullable(),
-	created_by: z.string().nullable(),
-	created_at: z.date(),
 
-	expires_at: z.date(),
-	type: z.enum(['login', 'invite']),
-
-	invitee_organization_id: z.string().nullable(),
 	email: z.string().email(),
-
-	user_id: z.string().nullable(),
-
-	used_at: z.date().nullable(),
+	role: roleEnum,
 	token_hash: z.string(),
+	expires_at: z.date(),
+	used_at: z.date().nullable(),
 	mail_record_id: z.string().nullable()
 });
 
-export const magicInviteSchema = magicLinkSchema.extend({
-	type: z.literal('invite'),
-	user_id: z.null(),
-	role: roleEnum
-});
+export const loginTokenSchema = z.object({
+	id: z.string(),
+	organization_id: z.string(),
+	created_at: z.date(),
 
-export const magicLoginSchema = magicLinkSchema.extend({
-	type: z.literal('login'),
-	user_id: z.string()
+	user_id: z.string(),
+	token_hash: z.string(),
+	expires_at: z.date(),
+	mail_record_id: z.string().nullable()
 });
 
 // Type exports for convenience
 export type LoginInput = z.infer<typeof loginSchema>;
 export type RegisterInput = z.infer<typeof registerSchema>;
 
-export type CreateMagicLogin = z.infer<typeof createMagicLoginSchema>;
-export type CreateMagicInvite = z.infer<typeof createMagicInviteSchema>;
+export type CreateInvitation = z.infer<typeof createInvitationSchema>;
+export type CreateLoginToken = z.infer<typeof createLoginTokenSchema>;
 export type VerifyOTP = z.infer<typeof verifyOTPSchema>;
-export type MagicInvite = z.infer<typeof magicInviteSchema>;
-export type MagicLogin = z.infer<typeof magicLoginSchema>;
-export type MagicLink = z.infer<typeof magicLinkSchema>;
+export type Invitation = z.infer<typeof invitationSchema>;
+export type LoginToken = z.infer<typeof loginTokenSchema>;

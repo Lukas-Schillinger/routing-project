@@ -1,8 +1,7 @@
 import type {
-	CreateMagicInvite,
-	CreateMagicLogin,
-	MagicInvite,
-	MagicLogin,
+	CreateInvitation,
+	CreateLoginToken,
+	Invitation,
 	Organization,
 	PublicUser,
 	UpdateOrganization,
@@ -11,20 +10,19 @@ import type {
 } from '$lib/schemas';
 import { apiClient } from './base';
 
-class MagicApiService {
-	async deleteInvite(magicLinkId: string): Promise<{ success: true }> {
-		return apiClient.delete<{ success: true }>(`/auth/magic/${magicLinkId}`);
+class InvitationsApiService {
+	async createInvitation(data: CreateInvitation): Promise<Invitation> {
+		return apiClient.post<Invitation>('/auth/invitations', data);
 	}
 
-	/**
-	 * Request a magic link to be sent via email
-	 */
-	async requestInvite(data: CreateMagicInvite): Promise<MagicInvite> {
-		return apiClient.post<MagicInvite>('/auth/magic/request', data);
+	async deleteInvitation(invitationId: string): Promise<{ success: true }> {
+		return apiClient.delete<{ success: true }>(`/auth/invitations/${invitationId}`);
 	}
+}
 
-	async requestLogin(data: CreateMagicLogin): Promise<MagicLogin> {
-		return apiClient.post<MagicLogin>('/auth/magic/request', data);
+class LoginTokensApiService {
+	async requestLoginToken(data: CreateLoginToken): Promise<void> {
+		await apiClient.post<void>('/auth/login-tokens', data);
 	}
 }
 
@@ -54,8 +52,9 @@ class OrganizationApiService {
 	}
 }
 
-// Singleton instance
-export const magicLinksApi = new MagicApiService();
+// Singleton instances
+export const invitationsApi = new InvitationsApiService();
+export const loginTokensApi = new LoginTokensApiService();
 export const authApi = new AuthApiService();
 export const organizationApi = new OrganizationApiService();
 export const usersApi = new UsersApiService();

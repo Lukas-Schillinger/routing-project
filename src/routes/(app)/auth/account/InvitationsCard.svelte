@@ -1,32 +1,32 @@
-<!-- @component Magic Invites management card for account page -->
+<!-- @component Invitations management card for account page -->
 <script lang="ts">
 	import { ConfirmDeleteDialog } from '$lib/components/ConfirmDeleteDialog';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
-	import type { MagicInvite, MailRecord } from '$lib/schemas';
+	import type { Invitation, MailRecord } from '$lib/schemas';
 	import { ApiError } from '$lib/services/api';
-	import { magicLinksApi } from '$lib/services/api/auth';
+	import { invitationsApi } from '$lib/services/api/auth';
 	import { formatDate } from '$lib/utils';
 	import { Trash2 } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
-	import CreateMagicInvitePopover from './CreateMagicInvitePopover/CreateMagicInvitePopover.svelte';
+	import CreateInvitationPopover from './CreateInvitationPopover/CreateInvitationPopover.svelte';
 
 	// Props
 	let {
-		magicInvitesWithMailRecord,
-		onCreateMagicInvite = () => {},
-		onDeleteMagicInvite = () => {}
+		invitationsWithMailRecord,
+		onCreateInvitation = () => {},
+		onDeleteInvitation = () => {}
 	}: {
-		magicInvitesWithMailRecord: { magicInvite: MagicInvite; mailRecord: MailRecord }[];
-		onCreateMagicInvite: (magicInvite: MagicInvite) => void;
-		onDeleteMagicInvite: () => void;
+		invitationsWithMailRecord: { invitation: Invitation; mailRecord: MailRecord }[];
+		onCreateInvitation: (invitation: Invitation) => void;
+		onDeleteInvitation: () => void;
 	} = $props();
 
-	async function handleDeleteMagicLink(magicLinkId: string) {
+	async function handleDeleteInvitation(invitationId: string) {
 		try {
-			await magicLinksApi.deleteInvite(magicLinkId);
-			onDeleteMagicInvite();
+			await invitationsApi.deleteInvitation(invitationId);
+			onDeleteInvitation();
 			toast.success('Invitation revoked');
 		} catch (err) {
 			if (err instanceof ApiError) {
@@ -37,9 +37,9 @@
 		}
 	}
 
-	function getInviteStatus(magicInvite: MagicInvite) {
-		if (magicInvite.used_at) return 'accepted';
-		if (magicInvite.expires_at < new Date()) return 'expired';
+	function getInviteStatus(invitation: Invitation) {
+		if (invitation.used_at) return 'accepted';
+		if (invitation.expires_at < new Date()) return 'expired';
 		return 'pending';
 	}
 
@@ -58,9 +58,9 @@
 
 	// Sort invites: pending first, then expired, then accepted
 	const sortedInvites = $derived(
-		[...magicInvitesWithMailRecord].sort((a, b) => {
-			const aStatus = getInviteStatus(a.magicInvite);
-			const bStatus = getInviteStatus(b.magicInvite);
+		[...invitationsWithMailRecord].sort((a, b) => {
+			const aStatus = getInviteStatus(a.invitation);
+			const bStatus = getInviteStatus(b.invitation);
 
 			const order = { pending: 0, expired: 1, accepted: 2 };
 			if (order[aStatus] !== order[bStatus]) {
@@ -69,13 +69,13 @@
 
 			// Within same status, newest first
 			return (
-				new Date(b.magicInvite.created_at).getTime() - new Date(a.magicInvite.created_at).getTime()
+				new Date(b.invitation.created_at).getTime() - new Date(a.invitation.created_at).getTime()
 			);
 		})
 	);
 
 	const pendingCount = $derived(
-		magicInvitesWithMailRecord.filter((invite) => getInviteStatus(invite.magicInvite) === 'pending')
+		invitationsWithMailRecord.filter((invite) => getInviteStatus(invite.invitation) === 'pending')
 			.length
 	);
 </script>
@@ -87,7 +87,7 @@
 				<Card.Title>Team Invitations</Card.Title>
 				<Card.Description>Invite new members to your organization</Card.Description>
 			</div>
-			<CreateMagicInvitePopover {onCreateMagicInvite} />
+			<CreateInvitationPopover {onCreateInvitation} />
 		</div>
 	</Card.Header>
 
@@ -100,28 +100,28 @@
 			<!-- Pending count summary -->
 			<div class="border-b py-4">
 				<p class="text-sm text-muted-foreground">
-					{pendingCount} pending, {magicInvitesWithMailRecord.length - pendingCount} accepted/expired
+					{pendingCount} pending, {invitationsWithMailRecord.length - pendingCount} accepted/expired
 				</p>
 			</div>
 
 			<!-- Invitations list -->
-			{#each sortedInvites as invite (invite.magicInvite.id)}
-				{@const status = getInviteStatus(invite.magicInvite)}
+			{#each sortedInvites as invite (invite.invitation.id)}
+				{@const status = getInviteStatus(invite.invitation)}
 				<div class="flex items-center justify-between gap-4 border-b py-4 last:border-b-0">
 					<div class="min-w-0 flex-1">
-						<p class="truncate text-sm font-medium">{invite.magicInvite.email}</p>
+						<p class="truncate text-sm font-medium">{invite.invitation.email}</p>
 						<div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
 							<Badge variant={getStatusBadgeVariant(status)} class="text-xs">
 								{status}
 							</Badge>
 							<span class="text-xs text-muted-foreground">
 								{#if status === 'accepted'}
-									Joined {formatDate(invite.magicInvite.used_at || invite.magicInvite.created_at)}
+									Joined {formatDate(invite.invitation.used_at || invite.invitation.created_at)}
 								{:else if status === 'expired'}
-									Expired {formatDate(invite.magicInvite.expires_at)}
+									Expired {formatDate(invite.invitation.expires_at)}
 								{:else}
-									Sent {formatDate(invite.magicInvite.created_at)} · Expires {formatDate(
-										invite.magicInvite.expires_at
+									Sent {formatDate(invite.invitation.created_at)} · Expires {formatDate(
+										invite.invitation.expires_at
 									)}
 								{/if}
 								{#if invite.mailRecord.status === 'delivered'}
@@ -143,10 +143,10 @@
 						<div class="shrink-0 pr-0">
 							<ConfirmDeleteDialog
 								title="Revoke Invitation"
-								description="Are you sure you want to revoke the invitation for {invite.magicInvite
+								description="Are you sure you want to revoke the invitation for {invite.invitation
 									.email}? The email link will no longer work."
 								confirmText="Revoke"
-								onConfirm={() => handleDeleteMagicLink(invite.magicInvite.id)}
+								onConfirm={() => handleDeleteInvitation(invite.invitation.id)}
 							>
 								{#snippet trigger({ props })}
 									<Button
