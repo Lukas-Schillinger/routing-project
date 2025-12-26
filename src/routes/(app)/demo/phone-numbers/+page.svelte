@@ -1,4 +1,5 @@
 <script lang="ts">
+	import CloudflareImage from '$lib/components/CloudflareImage.svelte';
 	import PhoneInput from '$lib/components/PhoneInput.svelte';
 	import * as Card from '$lib/components/ui/card';
 	import { Label } from '$lib/components/ui/label';
@@ -8,6 +9,11 @@
 </script>
 
 <div class="container mx-auto max-w-md py-8">
+	<CloudflareImage
+		src="https://storage-public.wend-routing.com/logo/logo_black.png"
+		alt="wend logo"
+		sizes="100"
+	/>
 	<Card.Root>
 		<Card.Header>
 			<Card.Title>Phone Number Input</Card.Title>
@@ -19,7 +25,7 @@
 				<PhoneInput id="phone" bind:value={phoneNumber} bind:valid={isValid} />
 			</div>
 
-			<div class="rounded-md bg-muted p-3 text-sm space-y-1">
+			<div class="space-y-1 rounded-md bg-muted p-3 text-sm">
 				<p><strong>Raw value:</strong> {phoneNumber || '(empty)'}</p>
 				<p>
 					<strong>Valid:</strong>

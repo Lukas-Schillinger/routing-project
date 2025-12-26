@@ -30,7 +30,7 @@ Component for automatically resizing images using cloudflare images transformati
 		...restProps
 	}: $$Props = $props();
 
-	const CF_ZONE = 'https://fun.schillingertools.com';
+	const CF_ZONE = 'https://images.wend-routing.com';
 	const OPTS = 'format=auto,quality=85';
 	const widths = [400, 640, 768, 1024, 1280, 1536, 1920];
 
