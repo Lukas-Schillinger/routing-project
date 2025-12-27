@@ -1,7 +1,7 @@
 import type { CreateStop, Stop, StopFilter, StopWithLocation, UpdateStop } from '$lib/schemas/stop';
 import { db } from '$lib/server/db';
 import { locations, maps, stops } from '$lib/server/db/schema';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, isNotNull } from 'drizzle-orm';
 import { ServiceError } from './errors';
 import { locationService } from './location.service';
 
@@ -72,6 +72,34 @@ export class StopService {
 			.from(stops)
 			.innerJoin(locations, eq(stops.location_id, locations.id))
 			.where(conditions);
+
+		return results;
+	}
+
+	/**
+	 * Get routed stops for a specific driver on a map
+	 * Only returns stops with a delivery_index (assigned to route)
+	 */
+	async getStopsForRoute(
+		mapId: string,
+		driverId: string,
+		organizationId: string
+	): Promise<StopWithLocation[]> {
+		const results = await db
+			.select({
+				stop: stops,
+				location: locations
+			})
+			.from(stops)
+			.innerJoin(locations, eq(stops.location_id, locations.id))
+			.where(
+				and(
+					eq(stops.map_id, mapId),
+					eq(stops.driver_id, driverId),
+					eq(stops.organization_id, organizationId),
+					isNotNull(stops.delivery_index)
+				)
+			);
 
 		return results;
 	}

@@ -4,7 +4,8 @@
 	import EditOrCreateDriverPopover from '$lib/components/EditOrCreateDriverPopover';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
-	import { Building2, Truck } from 'lucide-svelte';
+	import { Truck } from 'lucide-svelte';
+	import { Garage } from 'phosphor-svelte';
 	import { getContext } from 'svelte';
 	import type { PageData } from './$types';
 	import DepotsTable from './DepotsTable.svelte';
@@ -73,7 +74,7 @@
 			<Card.Root class="h-full">
 				<Card.Header>
 					<Card.Title class="flex items-center gap-2">
-						<Building2 class="h-5 w-5 text-primary" />
+						<Garage class="h-5 w-5 text-primary" />
 						Depots
 					</Card.Title>
 					<Card.Description>Starting locations for your delivery routes</Card.Description>

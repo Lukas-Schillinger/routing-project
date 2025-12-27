@@ -1,8 +1,9 @@
-import type { CreateRoute, PublicUser, Route } from '$lib/schemas';
+import type { CreateRoute, Driver, Map, PublicUser, Route, RouteWithDetails } from '$lib/schemas';
 import { db } from '$lib/server/db';
-import { drivers, routes } from '$lib/server/db/schema';
+import { depots, drivers, locations, maps, routes } from '$lib/server/db/schema';
 import { and, eq } from 'drizzle-orm';
 import { ServiceError } from './errors';
+import { stopService } from './stop.service';
 
 export class RouteService {
 	/**
@@ -199,6 +200,46 @@ export class RouteService {
 			.limit(1);
 
 		return driver ?? null;
+	}
+
+	/**
+	 * Get route with all related details using a single join query
+	 * Returns route, map, driver, depot (with location), and routed stops
+	 */
+	async getRouteWithDetails(routeId: string, organizationId: string): Promise<RouteWithDetails> {
+		const [result] = await db
+			.select({
+				route: routes,
+				map: maps,
+				driver: drivers,
+				depot: depots,
+				location: locations
+			})
+			.from(routes)
+			.innerJoin(maps, eq(routes.map_id, maps.id))
+			.innerJoin(drivers, eq(routes.driver_id, drivers.id))
+			.innerJoin(depots, eq(routes.depot_id, depots.id))
+			.innerJoin(locations, eq(depots.location_id, locations.id))
+			.where(and(eq(routes.id, routeId), eq(routes.organization_id, organizationId)))
+			.limit(1);
+
+		if (!result) {
+			throw ServiceError.notFound('Route not found');
+		}
+
+		const stops = await stopService.getStopsForRoute(
+			result.route.map_id,
+			result.route.driver_id,
+			organizationId
+		);
+
+		return {
+			route: result.route as Route,
+			map: result.map as Map,
+			driver: result.driver as Driver,
+			depot: { depot: result.depot, location: result.location },
+			stops
+		};
 	}
 }
 

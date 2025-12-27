@@ -9,7 +9,8 @@
 	import * as Table from '$lib/components/ui/table';
 	import type { DepotWithLocationJoin } from '$lib/schemas/depot';
 	import { depotApi } from '$lib/services/api/depots';
-	import { Building2, Pencil } from 'lucide-svelte';
+	import { Pencil } from 'lucide-svelte';
+	import { Garage } from 'phosphor-svelte';
 	import { toast } from 'svelte-sonner';
 
 	let {
@@ -45,7 +46,7 @@
 {#if depots.length === 0}
 	<Empty.Root>
 		<Empty.Media variant="icon">
-			<Building2 />
+			<Garage />
 		</Empty.Media>
 		<Empty.Content>
 			<Empty.Title>No depots yet</Empty.Title>

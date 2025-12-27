@@ -15,8 +15,7 @@
 	let { data }: { data: PageData } = $props();
 
 	// Destructure data
-	const { map, stops, assignedDrivers, route } = data;
-	const driver = $derived(assignedDrivers.find((d) => d.id === route.driver_id));
+	const { map, stops, driver, depot, route } = data;
 
 	// ========================================
 	// UI State Management
@@ -224,6 +223,7 @@
 			<div class="flex-1 overflow-hidden p-4">
 				<RouteTimeline
 					{route}
+					{depot}
 					stops={sortedStops}
 					selectedIndex={selectedStopIndex}
 					onStopSelect={(index) => (selectedStopIndex = index)}
@@ -241,6 +241,7 @@
 						drivers={driver ? [driver] : []}
 						stops={sortedStops}
 						routes={[route]}
+						{depot}
 						center={mapCenter}
 						zoom={12}
 						bind:focusedStopId
@@ -267,6 +268,7 @@
 					<div class="flex-1 overflow-hidden p-4">
 						<RouteTimeline
 							{route}
+							{depot}
 							stops={sortedStops}
 							selectedIndex={selectedStopIndex}
 							onStopSelect={(index) => (selectedStopIndex = index)}

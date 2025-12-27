@@ -36,3 +36,22 @@ export const updateRouteSchema = z.object({
 export type Route = z.infer<typeof routeSchema>;
 export type CreateRoute = z.infer<typeof createRouteSchema>;
 export type UpdateRoute = z.infer<typeof updateRouteSchema>;
+
+// Composite type for route detail pages
+export type { DepotWithLocationJoin } from './depot';
+export type { Driver } from './driver';
+export type { Map } from './map';
+export type { StopWithLocation } from './stop';
+
+import type { DepotWithLocationJoin } from './depot';
+import type { Driver } from './driver';
+import type { Map } from './map';
+import type { StopWithLocation } from './stop';
+
+export type RouteWithDetails = {
+	route: Route;
+	map: Map;
+	stops: StopWithLocation[];
+	driver: Driver;
+	depot: DepotWithLocationJoin;
+};

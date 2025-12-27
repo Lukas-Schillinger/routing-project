@@ -6,7 +6,8 @@
 	import Label from '$lib/components/ui/label/label.svelte';
 	import type { DepotWithLocationJoin, Driver, Map, StopWithLocation } from '$lib/schemas';
 	import { mapApi } from '$lib/services/api';
-	import { AlertCircle, Building2, Sparkles } from 'lucide-svelte';
+	import { AlertCircle, Sparkles } from 'lucide-svelte';
+	import { Garage } from 'phosphor-svelte';
 	import DepotSelect from './DepotSelect.svelte';
 	import FairnessSlider from './FairnessSlider.svelte';
 
@@ -86,7 +87,7 @@
 <Card.Root>
 	<Card.Header>
 		<Card.Title class="flex items-center gap-2">
-			<Building2 class="h-5 w-5 text-primary" />
+			<Garage class="h-5 w-5 text-primary" />
 			Route Optimization
 		</Card.Title>
 		<Card.Description>Configure and optimize delivery routes</Card.Description>

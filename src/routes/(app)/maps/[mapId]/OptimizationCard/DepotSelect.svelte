@@ -2,7 +2,7 @@
 	import EditOrCreateDepotPopover from '$lib/components/EditOrCreateDepotPopover';
 	import * as Select from '$lib/components/ui/select';
 	import type { Depot, DepotWithLocationJoin } from '$lib/schemas';
-	import { Building2 } from 'lucide-svelte';
+	import { Garage } from 'phosphor-svelte';
 
 	interface Props {
 		depots: DepotWithLocationJoin[];
@@ -25,7 +25,7 @@
 				{@const selectedDepot = depots.find((d) => d.depot.id === selectedDepotId)}
 				{#if selectedDepot}
 					<div class="flex items-center gap-2">
-						<Building2 class="h-4 w-4" />
+						<Garage class="h-4 w-4" />
 						<span>{selectedDepot.depot.name}</span>
 					</div>
 				{/if}
@@ -39,7 +39,7 @@
 			{#each depots as depot}
 				<Select.Item value={depot.depot.id}>
 					<div class="flex items-center gap-2">
-						<Building2 class="h-4 w-4" />
+						<Garage class="h-4 w-4" />
 						<div>
 							<div class="font-medium">{depot.depot.name}</div>
 							<div class="text-xs text-muted-foreground">

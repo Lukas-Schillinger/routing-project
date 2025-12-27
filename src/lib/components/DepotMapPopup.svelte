@@ -7,7 +7,7 @@
 
 <div class="min-w-48 p-1">
 	<div class="flex items-center gap-2 pb-2">
-		<Garage weight="fill" class="h-5 w-5 text-amber-500" />
+		<Garage class="h-5 w-5 text-amber-500" />
 		<h3 class="text-base font-medium">{depot.depot.name}</h3>
 	</div>
 	<div>

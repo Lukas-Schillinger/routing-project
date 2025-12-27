@@ -1,14 +1,16 @@
 <!-- @component RouteTimeline - Displays a list of stops in table format -->
 <script lang="ts">
 	import { browser } from '$app/environment';
-	import type { Route as RouteType } from '$lib/schemas';
+	import type { DepotWithLocationJoin, Route as RouteType } from '$lib/schemas';
 	import type { StopWithLocation } from '$lib/schemas/stop';
 	import { formatDate } from '$lib/utils';
 	import { Calendar, Check, Clock, MapPin, Route } from 'lucide-svelte';
+	import { Garage } from 'phosphor-svelte';
 
 	interface Props {
 		route: RouteType;
 		stops: StopWithLocation[];
+		depot?: DepotWithLocationJoin | null;
 		selectedIndex?: number;
 		onStopSelect?: (index: number) => void;
 		onStopFocus?: (stopId: string) => void;
@@ -20,6 +22,7 @@
 	let {
 		route,
 		stops,
+		depot = null,
 		selectedIndex = -1,
 		onStopSelect,
 		onStopFocus,
@@ -121,6 +124,28 @@
 			</ul>
 		</div>
 		<div class="h-full max-h-[calc(100%-4rem)] overflow-y-auto" bind:this={scrollContainer}>
+			<!-- Depot -->
+			{#if depot}
+				<div class="border-b transition-colors hover:bg-sand-100 dark:hover:bg-secondary/55">
+					<div class="flex items-center justify-between p-3">
+						<div class="min-w-0 flex-1 text-left">
+							<div class="flex items-center gap-4">
+								<span
+									class="flex h-6 w-6 items-center justify-center rounded-full border bg-secondary text-xs font-medium"
+								>
+									<Garage class="h-3.5 w-3.5" />
+								</span>
+								<div>
+									<h4>{depot.depot.name}</h4>
+									<p class="text-sm text-muted-foreground">{depot.location.address_line_1}</p>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			{/if}
+
+			<!-- Stops -->
 			{#each stops as { stop, location }, index}
 				{@const isCompleted = completedStops.has(stop.id)}
 				<div

@@ -4,7 +4,8 @@
 	import * as Popover from '$lib/components/ui/popover';
 	import type { DepotWithLocationJoin } from '$lib/schemas/depot';
 	import type { LocationCreate } from '$lib/schemas/location';
-	import { Building2, Pencil } from 'lucide-svelte';
+	import { Pencil } from 'lucide-svelte';
+	import { Garage } from 'phosphor-svelte';
 	import { MediaQuery } from 'svelte/reactivity';
 	import Form from './Form.svelte';
 
@@ -84,7 +85,7 @@
 				{@render children()}
 			{:else if mode === 'create'}
 				<Button size="sm" variant="secondary">
-					<Building2 class="mr-2 h-4 w-4" />
+					<Garage class="mr-2 h-4 w-4" />
 					Create Depot
 				</Button>
 			{:else}
@@ -112,7 +113,7 @@
 				{@render children()}
 			{:else if mode === 'create'}
 				<Button size="sm" variant="secondary">
-					<Building2 class="mr-2 h-4 w-4" />
+					<Garage class="mr-2 h-4 w-4" />
 					Create Depot
 				</Button>
 			{:else}

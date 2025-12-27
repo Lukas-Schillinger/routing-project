@@ -9,7 +9,8 @@
 	} from '$lib/components/ui/card';
 	import * as Table from '$lib/components/ui/table';
 	import type { DistanceMatrixResult } from '$lib/services/external/mapbox';
-	import { Building2, MapPin } from 'lucide-svelte';
+	import { MapPin } from 'lucide-svelte';
+	import { Garage } from 'phosphor-svelte';
 
 	let {
 		data
@@ -61,7 +62,7 @@
 			Map ID: <code class="rounded bg-muted px-2 py-1">{data.mapId}</code>
 		</p>
 		<p class="text-muted-foreground">
-			Depot: <Building2 class="inline h-4 w-4" />
+			Depot: <Garage class="inline h-4 w-4" />
 			{data.depotName}
 			<code class="ml-2 rounded bg-muted px-2 py-1">{data.depotId}</code>
 		</p>
@@ -133,7 +134,7 @@
 							<Table.Cell class="font-mono">{i}</Table.Cell>
 							<Table.Cell>
 								{#if i === 0}
-									<Building2 class="mr-2 inline h-4 w-4" />
+									<Garage class="mr-2 inline h-4 w-4" />
 								{:else}
 									<MapPin class="mr-2 inline h-4 w-4" />
 								{/if}
@@ -173,7 +174,7 @@
 							<Table.Head class="min-w-[100px] text-center">
 								<div class="flex flex-col items-center">
 									{#if i === 0}
-										<Building2 class="mb-1 h-4 w-4" />
+										<Garage class="mb-1 h-4 w-4" />
 									{:else}
 										<MapPin class="mb-1 h-4 w-4" />
 									{/if}
@@ -192,7 +193,7 @@
 							<Table.Cell class="sticky left-0 z-10 bg-background font-medium">
 								<div class="flex items-center gap-2">
 									{#if i === 0}
-										<Building2 class="h-4 w-4" />
+										<Garage class="h-4 w-4" />
 									{:else}
 										<MapPin class="h-4 w-4" />
 									{/if}
@@ -233,7 +234,7 @@
 							<Table.Head class="min-w-[100px] text-center">
 								<div class="flex flex-col items-center">
 									{#if i === 0}
-										<Building2 class="mb-1 h-4 w-4" />
+										<Garage class="mb-1 h-4 w-4" />
 									{:else}
 										<MapPin class="mb-1 h-4 w-4" />
 									{/if}
@@ -252,7 +253,7 @@
 							<Table.Cell class="sticky left-0 z-10 bg-background font-medium">
 								<div class="flex items-center gap-2">
 									{#if i === 0}
-										<Building2 class="h-4 w-4" />
+										<Garage class="h-4 w-4" />
 									{:else}
 										<MapPin class="h-4 w-4" />
 									{/if}
