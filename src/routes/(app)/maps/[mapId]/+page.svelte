@@ -16,7 +16,7 @@
 	import type { PageData } from './$types';
 	import OptimizationCard from './OptimizationCard/';
 	import OptimizationLoadingCard from './OptimizationLoading/OptimizationLoadingCard.svelte';
-	import DetailedRoutesTable from './tables/DetailedRoutesTable.svelte';
+	import { DetailedRoutesTable } from './tables/DetailedRoutesTable';
 	import EditDriversTable from './tables/EditDriversTable.svelte';
 	import EditStopsDataTable from './tables/EditStopsDataTable';
 	import RouteCards from './tables/RouteCards.svelte';

@@ -189,7 +189,7 @@
 		{#if depot?.location.lat && depot?.location.lon}
 			<Marker lngLat={[depot.location.lon, depot.location.lat]} class="cursor-pointer">
 				<div class="transition-transform duration-100 hover:scale-110">
-					<Garage class="size-7 text-forest-600 dark:text-white" />
+					<Garage weight="fill" class="size-7 text-forest-600 dark:text-white" />
 				</div>
 				<Popup openOn="click" offset={[0, -10]} closeOnClickOutside closeButton>
 					<DepotMapPopup {depot} />

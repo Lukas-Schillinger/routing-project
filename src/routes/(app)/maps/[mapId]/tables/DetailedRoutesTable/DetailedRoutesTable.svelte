@@ -1,0 +1,98 @@
+<script lang="ts">
+	import * as Card from '$lib/components/ui/card';
+	import type { Driver } from '$lib/schemas/driver';
+	import type { StopWithLocation } from '$lib/schemas/stop';
+	import { MapPin, Package } from 'lucide-svelte';
+	import DriverRouteTable from './DriverRouteTable.svelte';
+
+	interface Props {
+		stops: StopWithLocation[];
+		assignedDrivers: Driver[];
+		focusedStopId: string | null;
+	}
+
+	let { stops, assignedDrivers, focusedStopId = $bindable() }: Props = $props();
+
+	// Group stops by driver
+	const routesByDriver = $derived.by(() => {
+		const routes = new Map<string, StopWithLocation[]>();
+
+		// Initialize routes for each assigned driver
+		assignedDrivers.forEach((driver) => {
+			routes.set(driver.id, []);
+		});
+
+		// Add unassigned route
+		routes.set('unassigned', []);
+
+		// Group stops by driver
+		stops.forEach((stop) => {
+			if (stop.stop.driver_id) {
+				const driverStops = routes.get(stop.stop.driver_id) || [];
+				driverStops.push(stop);
+				routes.set(stop.stop.driver_id, driverStops);
+			} else {
+				const unassignedStops = routes.get('unassigned') || [];
+				unassignedStops.push(stop);
+				routes.set('unassigned', unassignedStops);
+			}
+		});
+
+		// Sort stops by delivery_index within each route
+		routes.forEach((driverStops) => {
+			driverStops.sort((a, b) => {
+				const aIndex = a.stop.delivery_index ?? Number.MAX_SAFE_INTEGER;
+				const bIndex = b.stop.delivery_index ?? Number.MAX_SAFE_INTEGER;
+				return aIndex - bIndex;
+			});
+		});
+
+		return routes;
+	});
+
+	// Get driver by ID
+	function getDriver(driverId: string): Driver | undefined {
+		return assignedDrivers.find((d) => d.id === driverId);
+	}
+</script>
+
+{#if stops.length === 0}
+	<Card.Root>
+		<Card.Content class="flex flex-col items-center justify-center py-16">
+			<MapPin class="mb-4 h-16 w-16 text-muted-foreground" />
+			<h3 class="headline-small mb-2">No Stops Yet</h3>
+			<p class="body-medium text-center text-muted-foreground">
+				Add stops to this map to start planning routes.
+			</p>
+		</Card.Content>
+	</Card.Root>
+{:else}
+	<div class="space-y-6">
+		{#each Array.from(routesByDriver) as [driverId, driverStops]}
+			{@const driver = getDriver(driverId)}
+			{@const isUnassigned = driverId === 'unassigned'}
+			{#if driverStops.length > 0}
+				<div class="mb-2 flex items-center justify-between overflow-auto">
+					<div class="flex w-full items-center gap-3">
+						{#if isUnassigned}
+							<Package class="h-5 w-5 text-muted-foreground" />
+							<div>
+								<Card.Title>Unassigned Stops</Card.Title>
+								<Card.Description>
+									{driverStops.length} stop{driverStops.length !== 1 ? 's' : ''}
+									not assigned to any driver
+								</Card.Description>
+							</div>
+						{:else if driver}
+							<DriverRouteTable
+								{driver}
+								stops={driverStops}
+								onFocusStop={(stopId) => (focusedStopId = stopId)}
+							/>
+						{/if}
+					</div>
+				</div>
+			{/if}
+		{/each}
+	</div>
+{/if}
