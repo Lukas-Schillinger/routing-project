@@ -1,55 +1,39 @@
 <!--
 @component
-Component for automatically resizing images using cloudflare images transformations. 
+Component for resizing images using Cloudflare image transformations.
 -->
 <script lang="ts">
 	import { cn } from '$lib/utils.js';
 	import type { HTMLImgAttributes } from 'svelte/elements';
 
-	type $$Props = {
+	type Size = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+
+	interface Props extends Omit<HTMLImgAttributes, 'src' | 'srcset' | 'sizes'> {
 		src: string;
 		alt: string;
-		sizes?: string;
-		class?: string;
-		loading?: 'lazy' | 'eager';
-		decoding?: 'async' | 'sync' | 'auto';
-	} & Omit<
-		HTMLImgAttributes,
-		'src' | 'alt' | 'sizes' | 'class' | 'srcset' | 'loading' | 'decoding'
-	>;
-
-	const defaultSizes = '(min-width: 1280px) 1200px, (min-width: 768px) 90vw, 100vw';
-
-	let {
-		src,
-		alt,
-		sizes = defaultSizes,
-		class: className,
-		loading = 'lazy',
-		decoding = 'async',
-		...restProps
-	}: $$Props = $props();
-
-	const CF_ZONE = 'https://images.wend-routing.com';
-	const OPTS = 'format=auto,quality=85';
-	const widths = [400, 640, 768, 1024, 1280, 1536, 1920];
-
-	function cfUrl(url: string, width: number) {
-		const remote = encodeURI(url);
-		return `${CF_ZONE}/cdn-cgi/image/width=${width},${OPTS}/${remote}`;
+		size?: Size;
 	}
 
-	const srcset = widths.map((w) => `${cfUrl(src, w)} ${w}w`).join(', ');
-	const defaultSrc = cfUrl(src, 1200);
+	const sizeConfig: Record<Size, { widths: number[]; sizes: string }> = {
+		xs: { widths: [160, 320], sizes: '160px' },
+		sm: { widths: [240, 480], sizes: '240px' },
+		md: { widths: [384, 768], sizes: '384px' },
+		lg: { widths: [512, 1024], sizes: '512px' },
+		xl: { widths: [640, 1280], sizes: '640px' },
+		'2xl': { widths: [960, 1920], sizes: '960px' }
+	};
+
+	let { src, alt, size = 'lg', class: className, loading = 'lazy', ...restProps }: Props = $props();
+
+	const CF_ZONE = 'https://images.wend-routing.com';
+
+	function cfUrl(url: string, width: number) {
+		return `${CF_ZONE}/cdn-cgi/image/width=${width},format=auto,quality=85/${encodeURI(url)}`;
+	}
+
+	const config = $derived(sizeConfig[size]);
+	const srcset = $derived(config.widths.map((w) => `${cfUrl(src, w)} ${w}w`).join(', '));
+	const imgSrc = $derived(cfUrl(src, config.widths[0]));
 </script>
 
-<img
-	{alt}
-	{sizes}
-	{srcset}
-	{loading}
-	{decoding}
-	src={defaultSrc}
-	class={cn(className)}
-	{...restProps}
-/>
+<img {alt} src={imgSrc} {srcset} sizes={config.sizes} {loading} class={cn(className)} {...restProps} />

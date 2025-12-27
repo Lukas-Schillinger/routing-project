@@ -1,18 +1,19 @@
 <script lang="ts">
-	import type { Driver, Route, StopWithLocation } from '$lib/schemas';
+	import type { DepotWithLocationJoin, Driver, Route, StopWithLocation } from '$lib/schemas';
 	import { getTextColor } from '$lib/utils';
-	// import { MapPin } from 'lucide-svelte';
 	import type maplibregl from 'maplibre-gl';
 	import { mode } from 'mode-watcher';
-	import { MapPin } from 'phosphor-svelte';
+	import { Garage, MapPin } from 'phosphor-svelte';
 	import { LineLayer, MapLibre, Marker, Popup } from 'svelte-maplibre';
 	import GeoJSON from 'svelte-maplibre/GeoJSON.svelte';
+	import DepotMapPopup from './DepotMapPopup.svelte';
 	import StopMapPopup from './StopMapPopup.svelte';
 
 	let {
 		stops = [],
 		routes = null,
 		drivers = [],
+		depot = null,
 		center = [-98.5795, 39.8283],
 		zoom = 4,
 		focusedStopId = $bindable(null),
@@ -22,6 +23,7 @@
 		stops?: StopWithLocation[];
 		routes?: Route[] | null;
 		drivers?: Driver[];
+		depot?: DepotWithLocationJoin | null;
 		center?: [number, number];
 		zoom?: number;
 		focusedStopId?: string | null;
@@ -46,9 +48,9 @@
 		} else return '#ffffff';
 	}
 
-	// Calculate bounds from stops for initial view
+	// Calculate bounds from stops and depot for initial view
 	const bounds = $derived.by(() => {
-		if (stops.length === 0) return undefined;
+		if (stops.length === 0 && !depot) return undefined;
 
 		let minLng = Infinity;
 		let maxLng = -Infinity;
@@ -68,6 +70,14 @@
 				maxLat = Math.max(maxLat, lat);
 			}
 		});
+
+		// Include depot in bounds
+		if (depot?.location.lat && depot?.location.lon) {
+			minLng = Math.min(minLng, depot.location.lon);
+			maxLng = Math.max(maxLng, depot.location.lon);
+			minLat = Math.min(minLat, depot.location.lat);
+			maxLat = Math.max(maxLat, depot.location.lat);
+		}
 
 		if (minLng === Infinity) return undefined;
 
@@ -174,6 +184,18 @@
 				{/if}
 			{/if}
 		{/each}
+
+		<!-- Depot marker -->
+		{#if depot?.location.lat && depot?.location.lon}
+			<Marker lngLat={[depot.location.lon, depot.location.lat]} class="cursor-pointer">
+				<div class="transition-transform duration-100 hover:scale-110">
+					<Garage weight="fill" class="size-7 text-forest-600 dark:text-white" />
+				</div>
+				<Popup openOn="click" offset={[0, -10]} closeOnClickOutside closeButton>
+					<DepotMapPopup {depot} />
+				</Popup>
+			</Marker>
+		{/if}
 	</MapLibre>
 </div>
 

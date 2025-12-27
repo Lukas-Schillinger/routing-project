@@ -39,6 +39,7 @@
 	let isViewMode = $state(data.isViewMode ?? false);
 	let focusedStopId = $state<string | null>(null);
 	let hiddenDrivers = $state<Driver[]>([]);
+	let selectedDepotId = $state<string | undefined>(undefined);
 	let pollInterval: ReturnType<typeof setInterval> | null = null;
 	let pollCount = 0;
 	const MAX_POLL_COUNT = 150; // 5 minutes at 2 second intervals
@@ -48,6 +49,17 @@
 	let pageState: PageState = $derived(
 		isViewMode ? 'viewing' : isOptimizing ? 'optimizing' : 'editing'
 	);
+
+	// Derive selected depot for map display
+	let selectedDepot = $derived.by(() => {
+		if (isViewMode && data.routes && data.routes.length > 0) {
+			// In viewing mode, get depot from routes
+			const depotId = data.routes[0].depot_id;
+			return data.depots.find((d) => d.depot.id === depotId) ?? null;
+		}
+		// In editing mode, use the selected depot from OptimizationCard
+		return data.depots.find((d) => d.depot.id === selectedDepotId) ?? null;
+	});
 
 	// Check for active optimization job on load and when data changes
 	$effect(() => {
@@ -186,6 +198,7 @@
 			stops={data.stops}
 			routes={data.routes}
 			drivers={data.allDrivers}
+			depot={selectedDepot}
 			bind:hiddenDrivers
 			bind:focusedStopId
 		/>
@@ -285,6 +298,7 @@
 			map={data.map}
 			depots={data.depots}
 			bind:isOptimizing
+			bind:selectedDepotId
 			onRoutesOptimized={() => invalidateAll()}
 			onDepotCreated={() => invalidateAll()}
 		/>

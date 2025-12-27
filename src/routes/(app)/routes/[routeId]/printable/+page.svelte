@@ -42,10 +42,12 @@
 		<Route />
 		Route
 	</Button>
-	<Button href="/maps/{map.id}">
-		<Map />
-		Map
-	</Button>
+	{#if data.permissions.includes('resources:read')}
+		<Button href="/maps/{map.id}">
+			<Map />
+			Map
+		</Button>
+	{/if}
 </div>
 
 <!-- Printable Content -->

@@ -72,7 +72,7 @@ export const optimizationOptionsSchema = z.object({
 export const optimizationJobSchema = z.object({
 	id: z.string().uuid(),
 	organization_id: z.string().uuid(),
-	status: z.enum(['pending', 'running', 'completing', 'completed', 'failed']),
+	status: z.enum(['pending', 'running', 'completing', 'completed', 'failed', 'cancelled']),
 	matrix_id: z.string().uuid(),
 	map_id: z.string().uuid(),
 	depot_id: z.string().uuid(),

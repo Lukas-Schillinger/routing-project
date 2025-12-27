@@ -16,6 +16,7 @@
 		depots: DepotWithLocationJoin[];
 		assignedDrivers: Driver[];
 		isOptimizing: boolean;
+		selectedDepotId: string | undefined;
 		onRoutesOptimized: () => void;
 		onDepotCreated: () => void;
 	}
@@ -26,12 +27,12 @@
 		depots,
 		assignedDrivers,
 		isOptimizing = $bindable(),
+		selectedDepotId = $bindable(),
 		onRoutesOptimized,
 		onDepotCreated
 	}: Props = $props();
 
 	let optimizationError = $state('');
-	let selectedDepotId = $state<string | undefined>(undefined);
 	let fairness = $state<'high' | 'medium' | 'low'>('medium');
 
 	// Set default depot if available

@@ -184,7 +184,7 @@
 									</Badge>
 								{/if}
 							</Table.Cell>
-							<Table.Cell class="hidden px-0 text-sm text-muted-foreground sm:block">
+							<Table.Cell class="hidden px-0 text-sm text-muted-foreground sm:table-cell">
 								{formatDate(user.created_at)}
 							</Table.Cell>
 							{#if canDeleteUsers}

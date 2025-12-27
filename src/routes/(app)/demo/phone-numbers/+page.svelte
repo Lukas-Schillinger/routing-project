@@ -9,11 +9,13 @@
 </script>
 
 <div class="container mx-auto max-w-md py-8">
-	<CloudflareImage
-		src="https://storage-public.wend-routing.com/logo/logo_black.png"
-		alt="wend logo"
-		sizes="100"
-	/>
+	<div class="size-48">
+		<CloudflareImage
+			src="https://storage-public.wend-routing.com/logo/logo_black.png"
+			alt="wend logo"
+			size="2xl"
+		/>
+	</div>
 	<Card.Root>
 		<Card.Header>
 			<Card.Title>Phone Number Input</Card.Title>

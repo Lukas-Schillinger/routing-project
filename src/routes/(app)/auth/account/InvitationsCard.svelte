@@ -4,11 +4,12 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
+	import * as Empty from '$lib/components/ui/empty/index.js';
 	import type { Invitation, MailRecord } from '$lib/schemas';
 	import { ApiError } from '$lib/services/api';
 	import { invitationsApi } from '$lib/services/api/auth';
 	import { formatDate } from '$lib/utils';
-	import { Trash2 } from 'lucide-svelte';
+	import { Mail, Trash2 } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 	import CreateInvitationPopover from './CreateInvitationPopover/CreateInvitationPopover.svelte';
 
@@ -93,9 +94,17 @@
 
 	<Card.Content class="space-y-1">
 		{#if sortedInvites.length === 0}
-			<div class="py-8 text-center">
-				<p class="text-sm text-muted-foreground">No invitations sent yet</p>
-			</div>
+			<Empty.Root>
+				<Empty.Header>
+					<Empty.Media variant="icon">
+						<Mail />
+					</Empty.Media>
+					<Empty.Title>No invitations</Empty.Title>
+					<Empty.Description>
+						Invitations you send to team members will appear here.
+					</Empty.Description>
+				</Empty.Header>
+			</Empty.Root>
 		{:else}
 			<!-- Pending count summary -->
 			<div class="border-b py-4">
