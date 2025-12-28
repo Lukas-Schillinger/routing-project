@@ -265,42 +265,44 @@
 			</CardContent>
 		</Card>
 
-		<Card>
-			<CardHeader>
-				<CardTitle class="flex items-center gap-2">
-					<Truck class="h-5 w-5 text-primary" />
-					Drivers
-				</CardTitle>
-				<CardDescription>Assign drivers to this map for route optimization</CardDescription>
-			</CardHeader>
-			<CardContent class="space-y-4">
-				{#if errorMessage}
-					<div
-						class="rounded-md border border-destructive bg-destructive/10 p-3 text-sm text-destructive"
-					>
-						{errorMessage}
-					</div>
-				{/if}
+		<div class="flex flex-col gap-6 lg:flex-row">
+			<Card>
+				<CardHeader>
+					<CardTitle class="flex items-center gap-2">
+						<Truck class="h-5 w-5 text-primary" />
+						Drivers
+					</CardTitle>
+					<CardDescription>Assign drivers to this map for route optimization</CardDescription>
+				</CardHeader>
+				<CardContent class="space-y-4">
+					{#if errorMessage}
+						<div
+							class="rounded-md border border-destructive bg-destructive/10 p-3 text-sm text-destructive"
+						>
+							{errorMessage}
+						</div>
+					{/if}
 
-				<EditDriversTable
-					assignedDrivers={data.assignedDrivers}
-					allDrivers={data.allDrivers}
-					mapId={data.map.id}
-					{isLoading}
-					onRemoveDriver={removeDriver}
-				/>
-			</CardContent>
-		</Card>
+					<EditDriversTable
+						assignedDrivers={data.assignedDrivers}
+						allDrivers={data.allDrivers}
+						mapId={data.map.id}
+						{isLoading}
+						onRemoveDriver={removeDriver}
+					/>
+				</CardContent>
+			</Card>
 
-		<OptimizationCard
-			assignedDrivers={data.assignedDrivers}
-			stops={data.stops}
-			map={data.map}
-			depots={data.depots}
-			bind:isOptimizing
-			bind:selectedDepotId
-			onRoutesOptimized={() => invalidateAll()}
-			onDepotCreated={() => invalidateAll()}
-		/>
+			<OptimizationCard
+				assignedDrivers={data.assignedDrivers}
+				stops={data.stops}
+				map={data.map}
+				depots={data.depots}
+				bind:isOptimizing
+				bind:selectedDepotId
+				onRoutesOptimized={() => invalidateAll()}
+				onDepotCreated={() => invalidateAll()}
+			/>
+		</div>
 	{/if}
 </div>

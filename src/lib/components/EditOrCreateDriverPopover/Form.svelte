@@ -181,7 +181,7 @@
 
 	<div class="space-y-2">
 		<Label for="driver-phone">Phone Number</Label>
-		<PhoneInput id="driver-phone" bind:value={phone} disabled={isSubmitting} />
+		<PhoneInput id="driver-phone" bind:value={phone} disabled={isSubmitting || temporaryDriver} />
 	</div>
 
 	<div class="space-y-2">
