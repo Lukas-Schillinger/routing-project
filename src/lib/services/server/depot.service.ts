@@ -1,7 +1,7 @@
 import type { DepotCreate, DepotUpdate, DepotWithLocationJoin } from '$lib/schemas/depot';
 import { db } from '$lib/server/db';
-import { depots, locations } from '$lib/server/db/schema';
-import { eq } from 'drizzle-orm';
+import { depots, locations, routes } from '$lib/server/db/schema';
+import { and, eq } from 'drizzle-orm';
 import { ServiceError } from './errors';
 import { locationService } from './location.service';
 
@@ -153,6 +153,15 @@ export class DepotService {
 	async deleteDepot(depotId: string, organizationId: string) {
 		// Verify depot ownership
 		await this.getDepotById(depotId, organizationId);
+
+		const usedInRoutes = await db
+			.select()
+			.from(routes)
+			.where(and(eq(routes.depot_id, depotId), eq(routes.organization_id, organizationId)));
+
+		if (usedInRoutes.length != 0) {
+			throw ServiceError.validation("Can't delete depots while assigned to a route. ");
+		}
 
 		await db.delete(depots).where(eq(depots.id, depotId));
 
