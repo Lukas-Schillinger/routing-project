@@ -190,9 +190,6 @@
 		<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 			<div>
 				<h1 class="text-2xl font-semibold tracking-tight">Maps</h1>
-				<p class="mt-1 text-sm text-muted-foreground">
-					{data.maps.length} map{data.maps.length !== 1 ? 's' : ''} total
-				</p>
 			</div>
 			<ButtonGroup.Root>
 				<Button href="/maps/import" class="gap-2 px-8">

@@ -121,9 +121,7 @@
 								</div>
 							</div>
 
-							<div
-								class="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100"
-							>
+							<div class="flex items-center gap-1">
 								<DropdownMenu.Root>
 									<DropdownMenu.Trigger
 										onclick={(e: MouseEvent) => e.stopPropagation()}

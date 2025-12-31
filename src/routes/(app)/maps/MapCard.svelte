@@ -88,7 +88,7 @@
 				</div>
 			{/if}
 			<!-- Status overlay -->
-			<div class="absolute left-2 top-2 sm:hidden">
+			<div class="absolute top-2 left-2 sm:hidden">
 				{#if isRouted}
 					<Badge variant="default" class="bg-emerald-500/90 text-white">Routed</Badge>
 				{/if}
@@ -121,12 +121,16 @@
 						{map.title}
 					</h3>
 					{#if isRouted && showThumbnail}
-						<Badge variant="default" class="hidden shrink-0 bg-emerald-500 sm:inline-flex">Routed</Badge>
+						<Badge variant="default" class="hidden shrink-0 bg-emerald-500 sm:inline-flex"
+							>Routed</Badge
+						>
 					{:else if isRouted}
 						<Badge variant="default" class="hidden shrink-0 sm:inline-flex">Routed</Badge>
 					{/if}
 				</div>
-				<div class="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+				<div
+					class="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground"
+				>
 					<span class="flex items-center gap-1.5">
 						<MapPin class="h-3.5 w-3.5" />
 						{stops.length} stop{stops.length !== 1 ? 's' : ''}
@@ -155,12 +159,7 @@
 		<div class="flex shrink-0 items-center gap-2">
 			<DropdownMenu.Root>
 				<DropdownMenu.Trigger>
-					<Button
-						variant="ghost"
-						size="icon"
-						class="h-8 w-8 opacity-0 transition-opacity group-hover:opacity-100"
-						onclick={(e) => e.preventDefault()}
-					>
+					<Button variant="ghost" size="icon" class="h-8 w-8 " onclick={(e) => e.preventDefault()}>
 						<MoreHorizontal class="h-4 w-4" />
 					</Button>
 				</DropdownMenu.Trigger>
@@ -176,7 +175,9 @@
 					</DropdownMenu.Item>
 				</DropdownMenu.Content>
 			</DropdownMenu.Root>
-			<ChevronRight class="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+			<ChevronRight
+				class="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5"
+			/>
 		</div>
 	</div>
 </a>
