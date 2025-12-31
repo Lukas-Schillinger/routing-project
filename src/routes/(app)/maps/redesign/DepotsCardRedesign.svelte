@@ -1,0 +1,157 @@
+<script lang="ts">
+	import { invalidateAll } from '$app/navigation';
+	import EditOrCreateDepotPopover from '$lib/components/EditOrCreateDepotPopover';
+	import { Badge } from '$lib/components/ui/badge';
+	import { Button } from '$lib/components/ui/button';
+	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
+	import type { DepotWithLocationJoin } from '$lib/schemas/depot';
+	import { depotApi } from '$lib/services/api/depots';
+	import {
+		Building2,
+		Plus,
+		MoreHorizontal,
+		MapPin,
+		Pencil,
+		Trash2,
+		Copy,
+		ChevronRight,
+		Star
+	} from 'lucide-svelte';
+	import { toast } from 'svelte-sonner';
+
+	let { depots = $bindable([]) }: { depots: DepotWithLocationJoin[] } = $props();
+
+	async function handleDepotSuccess() {
+		await invalidateAll();
+	}
+
+	async function handleDelete(depot: DepotWithLocationJoin) {
+		if (!confirm(`Are you sure you want to delete "${depot.depot.name}"?`)) return;
+		try {
+			await depotApi.delete(depot.depot.id);
+			depots = depots.filter((d) => d.depot.id !== depot.depot.id);
+			toast.success('Depot deleted');
+		} catch (error) {
+			toast.error('Failed to delete depot');
+		}
+	}
+
+	function handleCopyId(id: string) {
+		navigator.clipboard.writeText(id);
+		toast.success('Depot ID copied');
+	}
+
+	function formatAddress(depot: DepotWithLocationJoin): string {
+		const parts = [
+			depot.location.address_line_1,
+			depot.location.city,
+			depot.location.region
+		].filter(Boolean);
+		return parts.join(', ');
+	}
+</script>
+
+<div class="rounded-lg border border-border/50 bg-card">
+	<!-- Header -->
+	<div class="flex items-center justify-between border-b border-border/50 px-4 py-3">
+		<div class="flex items-center gap-2">
+			<Building2 class="h-4 w-4 text-muted-foreground" />
+			<h3 class="text-sm font-medium">Depots</h3>
+			{#if depots.length > 0}
+				<Badge variant="secondary" class="ml-1 h-5 px-1.5 text-xs">
+					{depots.length}
+				</Badge>
+			{/if}
+		</div>
+		<EditOrCreateDepotPopover mode="create" onSuccess={handleDepotSuccess}>
+			<Button variant="ghost" size="icon" class="h-7 w-7">
+				<Plus class="h-4 w-4" />
+			</Button>
+		</EditOrCreateDepotPopover>
+	</div>
+
+	<!-- Content -->
+	<div class="p-2">
+		{#if depots.length === 0}
+			<div class="flex flex-col items-center justify-center py-8 text-center">
+				<div class="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+					<Building2 class="h-5 w-5 text-muted-foreground" />
+				</div>
+				<p class="mt-3 text-sm font-medium">No depots yet</p>
+				<p class="mt-1 text-xs text-muted-foreground">
+					Create a depot as a starting location for routes
+				</p>
+				<EditOrCreateDepotPopover mode="create" onSuccess={handleDepotSuccess}>
+					<Button variant="outline" size="sm" class="mt-3 gap-1">
+						<Plus class="h-3.5 w-3.5" />
+						Add Depot
+					</Button>
+				</EditOrCreateDepotPopover>
+			</div>
+		{:else}
+			<div class="space-y-0.5">
+				{#each depots.slice(0, 4) as depot (depot.depot.id)}
+					<div
+						class="group flex items-center justify-between rounded-md px-2 py-2 transition-colors hover:bg-accent/50"
+					>
+						<div class="flex items-center gap-3">
+							<div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted">
+								{#if depot.depot.default_depot}
+									<Star class="h-4 w-4 text-amber-500" />
+								{:else}
+									<MapPin class="h-4 w-4 text-muted-foreground" />
+								{/if}
+							</div>
+							<div class="min-w-0">
+								<div class="flex items-center gap-2">
+									<p class="truncate text-sm font-medium">{depot.depot.name}</p>
+									{#if depot.depot.default_depot}
+										<Badge variant="secondary" class="h-4 px-1 text-[10px]">Default</Badge>
+									{/if}
+								</div>
+								<p class="truncate text-xs text-muted-foreground">
+									{formatAddress(depot)}
+								</p>
+							</div>
+						</div>
+
+						<div class="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+							<EditOrCreateDepotPopover mode="edit" {depot} onSuccess={handleDepotSuccess}>
+								<Button variant="ghost" size="icon" class="h-7 w-7">
+									<Pencil class="h-3.5 w-3.5" />
+								</Button>
+							</EditOrCreateDepotPopover>
+							<DropdownMenu.Root>
+								<DropdownMenu.Trigger asChild>
+									<Button variant="ghost" size="icon" class="h-7 w-7">
+										<MoreHorizontal class="h-3.5 w-3.5" />
+									</Button>
+								</DropdownMenu.Trigger>
+								<DropdownMenu.Content align="end">
+									<DropdownMenu.Item onclick={() => handleCopyId(depot.depot.id)}>
+										<Copy class="mr-2 h-4 w-4" />
+										Copy ID
+									</DropdownMenu.Item>
+									<DropdownMenu.Separator />
+									<DropdownMenu.Item class="text-destructive" onclick={() => handleDelete(depot)}>
+										<Trash2 class="mr-2 h-4 w-4" />
+										Delete
+									</DropdownMenu.Item>
+								</DropdownMenu.Content>
+							</DropdownMenu.Root>
+						</div>
+					</div>
+				{/each}
+			</div>
+
+			{#if depots.length > 4}
+				<div class="mt-2 border-t border-border/50 pt-2">
+					<Button variant="ghost" size="sm" class="w-full justify-between text-xs">
+						<span>View all {depots.length} depots</span>
+						<ChevronRight class="h-3.5 w-3.5" />
+					</Button>
+				</div>
+			{/if}
+		{/if}
+	</div>
+</div>

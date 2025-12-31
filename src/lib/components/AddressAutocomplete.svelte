@@ -26,7 +26,7 @@
 	} = $props();
 
 	// State
-	let open = $state(true);
+	let open = $state(false);
 	let searchQuery = $state('');
 	let suggestions = $state<GeocodingFeature[]>([]);
 	let isSearching = $state(false);

@@ -30,7 +30,7 @@
 					/>
 					{driver.name}
 				</div>
-				<div class="text-muted-foreground">
+				<div class="flex gap-4 text-muted-foreground">
 					{#if driver.temporary}
 						<Badge variant="secondary" class="text-xs">Temporary</Badge>
 					{/if}

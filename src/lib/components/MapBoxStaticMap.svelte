@@ -103,7 +103,7 @@
 		{#if stops.length}
 			<img
 				src={mapUrl}
-				class="h-24 w-full object-cover shadow transition-transform duration-300 hover:scale-110 sm:h-full sm:w-32 md:w-56 lg:w-72"
+				class="h-32 w-full object-cover shadow transition-transform duration-300 hover:scale-110 sm:h-full sm:w-32 md:w-56 lg:w-72"
 				alt="Map showing {stops.length} stops"
 				{...restProps}
 			/>
@@ -113,7 +113,7 @@
 	</a>
 {:else}
 	<div
-		class="flex h-48 w-full items-center justify-center rounded-lg border border-gray-300 bg-gray-100 sm:h-full sm:w-32"
+		class="flex h-32 w-full items-center justify-center rounded-lg border border-gray-300 bg-gray-100 sm:h-full sm:w-32"
 		{...restProps}
 	>
 		<p class="text-sm text-gray-500">Mapbox token not configured</p>

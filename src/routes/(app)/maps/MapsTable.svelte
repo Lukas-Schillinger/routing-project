@@ -5,12 +5,23 @@
 	import TableActionsDropdown from '$lib/components/TableActionsDropdown.svelte';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
+	import * as ButtonGroup from '$lib/components/ui/button-group/index.js';
 	import * as Card from '$lib/components/ui/card';
 	import * as Empty from '$lib/components/ui/empty';
+	import { Input } from '$lib/components/ui/input/index.js';
 	import type { Map as MapType, StopWithLocation } from '$lib/schemas';
 	import { mapApi } from '$lib/services/api';
 	import { formatDate } from '$lib/utils';
-	import { Calendar, ChevronLeft, ChevronRight, Map, MapPin, Route, Truck } from 'lucide-svelte';
+	import {
+		Calendar,
+		ChevronLeft,
+		ChevronRight,
+		Map,
+		MapPin,
+		Plus,
+		Route,
+		Truck
+	} from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 	import { MediaQuery } from 'svelte/reactivity';
 
@@ -102,6 +113,13 @@
 		return uniqueDrivers.size;
 	}
 </script>
+
+<ButtonGroup.Root>
+	<Input placeholder="Search..." />
+	<Button variant="secondary" aria-label="Search">
+		<Plus /> New Map
+	</Button>
+</ButtonGroup.Root>
 
 {#if maps.length === 0}
 	<Card.Root>
