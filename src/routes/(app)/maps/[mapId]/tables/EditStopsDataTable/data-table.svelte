@@ -301,7 +301,7 @@
 {:else}
 	<div class="@container flex h-full flex-col">
 		<!-- Toolbar -->
-		<div class="flex flex-col justify-between gap-2 pb-4 @lg:flex-row">
+		<div class="flex flex-col justify-between gap-2 pb-4 @lg:flex-row @lg:items-center">
 			<!-- Search input with field selector -->
 			<ButtonGroup.Root class="w-full flex-1">
 				<Input
@@ -399,7 +399,7 @@
 					onSuccess={(stop) => {
 						onCreate?.(stop);
 					}}
-					triggerClass="w-full"
+					triggerClass="w-full flex"
 				>
 					<Button class="w-full" variant="secondary" size="sm">
 						<MapPin class="mr-2 h-4 w-4" />

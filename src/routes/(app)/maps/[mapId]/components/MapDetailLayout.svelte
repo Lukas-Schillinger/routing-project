@@ -4,9 +4,9 @@
 	import { MediaQuery } from 'svelte/reactivity';
 
 	const LAYOUT_STORAGE_KEY = 'map-detail-pane-layout';
-	const SIDEBAR_MIN_PX = 320;
+	const SIDEBAR_MIN_PX = 360;
 	const MAP_MIN_PX = 100;
-	const LAYOUT_MIN_HEIGHT_PX = 950;
+	const LAYOUT_MIN_HEIGHT_PX = 920;
 
 	let {
 		children,
