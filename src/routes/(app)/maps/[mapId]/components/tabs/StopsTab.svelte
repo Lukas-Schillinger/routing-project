@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { StopWithLocation } from '$lib/schemas/stop';
-	import EditStopsDataTable from '../../tables/EditStopsDataTable';
+	import EditStopsDataTable from '../EditStopsDataTable';
 
 	let {
 		stops,
