@@ -8,14 +8,13 @@
 	import { depotApi } from '$lib/services/api/depots';
 	import {
 		Building2,
-		Plus,
-		MoreHorizontal,
-		MapPin,
-		Pencil,
-		Trash2,
-		Copy,
 		ChevronRight,
-		Star
+		Copy,
+		MapPin,
+		MoreHorizontal,
+		Plus,
+		Star,
+		Trash2
 	} from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
@@ -89,58 +88,64 @@
 				</EditOrCreateDepotPopover>
 			</div>
 		{:else}
-			<div class="space-y-0.5">
-				{#each depots.slice(0, 4) as depot (depot.depot.id)}
-					<div
-						class="group flex items-center justify-between rounded-md px-2 py-2 transition-colors hover:bg-accent/50"
+			<div class="flex flex-col gap-2 sm:grid sm:grid-cols-2 lg:flex lg:flex-col">
+				{#each depots as depot (depot.depot.id)}
+					<EditOrCreateDepotPopover
+						triggerClass="w-full"
+						mode="edit"
+						{depot}
+						onSuccess={handleDepotSuccess}
 					>
-						<div class="flex items-center gap-3">
-							<div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted">
-								{#if depot.depot.default_depot}
-									<Star class="h-4 w-4 text-amber-500" />
-								{:else}
-									<MapPin class="h-4 w-4 text-muted-foreground" />
-								{/if}
-							</div>
-							<div class="min-w-0">
-								<div class="flex items-center gap-2">
-									<p class="truncate text-sm font-medium">{depot.depot.name}</p>
+						<button
+							type="button"
+							class="group flex w-full cursor-pointer items-center justify-between rounded-md px-2 py-2 text-left transition-colors hover:bg-accent/50"
+						>
+							<div class="flex items-center gap-3">
+								<div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted">
 									{#if depot.depot.default_depot}
-										<Badge variant="secondary" class="h-4 px-1 text-[10px]">Default</Badge>
+										<Star class="h-4 w-4 text-amber-500" />
+									{:else}
+										<MapPin class="h-4 w-4 text-muted-foreground" />
 									{/if}
 								</div>
-								<p class="truncate text-xs text-muted-foreground">
-									{formatAddress(depot)}
-								</p>
+								<div class="min-w-0">
+									<div class="flex items-center gap-2">
+										<p class="truncate text-sm font-medium">{depot.depot.name}</p>
+										{#if depot.depot.default_depot}
+											<Badge variant="secondary" class="h-4 px-1 text-[10px]">Default</Badge>
+										{/if}
+									</div>
+									<p class="truncate text-xs text-muted-foreground">
+										{formatAddress(depot)}
+									</p>
+								</div>
 							</div>
-						</div>
 
-						<div class="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-							<EditOrCreateDepotPopover mode="edit" {depot} onSuccess={handleDepotSuccess}>
-								<Button variant="ghost" size="icon" class="h-7 w-7">
-									<Pencil class="h-3.5 w-3.5" />
-								</Button>
-							</EditOrCreateDepotPopover>
-							<DropdownMenu.Root>
-								<DropdownMenu.Trigger asChild>
-									<Button variant="ghost" size="icon" class="h-7 w-7">
+							<div
+								class="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100"
+							>
+								<DropdownMenu.Root>
+									<DropdownMenu.Trigger
+										onclick={(e: MouseEvent) => e.stopPropagation()}
+										class="inline-flex h-7 w-7 items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+									>
 										<MoreHorizontal class="h-3.5 w-3.5" />
-									</Button>
-								</DropdownMenu.Trigger>
-								<DropdownMenu.Content align="end">
-									<DropdownMenu.Item onclick={() => handleCopyId(depot.depot.id)}>
-										<Copy class="mr-2 h-4 w-4" />
-										Copy ID
-									</DropdownMenu.Item>
-									<DropdownMenu.Separator />
-									<DropdownMenu.Item class="text-destructive" onclick={() => handleDelete(depot)}>
-										<Trash2 class="mr-2 h-4 w-4" />
-										Delete
-									</DropdownMenu.Item>
-								</DropdownMenu.Content>
-							</DropdownMenu.Root>
-						</div>
-					</div>
+									</DropdownMenu.Trigger>
+									<DropdownMenu.Content align="end">
+										<DropdownMenu.Item onclick={() => handleCopyId(depot.depot.id)}>
+											<Copy class="mr-2 h-4 w-4" />
+											Copy ID
+										</DropdownMenu.Item>
+										<DropdownMenu.Separator />
+										<DropdownMenu.Item class="text-destructive" onclick={() => handleDelete(depot)}>
+											<Trash2 class="mr-2 h-4 w-4" />
+											Delete
+										</DropdownMenu.Item>
+									</DropdownMenu.Content>
+								</DropdownMenu.Root>
+							</div>
+						</button>
+					</EditOrCreateDepotPopover>
 				{/each}
 			</div>
 
