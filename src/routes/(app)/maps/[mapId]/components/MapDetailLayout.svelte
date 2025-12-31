@@ -56,7 +56,7 @@
 				{@render sidebar()}
 			</div>
 			{#if footer}
-				<div class="flex-shrink-0 border-t border-border/50 bg-card">
+				<div class="flex-shrink-0 pt-4">
 					{@render footer()}
 				</div>
 			{/if}
@@ -82,15 +82,15 @@
 		</div>
 
 		<!-- Sidebar -->
-		<div class="flex h-full flex-col overflow-hidden" style="width: {sidebarWidth}px;">
-			<div class="flex-1 overflow-auto">
-				{@render sidebar()}
-			</div>
+		<div class="flex flex-col overflow-hidden" style="width: {sidebarWidth}px;">
 			{#if footer}
-				<div class="flex-shrink-0 border-t border-border/50">
+				<div class="flex-shrink-0 pb-1">
 					{@render footer()}
 				</div>
 			{/if}
+			<div class="flex-1 overflow-auto">
+				{@render sidebar()}
+			</div>
 		</div>
 	{/if}
 </div>

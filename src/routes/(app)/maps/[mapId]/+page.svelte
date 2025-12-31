@@ -3,7 +3,7 @@
 	import MapView from '$lib/components/MapView.svelte';
 	import type { Driver } from '$lib/schemas';
 	import { ApiError, mapApi } from '$lib/services/api';
-	import { getContext, onDestroy } from 'svelte';
+	import { onDestroy } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import type { PageData } from './$types';
 	import MapDetailLayout from './components/MapDetailLayout.svelte';
@@ -15,16 +15,6 @@
 	import StopsTab from './components/tabs/StopsTab.svelte';
 
 	let { data }: { data: PageData } = $props();
-
-	// Set page header in layout context
-	const pageHeaderContext = getContext<{ set: (header: any) => void }>('pageHeader');
-
-	if (pageHeaderContext) {
-		pageHeaderContext.set({
-			title: data.map.title,
-			breadcrumbs: [{ name: 'Maps', href: '/maps' }]
-		});
-	}
 
 	// Page state
 	let isLoading = $state(false);
@@ -136,7 +126,7 @@
 
 		// Find the route for this driver
 		const route = data.routes.find((r) => r.driver_id === driverId);
-		if (!route) {
+		if (route) {
 			toast.error('Could not find route for driver');
 			return;
 		}
@@ -148,10 +138,11 @@
 		isLoading = true;
 
 		try {
-			await mapApi.removeDriver(data.map.id, route.id);
+			await mapApi.removeDriver(data.map.id, driverId);
 			await invalidateAll();
 			toast.success('Driver removed');
 		} catch (err) {
+			console.log(err);
 			const message = err instanceof ApiError ? err.message : 'Failed to remove driver';
 			toast.error(message);
 		} finally {
@@ -203,12 +194,7 @@
 </svelte:head>
 
 <div class="flex h-full flex-col">
-	<MapHeader
-		title={data.map.title}
-		mapId={data.map.id}
-		{pageState}
-		onDelete={handleDeleteMap}
-	/>
+	<MapHeader title={data.map.title} mapId={data.map.id} {pageState} onDelete={handleDeleteMap} />
 
 	<MapDetailLayout>
 		{#snippet children()}
@@ -262,7 +248,7 @@
 						assignedDrivers={data.assignedDrivers}
 						allDrivers={data.allDrivers}
 						mapId={data.map.id}
-						isLoading={isLoading}
+						{isLoading}
 						onRemoveDriver={removeDriver}
 					/>
 				{/snippet}

@@ -18,7 +18,6 @@
 		Plus,
 		Search
 	} from 'lucide-svelte';
-	import { getContext } from 'svelte';
 	import { MediaQuery } from 'svelte/reactivity';
 	import type { PageData } from './$types';
 	import DepotsCard from './DepotsCard.svelte';
@@ -26,12 +25,6 @@
 	import MapCard from './MapCard.svelte';
 
 	let { data }: { data: PageData } = $props();
-
-	// Set page header in layout context
-	const pageHeaderContext = getContext<{ set: (header: any) => void }>('pageHeader');
-	pageHeaderContext.set({
-		breadcrumbs: [{ name: 'Maps', href: '/maps' }]
-	});
 
 	// Initialize state from URL params (via server)
 	type SortColumn = 'created_at' | 'title' | 'stops';

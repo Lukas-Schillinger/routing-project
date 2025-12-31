@@ -5,7 +5,6 @@
 	import type { GeocodingFeature } from '$lib/services/external/mapbox';
 	import type { GeocodeCSVResult } from '$lib/services/server/csv-import.service';
 	import { FileText, Settings, Upload } from 'lucide-svelte';
-	import { getContext } from 'svelte';
 	import type { PageData } from './$types';
 
 	import { goto } from '$app/navigation';
@@ -27,14 +26,6 @@
 	let geocodedResults = $state<GeocodeCSVResult[]>([]);
 	let isGeocoding = $state(false);
 	let isCreating = $state(false);
-
-	// Set page header
-	const pageHeaderContext = getContext<{ set: (header: any) => void }>('pageHeader');
-	if (pageHeaderContext) {
-		pageHeaderContext.set({
-			title: 'Create Map'
-		});
-	}
 
 	const steps = [
 		{ number: 1, title: 'Upload CSV', icon: Upload },

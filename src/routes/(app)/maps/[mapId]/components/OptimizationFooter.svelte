@@ -82,12 +82,10 @@
 	}
 </script>
 
-<div class="p-4">
+<div class="p-2 pt-0">
 	{#if pageState === 'viewing'}
 		<!-- Viewing Mode: Show edit button -->
-		<Button variant="outline" class="w-full" onclick={onSwitchToEdit}>
-			Switch to Edit Mode
-		</Button>
+		<Button variant="outline" class="w-full" onclick={onSwitchToEdit}>Switch to Edit Mode</Button>
 	{:else if pageState === 'optimizing'}
 		<!-- Optimizing Mode: Show progress and cancel -->
 		<div class="flex items-center gap-3">
@@ -110,6 +108,30 @@
 					<AlertCircle class="h-4 w-4" />
 					{error}
 				</div>
+			{/if}
+
+			<!-- Optimize Button -->
+			<Button class="w-full gap-2" disabled={!canOptimize} onclick={handleOptimize}>
+				{#if isSubmitting}
+					<Loader2 class="h-4 w-4 animate-spin" />
+					Starting...
+				{:else}
+					<Sparkles class="h-4 w-4" />
+					Optimize Routes
+				{/if}
+			</Button>
+
+			<!-- Validation hints -->
+			{#if !canOptimize && !isSubmitting}
+				<p class="text-center text-xs text-muted-foreground">
+					{#if !selectedDepotId}
+						Select a depot to optimize
+					{:else if assignedDrivers.length === 0}
+						Add drivers to optimize
+					{:else if stops.length === 0}
+						Add stops to optimize
+					{/if}
+				</p>
 			{/if}
 
 			<!-- Compact controls row -->
@@ -181,30 +203,6 @@
 					</button>
 				</div>
 			</div>
-
-			<!-- Optimize Button -->
-			<Button class="w-full gap-2" disabled={!canOptimize} onclick={handleOptimize}>
-				{#if isSubmitting}
-					<Loader2 class="h-4 w-4 animate-spin" />
-					Starting...
-				{:else}
-					<Sparkles class="h-4 w-4" />
-					Optimize Routes
-				{/if}
-			</Button>
-
-			<!-- Validation hints -->
-			{#if !canOptimize && !isSubmitting}
-				<p class="text-center text-xs text-muted-foreground">
-					{#if !selectedDepotId}
-						Select a depot to optimize
-					{:else if assignedDrivers.length === 0}
-						Add drivers to optimize
-					{:else if stops.length === 0}
-						Add stops to optimize
-					{/if}
-				</p>
-			{/if}
 		</div>
 	{/if}
 </div>
