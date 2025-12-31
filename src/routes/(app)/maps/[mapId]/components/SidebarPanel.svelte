@@ -42,7 +42,7 @@
 </script>
 
 <div class="flex h-full flex-col">
-	<Tabs.Root bind:value={activeTab} class="flex h-full flex-col pt-4 lg:pt-0">
+	<Tabs.Root bind:value={activeTab} class="flex h-full flex-col pt-2 lg:pt-0">
 		<div class="flex-shrink-0">
 			<Tabs.List class="h-8 w-full justify-start gap-1">
 				<Tabs.Trigger value="stops" class="gap-1.5 " disabled={pageState === 'optimizing'}>

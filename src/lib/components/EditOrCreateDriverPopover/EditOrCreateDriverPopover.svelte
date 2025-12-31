@@ -4,6 +4,7 @@
 	import * as Popover from '$lib/components/ui/popover';
 	import type { Driver } from '$lib/schemas/driver';
 	import { Pencil, Truck } from 'lucide-svelte';
+	import type { Snippet } from 'svelte';
 	import { MediaQuery } from 'svelte/reactivity';
 	import Form from './Form.svelte';
 
@@ -22,7 +23,7 @@
 		mapId?: string;
 		temporaryDriver?: boolean;
 		triggerClass?: string;
-		children?: any;
+		children?: Snippet<[{ props: Record<string, unknown> }]>;
 		onSuccess?: (driver: Driver) => void;
 	} = $props();
 
@@ -41,18 +42,20 @@
 {#if isDesktop.current}
 	<Popover.Root bind:open>
 		<Popover.Trigger class={triggerClass}>
-			{#if children}
-				{@render children()}
-			{:else if mode === 'create'}
-				<Button size="sm" variant="secondary">
-					<Truck class="mr-2 h-4 w-4" />
-					Create Driver
-				</Button>
-			{:else}
-				<Button variant="ghost" size="icon">
-					<Pencil class="h-4 w-4" />
-				</Button>
-			{/if}
+			{#snippet child({ props })}
+				{#if children}
+					{@render children({ props })}
+				{:else if mode === 'create'}
+					<Button {...props} size="sm" variant="secondary">
+						<Truck class="mr-2 h-4 w-4" />
+						Create Driver
+					</Button>
+				{:else}
+					<Button {...props} variant="ghost" size="icon">
+						<Pencil class="h-4 w-4" />
+					</Button>
+				{/if}
+			{/snippet}
 		</Popover.Trigger>
 		<Popover.Content class="w-96">
 			<Form
@@ -71,18 +74,20 @@
 {:else}
 	<Drawer.Root bind:open>
 		<Drawer.Trigger class={triggerClass}>
-			{#if children}
-				{@render children()}
-			{:else if mode === 'create'}
-				<Button size="sm" variant="secondary">
-					<Truck class="mr-2 h-4 w-4" />
-					Create Driver
-				</Button>
-			{:else}
-				<Button variant="ghost" size="icon">
-					<Pencil class="h-4 w-4" />
-				</Button>
-			{/if}
+			{#snippet child({ props })}
+				{#if children}
+					{@render children({ props })}
+				{:else if mode === 'create'}
+					<Button {...props} size="sm" variant="secondary">
+						<Truck class="mr-2 h-4 w-4" />
+						Create Driver
+					</Button>
+				{:else}
+					<Button {...props} variant="ghost" size="icon">
+						<Pencil class="h-4 w-4" />
+					</Button>
+				{/if}
+			{/snippet}
 		</Drawer.Trigger>
 		<Drawer.Content>
 			<div class="p-4">

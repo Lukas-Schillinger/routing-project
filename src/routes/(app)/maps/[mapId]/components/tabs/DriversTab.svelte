@@ -10,24 +10,22 @@
 	import type { Driver } from '$lib/schemas/driver';
 	import { ApiError, mapApi } from '$lib/services/api';
 	import { getIdenticon } from '$lib/utils';
-	import { ChevronsUpDown, Copy, MoreHorizontal, Phone, Plus, Trash2, Truck } from 'lucide-svelte';
+	import { Copy, Ellipsis, Pencil, Phone, Plus, Trash2, Truck, UserPlus } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
 	let {
 		assignedDrivers,
 		allDrivers,
 		mapId,
-		isLoading = false,
 		onRemoveDriver
 	}: {
 		assignedDrivers: Driver[];
 		allDrivers: Driver[];
 		mapId: string;
-		isLoading?: boolean;
-		onRemoveDriver: (routeId: string) => void;
+		onRemoveDriver: (driverId: string) => void;
 	} = $props();
 
-	let open = $state(false);
+	let addPopoverOpen = $state(false);
 	let localIsLoading = $state(false);
 
 	// Get available drivers (non-temporary, not already assigned)
@@ -44,7 +42,7 @@
 		try {
 			await mapApi.addDriver(mapId, driverId);
 			await invalidateAll();
-			open = false;
+			addPopoverOpen = false;
 		} catch (err) {
 			const message = err instanceof ApiError ? err.message : 'Failed to assign driver';
 			toast.error('Error adding driver', { description: message });
@@ -57,70 +55,94 @@
 		navigator.clipboard.writeText(id);
 		toast.success('Driver ID copied');
 	}
+
+	function handleDriverCreated() {
+		addPopoverOpen = false;
+		invalidateAll();
+	}
 </script>
 
 <div class="flex h-full flex-col">
-	<!-- Add Driver Controls -->
-	<div class="mb-4 flex flex-wrap gap-2">
-		<!-- Add existing driver combobox -->
-		<Popover.Root bind:open>
-			<Popover.Trigger
-				disabled={localIsLoading || isLoading || availableDrivers.length === 0}
-				class="flex items-center gap-2 rounded-md border border-border/50 bg-background px-3 py-1.5 text-sm transition-colors hover:bg-accent/50 disabled:cursor-not-allowed disabled:opacity-50"
-			>
-				<Plus class="h-3.5 w-3.5" />
-				Add existing
-				<ChevronsUpDown class="h-3.5 w-3.5 opacity-50" />
+	<!-- Summary Header -->
+	<div class="flex items-center justify-between border-b border-border/50 px-4 py-3">
+		<div class="flex items-center gap-1.5 text-sm text-muted-foreground">
+			<Truck class="h-3.5 w-3.5" />
+			<span>{assignedDrivers.length} driver{assignedDrivers.length !== 1 ? 's' : ''}</span>
+		</div>
+
+		<Popover.Root bind:open={addPopoverOpen}>
+			<Popover.Trigger>
+				{#snippet child({ props })}
+					<Button {...props} variant="outline" class="gap-1.5 px-2">
+						<Plus class="h-3.5 w-3.5" />
+						Add Driver
+					</Button>
+				{/snippet}
 			</Popover.Trigger>
-			<Popover.Content class="w-[240px] p-0">
+			<Popover.Content class="w-[260px] p-0" align="end">
 				<Command.Root>
-					<Command.Input placeholder="Search drivers..." />
+					<Command.Input placeholder="Search existing drivers..." disabled={localIsLoading} />
 					<Command.Empty>No drivers found.</Command.Empty>
-					<Command.Group>
-						{#each availableDrivers as driver}
-							<Command.Item value={driver.name} onSelect={() => addExistingDriver(driver.id)}>
-								<div class="flex items-center gap-2">
-									<Avatar.Root class="h-6 w-6">
-										<Avatar.Image src={getIdenticon(driver)} alt={driver.name} />
-										<Avatar.Fallback class="text-xs">
-											{driver.name.slice(0, 2).toUpperCase()}
-										</Avatar.Fallback>
-									</Avatar.Root>
-									<div class="min-w-0 flex-1">
-										<p class="truncate text-sm">{driver.name}</p>
+					{#if availableDrivers.length > 0}
+						<Command.Group heading="Existing Drivers">
+							{#each availableDrivers as driver}
+								<Command.Item
+									value={driver.name}
+									onSelect={() => addExistingDriver(driver.id)}
+									disabled={localIsLoading}
+								>
+									<div class="flex items-center gap-2">
+										<Avatar.Root class="h-6 w-6">
+											<Avatar.Image src={getIdenticon(driver)} alt={driver.name} />
+											<Avatar.Fallback class="text-xs">
+												{driver.name.slice(0, 2).toUpperCase()}
+											</Avatar.Fallback>
+										</Avatar.Root>
+										<span class="truncate">{driver.name}</span>
 									</div>
-								</div>
-							</Command.Item>
-						{/each}
+								</Command.Item>
+							{/each}
+						</Command.Group>
+					{/if}
+					<Command.Separator />
+					<Command.Group heading="Create New">
+						<EditOrCreateDriverPopover mode="create" {mapId} onSuccess={handleDriverCreated}>
+							{#snippet children({ props })}
+								<button
+									{...props}
+									type="button"
+									class="relative flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none select-none hover:bg-accent hover:text-accent-foreground"
+								>
+									<UserPlus class="h-4 w-4" />
+									Create new driver
+								</button>
+							{/snippet}
+						</EditOrCreateDriverPopover>
+						<EditOrCreateDriverPopover
+							mode="create"
+							{mapId}
+							temporaryDriver={true}
+							onSuccess={handleDriverCreated}
+						>
+							{#snippet children({ props })}
+								<button
+									{...props}
+									type="button"
+									class="relative flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-muted-foreground outline-none select-none hover:bg-accent hover:text-accent-foreground"
+								>
+									<Plus class="h-4 w-4" />
+									Create temporary driver
+								</button>
+							{/snippet}
+						</EditOrCreateDriverPopover>
 					</Command.Group>
 				</Command.Root>
 			</Popover.Content>
 		</Popover.Root>
-
-		<!-- Create new driver -->
-		<EditOrCreateDriverPopover mode="create" {mapId} onSuccess={() => invalidateAll()}>
-			<Button variant="outline" size="sm" class="gap-1.5">
-				<Plus class="h-3.5 w-3.5" />
-				Create driver
-			</Button>
-		</EditOrCreateDriverPopover>
-
-		<!-- Create temporary driver -->
-		<EditOrCreateDriverPopover
-			mode="create"
-			{mapId}
-			temporaryDriver={true}
-			onSuccess={() => invalidateAll()}
-		>
-			<Button variant="ghost" size="sm" class="gap-1.5 text-muted-foreground">
-				<Plus class="h-3.5 w-3.5" />
-				Temporary
-			</Button>
-		</EditOrCreateDriverPopover>
 	</div>
 
 	<!-- Driver List -->
-	<div class="flex-1 space-y-2 overflow-auto">
+	<div class="flex-1 space-y-2 overflow-auto p-4">
 		{#if assignedDrivers.length === 0}
 			<div class="flex flex-col items-center justify-center py-12 text-center">
 				<div class="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
@@ -132,7 +154,7 @@
 		{:else}
 			{#each assignedDrivers as driver (driver.id)}
 				<div
-					class="group flex items-center gap-3 rounded-md border border-border/50 p-3 transition-colors hover:bg-accent/30"
+					class="flex items-center gap-3 rounded-lg border border-border/50 p-3 transition-colors hover:bg-accent/30"
 				>
 					<Avatar.Root class="h-9 w-9 border border-border/50">
 						<Avatar.Image src={getIdenticon(driver)} alt={driver.name} />
@@ -157,12 +179,32 @@
 					</div>
 
 					<DropdownMenu.Root>
-						<DropdownMenu.Trigger
-							class="inline-flex h-7 w-7 items-center justify-center rounded-md opacity-0 transition-opacity group-hover:opacity-100 hover:bg-accent"
-						>
-							<MoreHorizontal class="h-4 w-4" />
+						<DropdownMenu.Trigger>
+							{#snippet child({ props })}
+								<Button {...props} variant="ghost" size="icon" class="h-7 w-7">
+									<Ellipsis class="h-4 w-4" />
+								</Button>
+							{/snippet}
 						</DropdownMenu.Trigger>
 						<DropdownMenu.Content align="end">
+							<EditOrCreateDriverPopover
+								triggerClass="block w-full"
+								mode="edit"
+								{driver}
+								{mapId}
+								onSuccess={() => invalidateAll()}
+							>
+								{#snippet children({ props })}
+									<button
+										{...props}
+										type="button"
+										class="relative flex w-full cursor-pointer items-center rounded-sm px-2 py-1.5 text-sm outline-none select-none hover:bg-accent hover:text-accent-foreground"
+									>
+										<Pencil class="mr-2 h-4 w-4" />
+										Edit
+									</button>
+								{/snippet}
+							</EditOrCreateDriverPopover>
 							<DropdownMenu.Item onclick={() => handleCopyId(driver.id)}>
 								<Copy class="mr-2 h-4 w-4" />
 								Copy ID

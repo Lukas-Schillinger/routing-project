@@ -1,7 +1,6 @@
 <script lang="ts">
 	import * as Avatar from '$lib/components/ui/avatar';
 	import { Button } from '$lib/components/ui/button';
-	import * as Collapsible from '$lib/components/ui/collapsible';
 	import type { Route as RouteType } from '$lib/schemas';
 	import type { Driver } from '$lib/schemas/driver';
 	import type { StopWithLocation } from '$lib/schemas/stop';
@@ -16,6 +15,7 @@
 		Printer,
 		Route
 	} from 'lucide-svelte';
+	import { slide } from 'svelte/transition';
 
 	let {
 		stops,
@@ -67,10 +67,6 @@
 
 		return grouped;
 	});
-
-	function getDriver(driverId: string): Driver | undefined {
-		return assignedDrivers.find((d) => d.id === driverId);
-	}
 
 	function getRouteStats(driverStops: StopWithLocation[], driverId: string) {
 		const driverRoute = routes.find((r) => r.driver_id === driverId);
@@ -156,13 +152,16 @@
 			{@const isHidden = isDriverHidden(driver.id)}
 			{@const isExpanded = expandedRoutes.has(driver.id)}
 
-			<Collapsible.Root open={isExpanded} onOpenChange={() => toggleExpanded(driver.id)}>
 				<div
-					class="rounded-lg border border-border/50 transition-colors"
-					class:opacity-50={isHidden}
-				>
+				class="rounded-lg border border-border/50 transition-colors"
+				class:opacity-50={isHidden}
+			>
 					<!-- Route Header -->
-					<div class="flex items-center gap-3 p-3">
+					<button
+						type="button"
+						class="flex w-full items-center gap-3 p-3 text-left hover:bg-accent/30"
+						onclick={() => toggleExpanded(driver.id)}
+					>
 						<Avatar.Root class="h-9 w-9 border border-border/50">
 							<Avatar.Image src={getIdenticon(driver)} alt={driver.name} />
 							<Avatar.Fallback class="text-xs">
@@ -198,7 +197,13 @@
 							</Button>
 
 							{#if route}
-								<Button variant="ghost" size="icon" class="h-7 w-7" href="/routes/{route.id}">
+								<Button
+									variant="ghost"
+									size="icon"
+									class="h-7 w-7"
+									href="/routes/{route.id}"
+									onclick={(e: MouseEvent) => e.stopPropagation()}
+								>
 									<ExternalLink class="h-3.5 w-3.5" />
 								</Button>
 								<Button
@@ -207,26 +212,21 @@
 									class="h-7 w-7"
 									href="/routes/{route.id}/print"
 									target="_blank"
+									onclick={(e: MouseEvent) => e.stopPropagation()}
 								>
 									<Printer class="h-3.5 w-3.5" />
 								</Button>
 							{/if}
 
-							<Collapsible.Trigger>
-								<Button variant="ghost" size="icon" class="h-7 w-7">
-									<ChevronDown
-										class="h-4 w-4 transition-transform duration-200 {isExpanded
-											? 'rotate-180'
-											: ''}"
-									/>
-								</Button>
-							</Collapsible.Trigger>
+							<ChevronDown
+								class="h-4 w-4 transition-transform duration-200 {isExpanded ? 'rotate-180' : ''}"
+							/>
 						</div>
-					</div>
+					</button>
 
 					<!-- Stops List (Collapsible) -->
-					<Collapsible.Content>
-						<div class="border-t border-border/50 px-3 py-2">
+					{#if isExpanded}
+						<div class="border-t border-border/50 px-3 py-2" transition:slide={{ duration: 200 }}>
 							{#each driverStops as stop, index (stop.stop.id)}
 								<button
 									type="button"
@@ -253,14 +253,13 @@
 								<p class="py-4 text-center text-sm text-muted-foreground">No stops assigned</p>
 							{/if}
 						</div>
-					</Collapsible.Content>
-				</div>
-			</Collapsible.Root>
+					{/if}
+			</div>
 		{/each}
 
 		<!-- Unassigned Stops -->
-		{#if routesByDriver.get('unassigned').length > 0}
-			{@const unassignedStops = routesByDriver.get('unassigned') || []}
+		{#if (routesByDriver.get('unassigned') ?? []).length > 0}
+			{@const unassignedStops = routesByDriver.get('unassigned') ?? []}
 			<div class="rounded-lg border border-dashed border-border/50 p-3">
 				<p class="mb-2 text-sm font-medium text-muted-foreground">
 					Unassigned ({unassignedStops.length})

@@ -122,14 +122,14 @@
 			{@render children()}
 		</div>
 		<div class="flex min-h-0 flex-1 flex-col overflow-hidden">
-			<div class="flex-1 overflow-auto">
-				{@render sidebar()}
-			</div>
 			{#if footer}
-				<div class="flex-shrink-0 pt-4">
+				<div class="flex-shrink-0 pt-2">
 					{@render footer()}
 				</div>
 			{/if}
+			<div class="flex-1 overflow-auto">
+				{@render sidebar()}
+			</div>
 		</div>
 	</div>
 {:else}
