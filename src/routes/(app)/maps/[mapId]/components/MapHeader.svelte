@@ -42,9 +42,9 @@
 	}
 </script>
 
-<div class="flex items-center justify-between px-4 py-3">
+<div class="flex items-center justify-between pb-3">
 	<div class="flex items-center gap-3">
-		<h1 class="text-lg font-semibold tracking-tight">{title}</h1>
+		<h1 class="text-xl font-semibold tracking-tight">{title}</h1>
 		<Badge variant="secondary" class={status.class}>
 			{status.label}
 		</Badge>

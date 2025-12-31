@@ -179,10 +179,10 @@
 
 <div class="min-h-screen">
 	<!-- Header Section -->
-	<div class="mb-4 sm:mb-6">
+	<div class="mb-3">
 		<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 			<div>
-				<h1 class="text-2xl font-semibold tracking-tight">Maps</h1>
+				<h1 class="text-xl font-semibold tracking-tight">Maps</h1>
 			</div>
 			<ButtonGroup.Root>
 				<Button href="/maps/import" class="gap-2 px-8">
