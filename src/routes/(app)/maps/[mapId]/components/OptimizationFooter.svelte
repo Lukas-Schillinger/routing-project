@@ -123,7 +123,7 @@
 		<div class="flex flex-col gap-2 @lg:flex-row">
 			<div class="flex gap-2">
 				<!-- Depot + Add button -->
-				<ButtonGroup.Root class="grow @lg:min-w-56">
+				<ButtonGroup.Root class="grow @lg:min-w-48">
 					<Select.Root type="single" bind:value={selectedDepotId}>
 						<Select.Trigger size="sm" class="h-7 w-32 grow rounded-r-none border-r-0">
 							{#if selectedDepotId}

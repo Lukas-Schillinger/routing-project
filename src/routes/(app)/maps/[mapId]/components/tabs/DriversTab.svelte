@@ -10,15 +10,7 @@
 	import type { Driver } from '$lib/schemas/driver';
 	import { ApiError, mapApi } from '$lib/services/api';
 	import { getIdenticon } from '$lib/utils';
-	import {
-		ChevronsUpDown,
-		Copy,
-		MoreHorizontal,
-		Phone,
-		Plus,
-		Trash2,
-		Truck
-	} from 'lucide-svelte';
+	import { ChevronsUpDown, Copy, MoreHorizontal, Phone, Plus, Trash2, Truck } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
 	let {
@@ -67,7 +59,7 @@
 	}
 </script>
 
-<div class="flex h-full flex-col p-4">
+<div class="flex h-full flex-col">
 	<!-- Add Driver Controls -->
 	<div class="mb-4 flex flex-wrap gap-2">
 		<!-- Add existing driver combobox -->
@@ -135,9 +127,7 @@
 					<Truck class="h-5 w-5 text-muted-foreground" />
 				</div>
 				<p class="mt-3 text-sm font-medium">No drivers assigned</p>
-				<p class="mt-1 text-xs text-muted-foreground">
-					Add drivers to optimize routes
-				</p>
+				<p class="mt-1 text-xs text-muted-foreground">Add drivers to optimize routes</p>
 			</div>
 		{:else}
 			{#each assignedDrivers as driver (driver.id)}
@@ -168,7 +158,7 @@
 
 					<DropdownMenu.Root>
 						<DropdownMenu.Trigger
-							class="inline-flex h-7 w-7 items-center justify-center rounded-md opacity-0 transition-opacity hover:bg-accent group-hover:opacity-100"
+							class="inline-flex h-7 w-7 items-center justify-center rounded-md opacity-0 transition-opacity group-hover:opacity-100 hover:bg-accent"
 						>
 							<MoreHorizontal class="h-4 w-4" />
 						</DropdownMenu.Trigger>
@@ -178,10 +168,7 @@
 								Copy ID
 							</DropdownMenu.Item>
 							<DropdownMenu.Separator />
-							<DropdownMenu.Item
-								class="text-destructive"
-								onclick={() => onRemoveDriver(driver.id)}
-							>
+							<DropdownMenu.Item class="text-destructive" onclick={() => onRemoveDriver(driver.id)}>
 								<Trash2 class="mr-2 h-4 w-4" />
 								Remove
 							</DropdownMenu.Item>

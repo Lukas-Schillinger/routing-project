@@ -7,7 +7,7 @@
 	import { tick } from 'svelte';
 
 	interface Props {
-		value?: string;
+		value?: string | null;
 		valid?: boolean;
 		placeholder?: string;
 		class?: string;
