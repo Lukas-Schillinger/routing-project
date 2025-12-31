@@ -51,6 +51,7 @@
 		"formsnap": "^2.0.1",
 		"globals": "^16.0.0",
 		"mdsvex": "^0.12.3",
+		"paneforge": "^1.0.2",
 		"phosphor-svelte": "^3.0.1",
 		"playwright": "^1.53.0",
 		"prettier": "^3.4.2",

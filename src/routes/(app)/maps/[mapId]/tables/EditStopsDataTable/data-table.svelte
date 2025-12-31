@@ -299,9 +299,9 @@
 		</EditOrCreateStopPopover>
 	</Empty.Root>
 {:else}
-	<div class="space-y-4">
+	<div class="@container flex h-full flex-col">
 		<!-- Toolbar -->
-		<div class="flex flex-col justify-between gap-2 sm:flex-row">
+		<div class="flex flex-col justify-between gap-2 pb-4 @lg:flex-row">
 			<!-- Search input with field selector -->
 			<ButtonGroup.Root class="w-full flex-1">
 				<Input
@@ -340,10 +340,12 @@
 				</DropdownMenu.Root>
 			</ButtonGroup.Root>
 			<!-- Sort dropdown -->
-			<div class="flex flex-col gap-2 sm:flex-row">
+			<div class="flex flex-col gap-2 @sm:flex-row">
 				<div class="flex gap-2">
 					<DropdownMenu.Root>
-						<DropdownMenu.Trigger class="{buttonVariants({ variant: 'outline' })} grow gap-2">
+						<DropdownMenu.Trigger
+							class="{buttonVariants({ variant: 'outline', size: 'sm' })} grow gap-2"
+						>
 							<ArrowUpDown class="h-4 w-4" />
 							Sort
 						</DropdownMenu.Trigger>
@@ -372,7 +374,9 @@
 
 					<!-- Column visibility dropdown -->
 					<DropdownMenu.Root>
-						<DropdownMenu.Trigger class="{buttonVariants({ variant: 'outline' })} grow gap-2">
+						<DropdownMenu.Trigger
+							class="{buttonVariants({ variant: 'outline', size: 'sm' })} grow gap-2"
+						>
 							Columns <ChevronDown class="h-4 w-4" />
 						</DropdownMenu.Trigger>
 						<DropdownMenu.Content align="end">
@@ -397,7 +401,7 @@
 					}}
 					triggerClass="w-full"
 				>
-					<Button class="w-full" variant="secondary">
+					<Button class="w-full" variant="secondary" size="sm">
 						<MapPin class="mr-2 h-4 w-4" />
 						Create Stop
 					</Button>
@@ -406,7 +410,7 @@
 		</div>
 
 		<!-- Data table -->
-		<div class="">
+		<div class="min-h-0 flex-1 overflow-auto">
 			<Table.Root>
 				<Table.Header>
 					{#each table.getHeaderGroups() as headerGroup}
@@ -445,13 +449,12 @@
 		</div>
 
 		<!-- Pagination -->
-		<div class="flex flex-col items-center justify-between gap-4 px-2 sm:flex-row">
-			<div class="flex items-center space-x-4 sm:space-x-6 lg:space-x-8">
+		<div class="flex shrink-0 items-center justify-center px-2 pt-2">
+			<div class="flex items-center space-x-4 @sm:space-x-6 @lg:space-x-8">
 				<div class="flex items-center space-x-2">
-					<p class="hidden text-sm font-medium sm:block">Rows per page</p>
 					<DropdownMenu.Root>
 						<DropdownMenu.Trigger
-							class="flex h-8 items-center justify-center gap-2 rounded-md border border-input bg-background px-3 text-sm ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
+							class="flex h-7 items-center justify-center gap-2 rounded-md border border-input bg-background px-3 text-xs ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
 						>
 							{table.getState().pagination.pageSize}
 							<ChevronDown class="h-4 w-4" />
@@ -469,11 +472,11 @@
 						</DropdownMenu.Content>
 					</DropdownMenu.Root>
 				</div>
-				<div class="flex w-[60px] items-center justify-center text-sm font-medium sm:w-[100px]">
-					<span class="sm:hidden"
+				<div class="flex w-[60px] items-center justify-center text-xs font-medium @sm:w-[100px]">
+					<span class="@sm:hidden"
 						>{table.getState().pagination.pageIndex + 1}/{table.getPageCount()}</span
 					>
-					<span class="hidden sm:inline">
+					<span class="hidden @sm:inline">
 						Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
 					</span>
 				</div>
@@ -483,7 +486,7 @@
 						size="sm"
 						onclick={() => table.previousPage()}
 						disabled={!table.getCanPreviousPage()}
-						class="hidden sm:inline-flex"
+						class="hidden @sm:inline-flex"
 					>
 						Previous
 					</Button>
@@ -492,7 +495,7 @@
 						size="icon"
 						onclick={() => table.previousPage()}
 						disabled={!table.getCanPreviousPage()}
-						class="h-8 w-8 sm:hidden"
+						class="size-7 @sm:hidden"
 					>
 						<ChevronDown class="h-4 w-4 rotate-90" />
 					</Button>
@@ -501,7 +504,7 @@
 						size="sm"
 						onclick={() => table.nextPage()}
 						disabled={!table.getCanNextPage()}
-						class="hidden sm:inline-flex"
+						class="hidden @sm:inline-flex"
 					>
 						Next
 					</Button>
@@ -510,7 +513,7 @@
 						size="icon"
 						onclick={() => table.nextPage()}
 						disabled={!table.getCanNextPage()}
-						class="h-8 w-8 sm:hidden"
+						class="size-7 @sm:hidden"
 					>
 						<ChevronDown class="h-4 w-4 -rotate-90" />
 					</Button>

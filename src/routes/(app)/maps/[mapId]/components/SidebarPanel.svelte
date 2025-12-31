@@ -69,7 +69,7 @@
 			</Tabs.List>
 		</div>
 
-		<div class="min-h-0 flex-1 overflow-auto">
+		<div class="min-h-0 flex-1 overflow-hidden">
 			<Tabs.Content value="stops" class="m-0 h-full">
 				{@render stopsTab()}
 			</Tabs.Content>

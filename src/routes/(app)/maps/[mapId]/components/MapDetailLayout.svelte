@@ -1,17 +1,18 @@
 <script lang="ts">
+	import { browser } from '$app/environment';
+	import * as Resizable from '$lib/components/ui/resizable';
 	import { MediaQuery } from 'svelte/reactivity';
 
+	const LAYOUT_STORAGE_KEY = 'map-detail-pane-layout';
+	const SIDEBAR_MIN_PX = 320;
+	const MAP_MIN_PX = 100;
+	const LAYOUT_MIN_HEIGHT_PX = 950;
+
 	let {
-		sidebarWidth = $bindable(400),
-		minSidebarWidth = 320,
-		maxSidebarWidth = 1200,
 		children,
 		sidebar,
 		footer
 	}: {
-		sidebarWidth?: number;
-		minSidebarWidth?: number;
-		maxSidebarWidth?: number;
 		children: import('svelte').Snippet;
 		sidebar: import('svelte').Snippet;
 		footer?: import('svelte').Snippet;
@@ -19,35 +20,59 @@
 
 	const isMobile = new MediaQuery('(max-width: 1024px)');
 
-	let isResizing = $state(false);
-	let containerRef: HTMLDivElement | null = $state(null);
+	// Track container width for pixel-based min sizes
+	let containerRef = $state<HTMLDivElement | null>(null);
+	let containerWidth = $state(browser ? window.innerWidth : 1200);
 
-	function startResize(e: MouseEvent) {
-		e.preventDefault();
-		isResizing = true;
-		document.addEventListener('mousemove', handleResize);
-		document.addEventListener('mouseup', stopResize);
+	// Calculate min sizes as percentages based on pixel values
+	const sidebarMinSize = $derived(Math.ceil((SIDEBAR_MIN_PX / containerWidth) * 100));
+	const mapMinSize = $derived(Math.ceil((MAP_MIN_PX / containerWidth) * 100));
+
+	// Update container width on resize
+	function updateContainerWidth() {
+		if (containerRef) {
+			containerWidth = containerRef.offsetWidth;
+		}
 	}
 
-	function handleResize(e: MouseEvent) {
-		if (!isResizing || !containerRef) return;
-
-		const containerRect = containerRef.getBoundingClientRect();
-		const newWidth = containerRect.right - e.clientX;
-
-		sidebarWidth = Math.max(minSidebarWidth, Math.min(maxSidebarWidth, newWidth));
+	// Load saved layout from localStorage
+	function getSavedLayout(): number[] | undefined {
+		if (!browser) return undefined;
+		const saved = localStorage.getItem(LAYOUT_STORAGE_KEY);
+		if (saved) {
+			try {
+				const parsed = JSON.parse(saved);
+				if (Array.isArray(parsed) && parsed.length === 2) {
+					return parsed;
+				}
+			} catch {
+				// Invalid JSON, ignore
+			}
+		}
+		return undefined;
 	}
 
-	function stopResize() {
-		isResizing = false;
-		document.removeEventListener('mousemove', handleResize);
-		document.removeEventListener('mouseup', stopResize);
+	// Save layout to localStorage
+	function saveLayout(sizes: number[]) {
+		if (!browser) return;
+		localStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify(sizes));
 	}
+
+	const savedLayout = getSavedLayout();
+
+	// Initialize container width on mount
+	$effect(() => {
+		if (containerRef) {
+			containerWidth = containerRef.offsetWidth;
+		}
+	});
 </script>
 
-<div bind:this={containerRef} class="flex flex-col lg:flex-row" class:select-none={isResizing}>
-	{#if isMobile.current}
-		<!-- Mobile Layout: Stacked -->
+<svelte:window onresize={updateContainerWidth} />
+
+{#if isMobile.current}
+	<!-- Mobile Layout: Stacked -->
+	<div class="flex flex-col">
 		<div class="h-[45vh] min-h-[300px] flex-shrink-0">
 			{@render children()}
 		</div>
@@ -61,36 +86,31 @@
 				</div>
 			{/if}
 		</div>
-	{:else}
-		<!-- Desktop Layout: Split-pane -->
-		<div class="relative h-[85vh] min-w-0 flex-1">
-			{@render children()}
-		</div>
-
-		<!-- Resize Handle -->
-		<div
-			role="separator"
-			aria-orientation="vertical"
-			tabindex="0"
-			class="group relative ml-2 w-1 cursor-col-resize bg-border/50 transition-colors hover:bg-primary/50"
-			onmousedown={startResize}
-		>
-			<div
-				class="absolute top-1/2 left-1/2 h-8 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-muted-foreground/30 opacity-0 transition-opacity group-hover:opacity-100"
-				class:opacity-100={isResizing}
-			></div>
-		</div>
-
-		<!-- Sidebar -->
-		<div class="flex flex-col overflow-hidden" style="width: {sidebarWidth}px;">
-			{#if footer}
-				<div class="flex-shrink-0 pb-1">
-					{@render footer()}
+	</div>
+{:else}
+	<!-- Desktop Layout: Resizable Split-pane -->
+	<div bind:this={containerRef} class="h-[85vh]" style:min-height="{LAYOUT_MIN_HEIGHT_PX}px">
+		<Resizable.PaneGroup direction="horizontal" class="h-full" onLayoutChange={saveLayout}>
+			<Resizable.Pane defaultSize={savedLayout?.[0] ?? 65} minSize={mapMinSize}>
+				<div class="h-full">
+					{@render children()}
 				</div>
-			{/if}
-			<div class="flex-1 overflow-auto">
-				{@render sidebar()}
-			</div>
-		</div>
-	{/if}
-</div>
+			</Resizable.Pane>
+
+			<Resizable.Handle withHandle />
+
+			<Resizable.Pane defaultSize={savedLayout?.[1] ?? 35} minSize={sidebarMinSize}>
+				<div class="flex h-full flex-col overflow-hidden">
+					{#if footer}
+						<div class="flex-shrink-0 pb-1">
+							{@render footer()}
+						</div>
+					{/if}
+					<div class="flex-1 overflow-auto">
+						{@render sidebar()}
+					</div>
+				</div>
+			</Resizable.Pane>
+		</Resizable.PaneGroup>
+	</div>
+{/if}
