@@ -25,19 +25,25 @@
 	// Default tab based on page state
 	let activeTab = $state(pageState === 'viewing' ? 'routes' : 'stops');
 
-	// Update active tab when page state changes
+	// Track previous page state to detect changes
+	let prevPageState = $state(pageState);
+
+	// Update active tab only when page state changes (not on every tab click)
 	$effect(() => {
-		if (pageState === 'viewing' && activeTab !== 'routes') {
-			activeTab = 'routes';
-		} else if (pageState === 'editing' && activeTab === 'routes') {
-			activeTab = 'stops';
+		if (pageState !== prevPageState) {
+			if (pageState === 'viewing') {
+				activeTab = 'routes';
+			} else if (pageState === 'editing' && activeTab === 'routes') {
+				activeTab = 'stops';
+			}
+			prevPageState = pageState;
 		}
 	});
 </script>
 
 <div class="flex h-full flex-col">
 	<Tabs.Root bind:value={activeTab} class="flex h-full flex-col pt-4 lg:pt-0">
-		<div class="flex-shrink-0 px-2">
+		<div class="flex-shrink-0">
 			<Tabs.List class="h-8 w-full justify-start gap-1">
 				<Tabs.Trigger value="stops" class="gap-1.5 " disabled={pageState === 'optimizing'}>
 					<MapPin class="h-3.5 w-3.5" />

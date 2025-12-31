@@ -248,7 +248,7 @@
 				defaultSize={savedLayout?.[1] ?? SIDEBAR_DEFAULT}
 				minSize={sidebarMinSize}
 			>
-				<div class="flex h-full flex-col overflow-hidden">
+				<div class="flex h-full flex-col overflow-hidden px-2">
 					{#if footer}
 						<div class="flex-shrink-0 pb-1">
 							{@render footer()}

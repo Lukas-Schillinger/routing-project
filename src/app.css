@@ -38,7 +38,8 @@
 }
 
 :root {
-	--radius: 0.625rem;
+	/* --radius: 0.625rem; */
+	--radius: 0.4rem;
 
 	/* Surfaces & text (light) */
 	--background: #fffbf4; /* #FFFBF4 ≈ hsl(38,100%,97%) */
@@ -196,38 +197,38 @@
 
 	/* Headlines using EB Garamond */
 	.headline-large {
-		@apply text-forest-950 dark:text-forest-50 text-4xl font-semibold leading-tight md:text-5xl;
+		@apply text-4xl leading-tight font-semibold text-forest-950 md:text-5xl dark:text-forest-50;
 		font-family: 'EB Garamond', serif;
 	}
 
 	.headline-medium {
-		@apply text-forest-950 dark:text-forest-50 text-3xl font-semibold leading-tight md:text-4xl;
+		@apply text-3xl leading-tight font-semibold text-forest-950 md:text-4xl dark:text-forest-50;
 		font-family: 'EB Garamond', serif;
 	}
 
 	.headline-small {
-		@apply text-forest-950 dark:text-forest-50 text-xl font-semibold leading-snug md:text-2xl;
+		@apply text-xl leading-snug font-semibold text-forest-950 md:text-2xl dark:text-forest-50;
 		font-family: 'EB Garamond', serif;
 	}
 
 	.headline-card {
-		@apply text-forest-950 dark:text-forest-50 text-2xl font-semibold leading-snug;
+		@apply text-2xl leading-snug font-semibold text-forest-950 dark:text-forest-50;
 		font-family: 'EB Garamond', serif;
 	}
 
 	/* Body text using Geist Sans */
 	.body-large {
-		@apply text-forest-950 dark:text-forest-50 text-lg leading-relaxed;
+		@apply text-lg leading-relaxed text-forest-950 dark:text-forest-50;
 		font-family: 'Geist Variable', system-ui, sans-serif;
 	}
 
 	.body-medium {
-		@apply text-forest-950 dark:text-forest-50 text-base leading-relaxed;
+		@apply text-base leading-relaxed text-forest-950 dark:text-forest-50;
 		font-family: 'Geist Variable', system-ui, sans-serif;
 	}
 
 	.body-small {
-		@apply text-forest-950 dark:text-forest-50 text-sm leading-relaxed;
+		@apply text-sm leading-relaxed text-forest-950 dark:text-forest-50;
 		font-family: 'Geist Variable', system-ui, sans-serif;
 	}
 }

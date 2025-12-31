@@ -21,7 +21,7 @@
 	} = $props();
 </script>
 
-<div class="h-full px-2">
+<div class="h-full">
 	{#if readonly}
 		<!-- Read-only view for viewing mode -->
 		<div class="space-y-2">

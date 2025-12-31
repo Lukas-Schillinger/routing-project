@@ -57,13 +57,13 @@
 	const MIN_PAGE_SIZE = 5;
 	const MAX_PAGE_SIZE = 50;
 
+	const isMobile = new MediaQuery('(max-width: 1024px)');
 	let tableContainerRef = $state<HTMLDivElement | null>(null);
 	let calculatedPageSize = $state(10);
 
 	// Calculate optimal page size based on container height
 	function calculatePageSize(containerHeight: number) {
-		const isMobile = new MediaQuery('(max-width: 1024px)');
-		if (isMobile) {
+		if (isMobile.current) {
 			return 10;
 		}
 		const availableHeight = containerHeight - HEADER_HEIGHT_PX;

@@ -91,7 +91,7 @@
 	}
 </script>
 
-<div class="@container px-3 pb-2">
+<div class="@container pb-2">
 	{#if pageState === 'viewing'}
 		<!-- Viewing Mode -->
 		<Button variant="outline" class="w-full" onclick={onSwitchToEdit}>Switch to Edit Mode</Button>
@@ -152,7 +152,10 @@
 					</Select.Root>
 
 					<EditOrCreateDepotPopover
-						triggerClass="{buttonVariants({ variant: 'outline' })} h-8 w-8 rounded-l-none px-0"
+						triggerClass="{buttonVariants({
+							variant: 'outline',
+							size: 'sm'
+						})} h-8 w-8 rounded-l-none px-0"
 						mode="create"
 						onSuccess={handleDepotCreated}
 					>
@@ -193,13 +196,8 @@
 			</div>
 
 			<!-- Optimize Button with validation info -->
-			<div class="flex grow @lg:max-w-32">
-				<Button
-					class="h-8 grow gap-1.5 {validationMessage ? 'rounded-r-none' : ''}"
-					size="sm"
-					disabled={!canOptimize}
-					onclick={handleOptimize}
-				>
+			<div class="flex grow gap-2 @lg:max-w-40">
+				<Button class="h-8 grow gap-1.5" size="sm" disabled={!canOptimize} onclick={handleOptimize}>
 					{#if isSubmitting}
 						<Loader2 class="h-3.5 w-3.5 animate-spin" />
 						Starting
@@ -211,7 +209,10 @@
 				{#if validationMessage && !isSubmitting}
 					<Popover.Root>
 						<Popover.Trigger
-							class="flex h-8 items-center justify-center rounded-l-none rounded-r-md border border-l-0 border-amber-500/50 bg-amber-500/10 px-2 text-amber-600 transition-colors hover:bg-amber-500/20 dark:text-amber-400"
+							class="{buttonVariants({
+								variant: 'outline',
+								size: 'sm'
+							})} h-8 border-amber-500/50 bg-amber-500/10 px-2 text-amber-600 hover:bg-amber-500/20 hover:text-amber-600 dark:text-amber-400 dark:hover:text-amber-400"
 						>
 							<Info class="h-3.5 w-3.5" />
 						</Popover.Trigger>

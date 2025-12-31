@@ -110,7 +110,7 @@
 	});
 </script>
 
-<div class="h-full w-full rounded-xl">
+<div class="rounded-car h-full w-full">
 	<!-- style="https://api.maptiler.com/maps/streets-v2/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL" -->
 	<MapLibre
 		{center}
@@ -118,7 +118,7 @@
 		{zoom}
 		{bounds}
 		fitBoundsOptions={{ padding: 80, maxZoom: 15 }}
-		class="h-full w-full rounded-xl"
+		class="h-full w-full rounded-lg"
 		bind:map
 	>
 		<!-- Route lines -->
