@@ -13,7 +13,7 @@
 
 <div class="min-h-screen">
 	<Header user={data.user} />
-	<main class="mx-auto px-2 pt-9 pb-12 sm:px-6 lg:px-8">
+	<main class="mx-auto px-2 pt-9 pb-12">
 		{@render children?.()}
 	</main>
 	<Footer />
