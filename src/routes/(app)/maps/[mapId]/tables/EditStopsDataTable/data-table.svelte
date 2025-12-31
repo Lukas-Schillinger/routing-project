@@ -57,6 +57,41 @@
 	let { stops, mapId, onDelete, onToggleInclude, onUpdate, onCreate, onZoomToStop }: Props =
 		$props();
 
+	// Dynamic page size based on container height
+	const ROW_HEIGHT_PX = 57;
+	const HEADER_HEIGHT_PX = 41;
+	const MIN_PAGE_SIZE = 5;
+	const MAX_PAGE_SIZE = 50;
+
+	let tableContainerRef = $state<HTMLDivElement | null>(null);
+	let calculatedPageSize = $state(10);
+
+	// Calculate optimal page size based on container height
+	function calculatePageSize(containerHeight: number) {
+		const availableHeight = containerHeight - HEADER_HEIGHT_PX;
+		const rows = Math.floor(availableHeight / ROW_HEIGHT_PX);
+		return Math.max(MIN_PAGE_SIZE, Math.min(MAX_PAGE_SIZE, rows));
+	}
+
+	// Watch container size changes
+	$effect(() => {
+		if (!tableContainerRef) return;
+
+		const observer = new ResizeObserver((entries) => {
+			for (const entry of entries) {
+				const newPageSize = calculatePageSize(entry.contentRect.height);
+				if (newPageSize !== calculatedPageSize) {
+					calculatedPageSize = newPageSize;
+					pagination = { ...pagination, pageSize: newPageSize };
+				}
+			}
+		});
+
+		observer.observe(tableContainerRef);
+
+		return () => observer.disconnect();
+	});
+
 	// Table state
 	let sorting = $state<SortingState>([{ id: 'contact', desc: true }]);
 	let columnFilters = $state<ColumnFiltersState>([]);
@@ -78,7 +113,7 @@
 	// Add types for table columns
 	const columnHelper = createColumnHelper<StopWithLocation>();
 
-	let pagination = $state<PaginationState>({ pageIndex: 0, pageSize: 10 });
+	let pagination = $state<PaginationState>({ pageIndex: 0, pageSize: calculatedPageSize });
 
 	// Get current sort state for a column
 	const getSortIcon = (columnId: string) => {
@@ -410,7 +445,7 @@
 		</div>
 
 		<!-- Data table -->
-		<div class="min-h-0 flex-1 overflow-auto">
+		<div bind:this={tableContainerRef} class="min-h-0 flex-1 overflow-auto">
 			<Table.Root>
 				<Table.Header>
 					{#each table.getHeaderGroups() as headerGroup}
@@ -449,34 +484,13 @@
 		</div>
 
 		<!-- Pagination -->
-		<div class="flex shrink-0 items-center justify-center px-2 pt-2">
-			<div class="flex items-center space-x-4 @sm:space-x-6 @lg:space-x-8">
-				<div class="flex items-center space-x-2">
-					<DropdownMenu.Root>
-						<DropdownMenu.Trigger
-							class="flex h-7 items-center justify-center gap-2 rounded-md border border-input bg-background px-3 text-xs ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
-						>
-							{table.getState().pagination.pageSize}
-							<ChevronDown class="h-4 w-4" />
-						</DropdownMenu.Trigger>
-						<DropdownMenu.Content align="end">
-							{#each [10, 20, 30, 40, 50] as pageSize}
-								<DropdownMenu.Item
-									onclick={() => {
-										table.setPageSize(Number(pageSize));
-									}}
-								>
-									{pageSize}
-								</DropdownMenu.Item>
-							{/each}
-						</DropdownMenu.Content>
-					</DropdownMenu.Root>
-				</div>
-				<div class="flex w-[60px] items-center justify-center text-xs font-medium @sm:w-[100px]">
-					<span class="@sm:hidden"
+		<div class="flex shrink-0 items-center justify-center px-2">
+			<div class="flex items-center space-x-4 @sm:space-x-6">
+				<div class="flex items-center justify-center text-xs text-muted-foreground">
+					<span class="tabular-nums @sm:hidden"
 						>{table.getState().pagination.pageIndex + 1}/{table.getPageCount()}</span
 					>
-					<span class="hidden @sm:inline">
+					<span class="hidden tabular-nums @sm:inline">
 						Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
 					</span>
 				</div>

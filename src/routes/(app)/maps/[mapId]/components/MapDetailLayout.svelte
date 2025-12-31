@@ -7,11 +7,11 @@
 	const LAYOUT_STORAGE_KEY = 'map-detail-pane-layout';
 	const SIDEBAR_MIN_PX = 360;
 	const MAP_MIN_PX = 100;
-	const LAYOUT_MIN_HEIGHT_PX = 920;
+	const LAYOUT_MIN_HEIGHT_PX = 800;
 
 	// Sidebar size presets
 	const SIDEBAR_COLLAPSED = 25;
-	const SIDEBAR_DEFAULT = 45;
+	const SIDEBAR_DEFAULT = 50;
 	const SIDEBAR_EXPANDED = 75;
 
 	let {
@@ -241,7 +241,7 @@
 				</div>
 			</Resizable.Pane>
 
-			<Resizable.Handle withHandle />
+			<Resizable.Handle withHandle class="bg-transparent" />
 
 			<Resizable.Pane
 				bind:this={sidebarPane}
