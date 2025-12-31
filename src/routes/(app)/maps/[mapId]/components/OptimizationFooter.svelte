@@ -120,10 +120,10 @@
 			</div>
 		{/if}
 
-		<div class="flex flex-col gap-2 @md:flex-row">
+		<div class="flex flex-col gap-2 @lg:flex-row">
 			<div class="flex gap-2">
 				<!-- Depot + Add button -->
-				<ButtonGroup.Root class="grow">
+				<ButtonGroup.Root class="grow @lg:min-w-56">
 					<Select.Root type="single" bind:value={selectedDepotId}>
 						<Select.Trigger size="sm" class="h-7 w-32 grow rounded-r-none border-r-0">
 							{#if selectedDepotId}
@@ -193,7 +193,7 @@
 			</div>
 
 			<!-- Optimize Button with validation info -->
-			<div class="flex grow">
+			<div class="flex grow @lg:max-w-32">
 				<Button
 					class="h-8 grow gap-1.5 {validationMessage ? 'rounded-r-none' : ''}"
 					size="sm"

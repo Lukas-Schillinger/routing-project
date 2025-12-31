@@ -3,10 +3,9 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as ButtonGroup from '$lib/components/ui/button-group/';
 	import { Input } from '$lib/components/ui/input';
-	import * as Select from '$lib/components/ui/select';
+	import { SortButton, type SortOption } from '$lib/components/ui/sort-button';
 	import * as Tabs from '$lib/components/ui/tabs';
 	import {
-		ArrowDown,
 		ChevronLeft,
 		ChevronRight,
 		ChevronsLeft,
@@ -50,15 +49,11 @@
 		goto(newUrl, { replaceState: true, keepFocus: true, noScroll: true });
 	}
 
-	const sortOptions: { value: SortColumn; label: string }[] = [
+	const sortOptions: SortOption<SortColumn>[] = [
 		{ value: 'created_at', label: 'Date' },
 		{ value: 'title', label: 'Name' },
 		{ value: 'stops', label: 'Stops' }
 	];
-
-	function toggleSortDirection() {
-		sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
-	}
 
 	function getMapStopCount(mapId: string) {
 		return data.stops.filter((s) => s.stop.map_id === mapId).length;
@@ -167,10 +162,6 @@
 		return pages;
 	}
 
-	// Get current sort label
-	const currentSortLabel = $derived(
-		sortOptions.find((opt) => opt.value === sortColumn)?.label ?? 'Date'
-	);
 </script>
 
 <svelte:head>
@@ -228,33 +219,8 @@
 					</Tabs.List>
 				</Tabs.Root>
 
-				<!-- Sort Button Group -->
-				<div class="flex items-center">
-					<ButtonGroup.Root>
-						<Button variant="outline" size="sm" class=" px-2" onclick={toggleSortDirection}>
-							<ArrowDown
-								class="h-4 w-4 transition-transform duration-200"
-								style="transform: rotate({sortDirection === 'asc' ? '180deg' : '0deg'})"
-							/>
-						</Button>
-						<Select.Root
-							type="single"
-							value={sortColumn}
-							onValueChange={(v) => {
-								if (v) sortColumn = v as SortColumn;
-							}}
-						>
-							<Select.Trigger size="sm" class="w-[90px] sm:w-[100px]">
-								{currentSortLabel}
-							</Select.Trigger>
-							<Select.Content>
-								{#each sortOptions as option}
-									<Select.Item value={option.value}>{option.label}</Select.Item>
-								{/each}
-							</Select.Content>
-						</Select.Root>
-					</ButtonGroup.Root>
-				</div>
+				<!-- Sort Button -->
+				<SortButton options={sortOptions} bind:value={sortColumn} bind:direction={sortDirection} />
 			</div>
 
 			<!-- Results count -->

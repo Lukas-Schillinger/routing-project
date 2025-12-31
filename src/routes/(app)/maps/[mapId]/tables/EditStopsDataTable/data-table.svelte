@@ -16,6 +16,7 @@
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import * as Empty from '$lib/components/ui/empty';
 	import { Input } from '$lib/components/ui/input';
+	import { SortButton, type SortOption } from '$lib/components/ui/sort-button';
 	import * as Table from '$lib/components/ui/table';
 	import type { StopWithLocation } from '$lib/schemas/stop';
 	import {
@@ -30,15 +31,8 @@
 		type SortingState,
 		type VisibilityState
 	} from '@tanstack/table-core';
-	import {
-		ArrowDown,
-		ArrowUp,
-		ArrowUpDown,
-		Check,
-		ChevronDown,
-		MapPin,
-		Search
-	} from 'lucide-svelte';
+	import { Check, ChevronDown, MapPin, Search } from 'lucide-svelte';
+	import { MediaQuery } from 'svelte/reactivity';
 	import AddressCell from './AddressCell.svelte';
 	import DateCell from './DateCell.svelte';
 	import NotesCell from './NotesCell.svelte';
@@ -68,6 +62,10 @@
 
 	// Calculate optimal page size based on container height
 	function calculatePageSize(containerHeight: number) {
+		const isMobile = new MediaQuery('(max-width: 1024px)');
+		if (isMobile) {
+			return 10;
+		}
 		const availableHeight = containerHeight - HEADER_HEIGHT_PX;
 		const rows = Math.floor(availableHeight / ROW_HEIGHT_PX);
 		return Math.max(MIN_PAGE_SIZE, Math.min(MAX_PAGE_SIZE, rows));
@@ -92,14 +90,30 @@
 		return () => observer.disconnect();
 	});
 
+	// Sort options for the SortButton
+	const sortOptions: SortOption<string>[] = [
+		{ value: 'contact', label: 'Contact' },
+		{ value: 'updated_at', label: 'Updated' },
+		{ value: 'notes', label: 'Notes' }
+	];
+
+	// Sort state for SortButton
+	let sortColumn = $state<string>('updated_at');
+	let sortDirection = $state<'asc' | 'desc'>('desc');
+
 	// Table state
-	let sorting = $state<SortingState>([{ id: 'contact', desc: true }]);
+	let sorting = $state<SortingState>([{ id: sortColumn, desc: sortDirection === 'desc' }]);
 	let columnFilters = $state<ColumnFiltersState>([]);
 	let columnVisibility = $state<VisibilityState>({});
 	let rowSelection = $state({});
 	let globalFilter = $state('');
 	let searchField = $state<string>('contact');
 	let searchValue = $state('');
+
+	// Sync SortButton state to TanStack Table sorting
+	$effect(() => {
+		sorting = [{ id: sortColumn, desc: sortDirection === 'desc' }];
+	});
 
 	// Update column filter when search field or value changes
 	$effect(() => {
@@ -114,25 +128,6 @@
 	const columnHelper = createColumnHelper<StopWithLocation>();
 
 	let pagination = $state<PaginationState>({ pageIndex: 0, pageSize: calculatedPageSize });
-
-	// Get current sort state for a column
-	const getSortIcon = (columnId: string) => {
-		const sortedColumn = sorting.find((s) => s.id === columnId);
-		if (!sortedColumn) return null;
-		return sortedColumn.desc ? ArrowDown : ArrowUp;
-	};
-
-	// Toggle sort for a column
-	const toggleSort = (columnId: string) => {
-		const existingSort = sorting.find((s) => s.id === columnId);
-		if (!existingSort) {
-			sorting = [{ id: columnId, desc: false }];
-		} else if (!existingSort.desc) {
-			sorting = [{ id: columnId, desc: true }];
-		} else {
-			sorting = [];
-		}
-	};
 
 	// Define columns
 	const columns: ColumnDef<StopWithLocation, any>[] = [
@@ -311,7 +306,7 @@
 			initialState: {
 				sorting: [
 					{
-						id: 'phone',
+						id: 'updated_at',
 						desc: true
 					}
 				]
@@ -374,38 +369,15 @@
 					</DropdownMenu.Content>
 				</DropdownMenu.Root>
 			</ButtonGroup.Root>
-			<!-- Sort dropdown -->
+			<!-- Sort and columns -->
 			<div class="flex flex-col gap-2 @sm:flex-row">
 				<div class="flex gap-2">
-					<DropdownMenu.Root>
-						<DropdownMenu.Trigger
-							class="{buttonVariants({ variant: 'outline', size: 'sm' })} grow gap-2"
-						>
-							<ArrowUpDown class="h-4 w-4" />
-							Sort
-						</DropdownMenu.Trigger>
-						<DropdownMenu.Content align="end" class="w-48">
-							{#each table.getAllColumns().filter((column) => column.getCanSort()) as column}
-								{@const SortIcon = getSortIcon(column.id)}
-								{@const currentSort = sorting.find((s) => s.id === column.id)}
-								<DropdownMenu.Item onclick={() => toggleSort(column.id)} class="justify-between">
-									<span class="flex items-center">
-										<span class="mr-2 inline-block h-4 w-4">
-											{#if SortIcon}
-												<SortIcon class="h-4 w-4" />
-											{/if}
-										</span>
-										{column.columnDef.header}
-									</span>
-									<span class="ml-auto w-12 text-right text-xs text-muted-foreground">
-										{#if currentSort}
-											({currentSort.desc ? 'desc' : 'asc'})
-										{/if}
-									</span>
-								</DropdownMenu.Item>
-							{/each}
-						</DropdownMenu.Content>
-					</DropdownMenu.Root>
+					<SortButton
+						options={sortOptions}
+						bind:value={sortColumn}
+						bind:direction={sortDirection}
+						size="sm"
+					/>
 
 					<!-- Column visibility dropdown -->
 					<DropdownMenu.Root>
