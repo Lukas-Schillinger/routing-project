@@ -56,9 +56,11 @@
 			{/if}
 		</div>
 		<EditOrCreateDriverPopover mode="create" onSuccess={handleDriverSuccess}>
-			<Button variant="ghost" size="icon" class="h-7 w-7">
-				<Plus class="h-4 w-4" />
-			</Button>
+			{#snippet children({ props })}
+				<Button {...props} variant="ghost" size="icon" class="h-7 w-7">
+					<Plus class="h-4 w-4" />
+				</Button>
+			{/snippet}
 		</EditOrCreateDriverPopover>
 	</div>
 
@@ -72,10 +74,12 @@
 				<p class="mt-3 text-sm font-medium">No drivers yet</p>
 				<p class="mt-1 text-xs text-muted-foreground">Add drivers to assign them to routes</p>
 				<EditOrCreateDriverPopover mode="create" onSuccess={handleDriverSuccess}>
-					<Button variant="outline" size="sm" class="mt-3 gap-1">
-						<Plus class="h-3.5 w-3.5" />
-						Add Driver
-					</Button>
+					{#snippet children({ props })}
+						<Button {...props} variant="outline" size="sm" class="mt-3 gap-1">
+							<Plus class="h-3.5 w-3.5" />
+							Add Driver
+						</Button>
+					{/snippet}
 				</EditOrCreateDriverPopover>
 			</div>
 		{:else}
@@ -87,53 +91,56 @@
 						{driver}
 						onSuccess={handleDriverSuccess}
 					>
-						<button
-							type="button"
-							class="group flex w-full cursor-pointer items-center justify-between rounded-md px-2 py-2 text-left transition-colors hover:bg-accent/50"
-						>
-							<div class="flex items-center gap-3">
-								<Avatar.Root class="h-8 w-8 border border-border/50">
-									<Avatar.Image src={getIdenticon(driver)} alt={driver.name} />
-									<Avatar.Fallback class="text-xs">
-										{driver.name.slice(0, 2).toUpperCase()}
-									</Avatar.Fallback>
-								</Avatar.Root>
-								<div class="min-w-0">
-									<p class="truncate text-sm font-medium">{driver.name}</p>
-									{#if driver.phone}
-										<p class="flex items-center gap-1 text-xs text-muted-foreground">
-											<Phone class="h-3 w-3" />
-											{driver.phone}
-										</p>
-									{/if}
+						{#snippet children({ props })}
+							<button
+								{...props}
+								type="button"
+								class="group flex w-full cursor-pointer items-center justify-between rounded-md px-2 py-2 text-left transition-colors hover:bg-accent/50"
+							>
+								<div class="flex items-center gap-3">
+									<Avatar.Root class="h-8 w-8 border border-border/50">
+										<Avatar.Image src={getIdenticon(driver)} alt={driver.name} />
+										<Avatar.Fallback class="text-xs">
+											{driver.name.slice(0, 2).toUpperCase()}
+										</Avatar.Fallback>
+									</Avatar.Root>
+									<div class="min-w-0">
+										<p class="truncate text-sm font-medium">{driver.name}</p>
+										{#if driver.phone}
+											<p class="flex items-center gap-1 text-xs text-muted-foreground">
+												<Phone class="h-3 w-3" />
+												{driver.phone}
+											</p>
+										{/if}
+									</div>
 								</div>
-							</div>
 
-							<div class="flex items-center gap-1 opacity-100">
-								<DropdownMenu.Root>
-									<DropdownMenu.Trigger
-										onclick={(e: MouseEvent) => e.stopPropagation()}
-										class="inline-flex h-7 w-7 items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
-									>
-										<MoreHorizontal class="h-3.5 w-3.5" />
-									</DropdownMenu.Trigger>
-									<DropdownMenu.Content align="end">
-										<DropdownMenu.Item onclick={() => handleCopyId(driver.id)}>
-											<Copy class="mr-2 h-4 w-4" />
-											Copy ID
-										</DropdownMenu.Item>
-										<DropdownMenu.Separator />
-										<DropdownMenu.Item
-											class="text-destructive"
-											onclick={() => handleDelete(driver)}
+								<div class="flex items-center gap-1 opacity-100">
+									<DropdownMenu.Root>
+										<DropdownMenu.Trigger
+											onclick={(e: MouseEvent) => e.stopPropagation()}
+											class="inline-flex h-7 w-7 items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
 										>
-											<Trash2 class="mr-2 h-4 w-4" />
-											Delete
-										</DropdownMenu.Item>
-									</DropdownMenu.Content>
-								</DropdownMenu.Root>
-							</div>
-						</button>
+											<MoreHorizontal class="h-3.5 w-3.5" />
+										</DropdownMenu.Trigger>
+										<DropdownMenu.Content align="end">
+											<DropdownMenu.Item onclick={() => handleCopyId(driver.id)}>
+												<Copy class="mr-2 h-4 w-4" />
+												Copy ID
+											</DropdownMenu.Item>
+											<DropdownMenu.Separator />
+											<DropdownMenu.Item
+												class="text-destructive"
+												onclick={() => handleDelete(driver)}
+											>
+												<Trash2 class="mr-2 h-4 w-4" />
+												Delete
+											</DropdownMenu.Item>
+										</DropdownMenu.Content>
+									</DropdownMenu.Root>
+								</div>
+							</button>
+						{/snippet}
 					</EditOrCreateDriverPopover>
 				{/each}
 			</div>
