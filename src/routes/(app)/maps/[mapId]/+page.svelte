@@ -1,25 +1,18 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
 	import MapView from '$lib/components/MapView.svelte';
-	import { Button } from '$lib/components/ui/button';
-	import {
-		Card,
-		CardContent,
-		CardDescription,
-		CardHeader,
-		CardTitle
-	} from '$lib/components/ui/card';
 	import type { Driver } from '$lib/schemas';
 	import { ApiError, mapApi } from '$lib/services/api';
-	import { MapPin, Route, Truck } from 'lucide-svelte';
 	import { getContext, onDestroy } from 'svelte';
+	import { toast } from 'svelte-sonner';
 	import type { PageData } from './$types';
-	import OptimizationCard from './OptimizationCard/';
-	import OptimizationLoadingCard from './OptimizationLoading/OptimizationLoadingCard.svelte';
-	import { DetailedRoutesTable } from './tables/DetailedRoutesTable';
-	import EditDriversTable from './tables/EditDriversTable.svelte';
-	import EditStopsDataTable from './tables/EditStopsDataTable';
-	import RouteCards from './tables/RouteCards.svelte';
+	import MapDetailLayout from './components/MapDetailLayout.svelte';
+	import MapHeader from './components/MapHeader.svelte';
+	import OptimizationFooter from './components/OptimizationFooter.svelte';
+	import SidebarPanel from './components/SidebarPanel.svelte';
+	import DriversTab from './components/tabs/DriversTab.svelte';
+	import RoutesTab from './components/tabs/RoutesTab.svelte';
+	import StopsTab from './components/tabs/StopsTab.svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -33,18 +26,20 @@
 		});
 	}
 
+	// Page state
 	let isLoading = $state(false);
-	let errorMessage = $state('');
 	let isOptimizing = $state(false);
 	let isViewMode = $state(data.isViewMode ?? false);
 	let focusedStopId = $state<string | null>(null);
 	let hiddenDrivers = $state<Driver[]>([]);
 	let selectedDepotId = $state<string | undefined>(undefined);
+
+	// Polling state
 	let pollInterval: ReturnType<typeof setInterval> | null = null;
 	let pollCount = 0;
 	const MAX_POLL_COUNT = 150; // 5 minutes at 2 second intervals
 
-	// Derive page state from isViewMode and isOptimizing
+	// Derive page state
 	type PageState = 'viewing' | 'optimizing' | 'editing';
 	let pageState: PageState = $derived(
 		isViewMode ? 'viewing' : isOptimizing ? 'optimizing' : 'editing'
@@ -53,15 +48,13 @@
 	// Derive selected depot for map display
 	let selectedDepot = $derived.by(() => {
 		if (isViewMode && data.routes && data.routes.length > 0) {
-			// In viewing mode, get depot from routes
 			const depotId = data.routes[0].depot_id;
 			return data.depots.find((d) => d.depot.id === depotId) ?? null;
 		}
-		// In editing mode, use the selected depot from OptimizationCard
 		return data.depots.find((d) => d.depot.id === selectedDepotId) ?? null;
 	});
 
-	// Check for active optimization job on load and when data changes
+	// Check for active optimization job on load
 	$effect(() => {
 		const activeJob = data.activeJob;
 		if (activeJob && ['pending', 'running', 'completing'].includes(activeJob.status)) {
@@ -98,7 +91,7 @@
 		if (pollCount >= MAX_POLL_COUNT) {
 			stopPolling();
 			isOptimizing = false;
-			errorMessage = 'Optimization timed out. Please try again.';
+			toast.error('Optimization timed out. Please try again.');
 			return;
 		}
 
@@ -112,7 +105,7 @@
 			} else if (job.status === 'failed') {
 				stopPolling();
 				isOptimizing = false;
-				errorMessage = job.error_message || 'Optimization failed';
+				toast.error(job.error_message || 'Optimization failed');
 				await invalidateAll();
 			} else if (job.status === 'cancelled') {
 				stopPolling();
@@ -124,6 +117,11 @@
 		}
 	}
 
+	function handleOptimizationStarted() {
+		isOptimizing = true;
+		startPolling();
+	}
+
 	function handleOptimizationCancelled() {
 		stopPolling();
 		isOptimizing = false;
@@ -133,24 +131,29 @@
 		stopPolling();
 	});
 
-	async function removeDriver(routeId: string) {
+	async function removeDriver(driverId: string) {
 		if (isLoading) return;
+
+		// Find the route for this driver
+		const route = data.routes.find((r) => r.driver_id === driverId);
+		if (!route) {
+			toast.error('Could not find route for driver');
+			return;
+		}
 
 		if (!confirm('Are you sure you want to remove this driver from the map?')) {
 			return;
 		}
 
 		isLoading = true;
-		errorMessage = '';
 
 		try {
-			await mapApi.removeDriver(data.map.id, routeId);
-
-			// Refresh the page data
+			await mapApi.removeDriver(data.map.id, route.id);
 			await invalidateAll();
+			toast.success('Driver removed');
 		} catch (err) {
-			errorMessage = err instanceof ApiError ? err.message : 'Failed to remove driver';
-			console.error('Error removing driver:', err);
+			const message = err instanceof ApiError ? err.message : 'Failed to remove driver';
+			toast.error(message);
 		} finally {
 			isLoading = false;
 		}
@@ -161,28 +164,36 @@
 
 		if (
 			!confirm(
-				'Switching to edit mode will remove all optimized route stops. Are you sure you want to continue?'
+				'Switching to edit mode will remove all optimized route data. Are you sure you want to continue?'
 			)
 		) {
 			return;
 		}
 
 		isLoading = true;
-		errorMessage = '';
 
 		try {
 			await mapApi.resetOptimization(data.map.id);
-
-			// Switch to edit mode
 			isViewMode = false;
-
-			// Refresh the page data
 			await invalidateAll();
 		} catch (err) {
-			errorMessage = err instanceof Error ? err.message : 'Failed to switch to edit mode';
-			console.error('Error switching to edit mode:', err);
+			toast.error('Failed to switch to edit mode');
 		} finally {
 			isLoading = false;
+		}
+	}
+
+	async function handleDeleteMap() {
+		if (!confirm('Are you sure you want to delete this map? This action cannot be undone.')) {
+			return;
+		}
+
+		try {
+			await mapApi.delete(data.map.id);
+			toast.success('Map deleted');
+			window.location.href = '/maps';
+		} catch (err) {
+			toast.error('Failed to delete map');
 		}
 	}
 </script>
@@ -191,118 +202,95 @@
 	<title>{data.map.title} - Routing Project</title>
 </svelte:head>
 
-<div class="space-y-6">
-	<!-- Map (shown in all states) -->
-	<div class="h-[500px]">
-		<MapView
-			stops={data.stops}
-			routes={data.routes}
-			drivers={data.allDrivers}
-			depot={selectedDepot}
-			bind:hiddenDrivers
-			bind:focusedStopId
-		/>
-	</div>
+<div class="flex h-full flex-col">
+	<MapHeader
+		title={data.map.title}
+		mapId={data.map.id}
+		{pageState}
+		onDelete={handleDeleteMap}
+	/>
 
-	<!-- Page State: Viewing -->
-	{#if pageState === 'viewing'}
-		<div class="space-y-6">
-			<RouteCards
-				bind:focusedStopId
-				bind:hiddenDrivers
-				stops={data.stops}
-				assignedDrivers={data.assignedDrivers}
-				routes={data.routes}
-			/>
-
-			<Card>
-				<CardHeader>
-					<CardTitle class="flex items-center gap-2">
-						<Route class="h-5 w-5 text-primary" />
-						Detailed Routes Table
-					</CardTitle>
-					<CardDescription>Detailed table view of stops organized by driver</CardDescription>
-				</CardHeader>
-				<CardContent>
-					<DetailedRoutesTable
-						bind:focusedStopId
-						stops={data.stops}
-						assignedDrivers={data.assignedDrivers}
-					/>
-				</CardContent>
-			</Card>
-
-			<div class="flex justify-center">
-				<Button size="lg" onclick={switchToEditMode} disabled={isLoading} variant="outline">
-					Switch to Edit Mode
-				</Button>
-			</div>
-		</div>
-
-		<!-- Page State: Optimizing -->
-	{:else if pageState === 'optimizing'}
-		<OptimizationLoadingCard mapId={data.map.id} onCancel={handleOptimizationCancelled} />
-
-		<!-- Page State: Editing -->
-	{:else}
-		<Card>
-			<CardHeader>
-				<CardTitle class="flex items-center gap-2">
-					<MapPin class="h-5 w-5 text-primary" />
-					Stops
-				</CardTitle>
-				<CardDescription>Where you're going.</CardDescription>
-			</CardHeader>
-			<CardContent>
-				<EditStopsDataTable
+	<MapDetailLayout>
+		{#snippet children()}
+			<div class="relative h-full">
+				<MapView
 					stops={data.stops}
-					mapId={data.map.id}
-					onUpdate={() => invalidateAll()}
-					onCreate={() => invalidateAll()}
-					onDelete={() => invalidateAll()}
-					onZoomToStop={(stopId) => (focusedStopId = stopId)}
+					routes={data.routes}
+					drivers={data.allDrivers}
+					depot={selectedDepot}
+					bind:hiddenDrivers
+					bind:focusedStopId
 				/>
-			</CardContent>
-		</Card>
 
-		<div class="flex flex-col gap-6 lg:flex-row">
-			<Card>
-				<CardHeader>
-					<CardTitle class="flex items-center gap-2">
-						<Truck class="h-5 w-5 text-primary" />
-						Drivers
-					</CardTitle>
-					<CardDescription>Assign drivers to this map for route optimization</CardDescription>
-				</CardHeader>
-				<CardContent class="space-y-4">
-					{#if errorMessage}
-						<div
-							class="rounded-md border border-destructive bg-destructive/10 p-3 text-sm text-destructive"
-						>
-							{errorMessage}
+				<!-- Optimization overlay -->
+				{#if pageState === 'optimizing'}
+					<div
+						class="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm"
+					>
+						<div class="flex flex-col items-center gap-3">
+							<div
+								class="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent"
+							></div>
+							<p class="text-sm text-muted-foreground">Optimizing routes...</p>
 						</div>
-					{/if}
+					</div>
+				{/if}
+			</div>
+		{/snippet}
 
-					<EditDriversTable
+		{#snippet sidebar()}
+			<SidebarPanel
+				{pageState}
+				stopsCount={data.stops.length}
+				driversCount={data.assignedDrivers.length}
+				routesCount={data.routes.length}
+			>
+				{#snippet stopsTab()}
+					<StopsTab
+						stops={data.stops}
+						mapId={data.map.id}
+						readonly={pageState === 'viewing'}
+						onUpdate={() => invalidateAll()}
+						onCreate={() => invalidateAll()}
+						onDelete={() => invalidateAll()}
+						onZoomToStop={(stopId) => (focusedStopId = stopId)}
+					/>
+				{/snippet}
+
+				{#snippet driversTab()}
+					<DriversTab
 						assignedDrivers={data.assignedDrivers}
 						allDrivers={data.allDrivers}
 						mapId={data.map.id}
-						{isLoading}
+						isLoading={isLoading}
 						onRemoveDriver={removeDriver}
 					/>
-				</CardContent>
-			</Card>
+				{/snippet}
 
-			<OptimizationCard
-				assignedDrivers={data.assignedDrivers}
-				stops={data.stops}
+				{#snippet routesTab()}
+					<RoutesTab
+						stops={data.stops}
+						assignedDrivers={data.assignedDrivers}
+						routes={data.routes}
+						bind:hiddenDrivers
+						onZoomToStop={(stopId) => (focusedStopId = stopId)}
+					/>
+				{/snippet}
+			</SidebarPanel>
+		{/snippet}
+
+		{#snippet footer()}
+			<OptimizationFooter
 				map={data.map}
+				stops={data.stops}
 				depots={data.depots}
-				bind:isOptimizing
+				assignedDrivers={data.assignedDrivers}
+				{pageState}
 				bind:selectedDepotId
-				onRoutesOptimized={() => invalidateAll()}
-				onDepotCreated={() => invalidateAll()}
+				onOptimize={handleOptimizationStarted}
+				onCancel={handleOptimizationCancelled}
+				onSwitchToEdit={switchToEditMode}
 			/>
-		</div>
-	{/if}
+		{/snippet}
+	</MapDetailLayout>
 </div>

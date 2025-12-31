@@ -446,10 +446,6 @@
 
 		<!-- Pagination -->
 		<div class="flex flex-col items-center justify-between gap-4 px-2 sm:flex-row">
-			<div class="flex-1 text-sm text-muted-foreground">
-				{table.getFilteredSelectedRowModel().rows.length} of{' '}
-				{table.getFilteredRowModel().rows.length} row(s) selected.
-			</div>
 			<div class="flex items-center space-x-4 sm:space-x-6 lg:space-x-8">
 				<div class="flex items-center space-x-2">
 					<p class="hidden text-sm font-medium sm:block">Rows per page</p>
