@@ -9,8 +9,8 @@ export const load: PageServerLoad = async ({ params }) => {
 		const publicRoute = await routeService.getPublicRoute(params.routeId);
 
 		// Determine org ID: from public route or authenticated user
-		const organizationId = publicRoute?.organization_id
-			?? requirePermission('routes:read').organization_id;
+		const organizationId =
+			publicRoute?.organization_id ?? requirePermission('routes:read').organization_id;
 
 		return await routeService.getRouteWithDetails(params.routeId, organizationId);
 	} catch (err) {

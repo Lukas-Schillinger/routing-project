@@ -64,7 +64,7 @@
 
 <div class="flex h-full flex-col">
 	<!-- Summary Header -->
-	<div class="flex items-center justify-between border-b border-border/50 px-4 py-3">
+	<div class="flex items-center justify-between border-b border-border/50 py-3">
 		<div class="flex items-center gap-1.5 text-sm text-muted-foreground">
 			<Truck class="h-3.5 w-3.5" />
 			<span>{assignedDrivers.length} driver{assignedDrivers.length !== 1 ? 's' : ''}</span>
@@ -142,7 +142,7 @@
 	</div>
 
 	<!-- Driver List -->
-	<div class="flex-1 space-y-2 overflow-auto p-4">
+	<div class="flex-1 space-y-2 overflow-auto py-4">
 		{#if assignedDrivers.length === 0}
 			<div class="flex flex-col items-center justify-center py-12 text-center">
 				<div class="flex h-10 w-10 items-center justify-center rounded-full bg-muted">

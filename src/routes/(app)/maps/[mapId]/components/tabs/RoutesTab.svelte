@@ -126,7 +126,7 @@
 
 <div class="flex h-full flex-col">
 	<!-- Summary Header -->
-	<div class="flex items-center justify-between border-b border-border/50 px-4 py-3">
+	<div class="flex items-center justify-between border-b border-border/50 py-3">
 		<div class="flex items-center gap-4 text-sm">
 			<span class="flex items-center gap-1.5 text-muted-foreground">
 				<Route class="h-3.5 w-3.5" />
@@ -144,7 +144,7 @@
 	</div>
 
 	<!-- Routes List -->
-	<div class="flex-1 space-y-2 overflow-auto p-4">
+	<div class="flex-1 space-y-2 overflow-auto py-4">
 		{#each assignedDrivers as driver (driver.id)}
 			{@const driverStops = routesByDriver.get(driver.id) || []}
 			{@const stats = getRouteStats(driverStops, driver.id)}
@@ -152,108 +152,105 @@
 			{@const isHidden = isDriverHidden(driver.id)}
 			{@const isExpanded = expandedRoutes.has(driver.id)}
 
-				<div
-				class="rounded-lg border border-border/50 transition-colors"
-				class:opacity-50={isHidden}
-			>
-					<!-- Route Header -->
-					<button
-						type="button"
-						class="flex w-full items-center gap-3 p-3 text-left hover:bg-accent/30"
-						onclick={() => toggleExpanded(driver.id)}
-					>
-						<Avatar.Root class="h-9 w-9 border border-border/50">
-							<Avatar.Image src={getIdenticon(driver)} alt={driver.name} />
-							<Avatar.Fallback class="text-xs">
-								{driver.name.slice(0, 2).toUpperCase()}
-							</Avatar.Fallback>
-						</Avatar.Root>
+			<div class="rounded-lg border border-border/50 transition-colors" class:opacity-50={isHidden}>
+				<!-- Route Header -->
+				<button
+					type="button"
+					class="flex w-full items-center gap-3 p-3 text-left hover:bg-accent/30"
+					onclick={() => toggleExpanded(driver.id)}
+				>
+					<Avatar.Root class="h-9 w-9 border border-border/50">
+						<Avatar.Image src={getIdenticon(driver)} alt={driver.name} />
+						<Avatar.Fallback class="text-xs">
+							{driver.name.slice(0, 2).toUpperCase()}
+						</Avatar.Fallback>
+					</Avatar.Root>
 
-						<div class="min-w-0 flex-1">
-							<p class="truncate text-sm font-medium">{driver.name}</p>
-							<div class="flex items-center gap-3 text-xs text-muted-foreground">
-								<span>{stats.totalStops} stops</span>
-								{#if stats.duration !== '0m'}
-									<span>{stats.duration}</span>
-								{/if}
-							</div>
+					<div class="min-w-0 flex-1">
+						<p class="truncate text-sm font-medium">{driver.name}</p>
+						<div class="flex items-center gap-3 text-xs text-muted-foreground">
+							<span>{stats.totalStops} stops</span>
+							{#if stats.duration !== '0m'}
+								<span>{stats.duration}</span>
+							{/if}
 						</div>
+					</div>
 
-						<div class="flex items-center gap-1">
+					<div class="flex items-center gap-1">
+						<Button
+							variant="ghost"
+							size="icon"
+							class="h-7 w-7"
+							onclick={(e: MouseEvent) => {
+								e.stopPropagation();
+								toggleDriverVisibility(driver);
+							}}
+						>
+							{#if isHidden}
+								<EyeOff class="h-3.5 w-3.5" />
+							{:else}
+								<Eye class="h-3.5 w-3.5" />
+							{/if}
+						</Button>
+
+						{#if route}
 							<Button
 								variant="ghost"
 								size="icon"
 								class="h-7 w-7"
-								onclick={(e: MouseEvent) => {
-									e.stopPropagation();
-									toggleDriverVisibility(driver);
-								}}
+								href="/routes/{route.id}"
+								onclick={(e: MouseEvent) => e.stopPropagation()}
 							>
-								{#if isHidden}
-									<EyeOff class="h-3.5 w-3.5" />
-								{:else}
-									<Eye class="h-3.5 w-3.5" />
-								{/if}
+								<ExternalLink class="h-3.5 w-3.5" />
 							</Button>
+							<Button
+								variant="ghost"
+								size="icon"
+								class="h-7 w-7"
+								href="/routes/{route.id}/printable"
+								target="_blank"
+								onclick={(e: MouseEvent) => e.stopPropagation()}
+							>
+								<Printer class="h-3.5 w-3.5" />
+							</Button>
+						{/if}
 
-							{#if route}
-								<Button
-									variant="ghost"
-									size="icon"
-									class="h-7 w-7"
-									href="/routes/{route.id}"
-									onclick={(e: MouseEvent) => e.stopPropagation()}
+						<ChevronDown
+							class="h-4 w-4 transition-transform duration-200 {isExpanded ? 'rotate-180' : ''}"
+						/>
+					</div>
+				</button>
+
+				<!-- Stops List (Collapsible) -->
+				{#if isExpanded}
+					<div class="border-t border-border/50 px-3 py-2" transition:slide={{ duration: 200 }}>
+						{#each driverStops as stop, index (stop.stop.id)}
+							<button
+								type="button"
+								class="flex w-full items-start gap-3 rounded-md p-2 text-left transition-colors hover:bg-accent/50"
+								onclick={() => onZoomToStop(stop.stop.id)}
+							>
+								<div
+									class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary"
 								>
-									<ExternalLink class="h-3.5 w-3.5" />
-								</Button>
-								<Button
-									variant="ghost"
-									size="icon"
-									class="h-7 w-7"
-									href="/routes/{route.id}/print"
-									target="_blank"
-									onclick={(e: MouseEvent) => e.stopPropagation()}
-								>
-									<Printer class="h-3.5 w-3.5" />
-								</Button>
-							{/if}
+									{index + 1}
+								</div>
+								<div class="min-w-0 flex-1">
+									<p class="truncate text-sm">
+										{stop.stop.contact_name || 'Unnamed Stop'}
+									</p>
+									<p class="truncate text-xs text-muted-foreground">
+										{stop.location.address_line_1}
+									</p>
+								</div>
+							</button>
+						{/each}
 
-							<ChevronDown
-								class="h-4 w-4 transition-transform duration-200 {isExpanded ? 'rotate-180' : ''}"
-							/>
-						</div>
-					</button>
-
-					<!-- Stops List (Collapsible) -->
-					{#if isExpanded}
-						<div class="border-t border-border/50 px-3 py-2" transition:slide={{ duration: 200 }}>
-							{#each driverStops as stop, index (stop.stop.id)}
-								<button
-									type="button"
-									class="flex w-full items-start gap-3 rounded-md p-2 text-left transition-colors hover:bg-accent/50"
-									onclick={() => onZoomToStop(stop.stop.id)}
-								>
-									<div
-										class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary"
-									>
-										{index + 1}
-									</div>
-									<div class="min-w-0 flex-1">
-										<p class="truncate text-sm">
-											{stop.stop.contact_name || 'Unnamed Stop'}
-										</p>
-										<p class="truncate text-xs text-muted-foreground">
-											{stop.location.address_line_1}
-										</p>
-									</div>
-								</button>
-							{/each}
-
-							{#if driverStops.length === 0}
-								<p class="py-4 text-center text-sm text-muted-foreground">No stops assigned</p>
-							{/if}
-						</div>
-					{/if}
+						{#if driverStops.length === 0}
+							<p class="py-4 text-center text-sm text-muted-foreground">No stops assigned</p>
+						{/if}
+					</div>
+				{/if}
 			</div>
 		{/each}
 
