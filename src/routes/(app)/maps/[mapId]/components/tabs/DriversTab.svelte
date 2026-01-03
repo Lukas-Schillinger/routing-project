@@ -6,6 +6,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Command from '$lib/components/ui/command';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
+	import * as Empty from '$lib/components/ui/empty';
 	import * as Popover from '$lib/components/ui/popover';
 	import type { Driver } from '$lib/schemas/driver';
 	import { ApiError, mapApi } from '$lib/services/api';
@@ -144,13 +145,15 @@
 	<!-- Driver List -->
 	<div class="flex-1 space-y-2 overflow-auto py-4">
 		{#if assignedDrivers.length === 0}
-			<div class="flex flex-col items-center justify-center py-12 text-center">
-				<div class="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
-					<Truck class="h-5 w-5 text-muted-foreground" />
-				</div>
-				<p class="mt-3 text-sm font-medium">No drivers assigned</p>
-				<p class="mt-1 text-xs text-muted-foreground">Add drivers to optimize routes</p>
-			</div>
+			<Empty.Root>
+				<Empty.Header>
+					<Empty.Media variant="icon">
+						<Truck />
+					</Empty.Media>
+					<Empty.Title>No drivers yet</Empty.Title>
+					<Empty.Description>Add your first driver to get started</Empty.Description>
+				</Empty.Header>
+			</Empty.Root>
 		{:else}
 			{#each assignedDrivers as driver (driver.id)}
 				<div

@@ -67,9 +67,13 @@
 	--accent: var(--color-sand-100);
 	--accent-foreground: var(--color-forest-700);
 
-	/* Destructive: keep a dedicated red so it’s unambiguous */
+	/* Destructive: keep a dedicated red so it's unambiguous */
 	--destructive: oklch(0.62 0.25 25); /* clear red; keep your existing if preferred */
 	--destructive-foreground: oklch(0.98 0 0);
+
+	/* Warning: amber for cautionary states */
+	--warning: oklch(0.75 0.18 75);
+	--warning-foreground: oklch(0.25 0.05 75);
 
 	/* Borders / inputs / focus */
 	--border: var(--color-sand-200);
@@ -111,6 +115,8 @@
 	--accent-foreground: oklch(0.985 0 0);
 	--destructive: oklch(0.704 0.191 22.216);
 	--destructive-foreground: oklch(0.985 0 0);
+	--warning: oklch(0.8 0.15 75);
+	--warning-foreground: oklch(0.2 0.05 75);
 	--border: oklch(0.275 0 0);
 	--input: oklch(0.325 0 0);
 	--ring: oklch(0.556 0 0);
@@ -149,6 +155,9 @@
 	--color-accent: var(--accent);
 	--color-accent-foreground: var(--accent-foreground);
 	--color-destructive: var(--destructive);
+	--color-destructive-foreground: var(--destructive-foreground);
+	--color-warning: var(--warning);
+	--color-warning-foreground: var(--warning-foreground);
 	--color-border: var(--border);
 	--color-input: var(--input);
 	--color-ring: var(--ring);

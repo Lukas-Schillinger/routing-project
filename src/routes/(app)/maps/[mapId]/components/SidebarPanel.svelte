@@ -50,6 +50,8 @@
 					<span>Stops</span>
 					{#if stopsCount > 0}
 						<span class="ml-1 text-xs text-muted-foreground">({stopsCount})</span>
+					{:else}
+						<span class="ml-1 text-xs text-warning">({stopsCount})</span>
 					{/if}
 				</Tabs.Trigger>
 
@@ -59,6 +61,8 @@
 						<span>Drivers</span>
 						{#if driversCount > 0}
 							<span class="ml-1 text-xs text-muted-foreground">({driversCount})</span>
+						{:else}
+							<span class="ml-1 text-xs text-warning">({driversCount})</span>
 						{/if}
 					</Tabs.Trigger>
 				{/if}
