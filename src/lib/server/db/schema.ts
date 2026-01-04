@@ -78,7 +78,9 @@ export const invitations = pgTable(
 		token_hash: text('token_hash').notNull(),
 		expires_at: ts('expires_at'),
 		used_at: timestamp('used_at', { withTimezone: true }),
-		mail_record_id: uuid('mail_record_id').references(() => mailRecords.id, { onDelete: 'set null' })
+		mail_record_id: uuid('mail_record_id').references(() => mailRecords.id, {
+			onDelete: 'set null'
+		})
 	},
 	(t) => [
 		index('invitations_org_idx').on(t.organization_id),
@@ -98,9 +100,14 @@ export const loginTokens = pgTable(
 			.notNull(),
 		token_hash: text('token_hash').notNull(),
 		expires_at: ts('expires_at'),
-		mail_record_id: uuid('mail_record_id').references(() => mailRecords.id, { onDelete: 'set null' })
+		mail_record_id: uuid('mail_record_id').references(() => mailRecords.id, {
+			onDelete: 'set null'
+		})
 	},
-	(t) => [index('login_tokens_org_idx').on(t.organization_id), index('login_tokens_user_idx').on(t.user_id)]
+	(t) => [
+		index('login_tokens_org_idx').on(t.organization_id),
+		index('login_tokens_user_idx').on(t.user_id)
+	]
 );
 
 export const drivers = pgTable(
@@ -280,6 +287,37 @@ export const routes = pgTable(
 	]
 );
 
+export const routeShares = pgTable(
+	'route_shares',
+	{
+		id,
+		organization_id: orgId.references(() => organizations.id, { onDelete: 'cascade' }),
+		route_id: uuid('route_id')
+			.notNull()
+			.references(() => routes.id, { onDelete: 'cascade' }),
+		created_by: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
+		created_at: ts('created_at'),
+		updated_at: ts('updated_at'),
+
+		share_type: varchar('share_type', { length: 16 }).$type<'email' | 'sms'>().notNull(),
+
+		// Access control
+		access_token_hash: varchar('access_token_hash', { length: 64 }).notNull(),
+		expires_at: timestamp('expires_at', { withTimezone: true }).notNull(),
+		revoked_at: timestamp('revoked_at', { withTimezone: true }),
+
+		// Delivery tracking - recipient info available via mail_record
+		mail_record_id: uuid('mail_record_id').references(() => mailRecords.id, {
+			onDelete: 'set null'
+		})
+	},
+	(t) => [
+		index('route_shares_org_idx').on(t.organization_id),
+		index('route_shares_route_idx').on(t.route_id),
+		index('route_shares_token_idx').on(t.access_token_hash)
+	]
+);
+
 export const matrices = pgTable('matrices', {
 	id,
 	organization_id: orgId.references(() => organizations.id, { onDelete: 'cascade' }),
@@ -342,7 +380,9 @@ export const mailRecords = pgTable(
 		created_at: ts('created_at'),
 
 		resend_id: varchar('resend_id', { length: 64 }).notNull().unique(),
-		type: varchar('type', { length: 32 }).$type<'invitation' | 'login_token'>().notNull(),
+		type: varchar('type', { length: 32 })
+			.$type<'invitation' | 'login_token' | 'route_share'>()
+			.notNull(),
 		to_email: text('to_email').notNull(),
 		from_email: text('from_email').notNull(),
 		subject: varchar('subject', { length: 500 }),
@@ -377,6 +417,7 @@ export const organizationsRelations = relations(organizations, ({ many }) => ({
 	driverMapMemberships: many(driverMapMemberships),
 	depots: many(depots),
 	routes: many(routes),
+	routeShares: many(routeShares),
 	matrices: many(matrices),
 	files: many(files),
 	optimizationJobs: many(optimizationJobs),
@@ -477,7 +518,7 @@ export const depotsRelations = relations(depots, ({ one, many }) => ({
 	optimizationJobs: many(optimizationJobs)
 }));
 
-export const routesRelations = relations(routes, ({ one }) => ({
+export const routesRelations = relations(routes, ({ one, many }) => ({
 	organization: one(organizations, {
 		fields: [routes.organization_id],
 		references: [organizations.id]
@@ -493,6 +534,26 @@ export const routesRelations = relations(routes, ({ one }) => ({
 	depot: one(depots, {
 		fields: [routes.depot_id],
 		references: [depots.id]
+	}),
+	shares: many(routeShares)
+}));
+
+export const routeSharesRelations = relations(routeShares, ({ one }) => ({
+	organization: one(organizations, {
+		fields: [routeShares.organization_id],
+		references: [organizations.id]
+	}),
+	route: one(routes, {
+		fields: [routeShares.route_id],
+		references: [routes.id]
+	}),
+	createdBy: one(users, {
+		fields: [routeShares.created_by],
+		references: [users.id]
+	}),
+	mailRecord: one(mailRecords, {
+		fields: [routeShares.mail_record_id],
+		references: [mailRecords.id]
 	})
 }));
 
@@ -544,7 +605,8 @@ export const mailRecordsRelations = relations(mailRecords, ({ one, many }) => ({
 		references: [organizations.id]
 	}),
 	invitations: many(invitations),
-	loginTokens: many(loginTokens)
+	loginTokens: many(loginTokens),
+	routeShares: many(routeShares)
 }));
 
 export const invitationsRelations = relations(invitations, ({ one }) => ({

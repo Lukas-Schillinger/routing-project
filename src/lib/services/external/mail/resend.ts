@@ -1,10 +1,12 @@
 import { env } from '$env/dynamic/private';
 import type { Invitation, LoginToken } from '$lib/schemas/auth.js';
 import type { MailRecordType } from '$lib/schemas/mail-record.js';
+import type { RouteShare } from '$lib/schemas/route-share.js';
 import { ServiceError } from '$lib/services/server/errors.js';
 import { invitationService } from '$lib/services/server/invitation.service.js';
 import { loginTokenService } from '$lib/services/server/login-token.service.js';
 import { mailRecordService } from '$lib/services/server/mail-record.service.js';
+import { routeShareService } from '$lib/services/server/route-share.service.js';
 import { organizationService, userService } from '$lib/services/server/user.service.js';
 import { Resend } from 'resend';
 import { renderClient } from './render.js';
@@ -113,6 +115,35 @@ export class ResendClient {
 
 		// Link mail record to login token
 		await loginTokenService.setMailRecordId(loginToken.id, mailRecordId);
+	}
+
+	async sendRouteShareEmail(
+		share: RouteShare,
+		recipientEmail: string,
+		token: string,
+		routeTitle: string,
+		driverName: string,
+		origin: string
+	): Promise<void> {
+		const routeUrl = `${origin}/routes/${share.route_id}?token=${token}`;
+
+		const { html, text } = await renderClient.renderRouteShare({
+			route_url: routeUrl,
+			route_title: routeTitle,
+			driver_name: driverName
+		});
+
+		const mailRecordId = await this.sendEmail({
+			organizationId: share.organization_id,
+			type: 'route_share',
+			to: recipientEmail,
+			subject: `Route shared: ${routeTitle}`,
+			html,
+			text
+		});
+
+		// Link mail record to share
+		await routeShareService.setMailRecordId(share.id, mailRecordId);
 	}
 }
 

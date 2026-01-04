@@ -23,7 +23,18 @@ type MagicInviteRequest = {
 	props: MagicInviteData;
 };
 
-type RenderRequest = MagicLinkRequest | MagicInviteRequest;
+export type RouteShareData = {
+	route_url: string;
+	route_title: string;
+	driver_name: string;
+};
+
+type RouteShareRequest = {
+	template_id: 'route_share';
+	props: RouteShareData;
+};
+
+type RenderRequest = MagicLinkRequest | MagicInviteRequest | RouteShareRequest;
 
 // Response types
 type RenderResponseSuccess = {
@@ -114,6 +125,13 @@ export class RenderClient {
 	async renderMagicInvite(data: MagicInviteData): Promise<RenderedEmail> {
 		return this.post({
 			template_id: 'magic_invite',
+			props: data
+		});
+	}
+
+	async renderRouteShare(data: RouteShareData): Promise<RenderedEmail> {
+		return this.post({
+			template_id: 'route_share',
 			props: data
 		});
 	}

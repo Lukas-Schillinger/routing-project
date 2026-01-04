@@ -10,5 +10,6 @@ export * from './mail-record.js';
 export * from './map.js';
 export * from './organization.js';
 export * from './route.js';
+export * from './route-share.js';
 export * from './stop.js';
 export * from './user.js';
