@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
+	import EditOrCreateMapPopover from '$lib/components/EditOrCreateMapPopover';
 	import MapBoxStaticMap from '$lib/components/MapBoxStaticMap.svelte';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
@@ -15,6 +16,7 @@
 		Map,
 		MapPin,
 		MoreHorizontal,
+		Pencil,
 		Route as RouteIcon,
 		Trash2,
 		Truck
@@ -164,9 +166,25 @@
 					</Button>
 				</DropdownMenu.Trigger>
 				<DropdownMenu.Content align="end">
+					<EditOrCreateMapPopover
+						mode="edit"
+						{map}
+						onSuccess={() => invalidateAll()}
+						triggerClass="w-full"
+					>
+						{#snippet children({ props })}
+							<button
+								{...props}
+								class="relative flex w-full cursor-default items-center rounded-sm px-2 py-1.5 text-sm text-muted-foreground outline-none select-none hover:bg-accent hover:text-accent-foreground"
+							>
+								<Pencil class="mr-4 h-4 w-4" />
+								Edit
+							</button>
+						{/snippet}
+					</EditOrCreateMapPopover>
 					<DropdownMenu.Item onclick={handleCopyId}>
 						<Copy class="mr-2 h-4 w-4" />
-						Copy ID
+						<div class="text-muted-foreground">Copy ID</div>
 					</DropdownMenu.Item>
 					<DropdownMenu.Separator />
 					<DropdownMenu.Item class="text-destructive" onclick={handleDelete}>

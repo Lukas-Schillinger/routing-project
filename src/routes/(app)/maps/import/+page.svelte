@@ -126,8 +126,9 @@
 			};
 		});
 
+		const title = selectedFile?.name ? selectedFile.name : `Map ${new Date().toLocaleDateString()}`;
 		const res = await mapApi.create({
-			title: `Map ${new Date().toLocaleDateString()}`,
+			title,
 			stops: stops
 		});
 

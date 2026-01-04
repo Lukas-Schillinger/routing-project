@@ -194,7 +194,13 @@
 </svelte:head>
 
 <div class="flex h-full flex-col">
-	<MapHeader title={data.map.title} mapId={data.map.id} {pageState} onDelete={handleDeleteMap} />
+	<MapHeader
+		title={data.map.title}
+		mapId={data.map.id}
+		{pageState}
+		onDelete={handleDeleteMap}
+		onUpdate={() => invalidateAll()}
+	/>
 
 	<MapDetailLayout>
 		{#snippet children()}
