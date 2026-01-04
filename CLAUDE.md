@@ -4,6 +4,7 @@
 - Use shadcn-svelte components with Tailwind CSS for styling.
 - Code should functional and avoid functions with side effects where possible.
 - Ensure all pages are mobile compatible.
+- Prefer type over interface. Use string literals instead of enums.
 
 ## Architecture Overview
 
