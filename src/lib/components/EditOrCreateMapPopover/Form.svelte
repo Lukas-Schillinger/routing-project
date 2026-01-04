@@ -4,7 +4,7 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { createMapSchema, type Map } from '$lib/schemas/map';
-	import { ApiError } from '$lib/services/api/base';
+	import { ServiceError } from '$lib/errors';
 	import { mapApi } from '$lib/services/api/maps';
 	import { Check, Loader2 } from 'lucide-svelte';
 	import { defaults, superForm } from 'sveltekit-superforms';
@@ -49,11 +49,11 @@
 				onSuccess(result.map);
 				open = false;
 			} catch (err) {
-				if (err instanceof ApiError) {
-					if (err.status === 409) form.errors.title = ['A map with this title already exists'];
+				if (err instanceof ServiceError) {
+					if (err.statusCode === 409) form.errors.title = ['A map with this title already exists'];
 					else
 						form.message =
-							err.status === 403 ? `You do not have permission to ${mode} maps` : err.message;
+							err.statusCode === 403 ? `You do not have permission to ${mode} maps` : err.message;
 				} else {
 					form.message = 'An unexpected error occurred';
 				}

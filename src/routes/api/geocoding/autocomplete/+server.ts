@@ -1,6 +1,7 @@
+import { handleApiError } from '$lib/errors';
 import { mapboxGeocoding } from '$lib/services/external/mapbox';
 import { requirePermissionApi } from '$lib/services/server/permissions';
-import { error, json } from '@sveltejs/kit';
+import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
 /**
@@ -38,7 +39,6 @@ export const GET: RequestHandler = async ({ url }) => {
 
 		return json({ features: results });
 	} catch (err) {
-		console.error('Geocoding autocomplete error:', err);
-		error(500, 'Failed to geocode address');
+		handleApiError(err, 'Failed to geocode address');
 	}
 };

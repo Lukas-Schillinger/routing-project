@@ -1,11 +1,11 @@
 // User management endpoints (admin only)
 
+import { handleApiError, ServiceError } from '$lib/errors';
 import type { PublicUser } from '$lib/schemas';
 import { updateUserRoleSchema } from '$lib/schemas';
-import { ServiceError } from '$lib/services/server/errors';
 import { requirePermissionApi } from '$lib/services/server/permissions';
 import { userService } from '$lib/services/server/user.service';
-import { error, json } from '@sveltejs/kit';
+import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
 // PATCH /api/auth/users/[userId] - Update user role
@@ -16,7 +16,7 @@ export const PATCH: RequestHandler = async ({ params, request }): Promise<Respon
 
 	// Prevent self-update
 	if (userId === user.id) {
-		error(400, 'Cannot update your own role');
+		throw ServiceError.badRequest('Cannot update your own role');
 	}
 
 	try {
@@ -30,11 +30,7 @@ export const PATCH: RequestHandler = async ({ params, request }): Promise<Respon
 		);
 		return json(result);
 	} catch (err) {
-		if (err instanceof ServiceError) {
-			error(err.statusCode, err.message);
-		}
-		console.error('Error updating user role:', err);
-		error(500, 'Failed to update user role');
+		handleApiError(err, 'Failed to update user role');
 	}
 };
 
@@ -46,17 +42,13 @@ export const DELETE: RequestHandler = async ({ params }): Promise<Response> => {
 
 	// Prevent self-deletion
 	if (userId === user.id) {
-		error(400, 'Cannot delete your own account');
+		throw ServiceError.badRequest('Cannot delete your own account');
 	}
 
 	try {
 		const result: { success: true } = await userService.deleteUser(userId, user.organization_id);
 		return json(result);
 	} catch (err) {
-		if (err instanceof ServiceError) {
-			error(err.statusCode, err.message);
-		}
-		console.error('Error deleting user:', err);
-		error(500, 'Failed to delete user');
+		handleApiError(err, 'Failed to delete user');
 	}
 };

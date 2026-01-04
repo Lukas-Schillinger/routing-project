@@ -15,18 +15,18 @@ export const load: PageServerLoad = async (event) => {
 	const email = event.url.searchParams.get('email');
 
 	if (!token) {
-		error(400, 'Missing token parameter');
+		error(400, { code: 'BAD_REQUEST', message: 'Missing token parameter' });
 	}
 
 	if (!email) {
-		error(400, 'Missing email parameter');
+		error(400, { code: 'BAD_REQUEST', message: 'Missing email parameter' });
 	}
 
 	try {
 		const invitation = await invitationService.getInvitationFromToken(token, email);
 
 		if (!invitation) {
-			error(400, 'Invalid or expired invitation link');
+			error(400, { code: 'BAD_REQUEST', message: 'Invalid or expired invitation link' });
 		}
 
 		// The intended user of the invitation is already logged in
@@ -48,7 +48,7 @@ export const load: PageServerLoad = async (event) => {
 		redirect(302, '/maps');
 	} catch (err) {
 		if (err instanceof ServiceError) {
-			error(err.statusCode, err.message);
+			error(err.statusCode, { code: err.code, message: err.message });
 		}
 
 		// Re-throw redirect errors
@@ -57,6 +57,6 @@ export const load: PageServerLoad = async (event) => {
 		}
 
 		console.error('Error redeeming invitation:', err);
-		error(500, 'Failed to redeem invitation');
+		error(500, { code: 'INTERNAL_ERROR', message: 'Failed to redeem invitation' });
 	}
 };

@@ -6,7 +6,7 @@
 	import { Switch } from '$lib/components/ui/switch';
 	import type { DepotWithLocationJoin } from '$lib/schemas/depot';
 	import type { LocationCreate } from '$lib/schemas/location';
-	import { ApiError } from '$lib/services/api/base';
+	import { ServiceError } from '$lib/errors';
 	import { depotApi } from '$lib/services/api/depots';
 	import { Check, LoaderCircle } from 'lucide-svelte';
 
@@ -120,10 +120,10 @@
 		} catch (err) {
 			console.error(`Error ${mode === 'create' ? 'creating' : 'updating'} depot:`, err);
 
-			if (err instanceof ApiError) {
-				if (err.status === 409) {
+			if (err instanceof ServiceError) {
+				if (err.statusCode === 409) {
 					error = 'A depot with this name already exists';
-				} else if (err.status === 403) {
+				} else if (err.statusCode === 403) {
 					error = `You do not have permission to ${mode} depots`;
 				} else {
 					error = err.message;

@@ -1,10 +1,11 @@
+import { ServiceError } from '$lib/errors';
 import { deleteSessionTokenCookie, invalidateSession } from '$lib/services/server/auth';
-import { error, json } from '@sveltejs/kit';
+import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async (event) => {
 	if (!event.locals.session) {
-		error(401, 'Unauthorized');
+		throw ServiceError.unauthorized('Unauthorized');
 	}
 
 	await invalidateSession(event.locals.session.id);

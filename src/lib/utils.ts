@@ -1,13 +1,13 @@
 import { createAvatar } from '@dicebear/core';
 import * as style from '@dicebear/identicon';
 import { clsx, type ClassValue } from 'clsx';
-import type { Permission } from './services/server/permissions';
 import TimeAgo from 'javascript-time-ago';
 import en from 'javascript-time-ago/locale/en';
 import { twMerge } from 'tailwind-merge';
 import type { Driver } from './schemas';
 import { locationCreateSchema, type LocationCreate } from './schemas/location';
 import type { GeocodingFeature } from './services/external/mapbox/types';
+import type { Permission } from './services/server/permissions';
 
 TimeAgo.addLocale(en);
 const timeAgo = new TimeAgo('en-US');
@@ -179,7 +179,8 @@ export type WithoutChildrenOrChild<T> = WithoutChildren<WithoutChild<T>>;
 export type WithElementRef<T, U extends HTMLElement = HTMLElement> = T & { ref?: U | null };
 
 /**
- * Check if the given permissions array includes the specified permission
+ * Client side permission checking utility. Used for selectively displaying UI elements
+ * according to user permissions.
  */
 export function checkPermission(permissions: Permission[], permission: Permission): boolean {
 	return permissions.includes(permission);

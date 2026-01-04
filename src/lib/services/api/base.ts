@@ -3,16 +3,7 @@
  * Provides centralized error handling and request configuration
  */
 
-export class ApiError extends Error {
-	constructor(
-		public status: number,
-		message: string,
-		public data?: unknown
-	) {
-		super(message);
-		this.name = 'ApiError';
-	}
-}
+import { ServiceError } from '$lib/errors';
 
 export class ApiClient {
 	private baseUrl: string;
@@ -47,21 +38,21 @@ export class ApiClient {
 			const data = await response.json().catch(() => ({}));
 
 			if (!response.ok) {
-				throw new ApiError(
-					response.status,
-					data.message || `Request failed: ${response.statusText}`,
-					data
-				);
+				throw ServiceError.fromResponse(response.status, data);
 			}
 
 			return data as T;
 		} catch (error) {
-			if (error instanceof ApiError) {
+			if (error instanceof ServiceError) {
 				throw error;
 			}
 
 			// Network or parsing errors
-			throw new ApiError(0, error instanceof Error ? error.message : 'An unknown error occurred');
+			throw new ServiceError(
+				error instanceof Error ? error.message : 'An unknown error occurred',
+				'NETWORK_ERROR',
+				0
+			);
 		}
 	}
 

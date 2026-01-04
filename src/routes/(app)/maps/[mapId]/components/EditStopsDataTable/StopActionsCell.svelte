@@ -4,7 +4,8 @@
 	import TableActionsDropdown from '$lib/components/TableActionsDropdown.svelte';
 	import DropdownMenuItem from '$lib/components/ui/dropdown-menu/dropdown-menu-item.svelte';
 	import type { StopWithLocation } from '$lib/schemas/stop';
-	import { ApiError, stopApi } from '$lib/services/api';
+	import { ServiceError } from '$lib/errors';
+	import { stopApi } from '$lib/services/api';
 	import { Pencil } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
@@ -35,7 +36,7 @@
 			await onDelete?.(stop.stop.id);
 			toast.success(`Stop Deleted`);
 		} catch (err) {
-			if (err instanceof ApiError) {
+			if (err instanceof ServiceError) {
 				toast.error(err.message);
 			} else {
 				toast.error('An unknown error occurred');

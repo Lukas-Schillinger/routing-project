@@ -7,7 +7,7 @@
 	import { Textarea } from '$lib/components/ui/textarea';
 	import type { LocationCreate } from '$lib/schemas/location';
 	import type { StopWithLocation } from '$lib/schemas/stop';
-	import { ApiError } from '$lib/services/api/base';
+	import { ServiceError } from '$lib/errors';
 	import { stopApi } from '$lib/services/api/stops';
 	import { Check, LoaderCircle } from 'lucide-svelte';
 
@@ -128,8 +128,8 @@
 		} catch (err) {
 			console.error(`Error ${mode === 'create' ? 'creating' : 'updating'} stop:`, err);
 
-			if (err instanceof ApiError) {
-				if (err.status === 403) {
+			if (err instanceof ServiceError) {
+				if (err.statusCode === 403) {
 					error = `You do not have permission to ${mode === 'create' ? 'create' : 'edit'} stops`;
 				} else {
 					error = err.message;

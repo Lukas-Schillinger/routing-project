@@ -6,7 +6,7 @@
 	import * as Card from '$lib/components/ui/card';
 	import * as Empty from '$lib/components/ui/empty/index.js';
 	import type { Invitation, MailRecord } from '$lib/schemas';
-	import { ApiError } from '$lib/services/api';
+	import { ServiceError } from '$lib/errors';
 	import { invitationsApi } from '$lib/services/api/auth';
 	import { formatDate } from '$lib/utils';
 	import { Mail, Trash2 } from 'lucide-svelte';
@@ -30,7 +30,7 @@
 			onDeleteInvitation();
 			toast.success('Invitation revoked');
 		} catch (err) {
-			if (err instanceof ApiError) {
+			if (err instanceof ServiceError) {
 				toast.error(err.message);
 			} else {
 				toast.error('Failed to revoke invitation');

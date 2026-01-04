@@ -17,7 +17,7 @@ export const load: PageServerLoad = async ({ params }) => {
 	const { mapId } = params;
 
 	if (!mapId) {
-		throw error(400, 'Map ID is required');
+		throw error(400, { code: 'BAD_REQUEST', message: 'Map ID is required' });
 	}
 
 	try {
@@ -51,7 +51,7 @@ export const load: PageServerLoad = async ({ params }) => {
 		};
 	} catch (err) {
 		if (err instanceof ServiceError) {
-			throw error(err.statusCode, err.message);
+			throw error(err.statusCode, { code: err.code, message: err.message });
 		}
 		throw err;
 	}

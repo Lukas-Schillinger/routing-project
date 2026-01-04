@@ -26,7 +26,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
 		return await routeService.getRouteWithDetails(params.routeId, user.organization_id);
 	} catch (err) {
 		if (err instanceof ServiceError) {
-			throw error(err.statusCode, err.message);
+			throw error(err.statusCode, { code: err.code, message: err.message });
 		}
 		throw err;
 	}

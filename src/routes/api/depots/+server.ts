@@ -1,12 +1,11 @@
 // GET /api/depots - List all depots for the organization
 // POST /api/depots - Create a new depot
 
+import { handleApiError } from '$lib/errors';
 import { depotCreateSchema } from '$lib/schemas/depot';
 import { depotService } from '$lib/services/server/depot.service';
-import { ServiceError } from '$lib/services/server/errors';
 import { requirePermissionApi } from '$lib/services/server/permissions';
-import { error, json } from '@sveltejs/kit';
-import { ZodError } from 'zod';
+import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async () => {
@@ -16,11 +15,7 @@ export const GET: RequestHandler = async () => {
 		const depots = await depotService.getDepots(user.organization_id);
 		return json(depots);
 	} catch (err) {
-		if (err instanceof ServiceError) {
-			error(err.statusCode, err.message);
-		}
-		console.error('Error fetching depots:', err);
-		error(500, 'Failed to fetch depots');
+		handleApiError(err, 'Failed to fetch depots');
 	}
 };
 
@@ -34,14 +29,6 @@ export const POST: RequestHandler = async ({ request }) => {
 
 		return json(depotWithLocation, { status: 201 });
 	} catch (err) {
-		if (err instanceof ZodError) {
-			const errorMessages = err.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ');
-			error(400, `Validation error: ${errorMessages}`);
-		}
-		if (err instanceof ServiceError) {
-			error(err.statusCode, err.message);
-		}
-		console.error('Error creating depot:', err);
-		error(500, 'Failed to create depot');
+		handleApiError(err, 'Failed to create depot');
 	}
 };

@@ -1,4 +1,5 @@
-import { mapService, ServiceError } from '$lib/services/server';
+import { handleApiError } from '$lib/errors';
+import { mapService } from '$lib/services/server';
 import { requirePermissionApi } from '$lib/services/server/permissions';
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
@@ -17,18 +18,7 @@ export const POST: RequestHandler = async ({ params }) => {
 		await mapService.resetOptimization(mapId, user.organization_id, user.id);
 
 		return json({ success: true });
-	} catch (error) {
-		console.error('Reset optimization error:', error);
-
-		if (error instanceof ServiceError) {
-			return json({ error: error.message }, { status: error.statusCode });
-		}
-
-		return json(
-			{
-				error: error instanceof Error ? error.message : 'Failed to reset optimization'
-			},
-			{ status: 500 }
-		);
+	} catch (err) {
+		handleApiError(err, 'Failed to reset optimization');
 	}
 };

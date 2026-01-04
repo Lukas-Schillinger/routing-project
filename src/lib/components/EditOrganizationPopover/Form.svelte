@@ -4,7 +4,7 @@
 	import { Label } from '$lib/components/ui/label';
 	import type { Organization } from '$lib/schemas/organization';
 	import { organizationApi } from '$lib/services/api/auth';
-	import { ApiError } from '$lib/services/api/base';
+	import { ServiceError } from '$lib/errors';
 	import { Check, LoaderCircle } from 'lucide-svelte';
 
 	// Props
@@ -60,8 +60,8 @@
 		} catch (err) {
 			console.error('Error updating organization:', err);
 
-			if (err instanceof ApiError) {
-				if (err.status === 403) {
+			if (err instanceof ServiceError) {
+				if (err.statusCode === 403) {
 					error = 'You do not have permission to update this organization';
 				} else {
 					error = err.message;

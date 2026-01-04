@@ -2,12 +2,11 @@
 // PATCH /api/drivers/[driverId] - Update a driver
 // DELETE /api/drivers/[driverId] - Delete a driver
 
+import { handleApiError } from '$lib/errors';
 import { driverUpdateSchema } from '$lib/schemas/driver';
 import { driverService } from '$lib/services/server/driver.service';
-import { ServiceError } from '$lib/services/server/errors';
 import { requirePermissionApi } from '$lib/services/server/permissions';
-import { error, json } from '@sveltejs/kit';
-import { ZodError } from 'zod';
+import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ params }) => {
@@ -19,11 +18,7 @@ export const GET: RequestHandler = async ({ params }) => {
 		const driver = await driverService.getDriverById(driverId, user.organization_id);
 		return json(driver);
 	} catch (err) {
-		if (err instanceof ServiceError) {
-			error(err.statusCode, err.message);
-		}
-		console.error('Error fetching driver:', err);
-		error(500, 'Failed to fetch driver');
+		handleApiError(err, 'Failed to fetch driver');
 	}
 };
 
@@ -45,15 +40,7 @@ export const PATCH: RequestHandler = async ({ params, request }) => {
 
 		return json(updatedDriver);
 	} catch (err) {
-		if (err instanceof ZodError) {
-			const errorMessages = err.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ');
-			error(400, `Validation error: ${errorMessages}`);
-		}
-		if (err instanceof ServiceError) {
-			error(err.statusCode, err.message);
-		}
-		console.error('Error updating driver:', err);
-		error(500, 'Failed to update driver');
+		handleApiError(err, 'Failed to update driver');
 	}
 };
 
@@ -66,10 +53,6 @@ export const DELETE: RequestHandler = async ({ params }) => {
 		const result = await driverService.deleteDriver(driverId, user.organization_id);
 		return json(result);
 	} catch (err) {
-		if (err instanceof ServiceError) {
-			error(err.statusCode, err.message);
-		}
-		console.error('Error deleting driver:', err);
-		error(500, 'Failed to delete driver');
+		handleApiError(err, 'Failed to delete driver');
 	}
 };

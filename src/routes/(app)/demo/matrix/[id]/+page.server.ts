@@ -4,7 +4,7 @@ import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
 	if (!locals.user) {
-		error(401, 'Unauthorized');
+		error(401, { code: 'UNAUTHORIZED', message: 'Unauthorized' });
 	}
 
 	const user = locals.user;
@@ -17,7 +17,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 		const depots = await depotService.getDepots(user.organization_id);
 
 		if (depots.length === 0) {
-			error(400, 'No depots found. Please create a depot first.');
+			error(400, { code: 'BAD_REQUEST', message: 'No depots found. Please create a depot first.' });
 		}
 
 		const firstDepot = depots[0];
@@ -38,10 +38,10 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 		};
 	} catch (err) {
 		console.error('Error creating distance matrix:', err);
-		if (err && typeof err === 'object' && 'statusCode' in err && 'message' in err) {
-			const serviceErr = err as { statusCode: number; message: string };
-			error(serviceErr.statusCode, serviceErr.message);
+		if (err && typeof err === 'object' && 'statusCode' in err && 'message' in err && 'code' in err) {
+			const serviceErr = err as { statusCode: number; message: string; code: string };
+			error(serviceErr.statusCode, { code: serviceErr.code as App.Error['code'], message: serviceErr.message });
 		}
-		error(500, 'Failed to create distance matrix');
+		error(500, { code: 'INTERNAL_ERROR', message: 'Failed to create distance matrix' });
 	}
 };

@@ -5,7 +5,7 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { driverCreateSchema, type Driver, type DriverCreate } from '$lib/schemas/driver';
-	import { ApiError } from '$lib/services/api/base';
+	import { ServiceError } from '$lib/errors';
 	import { driverApi } from '$lib/services/api/drivers';
 	import { mapApi } from '$lib/services/api/maps';
 	import { generateRandomColor } from '$lib/utils';
@@ -70,11 +70,11 @@
 				onSuccess(result);
 				open = false;
 			} catch (err) {
-				if (err instanceof ApiError) {
-					if (err.status === 409) form.errors.name = ['A driver with this name already exists'];
+				if (err instanceof ServiceError) {
+					if (err.statusCode === 409) form.errors.name = ['A driver with this name already exists'];
 					else
 						form.message =
-							err.status === 403 ? `You do not have permission to ${mode} drivers` : err.message;
+							err.statusCode === 403 ? `You do not have permission to ${mode} drivers` : err.message;
 				} else {
 					form.message = 'An unexpected error occurred';
 				}

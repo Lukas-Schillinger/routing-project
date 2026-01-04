@@ -11,7 +11,7 @@ export {
 } from './csv-import.service';
 export { DepotService, depotService } from './depot.service';
 export { DriverService, driverService } from './driver.service';
-export { ServiceError } from './errors';
+export { ServiceError, handleApiError } from './errors';
 export { FileService, fileService } from './file.service';
 export { InvitationService, invitationService } from './invitation.service';
 export { LocationService, locationService } from './location.service';

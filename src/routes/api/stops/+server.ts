@@ -1,8 +1,8 @@
+import { handleApiError } from '$lib/errors';
 import { createStopSchema } from '$lib/schemas/stop';
 import { stopService } from '$lib/services/server';
 import { requirePermissionApi } from '$lib/services/server/permissions';
-import { error } from '@sveltejs/kit';
-import { ZodError } from 'zod';
+import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
 /**
@@ -18,17 +18,8 @@ export const POST: RequestHandler = async ({ request }) => {
 
 		const stop = await stopService.createStop(validatedData, user.organization_id, user.id);
 
-		return new Response(JSON.stringify(stop), {
-			status: 201,
-			headers: {
-				'Content-Type': 'application/json'
-			}
-		});
+		return json(stop, { status: 201 });
 	} catch (err) {
-		if (err instanceof ZodError) {
-			error(400, `Validation error: ${err.errors.map((e) => e.message).join(', ')}`);
-		}
-
-		throw err;
+		handleApiError(err, 'Failed to create stop');
 	}
 };

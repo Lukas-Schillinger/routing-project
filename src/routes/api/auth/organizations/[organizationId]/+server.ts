@@ -1,11 +1,10 @@
 // PATCH /api/auth/organizations/[organizationId] - Update organization settings
 
+import { handleApiError } from '$lib/errors';
 import { updateOrganizationSchema } from '$lib/schemas';
-import { ServiceError } from '$lib/services/server/errors';
 import { requirePermissionApi } from '$lib/services/server/permissions';
 import { organizationService } from '$lib/services/server/user.service';
-import { error, json } from '@sveltejs/kit';
-import { ZodError } from 'zod';
+import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
 export const PATCH: RequestHandler = async ({ params, request }) => {
@@ -26,13 +25,6 @@ export const PATCH: RequestHandler = async ({ params, request }) => {
 
 		return json(organization);
 	} catch (err) {
-		if (err instanceof ZodError) {
-			const errorMessages = err.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ');
-			error(400, `Validation error: ${errorMessages}`);
-		}
-		if (err instanceof ServiceError) {
-			error(err.statusCode, err.message);
-		}
-		error(500, 'Failed to update organization');
+		handleApiError(err, 'Failed to update organization');
 	}
 };

@@ -2,7 +2,8 @@
 	import { invalidateAll } from '$app/navigation';
 	import MapView from '$lib/components/MapView.svelte';
 	import type { Driver } from '$lib/schemas';
-	import { ApiError, mapApi } from '$lib/services/api';
+	import { ServiceError } from '$lib/errors';
+	import { mapApi } from '$lib/services/api';
 	import { onDestroy } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import type { PageData } from './$types';
@@ -143,7 +144,7 @@
 			toast.success('Driver removed');
 		} catch (err) {
 			console.log(err);
-			const message = err instanceof ApiError ? err.message : 'Failed to remove driver';
+			const message = err instanceof ServiceError ? err.message : 'Failed to remove driver';
 			toast.error(message);
 		} finally {
 			isLoading = false;

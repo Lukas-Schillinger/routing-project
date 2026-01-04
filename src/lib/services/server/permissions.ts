@@ -69,7 +69,7 @@ export function requirePermission(permission: Permission): PublicUser {
 	const user = request.locals.user as PublicUser;
 
 	if (!hasPermission(user.role, permission)) {
-		throw error(403, 'Insufficient permissions');
+		throw error(403, { code: 'FORBIDDEN', message: 'Insufficient permissions' });
 	}
 
 	return user;
@@ -81,13 +81,13 @@ export function requirePermission(permission: Permission): PublicUser {
 export function requirePermissionApi(permission: Permission): PublicUser {
 	const request = getRequestEvent();
 	if (!request.locals.user) {
-		throw error(401, 'Unauthorized');
+		throw error(401, { code: 'UNAUTHORIZED', message: 'Unauthorized' });
 	}
 
 	const user = request.locals.user as PublicUser;
 
 	if (!hasPermission(user.role, permission)) {
-		throw error(403, 'Insufficient permissions');
+		throw error(403, { code: 'FORBIDDEN', message: 'Insufficient permissions' });
 	}
 
 	return user;

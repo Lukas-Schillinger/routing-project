@@ -9,7 +9,8 @@
 	import * as Empty from '$lib/components/ui/empty';
 	import * as Popover from '$lib/components/ui/popover';
 	import type { Driver } from '$lib/schemas/driver';
-	import { ApiError, mapApi } from '$lib/services/api';
+	import { ServiceError } from '$lib/errors';
+	import { mapApi } from '$lib/services/api';
 	import { getIdenticon } from '$lib/utils';
 	import { Copy, Ellipsis, Pencil, Phone, Plus, Trash2, Truck, UserPlus } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
@@ -45,7 +46,7 @@
 			await invalidateAll();
 			addPopoverOpen = false;
 		} catch (err) {
-			const message = err instanceof ApiError ? err.message : 'Failed to assign driver';
+			const message = err instanceof ServiceError ? err.message : 'Failed to assign driver';
 			toast.error('Error adding driver', { description: message });
 		} finally {
 			localIsLoading = false;
