@@ -8,17 +8,20 @@
 	5. Test search, sort, and filter functionality after changes
 -->
 <script lang="ts">
-	import { invalidateAll } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
 	import EditOrCreateStopPopover from '$lib/components/EditOrCreateStopPopover';
 	import { Button, buttonVariants } from '$lib/components/ui/button';
 	import * as ButtonGroup from '$lib/components/ui/button-group/index.js';
 	import { createSvelteTable, FlexRender, renderComponent } from '$lib/components/ui/data-table';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import * as Empty from '$lib/components/ui/empty';
+	import { FileUpload } from '$lib/components/ui/file-upload';
 	import { Input } from '$lib/components/ui/input';
 	import { SortButton, type SortOption } from '$lib/components/ui/sort-button';
 	import * as Table from '$lib/components/ui/table';
 	import type { StopWithLocation } from '$lib/schemas/stop';
+	import { pendingImport } from '$lib/stores/pending-import';
+	import { parseCsvFile } from '$lib/utils';
 	import {
 		createColumnHelper,
 		getCoreRowModel,
@@ -31,7 +34,7 @@
 		type SortingState,
 		type VisibilityState
 	} from '@tanstack/table-core';
-	import { Check, ChevronDown, MapPin, Search } from 'lucide-svelte';
+	import { Check, ChevronDown, MapPin, Plus, Search } from 'lucide-svelte';
 	import { MediaQuery } from 'svelte/reactivity';
 	import AddressCell from './AddressCell.svelte';
 	import DateCell from './DateCell.svelte';
@@ -50,6 +53,39 @@
 
 	let { stops, mapId, onDelete, onToggleInclude, onUpdate, onCreate, onZoomToStop }: Props =
 		$props();
+
+	// CSV upload state
+	let csvError = $state<string | null>(null);
+	let mobileFileInput = $state<HTMLInputElement | null>(null);
+
+	async function handleCsvUpload(files: File[]) {
+		if (files.length === 0) return;
+
+		csvError = null;
+
+		const result = await parseCsvFile(files[0]);
+
+		if (!result.success) {
+			csvError = result.error.message;
+			return;
+		}
+
+		// Store parsed data and navigate to import page
+		pendingImport.set({
+			fileName: result.data.fileName,
+			headers: result.data.headers,
+			rows: result.data.rows
+		});
+
+		await goto('/maps/import');
+	}
+
+	async function handleMobileFileInput(e: Event) {
+		const input = e.currentTarget as HTMLInputElement;
+		if (input.files) {
+			await handleCsvUpload(Array.from(input.files));
+		}
+	}
 
 	// Dynamic page size based on container height
 	const ROW_HEIGHT_PX = 57;
@@ -322,11 +358,46 @@
 				<MapPin />
 			</Empty.Media>
 			<Empty.Title>No stops yet</Empty.Title>
-			<Empty.Description>Add your first stop to get started.</Empty.Description>
+			<Empty.Description>Upload a CSV file or create stops manually.</Empty.Description>
 		</Empty.Header>
-		<EditOrCreateStopPopover mode="create" {mapId} onSuccess={invalidateAll}>
-			<Button variant="secondary">Create Stop</Button>
-		</EditOrCreateStopPopover>
+
+		<div class="flex w-full flex-row items-center justify-center lg:flex-col lg:gap-6">
+			<!-- File Upload: Simple button on mobile, dropzone on desktop -->
+			{#if isMobile.current}
+				<div class="flex flex-col gap-2">
+					<Input
+						bind:ref={mobileFileInput}
+						type="file"
+						accept=".csv"
+						class=""
+						onchange={handleMobileFileInput}
+					/>
+				</div>
+			{:else}
+				<FileUpload
+					accept=".csv"
+					onFileSelect={handleCsvUpload}
+					onError={(error) => (csvError = error)}
+					hint="CSV files with address data"
+					size="sm"
+					class="w-full max-w-md"
+				/>
+			{/if}
+
+			{#if csvError}
+				<p class="text-sm text-destructive">{csvError}</p>
+			{/if}
+
+			<div class="flex items-center gap-3 text-sm text-muted-foreground">
+				<div class="h-px flex-1 bg-border"></div>
+				<span>or</span>
+				<div class="h-px flex-1 bg-border"></div>
+			</div>
+
+			<EditOrCreateStopPopover mode="create" {mapId} onSuccess={invalidateAll}>
+				<Button variant="secondary"><Plus /> Add stop</Button>
+			</EditOrCreateStopPopover>
+		</div>
 	</Empty.Root>
 {:else}
 	<div class="@container flex h-full flex-col">
