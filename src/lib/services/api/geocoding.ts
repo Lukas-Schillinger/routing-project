@@ -34,26 +34,15 @@ class GeocodingApiService {
 	}
 
 	/**
-	 * Forward geocoding - convert address to coordinates
+	 * Batch geocoding - geocode multiple addresses at once
 	 */
-	async forward(
-		query: string,
-		options: {
-			country?: string;
-			limit?: number;
-			proximity?: [number, number];
-		} = {}
-	): Promise<GeocodingFeature[]> {
-		const params: Record<string, string> = { q: query };
-		if (options.country) params.country = options.country;
-		if (options.limit) params.limit = String(options.limit);
-		if (options.proximity) params.proximity = options.proximity.join(',');
-
-		const response = await apiClient.get<{ features: GeocodingFeature[] }>(
-			'/geocoding/forward',
-			params
-		);
-		return response.features;
+	async batch(
+		addresses: string[]
+	): Promise<Array<{ original: string; geocoded: GeocodingFeature | null }>> {
+		const response = await apiClient.post<
+			Array<{ original: string; geocoded: GeocodingFeature | null }>
+		>('/geocoding/batch', { addresses });
+		return response;
 	}
 }
 

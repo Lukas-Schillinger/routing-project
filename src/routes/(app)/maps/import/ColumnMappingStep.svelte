@@ -1,49 +1,40 @@
-<!-- src/routes/(app)/maps/[mapId]/import/components/ColumnMappingStep.svelte -->
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
-	import { ArrowLeft, ArrowRight } from 'lucide-svelte';
+	import { createImportRecord, type ImportState } from '$lib/schemas/import';
+	import { geocodingApi } from '$lib/services/api';
+	import { geocodingFeatureToLocation } from '$lib/utils';
+	import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-svelte';
 	import CsvPreviewTable from './CsvPreviewTable.svelte';
 
-	let {
-		csvHeaders,
-		csvData,
-		onColumnsMapped,
-		onBack
-	}: {
-		csvHeaders: string[];
-		csvData: any[];
-		onColumnsMapped: (mapping: Record<string, string>) => void;
-		onBack: () => void;
-	} = $props();
+	let { importState = $bindable() }: { importState: ImportState } = $props();
 
-	// Required field mappings
+	// Column mappings
 	let nameColumn = $state<string>('');
 	let addressColumn = $state<string>('');
 	let phoneColumn = $state<string>('');
 	let notesColumn = $state<string>('');
 
+	const csvHeaders = $derived(importState.file?.headers ?? []);
+	const csvData = $derived(importState.rawRows ?? []);
+
 	// Auto-detect likely column mappings
 	$effect(() => {
 		if (csvHeaders.length > 0) {
-			// Auto-detect name column
 			const nameCandidate = csvHeaders.find((h) =>
 				/^(name|contact|customer|client)$/i.test(h.trim())
 			);
 			if (nameCandidate) nameColumn = nameCandidate;
 
-			// Auto-detect address column
 			const addressCandidate = csvHeaders.find((h) =>
 				/^(address|addr|location|street)$/i.test(h.trim())
 			);
 			if (addressCandidate) addressColumn = addressCandidate;
 
-			// Auto-detect phone column
 			const phoneCandidate = csvHeaders.find((h) =>
 				/^(phone|tel|telephone|mobile|cell)$/i.test(h.trim())
 			);
 			if (phoneCandidate) phoneColumn = phoneCandidate;
 
-			// Auto-detect notes column
 			const notesCandidate = csvHeaders.find((h) =>
 				/^(notes|note|comments|comment|description)$/i.test(h.trim())
 			);
@@ -53,16 +44,58 @@
 
 	const canProceed = $derived(addressColumn);
 
-	function handleNext() {
-		if (!canProceed) return;
+	async function handleNext() {
+		if (!canProceed || !importState.rawRows) return;
 
-		const mapping: Record<string, string> = {};
-		if (nameColumn) mapping.name = nameColumn;
-		if (addressColumn) mapping.address = addressColumn;
-		if (phoneColumn) mapping.phone = phoneColumn;
-		if (notesColumn) mapping.notes = notesColumn;
+		// Store mapping
+		importState.mapping = {
+			name: nameColumn || null,
+			address: addressColumn,
+			phone: phoneColumn || null,
+			notes: notesColumn || null
+		};
 
-		onColumnsMapped(mapping);
+		importState.isProcessing = true;
+
+		try {
+			// Create records with raw values
+			importState.records = importState.rawRows.map((row) =>
+				createImportRecord({
+					name: nameColumn ? row[nameColumn] || null : null,
+					address: row[addressColumn] || '',
+					phone: phoneColumn ? row[phoneColumn] || null : null,
+					notes: notesColumn ? row[notesColumn] || null : null
+				})
+			);
+
+			// Batch geocode all addresses
+			const addresses = importState.records.map((r) => r.raw.address);
+			const results = await geocodingApi.batch(addresses);
+
+			// Update records with LocationCreate
+			results.forEach((result, i) => {
+				const record = importState.records[i];
+				if (result.geocoded) {
+					record.location = geocodingFeatureToLocation(result.geocoded);
+					record.status = 'success';
+				} else {
+					record.status = 'failed';
+				}
+			});
+
+			// Clean up temp data and advance
+			importState.rawRows = undefined;
+			importState.step = 3;
+		} catch (error) {
+			console.error('Geocoding error:', error);
+			alert('Failed to geocode addresses. Please try again.');
+		} finally {
+			importState.isProcessing = false;
+		}
+	}
+
+	function handleBack() {
+		importState.step = 1;
 	}
 </script>
 
@@ -86,13 +119,18 @@
 
 	<!-- Navigation -->
 	<div class="flex justify-between">
-		<Button variant="outline" onclick={onBack}>
+		<Button variant="outline" onclick={handleBack} disabled={importState.isProcessing}>
 			<ArrowLeft class="mr-2 h-4 w-4" />
 			Back
 		</Button>
-		<Button onclick={handleNext} disabled={!canProceed}>
-			Next: Review Data
-			<ArrowRight class="ml-2 h-4 w-4" />
+		<Button onclick={handleNext} disabled={!canProceed || importState.isProcessing}>
+			{#if importState.isProcessing}
+				<Loader2 class="mr-2 h-4 w-4 animate-spin" />
+				Geocoding...
+			{:else}
+				Next: Review
+				<ArrowRight class="ml-2 h-4 w-4" />
+			{/if}
 		</Button>
 	</div>
 </div>

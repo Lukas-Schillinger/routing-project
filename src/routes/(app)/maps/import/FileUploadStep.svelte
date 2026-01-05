@@ -1,14 +1,10 @@
-<!-- src/routes/(app)/maps/[mapId]/import/components/FileUploadStep.svelte -->
 <script lang="ts">
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
+	import type { ImportState } from '$lib/schemas/import';
 	import { AlertCircle, FileText, Upload } from 'lucide-svelte';
 	import Papa from 'papaparse';
 
-	let {
-		onFileUploaded
-	}: {
-		onFileUploaded: (file: File, headers: string[], rows: any[]) => void;
-	} = $props();
+	let { importState = $bindable() }: { importState: ImportState } = $props();
 
 	let isDragOver = $state(false);
 	let isProcessing = $state(false);
@@ -42,7 +38,7 @@
 				}
 
 				const headers = results.meta.fields || [];
-				const rows = results.data as any[];
+				const rows = results.data as Record<string, string>[];
 
 				if (headers.length === 0) {
 					error = 'No columns found in CSV file';
@@ -56,7 +52,11 @@
 					return;
 				}
 
-				onFileUploaded(file, headers, rows);
+				// Update importState directly
+				importState.file = { name: file.name, headers };
+				importState.rawRows = rows;
+				importState.step = 2;
+
 				isProcessing = false;
 			},
 			error: (err) => {
@@ -135,9 +135,8 @@
 			<h4 class="mb-2 font-medium">CSV Requirements:</h4>
 			<ul class="list-inside list-disc space-y-1 text-muted-foreground">
 				<li>File must have headers in the first row</li>
-				<li>Must include at least a name and address column</li>
-				<li>Optional: phone, notes, or custom fields</li>
-				<li>Maximum file size: 10MB</li>
+				<li>Must include at least an address column</li>
+				<li>Optional: name, phone, notes columns</li>
 			</ul>
 		</div>
 	</CardContent>
