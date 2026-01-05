@@ -1,18 +1,19 @@
 <script lang="ts">
 	import AddressAutocomplete from '$lib/components/AddressAutocomplete.svelte';
-	import { Button } from '$lib/components/ui/button';
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import type { ImportRecord, ImportState } from '$lib/schemas/import';
 	import type { LocationCreate } from '$lib/schemas/location';
 	import { cn } from '$lib/utils';
-	import { ArrowLeft, ArrowRight, Pencil } from 'lucide-svelte';
+	import { Pencil } from 'lucide-svelte';
 
 	let {
 		importState = $bindable(),
-		onImport
+		onImport,
+		onValidCountChange
 	}: {
 		importState: ImportState;
 		onImport: () => Promise<void>;
+		onValidCountChange?: (count: number, isImporting: boolean) => void;
 	} = $props();
 
 	let isImporting = $state(false);
@@ -92,7 +93,7 @@
 		cancelEditing();
 	}
 
-	async function handleImport() {
+	export async function handleImport() {
 		isImporting = true;
 		try {
 			await onImport();
@@ -101,14 +102,15 @@
 		}
 	}
 
-	function handleBack() {
-		importState.step = 2;
-	}
-
 	const totalCount = $derived(importState.records.length);
 	const validCount = $derived(
 		importState.records.filter((r) => r.status === 'success' || r.status === 'edited').length
 	);
+
+	// Notify parent when validCount or isImporting changes
+	$effect(() => {
+		onValidCountChange?.(validCount, isImporting);
+	});
 	const lowConfidenceCount = $derived(
 		importState.records.filter((r) => {
 			if (r.status === 'failed') return false;
@@ -218,7 +220,7 @@
 
 								<!-- Name -->
 								<td class="max-w-64 overflow-clip px-4 py-3 align-top">
-									<div class="font-medium">{record.raw.name || ''}</div>
+									<div class="font-medium">{record.raw.name || '—'}</div>
 								</td>
 
 								<!-- Address -->
@@ -275,7 +277,7 @@
 								</td>
 
 								<!-- Phone -->
-								<td class="whitespace-nowrap px-4 py-3 align-top">
+								<td class="px-4 py-3 align-top whitespace-nowrap">
 									{#if record.raw.phone}
 										<span class="font-mono text-xs">{record.raw.phone}</span>
 									{:else}
@@ -323,7 +325,7 @@
 
 						<!-- Address -->
 						<div class="mb-3">
-							<div class="mb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+							<div class="mb-1 text-xs font-medium tracking-wider text-muted-foreground uppercase">
 								Address
 							</div>
 							{#if isEditing}
@@ -374,7 +376,7 @@
 						<div class="grid grid-cols-3 gap-3 text-sm">
 							<div>
 								<div
-									class="mb-0.5 text-xs font-medium uppercase tracking-wider text-muted-foreground"
+									class="mb-0.5 text-xs font-medium tracking-wider text-muted-foreground uppercase"
 								>
 									Phone
 								</div>
@@ -387,7 +389,7 @@
 							{#if record.raw.notes}
 								<div class="col-span-2">
 									<div
-										class="mb-0.5 text-xs font-medium uppercase tracking-wider text-muted-foreground"
+										class="mb-0.5 text-xs font-medium tracking-wider text-muted-foreground uppercase"
 									>
 										Notes
 									</div>
@@ -401,22 +403,4 @@
 		{/if}
 	</div>
 
-	<!-- Footer -->
-	<div class="flex items-center justify-between">
-		<Button variant="outline" onclick={handleBack} disabled={importState.isProcessing || isImporting}>
-			<ArrowLeft class="mr-2 h-4 w-4" />
-			Back
-		</Button>
-		<Button
-			onclick={handleImport}
-			disabled={importState.isProcessing || isImporting || validCount === 0}
-		>
-			{#if isImporting}
-				Importing...
-			{:else}
-				Import {validCount}
-				<ArrowRight class="ml-2 h-4 w-4" />
-			{/if}
-		</Button>
-	</div>
 </div>

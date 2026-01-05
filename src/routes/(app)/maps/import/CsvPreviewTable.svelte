@@ -146,17 +146,19 @@
 												{/each}
 											</Select.Content>
 										</Select.Root>
-										<div class="text-sm font-normal text-muted-foreground">{header}</div>
+										<div class="font-mono text-sm font-semibold text-muted-foreground">
+											{header}
+										</div>
 									</th>
 								{/each}
 							</tr>
 						</thead>
 						<tbody>
 							{#each previewData as row}
-								<tr class="border-b">
+								<tr class="border-b font-mono">
 									{#each csvHeaders as header}
-										<td class="p-2 text-muted-foreground">
-											{row[header] || ''}
+										<td class="font p-2 text-muted-foreground">
+											<div class="line-clamp-2">{row[header] || ''}</div>
 										</td>
 									{/each}
 								</tr>

@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { Card, CardContent } from '$lib/components/ui/card';
-	import { Progress } from '$lib/components/ui/progress';
 	import { Button } from '$lib/components/ui/button';
 	import { createImportState, type ImportState } from '$lib/schemas/import';
 	import { mapApi } from '$lib/services/api';
-	import { FileText, Settings, Upload } from 'lucide-svelte';
+	import { pendingImport } from '$lib/stores/pending-import';
+	import { ArrowLeft, ArrowRight, Check, Loader2 } from 'lucide-svelte';
+	import { onMount } from 'svelte';
 	import type { PageData } from './$types';
 
 	import ColumnMappingStep from './ColumnMappingStep.svelte';
@@ -17,10 +17,29 @@
 	let importState = $state<ImportState>(createImportState());
 	let isCreating = $state(false);
 
+	// Check for pending import data from map detail page
+	onMount(() => {
+		const pending = pendingImport.consume();
+		if (pending) {
+			importState.file = { name: pending.fileName, headers: pending.headers };
+			importState.rawRows = pending.rows;
+			importState.step = 2;
+		}
+	});
+
+	// Child component refs
+	let columnMappingStep: ColumnMappingStep;
+	let geocodeReviewStep: GeocodeReviewStep;
+
+	// Child component state
+	let step2CanProceed = $state(false);
+	let step3ValidCount = $state(0);
+	let step3IsImporting = $state(false);
+
 	const steps = [
-		{ number: 1, title: 'Upload CSV', icon: Upload },
-		{ number: 2, title: 'Map Columns', icon: Settings },
-		{ number: 3, title: 'Review', icon: FileText }
+		{ number: 1 as const, title: 'Upload' },
+		{ number: 2 as const, title: 'Map Columns' },
+		{ number: 3 as const, title: 'Review' }
 	];
 
 	async function createEmptyMap() {
@@ -59,48 +78,169 @@
 
 		goto(`/maps/${res.map.id}`);
 	}
+
+	function handleBack() {
+		if (importState.step === 2) {
+			importState.step = 1;
+		} else if (importState.step === 3) {
+			importState.step = 2;
+		}
+	}
+
+	function handleNext() {
+		if (importState.step === 2) {
+			columnMappingStep?.handleNext();
+		} else if (importState.step === 3) {
+			geocodeReviewStep?.handleImport();
+		}
+	}
+
+	function goToStep(stepNumber: 1 | 2 | 3) {
+		// Only allow navigating to completed steps
+		if (stepNumber < importState.step) {
+			importState.step = stepNumber;
+		}
+	}
+
+	// Derived states for button visibility and disabled states
+	const showBackButton = $derived(importState.step > 1);
+	const showNextButton = $derived(importState.step === 2 || importState.step === 3);
+
+	const nextButtonDisabled = $derived(() => {
+		if (importState.step === 2) {
+			return !step2CanProceed || importState.isProcessing;
+		}
+		if (importState.step === 3) {
+			return step3ValidCount === 0 || step3IsImporting || importState.isProcessing;
+		}
+		return true;
+	});
+
+	const nextButtonLabel = $derived(() => {
+		if (importState.step === 2) {
+			if (importState.isProcessing) return 'Geocoding...';
+			return 'Next';
+		}
+		if (importState.step === 3) {
+			if (step3IsImporting) return 'Importing...';
+			return `Import ${step3ValidCount}`;
+		}
+		return 'Next';
+	});
+
+	const isProcessing = $derived(importState.isProcessing || step3IsImporting);
 </script>
 
 <div class="space-y-6">
-	<!-- Progress Steps -->
-	<Card>
-		<CardContent>
-			<div class="grid grid-cols-3">
-				{#each steps as step}
-					<div class="flex justify-center first:justify-start last:justify-end">
-						<div class="flex flex-col items-center">
-							<div
-								class="flex size-8 items-center justify-center rounded-full border-2
-								{importState.step > step.number
-									? 'border-primary bg-primary text-primary-foreground'
-									: 'border-muted-foreground'}
-								{importState.step === step.number ? 'border-primary bg-primary/45' : ''}"
-							>
-								{#if importState.step > step.number}
-									✓
-								{:else}
-									{@const Icon = step.icon}
-									<Icon class="size-4" />
-								{/if}
-							</div>
-							<div class="text-center text-sm font-medium">{step.title}</div>
+	<!-- Step Header with Progress -->
+	<div class="rounded-lg border border-border bg-card p-4">
+		<div class="flex items-center justify-between">
+			<!-- Back Button -->
+			<div class="w-20">
+				{#if showBackButton}
+					<Button
+						variant="ghost"
+						size="sm"
+						onclick={handleBack}
+						disabled={isProcessing}
+						class="gap-1.5"
+					>
+						<ArrowLeft class="h-4 w-4" />
+						Back
+					</Button>
+				{/if}
+			</div>
+
+			<!-- Step Indicators -->
+			<div class="flex items-center">
+				{#each steps as step, index}
+					{@const isCompleted = importState.step > step.number}
+					{@const isCurrent = importState.step === step.number}
+					{@const isClickable = isCompleted}
+
+					<!-- Connector Line -->
+					{#if index > 0}
+						<div
+							class="mb-5 h-0.5 w-12 transition-colors duration-300
+								{importState.step > step.number ? 'bg-primary' : ''}
+								{importState.step === step.number ? 'bg-gradient-to-r from-primary to-muted' : ''}
+								{importState.step < step.number ? 'bg-muted' : ''}"
+						></div>
+					{/if}
+
+					<!-- Step Circle + Label -->
+					<button
+						type="button"
+						class="group flex flex-col items-center gap-1.5 transition-all
+							{isClickable ? 'cursor-pointer' : 'cursor-default'}"
+						onclick={() => isClickable && goToStep(step.number)}
+						disabled={!isClickable}
+					>
+						<div
+							class="flex h-8 w-8 items-center justify-center rounded-full border-2 text-sm font-medium transition-all duration-300
+								{isCompleted ? 'border-primary bg-primary text-primary-foreground' : ''}
+								{isCurrent ? 'border-primary bg-primary/10 text-primary' : ''}
+								{!isCompleted && !isCurrent ? 'border-muted bg-muted/50 text-muted-foreground' : ''}
+								{isClickable ? 'group-hover:scale-105' : ''}"
+						>
+							{#if isCompleted}
+								<Check class="h-4 w-4" />
+							{:else}
+								{step.number}
+							{/if}
 						</div>
-					</div>
+						<span
+							class="text-xs font-medium transition-colors
+								{isCurrent ? 'text-foreground' : ''}
+								{isCompleted ? 'text-muted-foreground group-hover:text-foreground' : ''}
+								{!isCompleted && !isCurrent ? 'text-muted-foreground/50' : ''}"
+						>
+							{step.title}
+						</span>
+					</button>
 				{/each}
 			</div>
-			<Progress value={((importState.step - 1) / (steps.length - 1)) * 100} class="mt-4" />
-		</CardContent>
-	</Card>
+
+			<!-- Next/Import Button -->
+			<div class="flex w-20 justify-end">
+				{#if showNextButton}
+					<Button size="sm" onclick={handleNext} disabled={nextButtonDisabled()} class="gap-1.5">
+						{#if isProcessing}
+							<Loader2 class="h-4 w-4 animate-spin" />
+						{/if}
+						{nextButtonLabel()}
+						{#if !isProcessing}
+							<ArrowRight class="h-4 w-4" />
+						{/if}
+					</Button>
+				{/if}
+			</div>
+		</div>
+	</div>
 
 	<!-- Step Content -->
 	{#if importState.step === 1}
-		<Button class="w-full" onclick={createEmptyMap} variant="outline" disabled={isCreating}>
-			{isCreating ? 'Creating...' : 'Create empty map'}
-		</Button>
-		<FileUploadStep bind:importState />
+		<div class="space-y-6">
+			<Button class="w-full" onclick={createEmptyMap} variant="outline" disabled={isCreating}>
+				{isCreating ? 'Creating...' : 'Create empty map'}
+			</Button>
+			<FileUploadStep bind:importState />
+		</div>
 	{:else if importState.step === 2}
-		<ColumnMappingStep bind:importState />
+		<ColumnMappingStep
+			bind:this={columnMappingStep}
+			bind:importState
+			onCanProceedChange={(canProceed) => (step2CanProceed = canProceed)}
+		/>
 	{:else if importState.step === 3}
-		<GeocodeReviewStep bind:importState onImport={handleImport} />
+		<GeocodeReviewStep
+			bind:this={geocodeReviewStep}
+			bind:importState
+			onImport={handleImport}
+			onValidCountChange={(count, importing) => {
+				step3ValidCount = count;
+				step3IsImporting = importing;
+			}}
+		/>
 	{/if}
 </div>

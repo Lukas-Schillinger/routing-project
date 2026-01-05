@@ -1,12 +1,18 @@
 <script lang="ts">
-	import { Button } from '$lib/components/ui/button';
 	import { createImportRecord, type ImportState } from '$lib/schemas/import';
 	import { geocodingApi } from '$lib/services/api';
 	import { geocodingFeatureToLocation } from '$lib/utils';
-	import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-svelte';
 	import CsvPreviewTable from './CsvPreviewTable.svelte';
 
-	let { importState = $bindable() }: { importState: ImportState } = $props();
+	let {
+		importState = $bindable(),
+		onNext,
+		onCanProceedChange
+	}: {
+		importState: ImportState;
+		onNext?: () => void;
+		onCanProceedChange?: (canProceed: boolean) => void;
+	} = $props();
 
 	// Column mappings
 	let nameColumn = $state<string>('');
@@ -42,9 +48,14 @@
 		}
 	});
 
-	const canProceed = $derived(addressColumn);
+	const canProceed = $derived(!!addressColumn);
 
-	async function handleNext() {
+	// Notify parent when canProceed changes
+	$effect(() => {
+		onCanProceedChange?.(canProceed);
+	});
+
+	export async function handleNext() {
 		if (!canProceed || !importState.rawRows) return;
 
 		// Store mapping
@@ -83,19 +94,15 @@
 				}
 			});
 
-			// Clean up temp data and advance
-			importState.rawRows = undefined;
+			// Advance to review step (keep rawRows for back navigation)
 			importState.step = 3;
+			onNext?.();
 		} catch (error) {
 			console.error('Geocoding error:', error);
 			alert('Failed to geocode addresses. Please try again.');
 		} finally {
 			importState.isProcessing = false;
 		}
-	}
-
-	function handleBack() {
-		importState.step = 1;
 	}
 </script>
 
@@ -116,21 +123,4 @@
 			Address field is required to proceed.
 		</div>
 	{/if}
-
-	<!-- Navigation -->
-	<div class="flex justify-between">
-		<Button variant="outline" onclick={handleBack} disabled={importState.isProcessing}>
-			<ArrowLeft class="mr-2 h-4 w-4" />
-			Back
-		</Button>
-		<Button onclick={handleNext} disabled={!canProceed || importState.isProcessing}>
-			{#if importState.isProcessing}
-				<Loader2 class="mr-2 h-4 w-4 animate-spin" />
-				Geocoding...
-			{:else}
-				Next: Review
-				<ArrowRight class="ml-2 h-4 w-4" />
-			{/if}
-		</Button>
-	</div>
 </div>
