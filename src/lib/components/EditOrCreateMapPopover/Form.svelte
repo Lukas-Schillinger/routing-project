@@ -3,8 +3,8 @@
 	import * as Field from '$lib/components/ui/field';
 	import { Input } from '$lib/components/ui/input';
 	import { Textarea } from '$lib/components/ui/textarea';
-	import { createMapSchema, type Map } from '$lib/schemas/map';
 	import { ServiceError } from '$lib/errors';
+	import { createMapSchema, type Map } from '$lib/schemas/map';
 	import { mapApi } from '$lib/services/api/maps';
 	import { Check, Loader2 } from 'lucide-svelte';
 	import { defaults, superForm } from 'sveltekit-superforms';
@@ -42,9 +42,7 @@
 				};
 
 				const result =
-					mode === 'create'
-						? await mapApi.create(payload)
-						: await mapApi.update(map!.id, payload);
+					mode === 'create' ? await mapApi.create(payload) : await mapApi.update(map!.id, payload);
 
 				onSuccess(result.map);
 				open = false;
@@ -63,9 +61,9 @@
 
 	const { form: formData, errors, message, enhance, submitting } = form;
 
-	// Reset form when dialog opens
+	// Reset form when dialog closes
 	$effect(() => {
-		if (open) Object.assign($formData, getInitialData());
+		if (!open) Object.assign($formData, getInitialData());
 	});
 </script>
 

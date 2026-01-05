@@ -4,8 +4,8 @@
 	import * as Field from '$lib/components/ui/field';
 	import { Input } from '$lib/components/ui/input';
 	import { Textarea } from '$lib/components/ui/textarea';
-	import { driverCreateSchema, type Driver, type DriverCreate } from '$lib/schemas/driver';
 	import { ServiceError } from '$lib/errors';
+	import { driverCreateSchema, type Driver } from '$lib/schemas/driver';
 	import { driverApi } from '$lib/services/api/drivers';
 	import { mapApi } from '$lib/services/api/maps';
 	import { generateRandomColor } from '$lib/utils';
@@ -74,7 +74,9 @@
 					if (err.statusCode === 409) form.errors.name = ['A driver with this name already exists'];
 					else
 						form.message =
-							err.statusCode === 403 ? `You do not have permission to ${mode} drivers` : err.message;
+							err.statusCode === 403
+								? `You do not have permission to ${mode} drivers`
+								: err.message;
 				} else {
 					form.message = 'An unexpected error occurred';
 				}
@@ -84,9 +86,11 @@
 
 	const { form: formData, errors, message, enhance, submitting } = form;
 
-	// Reset form when dialog opens
+	// Reset form when dialog closes
 	$effect(() => {
-		if (open) Object.assign($formData, getInitialData());
+		if (!open) {
+			Object.assign($formData, getInitialData());
+		}
 	});
 </script>
 
