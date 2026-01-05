@@ -3,6 +3,7 @@ import * as style from '@dicebear/identicon';
 import { clsx, type ClassValue } from 'clsx';
 import TimeAgo from 'javascript-time-ago';
 import en from 'javascript-time-ago/locale/en';
+import Papa from 'papaparse';
 import { twMerge } from 'tailwind-merge';
 import type { Driver } from './schemas';
 import { locationCreateSchema, type LocationCreate, type Location } from './schemas/location';
@@ -208,4 +209,83 @@ export function addressDisplay(location: AddressDisplayInput) {
 	const full = [topLine, bottomLine].filter(Boolean).join(', ');
 
 	return { topLine, bottomLine, full };
+}
+
+// CSV Parsing utilities
+
+export type ParsedCsv = {
+	fileName: string;
+	headers: string[];
+	rows: Record<string, string>[];
+};
+
+export type CsvParseError = {
+	type: 'invalid_extension' | 'parse_error' | 'no_columns' | 'no_data';
+	message: string;
+};
+
+export type CsvParseResult =
+	| { success: true; data: ParsedCsv }
+	| { success: false; error: CsvParseError };
+
+/**
+ * Parse a CSV file and return the headers and rows.
+ */
+export function parseCsvFile(file: File): Promise<CsvParseResult> {
+	return new Promise((resolve) => {
+		if (!file.name.endsWith('.csv')) {
+			resolve({
+				success: false,
+				error: { type: 'invalid_extension', message: 'Please select a CSV file' }
+			});
+			return;
+		}
+
+		Papa.parse(file, {
+			header: true,
+			skipEmptyLines: true,
+			complete: (results) => {
+				if (results.errors.length > 0) {
+					resolve({
+						success: false,
+						error: {
+							type: 'parse_error',
+							message: `CSV parsing error: ${results.errors[0].message}`
+						}
+					});
+					return;
+				}
+
+				const headers = results.meta.fields || [];
+				const rows = results.data as Record<string, string>[];
+
+				if (headers.length === 0) {
+					resolve({
+						success: false,
+						error: { type: 'no_columns', message: 'No columns found in CSV file' }
+					});
+					return;
+				}
+
+				if (rows.length === 0) {
+					resolve({
+						success: false,
+						error: { type: 'no_data', message: 'No data rows found in CSV file' }
+					});
+					return;
+				}
+
+				resolve({
+					success: true,
+					data: { fileName: file.name, headers, rows }
+				});
+			},
+			error: (err) => {
+				resolve({
+					success: false,
+					error: { type: 'parse_error', message: `Failed to read file: ${err.message}` }
+				});
+			}
+		});
+	});
 }
