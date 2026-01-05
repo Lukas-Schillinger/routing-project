@@ -4,7 +4,7 @@
 	import type { Route as RouteType } from '$lib/schemas';
 	import type { Driver } from '$lib/schemas/driver';
 	import type { StopWithLocation } from '$lib/schemas/stop';
-	import { getIdenticon } from '$lib/utils';
+	import { addressDisplay, getIdenticon } from '$lib/utils';
 	import {
 		ChevronDown,
 		Clock,
@@ -225,6 +225,7 @@
 				{#if isExpanded}
 					<div class="border-t border-border/50 px-3 py-2" transition:slide={{ duration: 200 }}>
 						{#each driverStops as stop, index (stop.stop.id)}
+							{@const addr = addressDisplay(stop.location)}
 							<button
 								type="button"
 								class="flex w-full items-start gap-3 rounded-md p-2 text-left transition-colors hover:bg-accent/50"
@@ -237,10 +238,14 @@
 								</div>
 								<div class="min-w-0 flex-1">
 									<p class="truncate text-sm">
-										{stop.stop.contact_name || 'Unnamed Stop'}
+										{stop.stop.contact_name || addr.topLine}
 									</p>
 									<p class="truncate text-xs text-muted-foreground">
-										{stop.location.address_line_1}
+										{#if stop.stop.contact_name}
+											{addr.topLine}
+										{:else}
+											{addr.bottomLine}
+										{/if}
 									</p>
 								</div>
 							</button>
@@ -263,6 +268,7 @@
 				</p>
 				<div class="space-y-1">
 					{#each unassignedStops as stop (stop.stop.id)}
+						{@const addr = addressDisplay(stop.location)}
 						<button
 							type="button"
 							class="flex w-full items-start gap-3 rounded-md p-2 text-left transition-colors hover:bg-accent/50"
@@ -271,10 +277,14 @@
 							<MapPin class="h-4 w-4 shrink-0 text-muted-foreground" />
 							<div class="min-w-0 flex-1">
 								<p class="truncate text-sm">
-									{stop.stop.contact_name || 'Unnamed Stop'}
+									{stop.stop.contact_name || addr.topLine}
 								</p>
 								<p class="truncate text-xs text-muted-foreground">
-									{stop.location.address_line_1}
+									{#if stop.stop.contact_name}
+										{addr.topLine}
+									{:else}
+										{addr.bottomLine}
+									{/if}
 								</p>
 							</div>
 						</button>

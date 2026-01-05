@@ -161,7 +161,6 @@
 
 		return pages;
 	}
-
 </script>
 
 <svelte:head>

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { StopWithLocation } from '$lib/schemas/stop';
+	import { addressDisplay } from '$lib/utils';
 	import EditStopsDataTable from '../EditStopsDataTable';
 
 	let {
@@ -26,6 +27,7 @@
 		<!-- Read-only view for viewing mode -->
 		<div class="space-y-2">
 			{#each stops as stop (stop.stop.id)}
+				{@const addr = addressDisplay(stop.location)}
 				<button
 					type="button"
 					class="flex w-full items-start gap-3 rounded-md p-2 text-left transition-colors hover:bg-accent/50"
@@ -42,11 +44,14 @@
 					</div>
 					<div class="min-w-0 flex-1">
 						<p class="truncate text-sm font-medium">
-							{stop.stop.contact_name || 'Unnamed Stop'}
+							{stop.stop.contact_name || addr.topLine}
 						</p>
 						<p class="truncate text-xs text-muted-foreground">
-							{stop.location.address_line_1}
-							{#if stop.location.city}, {stop.location.city}{/if}
+							{#if stop.stop.contact_name}
+								{addr.topLine}{#if addr.bottomLine}, {addr.bottomLine}{/if}
+							{:else}
+								{addr.bottomLine}
+							{/if}
 						</p>
 					</div>
 				</button>

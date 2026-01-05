@@ -7,9 +7,12 @@
 	import { onDestroy } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import type { PageData } from './$types';
+	import DebugToolbar from '$lib/components/DebugToolbar.svelte';
+	import { Button } from '$lib/components/ui/button';
 	import MapDetailLayout from './components/MapDetailLayout.svelte';
 	import MapHeader from './components/MapHeader.svelte';
 	import OptimizationFooter from './components/OptimizationFooter.svelte';
+	import OptimizationOverlay from './components/OptimizationOverlay.svelte';
 	import SidebarPanel from './components/SidebarPanel.svelte';
 	import DriversTab from './components/tabs/DriversTab.svelte';
 	import RoutesTab from './components/tabs/RoutesTab.svelte';
@@ -29,11 +32,13 @@
 	let pollInterval: ReturnType<typeof setInterval> | null = null;
 	let pollCount = 0;
 	const MAX_POLL_COUNT = 150; // 5 minutes at 2 second intervals
+	let optimizationStartTime = $state<Date>(new Date());
 
 	// Derive page state
 	type PageState = 'viewing' | 'optimizing' | 'editing';
+	let debugPageStateOverride = $state<PageState | null>(null);
 	let pageState: PageState = $derived(
-		isViewMode ? 'viewing' : isOptimizing ? 'optimizing' : 'editing'
+		debugPageStateOverride ?? (isViewMode ? 'viewing' : isOptimizing ? 'optimizing' : 'editing')
 	);
 
 	// Derive selected depot for map display
@@ -50,6 +55,7 @@
 		const activeJob = data.activeJob;
 		if (activeJob && ['pending', 'running', 'completing'].includes(activeJob.status)) {
 			isOptimizing = true;
+			optimizationStartTime = activeJob.created_at ? new Date(activeJob.created_at) : new Date();
 			startPolling();
 		} else {
 			isOptimizing = false;
@@ -110,6 +116,7 @@
 
 	function handleOptimizationStarted() {
 		isOptimizing = true;
+		optimizationStartTime = new Date();
 		startPolling();
 	}
 
@@ -215,18 +222,8 @@
 					bind:focusedStopId
 				/>
 
-				<!-- Optimization overlay -->
 				{#if pageState === 'optimizing'}
-					<div
-						class="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm"
-					>
-						<div class="flex flex-col items-center gap-3">
-							<div
-								class="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent"
-							></div>
-							<p class="text-sm text-muted-foreground">Optimizing routes...</p>
-						</div>
-					</div>
+					<OptimizationOverlay startTime={optimizationStartTime} />
 				{/if}
 			</div>
 		{/snippet}
@@ -255,7 +252,6 @@
 						assignedDrivers={data.assignedDrivers}
 						allDrivers={data.allDrivers}
 						mapId={data.map.id}
-						{isLoading}
 						onRemoveDriver={removeDriver}
 					/>
 				{/snippet}
@@ -287,3 +283,38 @@
 		{/snippet}
 	</MapDetailLayout>
 </div>
+
+<DebugToolbar title="Map Debug">
+	<div class="flex flex-col gap-3">
+		<div class="flex flex-col gap-1.5">
+			<span class="text-xs font-medium text-muted-foreground">Page State</span>
+			<div class="flex gap-1">
+				{#each ['editing', 'viewing', 'optimizing'] as state}
+					{@const isActive = debugPageStateOverride === state}
+					<Button
+						variant={isActive ? 'default' : 'outline'}
+						size="sm"
+						class="h-7 flex-1 text-xs"
+						onclick={() => (debugPageStateOverride = state as PageState)}
+					>
+						{state}
+					</Button>
+				{/each}
+			</div>
+			{#if debugPageStateOverride}
+				<Button
+					variant="ghost"
+					size="sm"
+					class="h-6 text-xs text-muted-foreground"
+					onclick={() => (debugPageStateOverride = null)}
+				>
+					Reset to auto
+				</Button>
+			{/if}
+		</div>
+		<div class="border-t border-border pt-2 text-xs text-muted-foreground">
+			<div>Actual: {isViewMode ? 'viewing' : isOptimizing ? 'optimizing' : 'editing'}</div>
+			<div>Override: {debugPageStateOverride ?? 'none'}</div>
+		</div>
+	</div>
+</DebugToolbar>

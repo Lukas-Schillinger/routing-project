@@ -5,7 +5,7 @@ import TimeAgo from 'javascript-time-ago';
 import en from 'javascript-time-ago/locale/en';
 import { twMerge } from 'tailwind-merge';
 import type { Driver } from './schemas';
-import { locationCreateSchema, type LocationCreate } from './schemas/location';
+import { locationCreateSchema, type LocationCreate, type Location } from './schemas/location';
 import type { GeocodingFeature } from './services/external/mapbox/types';
 import type { Permission } from './services/server/permissions';
 
@@ -184,4 +184,28 @@ export type WithElementRef<T, U extends HTMLElement = HTMLElement> = T & { ref?:
  */
 export function checkPermission(permissions: Permission[], permission: Permission): boolean {
 	return permissions.includes(permission);
+}
+
+type AddressDisplayInput = Pick<
+	Location,
+	'address_line_1' | 'address_line_2' | 'city' | 'region' | 'postal_code'
+>;
+
+/**
+ * Utility for displaying formatted address information.
+ * Returns top line (street address), bottom line (city, state, zip), and full address.
+ */
+export function addressDisplay(location: AddressDisplayInput) {
+	const topLine = [location.address_line_1, location.address_line_2].filter(Boolean).join(', ');
+
+	const bottomLine = [
+		location.city,
+		[location.region, location.postal_code].filter(Boolean).join(' ')
+	]
+		.filter(Boolean)
+		.join(', ');
+
+	const full = [topLine, bottomLine].filter(Boolean).join(', ');
+
+	return { topLine, bottomLine, full };
 }
