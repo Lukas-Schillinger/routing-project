@@ -1,350 +1,421 @@
 <script lang="ts">
 	import AddressAutocomplete from '$lib/components/AddressAutocomplete.svelte';
-	import { Button, buttonVariants } from '$lib/components/ui/button';
-	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
-	import * as Popover from '$lib/components/ui/popover';
+	import { Button } from '$lib/components/ui/button';
 	import { Skeleton } from '$lib/components/ui/skeleton';
+	import type { ImportRecord, ImportState } from '$lib/schemas/import';
 	import type { LocationCreate } from '$lib/schemas/location';
-	import { geocodingApi } from '$lib/services/api';
-	import type { GeocodeCSVResult } from '$lib/services/server/csv-import.service';
-	import {
-		ArrowLeft,
-		CircleCheck,
-		MapPin,
-		NotepadText,
-		Phone,
-		SquarePen,
-		TriangleAlert,
-		Upload
-	} from 'lucide-svelte';
+	import { cn } from '$lib/utils';
+	import { ArrowLeft, ArrowRight, Pencil } from 'lucide-svelte';
 
 	let {
-		geocodedResults = $bindable([]),
-		isGeocoding = false,
-		onBack,
+		importState = $bindable(),
 		onImport
 	}: {
-		geocodedResults?: GeocodeCSVResult[];
-		isGeocoding?: boolean;
-		onBack: () => void;
-		onImport: (results: GeocodeCSVResult[]) => Promise<void>;
+		importState: ImportState;
+		onImport: () => Promise<void>;
 	} = $props();
 
 	let isImporting = $state(false);
-	let editingRowIndex = $state<number | null>(null);
+	let editingId = $state<string | null>(null);
 	let editAddressValue = $state('');
 
-	function getConfidence(result: GeocodeCSVResult): 'exact' | 'high' | 'medium' | 'low' | 'none' {
-		if (!result.feature) return 'none';
+	type Confidence = 'exact' | 'high' | 'medium' | 'low' | 'none';
 
-		const matchCode = result.feature.properties.match_code;
-		if (!matchCode) return 'medium';
-
-		// Mapbox match codes indicate accuracy
-		// https://docs.mapbox.com/api/search/geocoding/#geocoding-response-object
-		if (matchCode.confidence === 'exact') return 'exact';
-		if (matchCode.confidence === 'high') return 'high';
-		if (matchCode.confidence === 'medium') return 'medium';
-		return 'low';
+	function getConfidence(record: ImportRecord): Confidence {
+		if (!record.location) return 'none';
+		const confidence = record.location.geocode_confidence;
+		if (confidence === 'exact') return 'exact';
+		if (confidence === 'high') return 'high';
+		if (confidence === 'medium') return 'medium';
+		if (confidence === 'low') return 'low';
+		return 'medium'; // Default if not set
 	}
 
-	function getStatusIcon(confidence: ReturnType<typeof getConfidence>) {
+	function getStatusColor(confidence: Confidence): string {
 		switch (confidence) {
 			case 'exact':
 			case 'high':
-				return CircleCheck;
+				return 'bg-emerald-500';
 			case 'medium':
-				return TriangleAlert;
 			case 'low':
-				return TriangleAlert;
+				return 'bg-amber-500';
 			case 'none':
-				return TriangleAlert;
+				return 'bg-red-500';
 		}
 	}
 
-	function getStatusColor(confidence: ReturnType<typeof getConfidence>) {
+	function getStatusLabel(confidence: Confidence): string {
 		switch (confidence) {
 			case 'exact':
+				return 'Exact match';
 			case 'high':
-				return 'text-green-600';
+				return 'High confidence';
 			case 'medium':
-				return 'text-yellow-600';
+				return 'Medium confidence';
 			case 'low':
-				return 'text-yellow-600';
+				return 'Low confidence';
 			case 'none':
-				return 'text-destructive';
+				return 'Not found';
 		}
 	}
 
-	function startEditingAddress(index: number) {
-		editingRowIndex = index;
-		editAddressValue = geocodedResults[index].raw_address;
+	function getFormattedAddress(record: ImportRecord): string {
+		if (!record.location) return '';
+		const loc = record.location;
+		const parts = [
+			loc.address_line_1,
+			loc.address_line_2,
+			loc.city,
+			loc.region,
+			loc.postal_code
+		].filter(Boolean);
+		return parts.join(', ');
 	}
 
-	function cancelEditingAddress() {
-		editingRowIndex = null;
+	function startEditing(record: ImportRecord) {
+		editingId = record.id;
+		editAddressValue = record.raw.address;
+	}
+
+	function cancelEditing() {
+		editingId = null;
 		editAddressValue = '';
 	}
 
-	async function handleAddressSelected(index: number, location: LocationCreate) {
-		// The full address is in address_line_1
-		const addressToGeocode = location.address_line_1;
-
-		// Geocode the new address to get the feature
-		try {
-			const features = await geocodingApi.forward(addressToGeocode, {
-				country: 'US',
-				limit: 1
-			});
-
-			if (features.length > 0) {
-				const feature = features[0];
-				// Update the result with new geocoded data
-				geocodedResults[index] = {
-					...geocodedResults[index],
-					raw_address: addressToGeocode,
-					feature
-				};
-			}
-		} catch (error) {
-			console.error('Failed to geocode new address:', error);
-		} finally {
-			cancelEditingAddress();
+	// No re-geocoding needed - AddressAutocomplete already returns LocationCreate!
+	function handleAddressSelected(recordId: string, location: LocationCreate) {
+		const record = importState.records.find((r) => r.id === recordId);
+		if (record) {
+			record.location = location;
+			record.status = 'edited';
 		}
+		cancelEditing();
 	}
 
 	async function handleImport() {
-		const resultsToImport = geocodedResults.filter((r) => r.feature != null);
 		isImporting = true;
 		try {
-			await onImport(resultsToImport);
+			await onImport();
 		} finally {
 			isImporting = false;
 		}
 	}
 
-	const validRowCount = $derived(
-		geocodedResults.filter((r) => r.feature != null && getConfidence(r) !== 'none').length
+	function handleBack() {
+		importState.step = 2;
+	}
+
+	const totalCount = $derived(importState.records.length);
+	const validCount = $derived(
+		importState.records.filter((r) => r.status === 'success' || r.status === 'edited').length
 	);
 	const lowConfidenceCount = $derived(
-		geocodedResults.filter((r) => {
+		importState.records.filter((r) => {
+			if (r.status === 'failed') return false;
 			const conf = getConfidence(r);
 			return conf === 'low' || conf === 'medium';
 		}).length
 	);
-	const errorCount = $derived(geocodedResults.filter((r) => !r.feature).length);
+	const failedCount = $derived(importState.records.filter((r) => r.status === 'failed').length);
 
-	// Sort results: failed and low confidence first, then medium, then high confidence
-	const sortedResults = $derived(
-		geocodedResults
-			.map((result, index) => ({ result, originalIndex: index }))
+	const sortedRecords = $derived(
+		importState.records
+			.map((record) => ({ record, id: record.id }))
 			.sort((a, b) => {
-				const confA = getConfidence(a.result);
-				const confB = getConfidence(b.result);
-
-				// Priority order: none > low > medium > high > exact
-				const priority = { none: 0, low: 1, medium: 2, high: 3, exact: 3 };
-
-				return priority[confA] - priority[confB];
+				const priority: Record<ImportRecord['status'], number> = {
+					failed: 0,
+					pending: 1,
+					edited: 2,
+					success: 3
+				};
+				return priority[a.record.status] - priority[b.record.status];
 			})
 	);
 </script>
 
 <div class="space-y-6">
-	<Card>
-		<CardHeader>
-			<CardTitle class="flex items-center gap-2">
-				<MapPin class="h-5 w-5" />
-				Geocoding Results
-			</CardTitle>
-			<p class="text-sm text-muted-foreground">
-				Review geocoded addresses. All valid addresses will be imported.
-			</p>
-		</CardHeader>
-		<CardContent>
-			{#if isGeocoding}
-				<!-- Loading State -->
-				<div class="space-y-4">
-					<p class="text-sm text-muted-foreground">Geocoding addresses...</p>
-					{#each Array(5) as _}
-						<div class="flex items-start gap-3 rounded-lg border p-3">
-							<Skeleton class="h-5 w-5 rounded" />
-							<div class="flex-1 space-y-2">
-								<Skeleton class="h-4 w-3/4" />
-								<Skeleton class="h-3 w-1/2" />
-							</div>
-						</div>
-					{/each}
-				</div>
-			{:else if geocodedResults.length === 0}
-				<p class="text-sm text-muted-foreground">No results to display</p>
+	<!-- Header -->
+	<div>
+		<h2 class="text-lg font-semibold tracking-tight">Review Addresses</h2>
+		<p class="mt-1 text-sm text-muted-foreground">
+			{#if importState.isProcessing}
+				Geocoding addresses...
 			{:else}
-				<!-- Summary Stats -->
-				<div class="mb-4 flex flex-wrap gap-4 rounded-lg bg-muted p-3 text-sm">
-					<div class="flex items-center gap-2">
-						<CircleCheck class="h-4 w-4 text-green-600" />
-						<span>{validRowCount} valid</span>
+				<span class="tabular-nums">{totalCount}</span> addresses
+				{#if validCount > 0}
+					<span class="mx-1.5 text-muted-foreground/50">·</span>
+					<span class="text-emerald-600">{validCount} valid</span>
+				{/if}
+				{#if lowConfidenceCount > 0}
+					<span class="mx-1.5 text-muted-foreground/50">·</span>
+					<span class="text-amber-600">{lowConfidenceCount} low confidence</span>
+				{/if}
+				{#if failedCount > 0}
+					<span class="mx-1.5 text-muted-foreground/50">·</span>
+					<span class="text-red-600">{failedCount} failed</span>
+				{/if}
+			{/if}
+		</p>
+	</div>
+
+	<!-- Table -->
+	<div class="rounded-lg border bg-card">
+		{#if importState.isProcessing}
+			<!-- Loading State -->
+			<div class="divide-y">
+				{#each Array(5) as _}
+					<div class="px-4 py-3">
+						<div class="flex items-center gap-4">
+							<Skeleton class="h-4 w-24" />
+							<Skeleton class="h-4 flex-1" />
+							<Skeleton class="h-4 w-16" />
+							<Skeleton class="h-4 w-20" />
+							<Skeleton class="h-2.5 w-2.5 rounded-full" />
+						</div>
+						<div class="mt-2 flex items-center gap-4 pl-0">
+							<Skeleton class="h-3 w-48" />
+						</div>
 					</div>
-					{#if lowConfidenceCount > 0}
-						<div class="flex items-center gap-2">
-							<TriangleAlert class="h-4 w-4 text-yellow-600" />
-							<span>{lowConfidenceCount} low confidence</span>
-						</div>
-					{/if}
-					{#if errorCount > 0}
-						<div class="flex items-center gap-2">
-							<TriangleAlert class="h-4 w-4 text-destructive" />
-							<span>{errorCount} failed</span>
-						</div>
-					{/if}
-				</div>
-
-				<!-- Results List -->
-				<div class="max-h-[600px] space-y-2 overflow-y-auto">
-					{#each sortedResults as { result, originalIndex }}
-						{@const confidence = getConfidence(result)}
-						{@const StatusIcon = getStatusIcon(confidence)}
-						{@const statusColor = getStatusColor(confidence)}
-						{@const isInvalid = !result.feature}
-						<div class="flex flex-col justify-between gap-3 rounded-lg border p-3 sm:flex-row">
-							<div class="flex items-start gap-3 transition-colors">
-								<!-- Status Icon -->
-								<StatusIcon class="mt-0.5 h-5 w-5 flex-shrink-0 {statusColor}" />
-
-								<!-- Content -->
-								<div class="flex-1 space-y-1">
-									<div class="flex items-start justify-between gap-2">
-										<div class="flex-1">
-											{#if result.name}
-												<div class="font-medium">{result.name}</div>
-											{/if}
-										</div>
+				{/each}
+			</div>
+		{:else if importState.records.length === 0}
+			<div class="px-4 py-12 text-center text-sm text-muted-foreground">No addresses to review</div>
+		{:else}
+			<!-- Desktop Table -->
+			<div class="hidden md:block">
+				<table class="w-full text-sm">
+					<thead>
+						<tr class="border-b bg-muted/30">
+							<th class="w-8 py-2"></th>
+							<th class="px-4 py-2.5 text-left font-medium tracking-wider text-muted-foreground"
+								>Name</th
+							>
+							<th class="px-4 py-2.5 text-left font-medium tracking-wider text-muted-foreground"
+								>Address</th
+							>
+							<th class="px-4 py-2.5 text-left font-medium tracking-wider text-muted-foreground"
+								>Phone</th
+							>
+							<th class="px-4 py-2.5 text-left font-medium tracking-wider text-muted-foreground"
+								>Notes</th
+							>
+						</tr>
+					</thead>
+					<tbody class="divide-y">
+						{#each sortedRecords as { record, id } (id)}
+							{@const confidence = getConfidence(record)}
+							{@const isEditing = editingId === record.id}
+							<tr class="group transition-colors hover:bg-muted/20">
+								<!-- Status -->
+								<td class="py-4 pr-1 align-top">
+									<div class="flex items-center justify-end">
+										<span
+											class={cn('h-2.5 w-2.5 rounded-full', getStatusColor(confidence))}
+											title={getStatusLabel(confidence)}
+										></span>
 									</div>
+								</td>
 
-									{#if result.feature}
-										<div class="flex items-start gap-2 text-sm text-muted-foreground">
-											<MapPin class="mt-0.5 h-3 w-3 flex-shrink-0" />
-											<span class="flex-1">
-												{result.feature.properties.context?.address?.name}
-												{result.feature.properties.context?.place?.name},
-												{result.feature.properties.context?.region?.region_code}
-											</span>
-										</div>
-									{:else}
-										<div class="flex items-center justify-between gap-2">
-											<div class="text-sm text-destructive">
-												<TriangleAlert class="inline h-3 w-3" />
-												Could not geocode this address
-											</div>
-										</div>
-									{/if}
+								<!-- Name -->
+								<td class="max-w-64 overflow-clip px-4 py-3 align-top">
+									<div class="font-medium">{record.raw.name || ''}</div>
+								</td>
 
-									<div class="flex flex-col gap-2 gap-x-3 sm:flex-row">
-										{#if result.phone}
-											<div
-												class="flex items-center gap-1.5 text-sm whitespace-nowrap text-muted-foreground"
-											>
-												<Phone class="h-3 w-3 shrink-0" />
-												{result.phone}
-											</div>
-										{/if}
-										{#if result.notes}
-											<div class="flex items-center gap-1.5 text-sm text-muted-foreground">
-												<NotepadText class="h-3 w-3 shrink-0" />
-												<span class="line-clamp-2">{result.notes}</span>
-											</div>
-										{/if}
-									</div>
-								</div>
-							</div>
-							{#if isInvalid}
-								<Popover.Root
-									open={editingRowIndex === originalIndex}
-									onOpenChange={(open) => {
-										if (!open) cancelEditingAddress();
-									}}
-								>
-									<Popover.Trigger
-										class="{buttonVariants({
-											variant: 'outline',
-											size: 'sm'
-										})} mb-auto w-full sm:w-fit"
-									>
-										<SquarePen class="mr-2 h-3 w-3" />
-										Fix Address
-									</Popover.Trigger>
-									<Popover.Content class="w-80">
-										<div class="space-y-3">
-											<div>
-												<h4 class="leading-none font-medium">Edit Address</h4>
-												<p class="mt-1 text-sm text-muted-foreground">
-													Search for a valid address to replace this one.
-												</p>
-											</div>
+								<!-- Address -->
+								<td class="px-4 py-3 align-top">
+									{#if isEditing}
+										<div class="max-w-sm">
 											<AddressAutocomplete
 												bind:value={editAddressValue}
 												placeholder="Search for address..."
-												onSelect={(location) => handleAddressSelected(originalIndex, location)}
+												onSelect={(location) => handleAddressSelected(record.id, location)}
+												onClear={cancelEditing}
 											/>
-											<div class="flex justify-end gap-2">
-												<Button variant="outline" size="sm" onclick={cancelEditingAddress}>
-													Cancel
-												</Button>
-											</div>
+											<button
+												type="button"
+												class="mt-1.5 text-xs text-muted-foreground hover:text-foreground"
+												onclick={cancelEditing}
+											>
+												Cancel
+											</button>
 										</div>
-									</Popover.Content>
-								</Popover.Root>
+									{:else}
+										<button
+											type="button"
+											class="group/addr flex w-full cursor-pointer items-start gap-2 text-left"
+											onclick={() => startEditing(record)}
+										>
+											<div class="min-w-0 flex-1">
+												{#if record.location}
+													<div class="flex items-center gap-1.5">
+														<span>{getFormattedAddress(record)}</span>
+														<Pencil
+															class="h-3 w-3 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover/addr:opacity-100"
+														/>
+													</div>
+												{:else}
+													<span
+														class="inline-flex items-center gap-1.5 text-red-600 underline decoration-red-300 decoration-dashed underline-offset-2"
+													>
+														Click to fix address
+														<Pencil class="h-3 w-3" />
+													</span>
+												{/if}
+												<div
+													class="mt-0.5 font-mono text-xs text-muted-foreground/70"
+													title={record.raw.address}
+												>
+													{record.raw.address.length > 40
+														? record.raw.address.slice(0, 40) + '...'
+														: record.raw.address}
+												</div>
+											</div>
+										</button>
+									{/if}
+								</td>
+
+								<!-- Phone -->
+								<td class="whitespace-nowrap px-4 py-3 align-top">
+									{#if record.raw.phone}
+										<span class="font-mono text-xs">{record.raw.phone}</span>
+									{:else}
+										<span class="text-muted-foreground/50">—</span>
+									{/if}
+								</td>
+
+								<!-- Notes -->
+								<td class="max-w-[200px] px-4 py-3 align-top">
+									{#if record.raw.notes}
+										<span
+											class="line-clamp-2 text-xs text-muted-foreground"
+											title={record.raw.notes}
+										>
+											{record.raw.notes}
+										</span>
+									{:else}
+										<span class="text-muted-foreground/50">—</span>
+									{/if}
+								</td>
+							</tr>
+						{/each}
+					</tbody>
+				</table>
+			</div>
+
+			<!-- Mobile Cards -->
+			<div class="divide-y md:hidden">
+				{#each sortedRecords as { record, id } (id)}
+					{@const confidence = getConfidence(record)}
+					{@const isEditing = editingId === record.id}
+					<div class="p-4">
+						<!-- Header row with name and status -->
+						<div class="mb-3 flex items-start justify-between gap-3">
+							<div class="min-w-0 flex-1">
+								<div class="font-medium">
+									{record.raw.name || '—'}
+								</div>
+							</div>
+							<span
+								class={cn('mt-1 h-2.5 w-2.5 shrink-0 rounded-full', getStatusColor(confidence))}
+								title={getStatusLabel(confidence)}
+							></span>
+						</div>
+
+						<!-- Address -->
+						<div class="mb-3">
+							<div class="mb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+								Address
+							</div>
+							{#if isEditing}
+								<div>
+									<AddressAutocomplete
+										bind:value={editAddressValue}
+										placeholder="Search for address..."
+										onSelect={(location) => handleAddressSelected(record.id, location)}
+										onClear={cancelEditing}
+									/>
+									<button
+										type="button"
+										class="mt-1.5 text-xs text-muted-foreground hover:text-foreground"
+										onclick={cancelEditing}
+									>
+										Cancel
+									</button>
+								</div>
+							{:else}
+								<button
+									type="button"
+									class="flex w-full cursor-pointer items-start gap-2 text-left"
+									onclick={() => startEditing(record)}
+								>
+									<div class="min-w-0 flex-1">
+										{#if record.location}
+											<div class="flex items-center gap-1.5 text-sm">
+												<span>{getFormattedAddress(record)}</span>
+												<Pencil class="h-3 w-3 shrink-0 text-muted-foreground" />
+											</div>
+										{:else}
+											<span
+												class="inline-flex items-center gap-1.5 text-sm text-red-600 underline decoration-red-300 decoration-dashed underline-offset-2"
+											>
+												Tap to fix address
+												<Pencil class="h-3 w-3" />
+											</span>
+										{/if}
+										<div class="mt-0.5 font-mono text-xs text-muted-foreground/70">
+											{record.raw.address}
+										</div>
+									</div>
+								</button>
 							{/if}
 						</div>
-					{/each}
-				</div>
-			{/if}
-		</CardContent>
-	</Card>
 
-	<!-- Warnings -->
-	{#if !isGeocoding && errorCount > 0}
-		<div class="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-900">
-			<div class="flex items-start gap-2">
-				<TriangleAlert class="mt-0.5 h-4 w-4 flex-shrink-0" />
-				<div>
-					<div class="font-medium">Failed to geocode {errorCount} address(es)</div>
-					<div class="mt-1 text-xs">
-						These addresses could not be found. Please check the addresses and try again, or uncheck
-						them to continue without importing these stops.
+						<!-- Details grid -->
+						<div class="grid grid-cols-3 gap-3 text-sm">
+							<div>
+								<div
+									class="mb-0.5 text-xs font-medium uppercase tracking-wider text-muted-foreground"
+								>
+									Phone
+								</div>
+								{#if record.raw.phone}
+									<span class="font-mono text-xs">{record.raw.phone}</span>
+								{:else}
+									<span class="text-muted-foreground/50">—</span>
+								{/if}
+							</div>
+							{#if record.raw.notes}
+								<div class="col-span-2">
+									<div
+										class="mb-0.5 text-xs font-medium uppercase tracking-wider text-muted-foreground"
+									>
+										Notes
+									</div>
+									<span class="text-xs text-muted-foreground">{record.raw.notes}</span>
+								</div>
+							{/if}
+						</div>
 					</div>
-				</div>
+				{/each}
 			</div>
-		</div>
-	{/if}
+		{/if}
+	</div>
 
-	{#if !isGeocoding && lowConfidenceCount > 0}
-		<div class="rounded-md border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
-			<div class="flex items-start gap-2">
-				<TriangleAlert class="mt-0.5 h-4 w-4 flex-shrink-0" />
-				<div>
-					<div class="font-medium">{lowConfidenceCount} address(es) with low confidence</div>
-					<div class="mt-1 text-xs">
-						These addresses were geocoded, but the results may not be accurate. Please review them
-						carefully.
-					</div>
-				</div>
-			</div>
-		</div>
-	{/if}
-
-	<!-- Navigation -->
-	<div class="flex justify-between">
-		<Button variant="outline" onclick={onBack} disabled={isGeocoding || isImporting}>
+	<!-- Footer -->
+	<div class="flex items-center justify-between">
+		<Button variant="outline" onclick={handleBack} disabled={importState.isProcessing || isImporting}>
 			<ArrowLeft class="mr-2 h-4 w-4" />
 			Back
 		</Button>
-		<Button onclick={handleImport} disabled={isGeocoding || isImporting || validRowCount === 0}>
+		<Button
+			onclick={handleImport}
+			disabled={importState.isProcessing || isImporting || validCount === 0}
+		>
 			{#if isImporting}
 				Importing...
 			{:else}
-				<Upload class="mr-2 h-4 w-4" />
-				Import {validRowCount} Stop(s)
+				Import {validCount}
+				<ArrowRight class="ml-2 h-4 w-4" />
 			{/if}
 		</Button>
 	</div>
