@@ -4,7 +4,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
-	import { ArrowRight, Loader2, Lock, Mail } from 'lucide-svelte';
+	import { ArrowLeft, Loader2, Lock, Mail } from 'lucide-svelte';
 	import type { ActionData } from './$types';
 
 	let {
@@ -132,8 +132,8 @@
 			onclick={onRequestMagicLogin}
 			disabled={isSubmitting}
 		>
-			Continue with email link
-			<ArrowRight class="ml-2 h-4 w-4" />
+			<ArrowLeft class="mr-2 h-4 w-4" />
+			Back to email
 		</Button>
 	</div>
 </form>

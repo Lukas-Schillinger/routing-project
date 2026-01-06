@@ -6,7 +6,7 @@
 	import * as InputOTP from '$lib/components/ui/input-otp';
 	import { Label } from '$lib/components/ui/label';
 	import { loginTokensApi } from '$lib/services/api/auth';
-	import { ArrowLeft, Loader2, Mail, Sparkles } from 'lucide-svelte';
+	import { ArrowLeft, ArrowRight, Loader2, Mail, Sparkles } from 'lucide-svelte';
 
 	interface Props {
 		onBack: () => void;
@@ -120,8 +120,8 @@
 				onclick={handleBack}
 				disabled={isSubmitting}
 			>
-				<ArrowLeft class="mr-2 h-4 w-4" />
-				Back to password
+				Log in with password
+				<ArrowRight class="ml-2 h-4 w-4" />
 			</Button>
 		</div>
 	</form>

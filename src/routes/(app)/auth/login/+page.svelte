@@ -14,8 +14,8 @@
 	const isRegistrationFlow = $derived($page.url.searchParams.get('confirm') === 'true');
 	const emailParam = $derived($page.url.searchParams.get('email') ?? '');
 
-	// Default to magic login (OTP entry) if coming from registration
-	let userLoginMethod = $state<'password' | 'magic'>(isRegistrationFlow ? 'magic' : 'password');
+	// Default to magic login - passwords are optional so email login is primary
+	let userLoginMethod = $state<'password' | 'magic'>('magic');
 
 	// Debug state
 	type LoginState = 'password' | 'magic-email' | 'magic-otp';
