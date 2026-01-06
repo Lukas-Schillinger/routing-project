@@ -138,7 +138,7 @@
 		</div>
 		<Separator />
 	</Card.Content>
-	<Card.Footer class="">
+	<Card.Footer>
 		<Button onclick={handleLogout} variant="destructive">Logout</Button>
 	</Card.Footer>
 </Card.Root>

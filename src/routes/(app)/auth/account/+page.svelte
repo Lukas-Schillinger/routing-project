@@ -1,14 +1,30 @@
 <!-- @component Account page with user profile and organization settings -->
 <script lang="ts">
-	import { invalidateAll } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
+	import { ConfirmDeleteDialog } from '$lib/components/ConfirmDeleteDialog';
+	import { Button } from '$lib/components/ui/button';
 	import { Separator } from '$lib/components/ui/separator';
-	import { Settings } from 'lucide-svelte';
+	import { usersApi } from '$lib/services/api/auth';
+	import { Settings, Trash2 } from 'lucide-svelte';
+	import { toast } from 'svelte-sonner';
 	import type { PageData } from './$types';
 	import InvitationsCard from './InvitationsCard.svelte';
 	import OrganizationCard from './OrganizationCard.svelte';
 	import ProfileInformationCard from './ProfileInformationCard.svelte';
 
 	let { data }: { data: PageData } = $props();
+
+	const canDeleteAccount = $derived(data.permissions.includes('users:delete'));
+
+	async function handleDeleteAccount() {
+		try {
+			await usersApi.deleteMe();
+			toast.success('Account deleted');
+			goto('/auth/login');
+		} catch (error) {
+			toast.error(error instanceof Error ? error.message : 'Failed to delete account');
+		}
+	}
 </script>
 
 <svelte:head>
@@ -51,6 +67,32 @@
 
 			<!-- Preferences Section -->
 			<!-- 		<PreferencesCard /> -->
+
+			<!-- Delete Account Section (admin only) -->
+			{#if canDeleteAccount}
+				<Separator />
+				<div class="flex flex-col gap-2">
+					<h2 class="text-lg font-semibold text-destructive">Danger Zone</h2>
+					<p class="text-sm text-muted-foreground">
+						Once you delete your account, there is no going back. Please be certain.
+					</p>
+					<div class="mt-2">
+						<ConfirmDeleteDialog
+							title="Delete Account"
+							description="Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently removed."
+							confirmText="Delete Account"
+							onConfirm={handleDeleteAccount}
+						>
+							{#snippet trigger({ props })}
+								<Button {...props} variant="destructive">
+									<Trash2 class="mr-2 h-4 w-4" />
+									Delete Account
+								</Button>
+							{/snippet}
+						</ConfirmDeleteDialog>
+					</div>
+				</div>
+			{/if}
 		</div>
 	</div>
 </div>

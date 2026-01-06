@@ -37,6 +37,10 @@ class UsersApiService {
 		return apiClient.patch<PublicUser>('/auth/users/me', data);
 	}
 
+	async deleteMe(): Promise<{ success: true }> {
+		return apiClient.delete<{ success: true }>('/auth/users/me');
+	}
+
 	async updateRole(userId: string, data: UpdateUserRole): Promise<PublicUser> {
 		return apiClient.patch<PublicUser>(`/auth/users/${userId}`, data);
 	}
