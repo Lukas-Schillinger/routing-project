@@ -33,7 +33,7 @@
 </script>
 
 {#if shouldShow}
-	<div class="fixed z-[9999] {positionClasses[position]}">
+	<div class="pointer-events-auto fixed isolate z-[9999] {positionClasses[position]}">
 		{#if !isOpen}
 			<Button
 				variant="outline"

@@ -1,64 +1,145 @@
 <script lang="ts">
+	import { AuthCard } from '$lib/components/auth';
+	import DebugToolbar from '$lib/components/DebugToolbar.svelte';
 	import { Button } from '$lib/components/ui/button';
-	import {
-		Card,
-		CardContent,
-		CardDescription,
-		CardHeader,
-		CardTitle
-	} from '$lib/components/ui/card';
-	import { User } from 'lucide-svelte';
 	import type { ActionData } from './$types';
 	import LoginWithPassword from './LoginWithPassword.svelte';
 	import RequestMagicLogin from './RequestMagicLogin.svelte';
 
 	let { form }: { form: ActionData } = $props();
-	let loginMethod = $state<'password' | 'magic'>('password');
+	let userLoginMethod = $state<'password' | 'magic'>('password');
+
+	// Debug state
+	type LoginState = 'password' | 'magic-email' | 'magic-otp';
+	let debugState = $state<LoginState | null>(null);
+	let debugShowError = $state(false);
+	let debugShowSuccess = $state(false);
+
+	// Derive active login method from debug state or user selection
+	const loginMethod = $derived.by(() => {
+		if (debugState === 'password') return 'password';
+		if (debugState === 'magic-email' || debugState === 'magic-otp') return 'magic';
+		return userLoginMethod;
+	});
+
+	const description = $derived(
+		loginMethod === 'password'
+			? 'Sign in to continue to your routes'
+			: "We'll send a secure link to your email"
+	);
+
+	// Derived debug props
+	const debugError = $derived(
+		debugShowError ? 'Invalid email or password. Please try again.' : null
+	);
+	const debugMagicError = $derived(
+		debugShowError ? 'Error sending login code. Please try again.' : null
+	);
+	const debugSuccess = $derived(debugShowSuccess ? 'Check your inbox for a login code' : null);
+	const debugOtpSent = $derived(debugState === 'magic-otp');
+	const debugFormMessage = $derived(
+		debugState === 'password' && debugShowError ? debugError : null
+	);
 </script>
 
 <svelte:head>
-	<title>Login - Routing Project</title>
+	<title>Sign in - Wend</title>
 </svelte:head>
 
-<div
-	class="flex min-h-[calc(100vh)] items-center justify-center bg-gradient-to-br from-forest-600 via-forest-700 to-forest-900 p-6"
->
-	<div class="w-full max-w-sm">
-		<div class="mb-8 text-center"></div>
+<AuthCard title="Welcome back" {description}>
+	{#snippet children()}
+		{#if loginMethod === 'password'}
+			<LoginWithPassword
+				form={debugFormMessage ? { message: debugFormMessage } : form}
+				onRequestMagicLogin={() => (userLoginMethod = 'magic')}
+			/>
+		{:else}
+			<RequestMagicLogin
+				onBack={() => (userLoginMethod = 'password')}
+				debugOtpSent={debugState ? debugOtpSent : undefined}
+				debugError={debugState && debugShowError ? debugMagicError : undefined}
+				debugSuccess={debugState === 'magic-otp' && debugShowSuccess ? debugSuccess : undefined}
+				debugEmail={debugState ? 'user@example.com' : undefined}
+			/>
+		{/if}
+	{/snippet}
 
-		<Card class="border-border bg-card shadow-xl">
-			<CardHeader class="space-y-1">
-				<CardTitle class="headline-card text-center text-foreground">
-					<User class="mx-auto mb-2 h-8 w-8 " />
-				</CardTitle>
-				<CardDescription class="body-medium text-center ">
-					{#if loginMethod === 'password'}
-						Enter your email and password to continue
-					{:else}
-						We'll send a magic link to your email
-					{/if}
-				</CardDescription>
-			</CardHeader>
-			<CardContent class="space-y-6">
-				{#if loginMethod === 'password'}
-					<LoginWithPassword {form} onRequestMagicLogin={() => (loginMethod = 'magic')} />
-				{:else}
-					<RequestMagicLogin onBack={() => (loginMethod = 'password')} />
-				{/if}
+	{#snippet footer()}
+		<p class="text-sm text-muted-foreground">
+			Don't have an account?
+			<Button
+				variant="link"
+				href="/auth/register"
+				class="h-auto p-0 pl-1 text-sm font-medium text-foreground underline-offset-4 hover:text-primary hover:underline"
+			>
+				Create one
+			</Button>
+		</p>
+	{/snippet}
+</AuthCard>
 
-				<div class="text-center">
-					<p class="body-small text-muted-foreground">
-						Don't have an account?
-						<Button
-							variant="link"
-							href="/auth/register"
-							class="body-small font-medium text-foreground underline hover:text-accent-foreground"
-						>
-							Register Here
-						</Button>
-					</p>
-				</div>
-			</CardContent>
-		</Card>
+<DebugToolbar title="Login States">
+	<div class="flex flex-col gap-3">
+		<div class="flex flex-col gap-1.5">
+			<span class="text-xs font-medium text-muted-foreground">View</span>
+			<div class="flex flex-wrap gap-1">
+				{#each [{ value: 'password', label: 'Password' }, { value: 'magic-email', label: 'Magic Email' }, { value: 'magic-otp', label: 'OTP Entry' }] as { value, label } (value)}
+					{@const isActive = debugState === value}
+					<Button
+						variant={isActive ? 'default' : 'outline'}
+						size="sm"
+						class="h-7 text-xs"
+						onclick={() => (debugState = value as LoginState)}
+					>
+						{label}
+					</Button>
+				{/each}
+			</div>
+		</div>
+
+		<div class="flex flex-col gap-1.5">
+			<span class="text-xs font-medium text-muted-foreground">Alerts</span>
+			<div class="flex gap-1">
+				<Button
+					variant={debugShowError ? 'destructive' : 'outline'}
+					size="sm"
+					class="h-7 flex-1 text-xs"
+					onclick={() => {
+						debugShowError = !debugShowError;
+						if (debugShowError) debugShowSuccess = false;
+					}}
+				>
+					Error
+				</Button>
+				<Button
+					variant={debugShowSuccess ? 'default' : 'outline'}
+					size="sm"
+					class="h-7 flex-1 text-xs"
+					onclick={() => {
+						debugShowSuccess = !debugShowSuccess;
+						if (debugShowSuccess) debugShowError = false;
+					}}
+				>
+					Success
+				</Button>
+			</div>
+		</div>
+
+		{#if debugState}
+			<div class="border-t border-border pt-2">
+				<Button
+					variant="ghost"
+					size="sm"
+					class="h-6 w-full text-xs text-muted-foreground"
+					onclick={() => {
+						debugState = null;
+						debugShowError = false;
+						debugShowSuccess = false;
+					}}
+				>
+					Reset to auto
+				</Button>
+			</div>
+		{/if}
 	</div>
-</div>
+</DebugToolbar>

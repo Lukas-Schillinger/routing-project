@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
 	import { Button } from '$lib/components/ui/button';
 	import * as ButtonGroup from '$lib/components/ui/button-group/';
 	import { Input } from '$lib/components/ui/input';
@@ -46,7 +45,8 @@
 		const queryString = params.toString();
 		const newUrl = queryString ? `/maps?${queryString}` : '/maps';
 
-		goto(newUrl, { replaceState: true, keepFocus: true, noScroll: true });
+		// Use history.replaceState directly to avoid triggering SvelteKit navigation
+		history.replaceState(history.state, '', newUrl);
 	}
 
 	const sortOptions: SortOption<SortColumn>[] = [

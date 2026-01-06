@@ -1,114 +1,111 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import * as Alert from '$lib/components/ui/alert';
+	import { AuthAlert, AuthCard } from '$lib/components/auth';
 	import { Button } from '$lib/components/ui/button';
-	import {
-		Card,
-		CardContent,
-		CardDescription,
-		CardHeader,
-		CardTitle
-	} from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
-	import { Lock, Mail, TriangleAlert, User } from 'lucide-svelte';
+	import { Lock, Mail, UserPlus } from 'lucide-svelte';
 	import type { ActionData } from './$types';
 
 	let { form }: { form: ActionData } = $props();
 </script>
 
 <svelte:head>
-	<title>Wend / Register</title>
+	<title>Create account - Wend</title>
 </svelte:head>
 
-<div
-	class="flex min-h-[calc(100vh)] items-center justify-center bg-gradient-to-br from-forest-600 via-forest-700 to-forest-900 p-6"
->
-	<div class="w-full max-w-sm">
-		<Card class="border-border bg-card shadow-xl">
-			<CardHeader class="space-y-1">
-				<CardTitle class="headline-card text-center text-foreground">
-					<User class="mx-auto mb-2 h-8 w-8 " />
-				</CardTitle>
-				<CardDescription class="body-medium text-center ">
-					Enter an email and password to register.
-				</CardDescription>
-			</CardHeader>
-			<CardContent class="space-y-6">
-				{#if form?.message}
-					<Alert.Root variant="destructive" class="text-destructive">
-						<TriangleAlert class="h-4 w-4" />
-						<Alert.Title class="">Error</Alert.Title>
-						<Alert.Description class="">{form.message}</Alert.Description>
-					</Alert.Root>
-				{/if}
+<AuthCard title="Create your account" description="Start optimizing your routes today">
+	{#snippet children()}
+		<div class="space-y-6">
+			<AuthAlert message={form?.message} />
 
-				<form method="post" action="?/register" use:enhance class="space-y-4" novalidate>
-					<div class="space-y-2">
-						<Label for="email" class="body-medium text-foreground">Email</Label>
-						<div class="relative">
-							<Mail class="absolute top-2.5 left-3 h-4 w-4 " />
-							<Input
-								id="email"
-								type="email"
-								name="email"
-								placeholder="Email"
-								class="pl-10"
-								required
-							/>
-						</div>
+			<form method="post" action="?/register" use:enhance class="space-y-5" novalidate>
+				<div class="space-y-1.5">
+					<Label
+						for="email"
+						class="text-xs font-medium tracking-wider text-muted-foreground uppercase"
+					>
+						Email
+					</Label>
+					<div class="relative">
+						<Mail
+							class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground/50"
+						/>
+						<Input
+							id="email"
+							type="email"
+							name="email"
+							placeholder="you@example.com"
+							class="h-11 border-border/50 bg-background/50 pl-10 transition-colors focus:border-primary/50 focus:bg-background"
+							required
+						/>
 					</div>
-
-					<div class="space-y-2">
-						<Label for="password" class="body-medium text-foreground">Password</Label>
-						<div class="relative">
-							<Lock class="absolute top-2.5 left-3 h-4 w-4 " />
-							<Input
-								id="password"
-								type="password"
-								name="password"
-								placeholder="Password"
-								class="pl-10"
-								required
-							/>
-						</div>
-					</div>
-
-					<div class="space-y-2">
-						<Label for="confirm-password" class="body-medium text-foreground"
-							>Confirm Password</Label
-						>
-						<div class="relative">
-							<Lock class="absolute top-2.5 left-3 h-4 w-4 " />
-							<Input
-								id="password"
-								type="password"
-								name="password-confirm"
-								placeholder="Confirm Password"
-								class="pl-10"
-								required
-							/>
-						</div>
-					</div>
-
-					<div class="grid grid-cols-1 gap-3 pt-2">
-						<Button type="submit">Register</Button>
-					</div>
-				</form>
-
-				<div class="text-center">
-					<p class="body-small text-muted-foreground">
-						Already have an account?
-						<Button
-							variant="link"
-							href="/auth/login"
-							class="body-small font-medium text-foreground underline hover:text-accent-foreground"
-						>
-							Sign In Here
-						</Button>
-					</p>
 				</div>
-			</CardContent>
-		</Card>
-	</div>
-</div>
+
+				<div class="space-y-1.5">
+					<Label
+						for="password"
+						class="text-xs font-medium tracking-wider text-muted-foreground uppercase"
+					>
+						Password
+					</Label>
+					<div class="relative">
+						<Lock
+							class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground/50"
+						/>
+						<Input
+							id="password"
+							type="password"
+							name="password"
+							placeholder="Create a strong password"
+							class="h-11 border-border/50 bg-background/50 pl-10 transition-colors focus:border-primary/50 focus:bg-background"
+							required
+						/>
+					</div>
+				</div>
+
+				<div class="space-y-1.5">
+					<Label
+						for="confirm-password"
+						class="text-xs font-medium tracking-wider text-muted-foreground uppercase"
+					>
+						Confirm password
+					</Label>
+					<div class="relative">
+						<Lock
+							class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground/50"
+						/>
+						<Input
+							id="confirm-password"
+							type="password"
+							name="password-confirm"
+							placeholder="Confirm your password"
+							class="h-11 border-border/50 bg-background/50 pl-10 transition-colors focus:border-primary/50 focus:bg-background"
+							required
+						/>
+					</div>
+				</div>
+
+				<div class="pt-2">
+					<Button type="submit" class="h-11 w-full font-medium">
+						<UserPlus class="mr-2 h-4 w-4" />
+						Create account
+					</Button>
+				</div>
+			</form>
+		</div>
+	{/snippet}
+
+	{#snippet footer()}
+		<p class="text-sm text-muted-foreground">
+			Already have an account?
+			<Button
+				variant="link"
+				href="/auth/login"
+				class="h-auto p-0 pl-1 text-sm font-medium text-foreground underline-offset-4 hover:text-primary hover:underline"
+			>
+				Sign in
+			</Button>
+		</p>
+	{/snippet}
+</AuthCard>
