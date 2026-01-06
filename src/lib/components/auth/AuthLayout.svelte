@@ -8,7 +8,7 @@
 	let { children }: Props = $props();
 </script>
 
-<div class="relative flex min-h-screen flex-col bg-background">
+<div class="relative flex min-h-svh flex-col bg-background">
 	<!-- Main content -->
 	<div class="relative z-10 flex flex-1 flex-col items-center justify-center px-4 py-12">
 		<!-- Logo -->
