@@ -153,16 +153,16 @@
 			<div class=" flex justify-center py-2">
 				<InputOTP.Root maxlength={6} bind:value={code} disabled={isSubmitting}>
 					{#snippet children({ cells })}
-						<div class="flex w-full max-w-60 items-center justify-around gap-2">
+						<div class="flex w-full items-center justify-around gap-2">
 							<InputOTP.Group>
 								{#each cells.slice(0, 3) as cell (cell)}
-									<InputOTP.Slot {cell} />
+									<InputOTP.Slot class="h-12 w-10" {cell} />
 								{/each}
 							</InputOTP.Group>
 							<span class="text-border">•</span>
 							<InputOTP.Group>
 								{#each cells.slice(3, 6) as cell (cell)}
-									<InputOTP.Slot {cell} />
+									<InputOTP.Slot class="h-12 w-10" {cell} />
 								{/each}
 							</InputOTP.Group>
 						</div>

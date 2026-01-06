@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { mode } from 'mode-watcher';
+	import CloudflareImage from '../CloudflareImage.svelte';
 
 	interface Props {
 		children: any;
@@ -15,16 +16,16 @@
 		<a href="/" class="mb-10 flex items-center gap-2.5 hover:opacity-80">
 			<div class="relative size-36">
 				{#if mode.current === 'light'}
-					<img
-						src="https://storage-public.wend-routing.com/cdn-cgi/image/width=100,height=100,fit=cover,format=webp,quality=100/logo/logo_black.png"
-						alt="Wend"
-						class="h-full w-full object-contain"
+					<CloudflareImage
+						size="lg"
+						src="https://storage-public.wend-routing.com/logo/logo_black.svg"
+						alt="wend logo"
 					/>
 				{:else}
-					<img
-						src="https://pub-7210daee28ba4cac82595c41b998d12f.r2.dev/logo/logo_white.png"
-						alt="Wend"
-						class="h-full w-full object-contain"
+					<CloudflareImage
+						size="lg"
+						src="https://storage-public.wend-routing.com/logo/logo_white.svg"
+						alt="wend logo"
 					/>
 				{/if}
 			</div>

@@ -13,7 +13,7 @@
 
 <div class="w-full max-w-[380px]">
 	{#if title || description}
-		<div class="mb-8 text-center">
+		<div class="mb-6 text-center sm:mb-8">
 			{#if title}
 				<h1 class="text-2xl font-medium tracking-tight text-foreground">
 					{title}
@@ -30,7 +30,7 @@
 	{@render children()}
 
 	{#if footer}
-		<div class="mt-8 text-center">
+		<div class="mt-6 text-center sm:mt-8">
 			{@render footer()}
 		</div>
 	{/if}
