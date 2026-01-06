@@ -11,6 +11,11 @@ type MagicLinkRequest = {
 	props: MagicLinkData;
 };
 
+type ConfirmEmailRequest = {
+	template_id: 'confirm_email';
+	props: MagicLinkData;
+};
+
 export type MagicInviteData = {
 	invite_url: string;
 	inviter_name?: string | null;
@@ -34,7 +39,11 @@ type RouteShareRequest = {
 	props: RouteShareData;
 };
 
-type RenderRequest = MagicLinkRequest | MagicInviteRequest | RouteShareRequest;
+type RenderRequest =
+	| MagicLinkRequest
+	| MagicInviteRequest
+	| RouteShareRequest
+	| ConfirmEmailRequest;
 
 // Response types
 type RenderResponseSuccess = {
@@ -118,6 +127,13 @@ export class RenderClient {
 	async renderMagicLink(data: MagicLinkData): Promise<RenderedEmail> {
 		return this.post({
 			template_id: 'magic_link',
+			props: data
+		});
+	}
+
+	async renderConfirmEmail(data: MagicLinkData): Promise<RenderedEmail> {
+		return this.post({
+			template_id: 'confirm_email',
 			props: data
 		});
 	}

@@ -41,7 +41,8 @@ export async function validateSessionToken(
 				email: table.users.email,
 				role: table.users.role,
 				created_at: table.users.created_at,
-				updated_at: table.users.updated_at
+				updated_at: table.users.updated_at,
+				email_confirmed_at: table.users.email_confirmed_at
 			},
 			session: table.session
 		})

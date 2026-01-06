@@ -36,7 +36,8 @@ export class UserService {
 			organization_id: user.organization_id,
 			email: user.email,
 			role: user.role,
-			name: user.name
+			name: user.name,
+			email_confirmed_at: user.email_confirmed_at
 		};
 	}
 
@@ -49,7 +50,8 @@ export class UserService {
 				organization_id: users.organization_id,
 				email: users.email,
 				role: users.role,
-				name: users.name
+				name: users.name,
+				email_confirmed_at: users.email_confirmed_at
 			})
 			.from(users)
 			.where(eq(users.organization_id, organizationId));
@@ -87,7 +89,8 @@ export class UserService {
 			organization_id: updatedUser.organization_id,
 			name: updatedUser.name,
 			email: updatedUser.email,
-			role: updatedUser.role
+			role: updatedUser.role,
+			email_confirmed_at: updatedUser.email_confirmed_at
 		};
 	}
 
@@ -116,7 +119,8 @@ export class UserService {
 			organization_id: updatedUser.organization_id,
 			name: updatedUser.name,
 			email: updatedUser.email,
-			role: updatedUser.role
+			role: updatedUser.role,
+			email_confirmed_at: updatedUser.email_confirmed_at
 		};
 	}
 

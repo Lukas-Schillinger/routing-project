@@ -167,7 +167,10 @@ describe('Registration Server Actions', () => {
 					passwordHash: null,
 					created_at: new Date(),
 					updated_at: new Date(),
-					organization_id: 'org_id'
+					organization_id: 'org_id',
+					name: null,
+					role: 'member',
+					email_confirmed_at: null
 				});
 
 				// Mock auth functions

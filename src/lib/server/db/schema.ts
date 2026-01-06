@@ -45,7 +45,8 @@ export const users = pgTable(
 		role: varchar('role', { length: 32 })
 			.$type<'admin' | 'member' | 'viewer' | 'driver'>()
 			.default('member')
-			.notNull()
+			.notNull(),
+		email_confirmed_at: timestamp('email_confirmed_at', { withTimezone: true })
 	},
 	(t) => [
 		uniqueIndex('users_user_org_uidx').on(t.organization_id, t.id),
@@ -634,3 +635,4 @@ export const loginTokensRelations = relations(loginTokens, ({ one }) => ({
 		references: [mailRecords.id]
 	})
 }));
+

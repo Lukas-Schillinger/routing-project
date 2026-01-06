@@ -33,7 +33,8 @@ export const userSchema = z.object({
 	passwordHash: z.string().nullable(),
 	role: roleEnum,
 	created_at: timestampSchema,
-	updated_at: timestampSchema
+	updated_at: timestampSchema,
+	email_confirmed_at: timestampSchema.nullable()
 });
 
 // Public user schema (without sensitive data)

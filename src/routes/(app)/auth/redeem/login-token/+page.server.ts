@@ -1,3 +1,5 @@
+import { db } from '$lib/server/db';
+import { users } from '$lib/server/db/schema';
 import {
 	createSession,
 	generateSessionToken,
@@ -6,6 +8,7 @@ import {
 import { ServiceError } from '$lib/services/server/errors';
 import { loginTokenService } from '$lib/services/server/login-token.service';
 import { error, redirect } from '@sveltejs/kit';
+import { eq } from 'drizzle-orm';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async (event) => {
@@ -30,6 +33,11 @@ export const load: PageServerLoad = async (event) => {
 
 		// Validate login token and get user
 		const user = await loginTokenService.validateLoginToken(token, email);
+
+		// Set email_confirmed_at if this is first login (email confirmation)
+		if (!user.email_confirmed_at) {
+			await db.update(users).set({ email_confirmed_at: new Date() }).where(eq(users.id, user.id));
+		}
 
 		// Create session
 		const sessionToken = generateSessionToken();

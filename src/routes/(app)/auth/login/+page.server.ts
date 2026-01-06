@@ -4,6 +4,7 @@ import * as table from '$lib/server/db/schema';
 import * as auth from '$lib/services/server/auth';
 import { ServiceError } from '$lib/services/server/errors';
 import { loginTokenService } from '$lib/services/server/login-token.service';
+import { resendClient } from '$lib/services/external/mail/resend';
 import { verify } from '@node-rs/argon2';
 import { fail, redirect } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
@@ -55,11 +56,49 @@ export const actions: Actions = {
 			return fail(400, { message: 'Incorrect email or password' });
 		}
 
+		// Check if email is confirmed
+		if (!existingUser.email_confirmed_at) {
+			return fail(400, {
+				message: 'Please confirm your email before logging in',
+				code: 'EMAIL_NOT_CONFIRMED',
+				email: validEmail
+			});
+		}
+
 		const sessionToken = auth.generateSessionToken();
 		const session = await auth.createSession(sessionToken, existingUser.id);
 		auth.setSessionTokenCookie(event, sessionToken, session.expires_at);
 
 		return redirect(302, '/auth/account');
+	},
+
+	resendConfirmation: async (event) => {
+		const formData = await event.request.formData();
+		const email = formData.get('email') as string;
+
+		if (!email) {
+			return fail(400, { message: 'Email is required' });
+		}
+
+		try {
+			// Use login token service to create a new login token
+			const { loginToken, token } = await loginTokenService.createLoginToken({
+				email,
+				token_duration_hours: 24 // 24 hours for confirmation emails
+			});
+
+			// Send welcome email
+			await resendClient.sendLoginEmail(loginToken, email, token, event.url.origin, true);
+
+			// Always return success to prevent email enumeration
+			return { resendSuccess: true };
+		} catch (error) {
+			if (error instanceof ServiceError && error.statusCode === 404) {
+				// User not found - still return success to prevent enumeration
+				return { resendSuccess: true };
+			}
+			return { resendSuccess: true };
+		}
 	},
 
 	verifyOTP: async (event) => {
@@ -78,6 +117,14 @@ export const actions: Actions = {
 
 		try {
 			const user = await loginTokenService.validateLoginToken(validCode, validEmail);
+
+			// Set email_confirmed_at if this is first login (email confirmation)
+			if (!user.email_confirmed_at) {
+				await db
+					.update(table.users)
+					.set({ email_confirmed_at: new Date() })
+					.where(eq(table.users.id, user.id));
+			}
 
 			const sessionToken = auth.generateSessionToken();
 			const session = await auth.createSession(sessionToken, user.id);

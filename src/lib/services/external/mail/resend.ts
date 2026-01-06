@@ -96,7 +96,23 @@ export class ResendClient {
 		await invitationService.setMailRecordId(invitation.id, mailRecordId);
 	}
 
-	async sendLoginEmail(loginToken: LoginToken, email: string, token: string, origin: string): Promise<void> {
+	private async getLoginEmail(login_url: string, token: string, isWelcome?: boolean) {
+		if (isWelcome) {
+			return renderClient.renderConfirmEmail({ login_url, token });
+		}
+		return renderClient.renderMagicLink({
+			login_url,
+			token
+		});
+	}
+
+	async sendLoginEmail(
+		loginToken: LoginToken,
+		email: string,
+		token: string,
+		origin: string,
+		isWelcome?: boolean
+	): Promise<void> {
 		const loginUrl = `${origin}/auth/redeem/login-token?token=${token}&email=${encodeURIComponent(email)}`;
 
 		const { html, text } = await renderClient.renderMagicLink({
@@ -108,7 +124,7 @@ export class ResendClient {
 			organizationId: loginToken.organization_id,
 			type: 'login_token',
 			to: email,
-			subject: 'Wend login link',
+			subject: isWelcome ? 'Welcome to Wend - Confirm your email' : 'Wend login link',
 			html,
 			text
 		});

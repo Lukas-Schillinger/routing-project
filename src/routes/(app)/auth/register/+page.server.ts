@@ -1,5 +1,7 @@
+import { ServiceError } from '$lib/errors';
 import { registerSchema } from '$lib/schemas/auth';
-import * as auth from '$lib/services/server/auth';
+import { resendClient } from '$lib/services/external/mail/resend';
+import { loginTokenService } from '$lib/services/server/login-token.service';
 import { userService } from '$lib/services/server/user.service';
 import { hash } from '@node-rs/argon2';
 import { fail, redirect } from '@sveltejs/kit';
@@ -19,8 +21,6 @@ export const actions: Actions = {
 		const password = formData.get('password');
 		const passwordConfirm = formData.get('password-confirm');
 
-		// Validate input using Zod
-		console.log(email, password, passwordConfirm);
 		const validation = registerSchema.safeParse({ email, password, passwordConfirm });
 		if (!validation.success) {
 			const errors = validation.error.issues;
@@ -33,7 +33,6 @@ export const actions: Actions = {
 		const { email: validEmail, password: validPassword } = validation.data;
 
 		const passwordHash = await hash(validPassword, {
-			// recommended minimum parameters
 			memoryCost: 19456,
 			timeCost: 2,
 			outputLen: 32,
@@ -41,23 +40,36 @@ export const actions: Actions = {
 		});
 
 		try {
-			const user = await userService.createUser({
+			// Create user (email_confirmed_at will be null)
+			await userService.createUser({
 				email: validEmail,
 				passwordHash: passwordHash,
-				role: 'admin' // A new organization is created for every user registering of which they are the admin of.
+				role: 'admin'
 			});
-			const userId = user.id;
 
-			const sessionToken = auth.generateSessionToken();
-			const session = await auth.createSession(sessionToken, userId);
-			auth.setSessionTokenCookie(event, sessionToken, session.expires_at);
+			// Create login token (acts as confirmation token with longer expiration)
+			const { loginToken, token } = await loginTokenService.createLoginToken({
+				email: validEmail,
+				token_duration_hours: 24 // 24 hours for welcome emails
+			});
+
+			// Send welcome email
+			await resendClient.sendLoginEmail(loginToken, validEmail, token, event.url.origin, true);
+
+			// Redirect to login page - confirm=true shows OTP entry with confirmation message
+			return redirect(302, `/auth/login?email=${encodeURIComponent(validEmail)}&confirm=true`);
 		} catch (error) {
-			// Check if it's a unique constraint violation (duplicate email)
-			if (error instanceof Error && error.message.includes('unique')) {
-				return fail(400, { message: 'Email already exists' });
+			// Re-throw redirect errors
+			if (error && typeof error === 'object' && 'status' in error && error.status === 302) {
+				throw error;
 			}
-			return fail(500, { message: 'An error has occurred' });
+
+			// Check if it's a unique constraint violation (duplicate email)
+			if (error instanceof ServiceError) {
+				return fail(error.statusCode, { message: error.message });
+			}
+			console.error('Registration error:', error);
+			return fail(500, { message: 'an unknown error occurred' });
 		}
-		return redirect(302, '/auth/account');
 	}
 };

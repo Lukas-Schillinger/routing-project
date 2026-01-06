@@ -6,7 +6,7 @@
 	import * as InputOTP from '$lib/components/ui/input-otp';
 	import { Label } from '$lib/components/ui/label';
 	import { loginTokensApi } from '$lib/services/api/auth';
-	import { ArrowLeft, Mail, Sparkles } from 'lucide-svelte';
+	import { ArrowLeft, Loader2, Mail, Sparkles } from 'lucide-svelte';
 
 	interface Props {
 		onBack: () => void;
@@ -14,15 +14,25 @@
 		debugError?: string | null;
 		debugSuccess?: string | null;
 		debugEmail?: string;
+		initialEmail?: string;
+		initialOtpSent?: boolean;
 	}
 
-	let { onBack, debugOtpSent, debugError, debugSuccess, debugEmail }: Props = $props();
+	let {
+		onBack,
+		debugOtpSent,
+		debugError,
+		debugSuccess,
+		debugEmail,
+		initialEmail = '',
+		initialOtpSent = false
+	}: Props = $props();
 
-	let internalEmail = $state('');
+	let internalEmail = $state(initialEmail);
 	let email = $derived(debugEmail ?? internalEmail);
 	let code = $state('');
 	let isSubmitting = $state(false);
-	let internalOtpSent = $state(false);
+	let internalOtpSent = $state(initialOtpSent);
 
 	let internalErrorMessage = $state<string | null>(null);
 	let internalSuccessMessage = $state<string | null>(null);
@@ -95,6 +105,7 @@
 		<div class="flex flex-col gap-3 pt-2">
 			<Button type="submit" class="h-11 w-full font-medium" disabled={isSubmitting}>
 				{#if isSubmitting}
+					<Loader2 class="mr-2 h-4 w-4 animate-spin" />
 					Sending...
 				{:else}
 					<Sparkles class="mr-2 h-4 w-4" />
@@ -115,7 +126,18 @@
 		</div>
 	</form>
 {:else}
-	<form method="POST" action="?/verifyOTP" use:enhance class="space-y-5">
+	<form
+		method="POST"
+		action="?/verifyOTP"
+		use:enhance={() => {
+			isSubmitting = true;
+			return async ({ update }) => {
+				await update();
+				isSubmitting = false;
+			};
+		}}
+		class="space-y-5"
+	>
 		<AuthAlert message={errorMessage} />
 		<AuthAlert message={successMessage} variant="success" />
 
@@ -153,12 +175,9 @@
 		</div>
 
 		<div class="flex flex-col items-center gap-3 pt-2">
-			<Button
-				type="submit"
-				class="h-11 w-full  max-w-60"
-				disabled={isSubmitting || code.length !== 6}
-			>
+			<Button type="submit" class="h-11 w-full" disabled={isSubmitting || code.length !== 6}>
 				{#if isSubmitting}
+					<Loader2 class="mr-2 h-4 w-4 animate-spin" />
 					Verifying...
 				{:else}
 					Verify code

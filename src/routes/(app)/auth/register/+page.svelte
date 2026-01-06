@@ -4,10 +4,12 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
-	import { Lock, Mail, UserPlus } from 'lucide-svelte';
+	import { Loader2, Lock, Mail, UserPlus } from 'lucide-svelte';
 	import type { ActionData } from './$types';
 
 	let { form }: { form: ActionData } = $props();
+
+	let isSubmitting = $state(false);
 </script>
 
 <svelte:head>
@@ -19,7 +21,19 @@
 		<div class="space-y-6">
 			<AuthAlert message={form?.message} />
 
-			<form method="post" action="?/register" use:enhance class="space-y-5" novalidate>
+			<form
+				method="post"
+				action="?/register"
+				use:enhance={() => {
+					isSubmitting = true;
+					return async ({ update }) => {
+						await update();
+						isSubmitting = false;
+					};
+				}}
+				class="space-y-5"
+				novalidate
+			>
 				<div class="space-y-1.5">
 					<Label
 						for="email"
@@ -87,9 +101,14 @@
 				</div>
 
 				<div class="pt-2">
-					<Button type="submit" class="h-11 w-full font-medium">
-						<UserPlus class="mr-2 h-4 w-4" />
-						Create account
+					<Button type="submit" class="h-11 w-full font-medium" disabled={isSubmitting}>
+						{#if isSubmitting}
+							<Loader2 class="mr-2 h-4 w-4 animate-spin" />
+							Creating account...
+						{:else}
+							<UserPlus class="mr-2 h-4 w-4" />
+							Create account
+						{/if}
 					</Button>
 				</div>
 			</form>

@@ -152,7 +152,8 @@ export class InvitationService {
 				name: user.name,
 				role: user.role,
 				created_at: user.created_at,
-				updated_at: user.updated_at
+				updated_at: user.updated_at,
+				email_confirmed_at: user.email_confirmed_at
 			};
 		});
 	}

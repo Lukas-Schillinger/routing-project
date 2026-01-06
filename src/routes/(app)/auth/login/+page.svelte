@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { AuthCard } from '$lib/components/auth';
+	import { page } from '$app/stores';
+	import { AuthAlert, AuthCard } from '$lib/components/auth';
 	import DebugToolbar from '$lib/components/DebugToolbar.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import type { ActionData } from './$types';
@@ -7,7 +8,14 @@
 	import RequestMagicLogin from './RequestMagicLogin.svelte';
 
 	let { form }: { form: ActionData } = $props();
-	let userLoginMethod = $state<'password' | 'magic'>('password');
+
+	// Registration flow: ?confirm=true&email=... (shows OTP entry with confirmation message)
+	// Normal login: no params (shows password login)
+	const isRegistrationFlow = $derived($page.url.searchParams.get('confirm') === 'true');
+	const emailParam = $derived($page.url.searchParams.get('email') ?? '');
+
+	// Default to magic login (OTP entry) if coming from registration
+	let userLoginMethod = $state<'password' | 'magic'>(isRegistrationFlow ? 'magic' : 'password');
 
 	// Debug state
 	type LoginState = 'password' | 'magic-email' | 'magic-otp';
@@ -48,6 +56,15 @@
 
 <AuthCard title="Welcome back" {description}>
 	{#snippet children()}
+		{#if isRegistrationFlow}
+			<div class="pb-4">
+				<AuthAlert
+					message="Check your email for a confirmation code to complete registration."
+					variant="info"
+				/>
+			</div>
+		{/if}
+
 		{#if loginMethod === 'password'}
 			<LoginWithPassword
 				form={debugFormMessage ? { message: debugFormMessage } : form}
@@ -59,7 +76,9 @@
 				debugOtpSent={debugState ? debugOtpSent : undefined}
 				debugError={debugState && debugShowError ? debugMagicError : undefined}
 				debugSuccess={debugState === 'magic-otp' && debugShowSuccess ? debugSuccess : undefined}
-				debugEmail={debugState ? 'user@example.com' : undefined}
+				debugEmail={debugState ? 'user@example.com' : emailParam || undefined}
+				initialEmail={emailParam}
+				initialOtpSent={isRegistrationFlow}
 			/>
 		{/if}
 	{/snippet}
