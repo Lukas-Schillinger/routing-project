@@ -1,3 +1,4 @@
+import { isValidPhoneNumber, parsePhoneNumber } from 'libphonenumber-js';
 import { z } from 'zod';
 
 // Common field schemas that can be reused
@@ -24,10 +25,29 @@ export const nameSchema = z
 	.max(200, 'Name must be less than 200 characters')
 	.trim();
 
+/**
+ * Validates and formats US phone numbers using libphonenumber-js.
+ * Accepts various formats and normalizes to E.164 format.
+ */
 export const phoneSchema = z
 	.string()
 	.max(32, 'Phone number must be less than 32 characters')
-	.optional()
+	.refine(
+		(val) => {
+			if (!val || val.trim() === '') return true;
+			return isValidPhoneNumber(val, 'US');
+		},
+		{ message: 'Please enter a valid US phone number' }
+	)
+	.transform((val) => {
+		if (!val || val.trim() === '') return null;
+		try {
+			const parsed = parsePhoneNumber(val, 'US');
+			return parsed.format('E.164');
+		} catch {
+			return val;
+		}
+	})
 	.nullable();
 
 export const notesSchema = z

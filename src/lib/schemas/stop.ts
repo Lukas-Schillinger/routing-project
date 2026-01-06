@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { phoneSchema } from './common';
 import type { Location } from './location';
 import { locationCreateSchema } from './location';
 
@@ -10,7 +11,7 @@ export const createStopSchema = z
 		driver_id: z.string().uuid().nullable().optional(),
 		delivery_index: z.number().int().nullable().optional(),
 		contact_name: z.string().max(200).nullable().optional(),
-		contact_phone: z.string().max(32).nullable().optional(),
+		contact_phone: phoneSchema.optional(),
 		notes: z.string().nullable().optional()
 	})
 	.refine((data) => data.location_id || data.location, {
@@ -24,7 +25,7 @@ export const updateStopSchema = z.object({
 	driver_id: z.string().uuid().nullable().optional(),
 	delivery_index: z.number().int().nullable().optional(),
 	contact_name: z.string().max(200).nullable().optional(),
-	contact_phone: z.string().max(32).nullable().optional(),
+	contact_phone: phoneSchema.optional(),
 	notes: z.string().nullable().optional()
 });
 
@@ -42,7 +43,7 @@ export const stopSchema = z.object({
 	driver_id: z.string().uuid().nullable(),
 	delivery_index: z.number().int().nullable(),
 	contact_name: z.string().nullable(),
-	contact_phone: z.string().nullable(),
+	contact_phone: phoneSchema,
 	notes: z.string().nullable(),
 	created_at: z.date(),
 	updated_at: z.date()

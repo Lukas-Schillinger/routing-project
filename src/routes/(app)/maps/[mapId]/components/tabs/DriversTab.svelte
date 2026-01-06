@@ -11,7 +11,7 @@
 	import type { Driver } from '$lib/schemas/driver';
 	import { ServiceError } from '$lib/errors';
 	import { mapApi } from '$lib/services/api';
-	import { getIdenticon } from '$lib/utils';
+	import { formatPhoneNumber, getIdenticon } from '$lib/utils';
 	import { Copy, Ellipsis, Pencil, Phone, Plus, Trash2, Truck, UserPlus } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
@@ -177,7 +177,7 @@
 						{#if driver.phone}
 							<p class="flex items-center gap-1 text-xs text-muted-foreground">
 								<Phone class="h-3 w-3" />
-								{driver.phone}
+								{formatPhoneNumber(driver.phone)}
 							</p>
 						{/if}
 					</div>

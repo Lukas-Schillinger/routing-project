@@ -5,9 +5,9 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import { Textarea } from '$lib/components/ui/textarea';
+	import { ServiceError } from '$lib/errors';
 	import type { LocationCreate } from '$lib/schemas/location';
 	import type { StopWithLocation } from '$lib/schemas/stop';
-	import { ServiceError } from '$lib/errors';
 	import { stopApi } from '$lib/services/api/stops';
 	import { Check, LoaderCircle } from 'lucide-svelte';
 
@@ -175,9 +175,7 @@
 	</div>
 
 	<div class="space-y-2">
-		<Label for="stop-address">
-			Address {mode === 'edit' ? '(optional - leave unchanged if empty)' : ''}
-		</Label>
+		<Label for="stop-address">Address</Label>
 		<AddressAutocomplete
 			bind:value={address}
 			placeholder={mode === 'create' ? 'Search for address...' : 'Search to update address...'}

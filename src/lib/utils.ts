@@ -3,6 +3,7 @@ import * as style from '@dicebear/identicon';
 import { clsx, type ClassValue } from 'clsx';
 import TimeAgo from 'javascript-time-ago';
 import en from 'javascript-time-ago/locale/en';
+import { parsePhoneNumber } from 'libphonenumber-js';
 import Papa from 'papaparse';
 import { twMerge } from 'tailwind-merge';
 import type { Driver } from './schemas';
@@ -209,6 +210,20 @@ export function addressDisplay(location: AddressDisplayInput) {
 	const full = [topLine, bottomLine].filter(Boolean).join(', ');
 
 	return { topLine, bottomLine, full };
+}
+
+/**
+ * Format an E.164 phone number for display.
+ * Converts "+15551234567" to "(555) 123-4567".
+ */
+export function formatPhoneNumber(phone: string | null | undefined): string | null {
+	if (!phone) return null;
+	try {
+		const parsed = parsePhoneNumber(phone);
+		return parsed.formatNational();
+	} catch {
+		return phone;
+	}
 }
 
 // CSV Parsing utilities

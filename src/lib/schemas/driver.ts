@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { phoneSchema } from './common';
 
 /**
  * Driver schema - represents a driver in the system
@@ -7,7 +8,7 @@ export const driverSchema = z.object({
 	id: z.string().uuid(),
 	organization_id: z.string().uuid(),
 	name: z.string().min(1, 'Name is required').max(200, 'Name must be 200 characters or less'),
-	phone: z.string().max(32, 'Phone must be 32 characters or less').nullable(),
+	phone: phoneSchema.nullable(),
 	notes: z.string().nullable(),
 	active: z.boolean(),
 	temporary: z.boolean(),
@@ -33,7 +34,7 @@ export const driverCreateSchema = driverSchema
 	})
 	.extend({
 		// Make phone and notes explicitly optional for creation
-		phone: z.string().max(32).nullable().optional(),
+		phone: phoneSchema.optional(),
 		notes: z.string().nullable().optional(),
 		// Provide defaults for boolean fields
 		active: z.boolean().default(true),
@@ -48,7 +49,7 @@ export type DriverCreate = z.infer<typeof driverCreateSchema>;
 export const driverUpdateSchema = z
 	.object({
 		name: z.string().min(1, 'Name cannot be empty').max(200).optional(),
-		phone: z.string().max(32).nullable().optional(),
+		phone: phoneSchema.optional(),
 		notes: z.string().nullable().optional(),
 		active: z.boolean().optional(),
 		temporary: z.boolean().optional(),

@@ -7,7 +7,7 @@
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import type { Driver } from '$lib/schemas/driver';
 	import { driverApi } from '$lib/services/api/drivers';
-	import { getIdenticon } from '$lib/utils';
+	import { formatPhoneNumber, getIdenticon } from '$lib/utils';
 	import {
 		ChevronRight,
 		Copy,
@@ -109,7 +109,7 @@
 										{#if driver.phone}
 											<p class="flex items-center gap-1 text-xs text-muted-foreground">
 												<Phone class="h-3 w-3" />
-												{driver.phone}
+												{formatPhoneNumber(driver.phone)}
 											</p>
 										{/if}
 									</div>

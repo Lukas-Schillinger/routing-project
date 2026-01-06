@@ -4,9 +4,9 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import { Switch } from '$lib/components/ui/switch';
+	import { ServiceError } from '$lib/errors';
 	import type { DepotWithLocationJoin } from '$lib/schemas/depot';
 	import type { LocationCreate } from '$lib/schemas/location';
-	import { ServiceError } from '$lib/errors';
 	import { depotApi } from '$lib/services/api/depots';
 	import { Check, LoaderCircle } from 'lucide-svelte';
 
@@ -167,9 +167,7 @@
 	</div>
 
 	<div class="space-y-2">
-		<Label for="depot-address">
-			Address {mode === 'create' ? '*' : '(optional - leave unchanged if empty)'}
-		</Label>
+		<Label for="depot-address">Address</Label>
 		<AddressAutocomplete
 			bind:value={address}
 			placeholder={mode === 'create'

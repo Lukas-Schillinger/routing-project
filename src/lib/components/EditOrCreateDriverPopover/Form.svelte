@@ -107,7 +107,7 @@
 
 		<Field.Group>
 			<Field.Field data-invalid={$errors.name ? true : undefined}>
-				<Field.Label for="driver-name">Driver Name</Field.Label>
+				<Field.Label for="driver-name">Name</Field.Label>
 				<Input
 					id="driver-name"
 					bind:value={$formData.name}
@@ -121,39 +121,39 @@
 				{/if}
 				{#if $errors.name}<Field.Error>{$errors.name[0]}</Field.Error>{/if}
 			</Field.Field>
-
-			<Field.Field data-invalid={$errors.phone ? true : undefined}>
-				<Field.Label for="driver-phone">Phone Number</Field.Label>
-				<PhoneInput
-					id="driver-phone"
-					bind:value={$formData.phone}
-					disabled={$submitting || temporaryDriver}
-				/>
-				{#if $errors.phone}<Field.Error>{$errors.phone[0]}</Field.Error>{/if}
-			</Field.Field>
-
-			<Field.Field data-invalid={$errors.color ? true : undefined}>
-				<Field.Label for="driver-color">Color</Field.Label>
-				<div class="flex gap-2">
-					<Input
-						type="color"
-						id="driver-color"
-						bind:value={$formData.color}
-						disabled={$submitting}
-						class="h-9 w-full cursor-pointer p-1"
+			<div class="flex gap-2">
+				<Field.Field data-invalid={$errors.phone ? true : undefined}>
+					<Field.Label for="driver-phone">Phone Number</Field.Label>
+					<PhoneInput
+						id="driver-phone"
+						bind:value={$formData.phone}
+						disabled={$submitting || temporaryDriver}
 					/>
-					<Button
-						type="button"
-						onclick={() => ($formData.color = generateRandomColor())}
-						variant="ghost"
-						size="icon"
-						disabled={$submitting}
-					>
-						<RefreshCw class="h-4 w-4" />
-					</Button>
-				</div>
-				{#if $errors.color}<Field.Error>{$errors.color[0]}</Field.Error>{/if}
-			</Field.Field>
+					{#if $errors.phone}<Field.Error>{$errors.phone[0]}</Field.Error>{/if}
+				</Field.Field>
+				<Field.Field data-invalid={$errors.color ? true : undefined}>
+					<Field.Label for="driver-color">Color</Field.Label>
+					<div class="flex gap-2">
+						<Input
+							type="color"
+							id="driver-color"
+							bind:value={$formData.color}
+							disabled={$submitting}
+							class="h-9 w-full cursor-pointer p-1"
+						/>
+						<Button
+							type="button"
+							onclick={() => ($formData.color = generateRandomColor())}
+							variant="ghost"
+							size="icon"
+							disabled={$submitting}
+						>
+							<RefreshCw class="h-4 w-4" />
+						</Button>
+					</div>
+					{#if $errors.color}<Field.Error>{$errors.color[0]}</Field.Error>{/if}
+				</Field.Field>
+			</div>
 
 			<Field.Field data-invalid={$errors.notes ? true : undefined}>
 				<Field.Label for="driver-notes">Notes</Field.Label>
