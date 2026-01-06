@@ -34,6 +34,20 @@ export const verifyOTPSchema = z.object({
 	code: z.string().length(6)
 });
 
+export const requestPasswordResetSchema = z.object({
+	email: emailSchema
+});
+
+export const resetPasswordSchema = z.object({
+	email: emailSchema,
+	token: z.string().min(1),
+	newPassword: z.string().min(6).max(255),
+	confirmPassword: z.string().min(6).max(255)
+}).refine((data) => data.newPassword === data.confirmPassword, {
+	message: "Passwords don't match",
+	path: ['confirmPassword']
+});
+
 export const invitationSchema = z.object({
 	id: z.string(),
 	organization_id: z.string(),
@@ -68,5 +82,7 @@ export type RegisterInput = z.infer<typeof registerSchema>;
 export type CreateInvitation = z.infer<typeof createInvitationSchema>;
 export type CreateLoginToken = z.infer<typeof createLoginTokenSchema>;
 export type VerifyOTP = z.infer<typeof verifyOTPSchema>;
+export type RequestPasswordReset = z.infer<typeof requestPasswordResetSchema>;
+export type ResetPassword = z.infer<typeof resetPasswordSchema>;
 export type Invitation = z.infer<typeof invitationSchema>;
 export type LoginToken = z.infer<typeof loginTokenSchema>;

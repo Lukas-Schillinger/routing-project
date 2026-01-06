@@ -118,6 +118,23 @@
 			<Badge class="max-w-fit" variant="secondary">{user.role}</Badge>
 		</div>
 
+		<!-- Password reset -->
+		<div
+			class="flex flex-col gap-1 border-b py-4 md:flex-row md:items-center md:justify-between md:gap-4"
+		>
+			<div class="shrink-0 pb-2 md:pb-0">
+				<p class="text-sm font-medium">Password</p>
+				<p class="text-sm text-muted-foreground">Reset your password via email</p>
+			</div>
+			<Button
+				href="/auth/password-reset?email={encodeURIComponent(user.email)}"
+				variant="outline"
+				size="sm"
+			>
+				Reset password
+			</Button>
+		</div>
+
 		<!-- Theme toggle -->
 		<div class="flex flex-col gap-1 py-4 md:flex-row md:items-center md:justify-between md:gap-4">
 			<div class="shrink-0 pb-2 md:pb-0">

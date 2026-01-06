@@ -97,6 +97,10 @@ export class LoginTokenService {
 			.set({ mail_record_id: mailRecordId })
 			.where(eq(loginTokens.id, loginTokenId));
 	}
+
+	async deleteLoginToken(tokenId: string): Promise<void> {
+		await db.delete(loginTokens).where(eq(loginTokens.id, tokenId));
+	}
 }
 
 export const loginTokenService = new LoginTokenService();

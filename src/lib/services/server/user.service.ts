@@ -124,6 +124,20 @@ export class UserService {
 		};
 	}
 
+	/** Update user's password hash - used by password reset flow */
+	async updatePasswordHash(userId: string, organizationId: string, passwordHash: string): Promise<void> {
+		await this.getUser(userId, organizationId);
+
+		await db
+			.update(users)
+			.set({
+				passwordHash,
+				updated_at: new Date(),
+				updated_by: userId
+			})
+			.where(and(eq(users.id, userId), eq(users.organization_id, organizationId)));
+	}
+
 	async deleteUser(userId: string, organizationId: string): Promise<{ success: true }> {
 		// Verify user exists and belongs to organization
 		const user = await this.getUser(userId, organizationId);

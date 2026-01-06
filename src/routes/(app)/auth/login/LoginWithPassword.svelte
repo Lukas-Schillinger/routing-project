@@ -17,6 +17,7 @@
 
 	let isSubmitting = $state(false);
 	let isResending = $state(false);
+	let emailValue = $state('');
 </script>
 
 {#if form?.message}
@@ -81,6 +82,7 @@
 				class="h-11 border-border/50 bg-background/50 pl-10 transition-colors focus:border-primary/50 focus:bg-background"
 				required
 				disabled={isSubmitting}
+				bind:value={emailValue}
 			/>
 		</div>
 	</div>
@@ -104,6 +106,12 @@
 				disabled={isSubmitting}
 			/>
 		</div>
+		<a
+			href="/auth/password-reset?email={encodeURIComponent(emailValue)}"
+			class="text-xs text-muted-foreground hover:text-foreground transition-colors"
+		>
+			Reset password
+		</a>
 	</div>
 
 	<div class="flex flex-col gap-3 pt-2">

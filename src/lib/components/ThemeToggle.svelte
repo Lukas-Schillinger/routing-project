@@ -2,12 +2,13 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Moon, Sun } from 'lucide-svelte';
 	import { mode, toggleMode } from 'mode-watcher';
+	import type { Snippet } from 'svelte';
 
-	let { variant = 'default' }: { variant?: 'default' | 'inverse' } = $props();
+	let { variant = 'default', children }: { variant?: string; children?: Snippet } = $props();
 </script>
 
 <Button
-	variant="ghost"
+	variant={variant ? variant : 'default'}
 	size="sm"
 	onclick={toggleMode}
 	class="h-9 w-9 p-0 {variant === 'inverse' ? '' : ''}"

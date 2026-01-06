@@ -1,70 +1,21 @@
 import { env } from '$env/dynamic/private';
+import type {
+	MagicInviteData,
+	MagicLinkData,
+	PasswordResetData,
+	RenderedEmail,
+	RenderRequest,
+	RenderResponse,
+	RouteShareData
+} from './types';
 
-export type MagicLinkData = {
-	token: string;
-	login_url: string;
-};
-
-// Request types
-type MagicLinkRequest = {
-	template_id: 'magic_link';
-	props: MagicLinkData;
-};
-
-type ConfirmEmailRequest = {
-	template_id: 'confirm_email';
-	props: MagicLinkData;
-};
-
-export type MagicInviteData = {
-	invite_url: string;
-	inviter_name?: string | null;
-	inviter_email: string;
-	organization_name: string;
-};
-
-type MagicInviteRequest = {
-	template_id: 'magic_invite';
-	props: MagicInviteData;
-};
-
-export type RouteShareData = {
-	route_url: string;
-	route_title: string;
-	driver_name: string;
-};
-
-type RouteShareRequest = {
-	template_id: 'route_share';
-	props: RouteShareData;
-};
-
-type RenderRequest =
-	| MagicLinkRequest
-	| MagicInviteRequest
-	| RouteShareRequest
-	| ConfirmEmailRequest;
-
-// Response types
-type RenderResponseSuccess = {
-	success: true;
-	results: {
-		html: string;
-		text: string;
-	};
-};
-
-type RenderResponseFail = {
-	success: false;
-	error?: object | string;
-};
-
-type RenderResponse = RenderResponseSuccess | RenderResponseFail;
-
-export type RenderedEmail = {
-	html: string;
-	text: string;
-};
+export type {
+	MagicInviteData,
+	MagicLinkData,
+	PasswordResetData,
+	RenderedEmail,
+	RouteShareData
+} from './types';
 
 export class RenderApiError extends Error {
 	constructor(
@@ -148,6 +99,13 @@ export class RenderClient {
 	async renderRouteShare(data: RouteShareData): Promise<RenderedEmail> {
 		return this.post({
 			template_id: 'route_share',
+			props: data
+		});
+	}
+
+	async renderPasswordReset(data: PasswordResetData): Promise<RenderedEmail> {
+		return this.post({
+			template_id: 'password_reset',
 			props: data
 		});
 	}

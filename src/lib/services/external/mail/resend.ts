@@ -96,7 +96,7 @@ export class ResendClient {
 		await invitationService.setMailRecordId(invitation.id, mailRecordId);
 	}
 
-	private async getLoginEmail(login_url: string, token: string, isWelcome?: boolean) {
+	private async renderLoginEmail(login_url: string, token: string, isWelcome?: boolean) {
 		if (isWelcome) {
 			return renderClient.renderConfirmEmail({ login_url, token });
 		}
@@ -106,6 +106,28 @@ export class ResendClient {
 		});
 	}
 
+	async sendPasswordResetEmail(
+		loginToken: LoginToken,
+		email: string,
+		token: string,
+		origin: string
+	): Promise<void> {
+		const login_url = `${origin}/auth/redeem/password-reset?token=${token}&email=${encodeURIComponent(email)}`;
+
+		const { html, text } = await renderClient.renderPasswordReset({ login_url });
+
+		const mailRecordId = await this.sendEmail({
+			organizationId: loginToken.organization_id,
+			type: 'password_reset',
+			to: email,
+			subject: 'Reset your Wend password',
+			html,
+			text
+		});
+
+		await loginTokenService.setMailRecordId(loginToken.id, mailRecordId);
+	}
+
 	async sendLoginEmail(
 		loginToken: LoginToken,
 		email: string,
@@ -113,18 +135,15 @@ export class ResendClient {
 		origin: string,
 		isWelcome?: boolean
 	): Promise<void> {
-		const loginUrl = `${origin}/auth/redeem/login-token?token=${token}&email=${encodeURIComponent(email)}`;
+		const login_url = `${origin}/auth/redeem/login-token?token=${token}&email=${encodeURIComponent(email)}`;
 
-		const { html, text } = await renderClient.renderMagicLink({
-			login_url: loginUrl,
-			token
-		});
+		const { html, text } = await this.renderLoginEmail(login_url, token);
 
 		const mailRecordId = await this.sendEmail({
 			organizationId: loginToken.organization_id,
 			type: 'login_token',
 			to: email,
-			subject: isWelcome ? 'Welcome to Wend - Confirm your email' : 'Wend login link',
+			subject: isWelcome ? 'Wend email confirmation' : 'Wend login link',
 			html,
 			text
 		});

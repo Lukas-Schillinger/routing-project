@@ -382,7 +382,7 @@ export const mailRecords = pgTable(
 
 		resend_id: varchar('resend_id', { length: 64 }).notNull().unique(),
 		type: varchar('type', { length: 32 })
-			.$type<'invitation' | 'login_token' | 'route_share'>()
+			.$type<'invitation' | 'login_token' | 'route_share' | 'password_reset'>()
 			.notNull(),
 		to_email: text('to_email').notNull(),
 		from_email: text('from_email').notNull(),

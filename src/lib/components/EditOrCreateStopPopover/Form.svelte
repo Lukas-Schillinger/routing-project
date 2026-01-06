@@ -129,11 +129,7 @@
 			console.error(`Error ${mode === 'create' ? 'creating' : 'updating'} stop:`, err);
 
 			if (err instanceof ServiceError) {
-				if (err.statusCode === 403) {
-					error = `You do not have permission to ${mode === 'create' ? 'create' : 'edit'} stops`;
-				} else {
-					error = err.message;
-				}
+				error = err.message;
 			} else {
 				error = 'An unexpected error occurred';
 			}
