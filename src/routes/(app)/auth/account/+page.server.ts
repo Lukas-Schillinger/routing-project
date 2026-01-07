@@ -8,7 +8,7 @@ export const load: PageServerLoad = async () => {
 
 	// Fetch all data in parallel since they're independent
 	const [organization, invitationsWithMailRecord, organizationUsers] = await Promise.all([
-		organizationService.getOrganization(user.organization_id, user.organization_id),
+		organizationService.getOrganization(user.organization_id),
 		invitationService.getInvitationsWithMailRecord(user.organization_id),
 		userService.getPublicUsers(user.organization_id)
 	]);

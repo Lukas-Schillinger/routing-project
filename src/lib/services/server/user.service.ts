@@ -183,11 +183,11 @@ export class UserService {
 }
 
 export class OrganizationService {
-	async getOrganization(requestedId: string, requesterId: string): Promise<Organization> {
+	async getOrganization(organizationId: string): Promise<Organization> {
 		const [organization] = await db
 			.select()
 			.from(organizations)
-			.where(and(eq(organizations.id, requestedId), eq(organizations.id, requesterId)))
+			.where(eq(organizations.id, organizationId))
 			.limit(1);
 
 		if (!organization) {
@@ -197,16 +197,12 @@ export class OrganizationService {
 		return organization;
 	}
 
-	async updateOrganization(
-		requestedId: string,
-		data: UpdateOrganization,
-		requesterId: string,
-		userId: string
-	) {
+	async updateOrganization(organizationId: string, data: UpdateOrganization, userId: string) {
 		const [organization] = await db
 			.select()
 			.from(organizations)
-			.where(and(eq(organizations.id, requestedId), eq(organizations.id, requesterId)));
+			.where(eq(organizations.id, organizationId))
+			.limit(1);
 
 		if (!organization) {
 			throw ServiceError.notFound('Organization not found');
@@ -219,7 +215,7 @@ export class OrganizationService {
 				updated_at: new Date(),
 				updated_by: userId
 			})
-			.where(eq(organizations.id, requestedId))
+			.where(eq(organizations.id, organizationId))
 			.returning();
 
 		return updatedOrganization;

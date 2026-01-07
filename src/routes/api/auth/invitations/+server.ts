@@ -22,10 +22,7 @@ export const POST: RequestHandler = async ({ request, url }) => {
 		);
 
 		// Does this call belong here or in the mail service? We're only using the organization to personalize the copy
-		const organization = await organizationService.getOrganization(
-			user.organization_id,
-			user.organization_id
-		);
+		const organization = await organizationService.getOrganization(user.organization_id);
 
 		await mailService.sendInvitationEmail(invitation, token, user, organization, url.origin);
 

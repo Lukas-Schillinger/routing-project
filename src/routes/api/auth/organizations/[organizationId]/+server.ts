@@ -2,6 +2,7 @@
 
 import { handleApiError } from '$lib/errors';
 import { updateOrganizationSchema } from '$lib/schemas';
+import { ServiceError } from '$lib/services/server/errors';
 import { requirePermissionApi } from '$lib/services/server/permissions';
 import { organizationService } from '$lib/services/server/user.service';
 import { json } from '@sveltejs/kit';
@@ -12,14 +13,18 @@ export const PATCH: RequestHandler = async ({ params, request }) => {
 
 	const { organizationId } = params;
 
+	// Security: users can only update their own organization
+	if (organizationId !== user.organization_id) {
+		throw ServiceError.forbidden('Cannot update other organizations');
+	}
+
 	try {
 		const body = await request.json();
 		const validatedData = updateOrganizationSchema.parse(body);
 
 		const organization = await organizationService.updateOrganization(
-			organizationId,
-			validatedData,
 			user.organization_id,
+			validatedData,
 			user.id
 		);
 
