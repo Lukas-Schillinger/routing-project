@@ -2,32 +2,14 @@ import type { RouteShare, RouteShareWithMailRecord, RouteWithDetails } from '$li
 import { db } from '$lib/server/db';
 import { mailRecords, routeShares, routes } from '$lib/server/db/schema';
 import { mailService } from '$lib/services/external/mail';
-import { sha256 } from '@oslojs/crypto/sha2';
-import { encodeHexLowerCase } from '@oslojs/encoding';
-import { randomBytes } from 'crypto';
 import { and, eq, isNull } from 'drizzle-orm';
 import { ServiceError } from './errors';
 import { routeService } from './route.service';
+import { TokenUtils } from './token.utils';
 
 const SHARE_DURATION_HOURS = 720; // 30 days
 
 export class RouteShareService {
-	private async hashToken(raw: string): Promise<string> {
-		return encodeHexLowerCase(sha256(new TextEncoder().encode(raw)));
-	}
-
-	private generateToken(): string {
-		return randomBytes(32).toString('hex');
-	}
-
-	private getExpiry(durationHours: number): Date {
-		return new Date(Date.now() + durationHours * 60 * 60 * 1000);
-	}
-
-	private isExpired(date: Date): boolean {
-		return Date.now() >= date.getTime();
-	}
-
 	/**
 	 * Create an email share for a route
 	 * Returns the share record and the raw token (to be included in the email link)
@@ -41,8 +23,8 @@ export class RouteShareService {
 		// Verify the route exists and belongs to the organization
 		await routeService.verifyRouteOwnership(routeId, organizationId);
 
-		const token = this.generateToken();
-		const tokenHash = await this.hashToken(token);
+		const token = TokenUtils.generateHex();
+		const tokenHash = TokenUtils.hash(token);
 
 		const [share] = await db
 			.insert(routeShares)
@@ -52,7 +34,7 @@ export class RouteShareService {
 				created_by: createdBy,
 				share_type: 'email',
 				access_token_hash: tokenHash,
-				expires_at: this.getExpiry(SHARE_DURATION_HOURS)
+				expires_at: TokenUtils.getExpiry(SHARE_DURATION_HOURS)
 			})
 			.returning();
 
@@ -74,7 +56,7 @@ export class RouteShareService {
 	 * Returns null if token is invalid, expired, or revoked
 	 */
 	async validateTokenAndGetRoute(token: string): Promise<RouteWithDetails | null> {
-		const tokenHash = await this.hashToken(token);
+		const tokenHash = TokenUtils.hash(token);
 
 		const [result] = await db
 			.select({ share: routeShares, route: routes })
@@ -90,7 +72,7 @@ export class RouteShareService {
 		const share = result.share;
 
 		// Check expiration
-		if (this.isExpired(share.expires_at)) {
+		if (TokenUtils.isExpired(share.expires_at)) {
 			return null;
 		}
 

@@ -1,11 +1,9 @@
 import type { CreateInvitation, Invitation, MailRecord, PublicUser } from '$lib/schemas';
 import { db } from '$lib/server/db';
 import { invitations, mailRecords } from '$lib/server/db/schema';
-import { sha256 } from '@oslojs/crypto/sha2';
-import { encodeHexLowerCase } from '@oslojs/encoding';
-import { randomInt } from 'crypto';
 import { and, eq } from 'drizzle-orm';
 import { ServiceError } from './errors';
+import { TokenUtils } from './token.utils';
 import { userService } from './user.service';
 
 const INVITATION_DURATION_HOURS = 720; // 30 days
@@ -47,25 +45,8 @@ export class InvitationService {
 		return { success: true };
 	}
 
-	private async hashToken(raw: string) {
-		return encodeHexLowerCase(sha256(new TextEncoder().encode(raw)));
-	}
-
-	private generateOTPCode(): string {
-		return Array.from({ length: 6 }, () => randomInt(0, 10)).join('');
-	}
-
-	/* Note that duration is in hours */
-	private getExpiry(duration: number): Date {
-		return new Date(Date.now() + duration * 60 * 60 * 1000);
-	}
-
-	private isExpired(date: Date) {
-		return Date.now() >= date.getTime();
-	}
-
 	async getInvitationFromToken(token: string, email: string): Promise<Invitation | null> {
-		const hashed = await this.hashToken(token);
+		const hashed = TokenUtils.hash(token);
 
 		const [invitation] = await db
 			.select()
@@ -101,8 +82,8 @@ export class InvitationService {
 			throw ServiceError.conflict('An invitation has already been sent to this email');
 		}
 
-		const token = this.generateOTPCode();
-		const tokenHash = await this.hashToken(token);
+		const token = TokenUtils.generateOTP();
+		const tokenHash = TokenUtils.hash(token);
 		const [newInvitation] = await db
 			.insert(invitations)
 			.values({
@@ -110,17 +91,17 @@ export class InvitationService {
 				created_by: userId,
 				updated_by: userId,
 				email: invitationData.email,
-				expires_at: this.getExpiry(INVITATION_DURATION_HOURS),
+				expires_at: TokenUtils.getExpiry(INVITATION_DURATION_HOURS),
 				token_hash: tokenHash,
 				role: invitationData.role
 			})
 			.returning();
 
-		return { invitation: newInvitation, token: token };
+		return { invitation: newInvitation, token };
 	}
 
 	async redeemInvitation(invitation: Invitation): Promise<PublicUser> {
-		if (this.isExpired(invitation.expires_at)) {
+		if (TokenUtils.isExpired(invitation.expires_at)) {
 			throw ServiceError.forbidden('Invitation expired');
 		}
 

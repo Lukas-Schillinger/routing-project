@@ -12,7 +12,10 @@ export const POST: RequestHandler = async ({ request, url }) => {
 
 		try {
 			// Create login token (reusing login token infrastructure)
-			const { loginToken, token } = await loginTokenService.createLoginToken({ email });
+			const { loginToken, token } = await loginTokenService.createLoginToken({
+				email,
+				type: 'password_reset'
+			});
 
 			// Send password reset email
 			await mailService.sendPasswordResetEmail(loginToken, email, token, url.origin);

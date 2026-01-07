@@ -24,9 +24,13 @@ export const createInvitationSchema = z.object({
 	role: roleEnum
 });
 
+export const loginTokenTypeEnum = z.enum(['login_token', 'password_reset']);
+export type LoginTokenType = z.infer<typeof loginTokenTypeEnum>;
+
 export const createLoginTokenSchema = z.object({
 	email: emailSchema,
-	token_duration_hours: z.number().default(0.25).optional() // 15 minutes default for OTP
+	type: loginTokenTypeEnum.optional().default('login_token'),
+	token_duration_hours: z.number().optional().default(0.25) // 15 minutes default for OTP
 });
 
 export const verifyOTPSchema = z.object({
@@ -71,6 +75,7 @@ export const loginTokenSchema = z.object({
 
 	user_id: z.string(),
 	token_hash: z.string(),
+	type: loginTokenTypeEnum,
 	expires_at: z.date(),
 	mail_record_id: z.string().nullable()
 });

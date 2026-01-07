@@ -1,13 +1,14 @@
 import { env } from '$env/dynamic/private';
 import type { Invitation, LoginToken } from '$lib/schemas/auth.js';
 import type { MailRecordType } from '$lib/schemas/mail-record.js';
+import type { Organization } from '$lib/schemas/organization.js';
 import type { RouteShare } from '$lib/schemas/route-share.js';
+import type { PublicUser } from '$lib/schemas/user.js';
 import { ServiceError } from '$lib/services/server/errors.js';
 import { invitationService } from '$lib/services/server/invitation.service.js';
 import { loginTokenService } from '$lib/services/server/login-token.service.js';
 import { mailRecordService } from '$lib/services/server/mail-record.service.js';
 import { routeShareService } from '$lib/services/server/route-share.service.js';
-import { organizationService, userService } from '$lib/services/server/user.service.js';
 import { Resend } from 'resend';
 import { renderClient } from './render.js';
 
@@ -67,14 +68,15 @@ export class ResendClient {
 		return mailRecord.id;
 	}
 
-	async sendInvitationEmail(invitation: Invitation, token: string, origin: string): Promise<void> {
+	async sendInvitationEmail(
+		invitation: Invitation,
+		token: string,
+		user: PublicUser,
+		organization: Organization,
+		origin: string
+	): Promise<void> {
 		if (!invitation.created_by)
 			throw ServiceError.internal('Invitation missing created_by attribution');
-
-		const [user, organization] = await Promise.all([
-			userService.getUser(invitation.created_by, invitation.organization_id),
-			organizationService.getOrganization(invitation.organization_id, invitation.organization_id)
-		]);
 
 		const { html, text } = await renderClient.renderMagicInvite({
 			invite_url: `${origin}/auth/redeem/invitation?token=${token}&email=${encodeURIComponent(invitation.email)}`,

@@ -1,35 +1,18 @@
-import type { CreateLoginToken, LoginToken, PublicUser } from '$lib/schemas';
+import type { LoginToken, PublicUser } from '$lib/schemas';
+import { createLoginTokenSchema } from '$lib/schemas';
+import type { z } from 'zod';
 import { db } from '$lib/server/db';
 import { loginTokens } from '$lib/server/db/schema';
-import { sha256 } from '@oslojs/crypto/sha2';
-import { encodeHexLowerCase } from '@oslojs/encoding';
-import { randomInt } from 'crypto';
 import { and, eq } from 'drizzle-orm';
 import { ServiceError } from './errors';
+import { TokenUtils } from './token.utils';
 import { userService } from './user.service';
 
 const LOGIN_TOKEN_DURATION_HOURS = 0.25; // 15 minutes
 
 export class LoginTokenService {
-	private async hashToken(raw: string) {
-		return encodeHexLowerCase(sha256(new TextEncoder().encode(raw)));
-	}
-
-	private generateOTPCode(): string {
-		return Array.from({ length: 6 }, () => randomInt(0, 10)).join('');
-	}
-
-	/* Note that duration is in hours */
-	private getExpiry(duration: number): Date {
-		return new Date(Date.now() + duration * 60 * 60 * 1000);
-	}
-
-	private isExpired(date: Date) {
-		return Date.now() >= date.getTime();
-	}
-
 	async getLoginTokenFromToken(token: string, email: string): Promise<LoginToken | null> {
-		const hashed = await this.hashToken(token);
+		const hashed = TokenUtils.hash(token);
 
 		// First find user by email to get their ID
 		const user = await userService.findAnyUserByEmail(email);
@@ -51,7 +34,7 @@ export class LoginTokenService {
 	}
 
 	async createLoginToken(
-		loginTokenData: CreateLoginToken
+		loginTokenData: z.input<typeof createLoginTokenSchema>
 	): Promise<{ loginToken: LoginToken; token: string }> {
 		// Check if user exists
 		const existingUser = await userService.findAnyUserByEmail(loginTokenData.email);
@@ -59,8 +42,9 @@ export class LoginTokenService {
 			throw ServiceError.notFound('User with that email could not be found');
 		}
 
-		const token = this.generateOTPCode();
-		const tokenHash = await this.hashToken(token);
+		const token = TokenUtils.generateOTP();
+		const tokenHash = TokenUtils.hash(token);
+		const duration = loginTokenData.token_duration_hours ?? LOGIN_TOKEN_DURATION_HOURS;
 
 		const [loginToken] = await db
 			.insert(loginTokens)
@@ -68,11 +52,12 @@ export class LoginTokenService {
 				organization_id: existingUser.organization_id,
 				user_id: existingUser.id,
 				token_hash: tokenHash,
-				expires_at: this.getExpiry(LOGIN_TOKEN_DURATION_HOURS)
+				type: loginTokenData.type ?? 'login_token',
+				expires_at: TokenUtils.getExpiry(duration)
 			})
 			.returning();
 
-		return { loginToken: loginToken, token: token };
+		return { loginToken, token };
 	}
 
 	async validateLoginToken(token: string, email: string): Promise<PublicUser> {
@@ -82,7 +67,7 @@ export class LoginTokenService {
 			throw ServiceError.notFound("Couldn't find a login matching that token");
 		}
 
-		if (this.isExpired(loginToken.expires_at)) {
+		if (TokenUtils.isExpired(loginToken.expires_at)) {
 			throw ServiceError.forbidden('Login token expired');
 		}
 

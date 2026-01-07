@@ -100,6 +100,10 @@ export const loginTokens = pgTable(
 			.references(() => users.id, { onDelete: 'cascade' })
 			.notNull(),
 		token_hash: text('token_hash').notNull(),
+		type: varchar('type', { length: 32 })
+			.$type<'login_token' | 'password_reset'>()
+			.default('login_token')
+			.notNull(),
 		expires_at: ts('expires_at'),
 		mail_record_id: uuid('mail_record_id').references(() => mailRecords.id, {
 			onDelete: 'set null'

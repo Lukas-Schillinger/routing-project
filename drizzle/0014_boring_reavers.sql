@@ -1,0 +1,1 @@
+ALTER TABLE "login_tokens" ADD COLUMN "type" varchar(32) DEFAULT 'login_token' NOT NULL;
