@@ -7,7 +7,7 @@
 	import * as Select from '$lib/components/ui/select';
 	import type { DepotWithLocationJoin, Driver, Map, StopWithLocation } from '$lib/schemas';
 	import { mapApi } from '$lib/services/api';
-	import { AlertCircle, Building2, Info, Loader2, Plus, Sparkles, X } from 'lucide-svelte';
+	import { AlertCircle, Building2, Loader2, Plus, Sparkles, TriangleAlert, X } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
 	type PageState = 'viewing' | 'optimizing' | 'editing';
@@ -209,14 +209,14 @@
 				{#if validationMessage && !isSubmitting}
 					<Popover.Root>
 						<Popover.Trigger
-							class="{buttonVariants({
-								variant: 'outline',
-								size: 'sm'
-							})} h-8 border-amber-500/50 bg-amber-500/10 px-2 text-amber-600 hover:bg-amber-500/20 hover:text-amber-600 dark:text-amber-400 dark:hover:text-amber-400"
+							class="inline-flex h-8 items-center justify-center rounded-md border border-warning bg-warning/15 px-2 text-warning-foreground transition-colors hover:bg-warning/25"
 						>
-							<Info class="h-3.5 w-3.5" />
+							<TriangleAlert class="h-3.5 w-3.5" />
 						</Popover.Trigger>
-						<Popover.Content class="w-auto max-w-[200px] p-2 text-xs" side="top">
+						<Popover.Content
+							class="w-auto max-w-[200px] border-warning/50 p-2 text-xs text-warning-foreground"
+							side="top"
+						>
 							{validationMessage}
 						</Popover.Content>
 					</Popover.Root>

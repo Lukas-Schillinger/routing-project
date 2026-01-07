@@ -78,7 +78,7 @@
 	<div class="mx-auto max-w-7xl px-4 md:px-8">
 		<!-- Section Header -->
 		<div class="mb-20 text-center">
-			<p class="mb-4 text-sm font-medium tracking-[0.2em] text-forest-600 uppercase">
+			<p class="mb-4 text-sm font-medium tracking-[0.2em] text-landing-primary uppercase">
 				How it works
 			</p>
 			<h2 class="font-serif text-4xl leading-tight tracking-tight md:text-5xl">
@@ -91,7 +91,7 @@
 			{#each showcaseItems as item, index}
 				<div class="group relative overflow-hidden rounded-3xl">
 					<div
-						class="grid grid-cols-1 items-center gap-8 p-6 md:grid-cols-2 md:gap-12 md:p-10 lg:p-12"
+						class="grid grid-cols-1 items-center gap-8 p-6 sm:grid-cols-2 md:gap-12 md:p-10 lg:p-12"
 					>
 						<!-- Content -->
 						<div class={index % 2 === 1 ? 'md:order-2' : ''}>
@@ -114,7 +114,7 @@
 											<feature.icon
 												class="h-4 w-4 {feature.fake
 													? 'text-muted-foreground/40'
-													: 'text-forest-600'}"
+													: 'text-landing-primary'}"
 											/>
 											{feature.label}
 											{#if feature.fake}

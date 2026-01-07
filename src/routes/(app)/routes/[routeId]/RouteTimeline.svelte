@@ -166,8 +166,8 @@
 							<div class="flex items-center gap-4">
 								<span
 									class="flex h-6 w-6 items-center justify-center rounded-full border text-xs font-medium {isCompleted
-										? 'bg-green-700 text-white'
-										: 'bg-secondary'}"
+										? 'bg-secondary text-secondary-foreground'
+										: 'bg-primary text-primary-foreground'}"
 								>
 									{#if isCompleted}
 										<Check class="h-3 w-3" />
@@ -189,7 +189,7 @@
 						</button>
 						<div class="flex items-center gap-2">
 							{#if isCompleted}
-								<Check class="h-4 w-4 text-green-600" />
+								<Check class="h-4 w-4 text-muted-foreground" />
 							{/if}
 						</div>
 					</div>

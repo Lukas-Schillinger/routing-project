@@ -19,7 +19,7 @@
 			<Alert.Description>{message}</Alert.Description>
 		</Alert.Root>
 	{:else if variant === 'info'}
-		<Alert.Root class="border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-200">
+		<Alert.Root class="border-muted-foreground/20 bg-muted text-muted-foreground">
 			<Info class="h-4 w-4" />
 			<Alert.Title class="line-clamp-2">{title || 'Info'}</Alert.Title>
 			<Alert.Description>{message}</Alert.Description>

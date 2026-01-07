@@ -30,11 +30,11 @@
 		},
 		optimizing: {
 			label: 'Optimizing...',
-			class: 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+			class: 'bg-warning/10 text-warning-foreground'
 		},
 		viewing: {
 			label: 'Ready',
-			class: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+			class: 'bg-primary/10 text-primary'
 		}
 	};
 

@@ -103,7 +103,7 @@
 							<div class="flex items-center gap-3">
 								<div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted">
 									{#if depot.depot.default_depot}
-										<Star class="h-4 w-4 text-amber-500" />
+										<Star class="h-4 w-4 text-primary" />
 									{:else}
 										<MapPin class="h-4 w-4 text-muted-foreground" />
 									{/if}

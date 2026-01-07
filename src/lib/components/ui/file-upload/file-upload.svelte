@@ -8,7 +8,7 @@
 				idle: 'border-muted-foreground/25 bg-transparent hover:border-primary/40 hover:bg-primary/[0.02]',
 				hover: 'border-primary/40 bg-primary/[0.02] scale-[1.005]',
 				dragging: 'border-primary bg-primary/5 scale-[1.01] animate-pulse-border',
-				success: 'border-emerald-500/50 bg-emerald-500/5',
+				success: 'border-primary/50 bg-primary/5',
 				error: 'border-destructive/50 bg-destructive/5'
 			},
 			size: {
@@ -260,8 +260,8 @@
 		>
 			<!-- Success Icon -->
 			<div class="relative">
-				<div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/15">
-					<CheckCircle2 class="check-icon h-7 w-7 text-emerald-600" />
+				<div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/15">
+					<CheckCircle2 class="check-icon h-7 w-7 text-primary" />
 				</div>
 			</div>
 

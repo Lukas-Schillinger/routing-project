@@ -7,7 +7,7 @@ import { parsePhoneNumber } from 'libphonenumber-js';
 import Papa from 'papaparse';
 import { twMerge } from 'tailwind-merge';
 import type { Driver } from './schemas';
-import { locationCreateSchema, type LocationCreate, type Location } from './schemas/location';
+import { locationCreateSchema, type Location, type LocationCreate } from './schemas/location';
 import type { GeocodingFeature } from './services/external/mapbox/types';
 import type { Permission } from './services/server/permissions';
 
@@ -181,8 +181,11 @@ export type WithoutChildrenOrChild<T> = WithoutChildren<WithoutChild<T>>;
 export type WithElementRef<T, U extends HTMLElement = HTMLElement> = T & { ref?: U | null };
 
 /**
- * Client side permission checking utility. Used for selectively displaying UI elements
- * according to user permissions.
+ * Client side permission checking utility. Used **only** for selectively displaying UI elements
+ * according to user permissions. We can't rely on this for auth because it can be modified
+ * client side.
+ *
+ * Unfortunately the Permission type is imported from `/src/services/server`
  */
 export function checkPermission(permissions: Permission[], permission: Permission): boolean {
 	return permissions.includes(permission);

@@ -66,7 +66,7 @@
 	<div class="mx-auto max-w-5xl">
 		<!-- Section Header -->
 		<div class="mb-12 text-center">
-			<p class="mb-4 text-sm font-medium tracking-[0.2em] text-forest-600 uppercase">Pricing</p>
+			<p class="mb-4 text-sm font-medium tracking-[0.2em] text-landing-primary uppercase">Pricing</p>
 			<h2 class="font-serif text-4xl leading-tight tracking-tight md:text-5xl">
 				Simple, transparent pricing
 			</h2>
@@ -98,7 +98,7 @@
 				>
 					Annual
 					<span
-						class="ml-1.5 rounded-full bg-forest-600 px-2 py-0.5 text-xs font-medium text-white"
+						class="ml-1.5 rounded-full bg-landing-primary px-2 py-0.5 text-xs font-medium text-landing-primary-foreground"
 					>
 						-25%
 					</span>
@@ -111,12 +111,12 @@
 			{#each plans as plan}
 				<div
 					class="relative flex flex-col rounded-lg border bg-background p-8 {plan.highlighted
-						? 'border-forest-600 shadow-lg shadow-forest-600/10'
+						? 'border-landing-primary shadow-lg shadow-landing-primary/10'
 						: 'border-foreground/10'}"
 				>
 					{#if plan.highlighted}
 						<span
-							class="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-forest-600 px-3 py-1 text-xs font-medium text-white"
+							class="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-landing-primary px-3 py-1 text-xs font-medium text-landing-primary-foreground"
 						>
 							Most popular
 						</span>
@@ -139,7 +139,7 @@
 					<Button
 						href={plan.cta === 'Contact sales' ? '/contact' : '/signup'}
 						class="mb-8 w-full {plan.highlighted
-							? 'bg-forest-600 text-white hover:bg-forest-700'
+							? 'bg-landing-primary text-landing-primary-foreground hover:bg-landing-primary-hover'
 							: 'bg-foreground/5 text-foreground hover:bg-foreground/10'}"
 					>
 						{plan.cta}
@@ -148,7 +148,7 @@
 					<ul class="mt-auto space-y-3">
 						{#each plan.features as feature}
 							<li class="flex items-start gap-3 text-sm">
-								<Check class="mt-0.5 h-4 w-4 shrink-0 text-forest-600" />
+								<Check class="mt-0.5 h-4 w-4 shrink-0 text-landing-primary" />
 								<span class="text-muted-foreground">{feature}</span>
 							</li>
 						{/each}

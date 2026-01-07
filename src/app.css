@@ -1,6 +1,5 @@
 @import 'tailwindcss';
 
-@import '@fontsource-variable/eb-garamond';
 @import '@fontsource-variable/geist';
 @import '@fontsource/instrument-serif';
 
@@ -52,7 +51,8 @@
 	--popover-foreground: var(--color-sand-900);
 
 	/* Primary (Forest) */
-	--primary: var(--color-forest-600);
+	/* --primary: var(--color-forest-600); */
+	--primary: var(--color-black);
 	--primary-foreground: var(--color-sand-50);
 
 	/* Secondary / subtle UI */
@@ -70,10 +70,6 @@
 	/* Destructive: keep a dedicated red so it's unambiguous */
 	--destructive: oklch(0.62 0.25 25); /* clear red; keep your existing if preferred */
 	--destructive-foreground: oklch(0.98 0 0);
-
-	/* Warning: amber for cautionary states */
-	--warning: oklch(0.75 0.18 75);
-	--warning-foreground: oklch(0.25 0.05 75);
 
 	/* Borders / inputs / focus */
 	--border: var(--color-sand-200);
@@ -96,6 +92,23 @@
 	--sidebar-accent-foreground: var(--color-sand-900);
 	--sidebar-border: var(--color-sand-200);
 	--sidebar-ring: var(--color-forest-400);
+
+	/* =================================================================================
+	
+	Custom colors below! 
+
+	================================================================================= */
+
+	--warning: oklch(0.75 0.18 75);
+	--warning-foreground: var(--color-amber-700);
+
+	/* Landing page theme */
+	--landing-primary: var(--color-forest-600);
+	--landing-primary-hover: var(--color-forest-700);
+	--landing-secondary: #fbbf24; /* amber-400 */
+	--landing-secondary-hover: #f59e0b; /* amber-500 */
+	--landing-primary-foreground: var(--color-sand-50);
+	--landing-secondary-foreground: var(--color-forest-950);
 }
 
 .dark {
@@ -105,7 +118,7 @@
 	--card-foreground: oklch(0.985 0 0);
 	--popover: oklch(0.269 0 0);
 	--popover-foreground: oklch(0.985 0 0);
-	--primary: oklch(0.596 0.145 163.225);
+	--primary: var(--color-white);
 	--primary-foreground: oklch(0.205 0 0);
 	--secondary: oklch(0.269 0 0);
 	--secondary-foreground: oklch(0.985 0 0);
@@ -115,8 +128,6 @@
 	--accent-foreground: oklch(0.985 0 0);
 	--destructive: oklch(0.704 0.191 22.216);
 	--destructive-foreground: oklch(0.985 0 0);
-	--warning: oklch(0.8 0.15 75);
-	--warning-foreground: oklch(0.2 0.05 75);
 	--border: oklch(0.275 0 0);
 	--input: oklch(0.325 0 0);
 	--ring: oklch(0.556 0 0);
@@ -133,6 +144,23 @@
 	--sidebar-accent-foreground: oklch(0.985 0 0);
 	--sidebar-border: oklch(0.275 0 0);
 	--sidebar-ring: oklch(0.439 0 0);
+
+	/* =================================================================================
+	
+	Custom colors below! 
+
+	================================================================================= */
+
+	--warning: var(--color-amber-400);
+	--warning-foreground: var(--color-amber-600);
+
+	/* Landing page theme */
+	--landing-primary: oklch(76.9% 0.188 70.08); /* amber-500 */
+	--landing-primary-hover: oklch(82.8% 0.189 84.429); /* amber-600 */
+	--landing-secondary: var(--color-forest-600);
+	--landing-secondary-hover: var(--color-forest-700);
+	--landing-primary-foreground: var(--color-forest-950);
+	--landing-secondary-foreground: var(--color-sand-50);
 }
 
 @theme inline {
@@ -156,8 +184,6 @@
 	--color-accent-foreground: var(--accent-foreground);
 	--color-destructive: var(--destructive);
 	--color-destructive-foreground: var(--destructive-foreground);
-	--color-warning: var(--warning);
-	--color-warning-foreground: var(--warning-foreground);
 	--color-border: var(--border);
 	--color-input: var(--input);
 	--color-ring: var(--ring);
@@ -174,6 +200,23 @@
 	--color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
 	--color-sidebar-border: var(--sidebar-border);
 	--color-sidebar-ring: var(--sidebar-ring);
+
+	/* =================================================================================
+	
+	Custom colors below! 
+
+	================================================================================= */
+
+	--color-warning: var(--warning);
+	--color-warning-foreground: var(--warning-foreground);
+
+	/* Landing page theme */
+	--color-landing-primary: var(--landing-primary);
+	--color-landing-primary-hover: var(--landing-primary-hover);
+	--color-landing-secondary: var(--landing-secondary);
+	--color-landing-secondary-hover: var(--landing-secondary-hover);
+	--color-landing-primary-foreground: var(--landing-primary-foreground);
+	--color-landing-secondary-foreground: var(--landing-secondary-foreground);
 }
 
 @layer base {
@@ -196,48 +239,10 @@
 	}
 }
 
-/* Typography System */
 @layer components {
 	/* Heropatterns texture pattern background */
 	.bg-texture {
 		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' viewBox='0 0 4 4'%3E%3Cpath fill='%23064314' fill-opacity='0.3' d='M1 3h1v1H1V3zm2-2h1v1H3V1z'%3E%3C/path%3E%3C/svg%3E");
 		background-repeat: repeat;
-	}
-
-	/* Headlines using EB Garamond */
-	.headline-large {
-		@apply text-4xl leading-tight font-semibold text-forest-950 md:text-5xl dark:text-forest-50;
-		font-family: 'EB Garamond', serif;
-	}
-
-	.headline-medium {
-		@apply text-3xl leading-tight font-semibold text-forest-950 md:text-4xl dark:text-forest-50;
-		font-family: 'EB Garamond', serif;
-	}
-
-	.headline-small {
-		@apply text-xl leading-snug font-semibold text-forest-950 md:text-2xl dark:text-forest-50;
-		font-family: 'EB Garamond', serif;
-	}
-
-	.headline-card {
-		@apply text-2xl leading-snug font-semibold text-forest-950 dark:text-forest-50;
-		font-family: 'EB Garamond', serif;
-	}
-
-	/* Body text using Geist Sans */
-	.body-large {
-		@apply text-lg leading-relaxed text-forest-950 dark:text-forest-50;
-		font-family: 'Geist Variable', system-ui, sans-serif;
-	}
-
-	.body-medium {
-		@apply text-base leading-relaxed text-forest-950 dark:text-forest-50;
-		font-family: 'Geist Variable', system-ui, sans-serif;
-	}
-
-	.body-small {
-		@apply text-sm leading-relaxed text-forest-950 dark:text-forest-50;
-		font-family: 'Geist Variable', system-ui, sans-serif;
 	}
 }

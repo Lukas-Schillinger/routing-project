@@ -27,7 +27,7 @@
 	<div class="mx-auto">
 		<!-- Section Header -->
 		<div class="mb-16 text-center">
-			<p class="mb-4 text-sm font-medium tracking-[0.2em] text-forest-600 uppercase">The impact</p>
+			<p class="mb-4 text-sm font-medium tracking-[0.2em] text-landing-primary uppercase">The impact</p>
 			<h2 class="font-serif text-4xl leading-tight tracking-tight md:text-5xl">
 				Results that speak for themselves
 			</h2>
@@ -38,7 +38,7 @@
 			<div class="grid max-w-7xl grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-8 lg:grid-cols-4">
 				{#each metrics as metric}
 					<div class="rounded-lg border border-foreground/5 bg-background p-8">
-						<p class="font-mono text-5xl font-medium tracking-tight text-forest-600">
+						<p class="font-mono text-5xl font-medium tracking-tight text-landing-primary">
 							{metric.value}
 						</p>
 						<p class="mt-2 text-lg font-semibold tracking-tight">

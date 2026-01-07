@@ -119,7 +119,7 @@
 	/>
 
 	{#if !canProceed}
-		<div class="rounded-md border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
+		<div class="rounded-md border border-warning/30 bg-warning/10 p-3 text-sm text-warning-foreground">
 			Address field is required to proceed.
 		</div>
 	{/if}

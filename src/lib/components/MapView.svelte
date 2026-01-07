@@ -208,6 +208,6 @@
 
 	:global(.dark .maplibregl-popup-content) {
 		background-color: oklch(0.205 0 0);
-		@apply border border-gray-900;
+		@apply border border-border;
 	}
 </style>

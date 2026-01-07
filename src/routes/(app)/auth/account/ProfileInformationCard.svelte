@@ -139,7 +139,7 @@
 		<div class="flex flex-col gap-1 py-4 md:flex-row md:items-center md:justify-between md:gap-4">
 			<div class="shrink-0 pb-2 md:pb-0">
 				<p class="text-sm font-medium">Theme</p>
-				<p class="text-sm text-muted-foreground">Toggle between light and dark mode</p>
+				<p class="text-sm text-muted-foreground">Switch between light and dark mode</p>
 			</div>
 			<Button onclick={toggleMode} variant="outline" size="sm">
 				<div class="relative">

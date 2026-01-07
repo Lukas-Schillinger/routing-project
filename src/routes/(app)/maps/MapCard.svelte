@@ -92,7 +92,7 @@
 			<!-- Status overlay -->
 			<div class="absolute top-2 left-2 sm:hidden">
 				{#if isRouted}
-					<Badge variant="default" class="bg-emerald-500/90 text-white">Routed</Badge>
+					<Badge variant="default" class="bg-primary text-primary-foreground">Routed</Badge>
 				{/if}
 			</div>
 		</div>
@@ -105,8 +105,8 @@
 			{#if !showThumbnail}
 				<div class="hidden sm:block">
 					{#if isRouted}
-						<div class="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/10">
-							<RouteIcon class="h-5 w-5 text-emerald-500" />
+						<div class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+							<RouteIcon class="h-5 w-5 text-primary" />
 						</div>
 					{:else}
 						<div class="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
@@ -123,7 +123,7 @@
 						{map.title}
 					</h3>
 					{#if isRouted && showThumbnail}
-						<Badge variant="default" class="hidden shrink-0 bg-emerald-500 sm:inline-flex"
+						<Badge variant="default" class="hidden shrink-0 bg-primary text-primary-foreground sm:inline-flex"
 							>Routed</Badge
 						>
 					{:else if isRouted}

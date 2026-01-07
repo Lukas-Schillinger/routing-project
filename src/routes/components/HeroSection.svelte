@@ -6,7 +6,7 @@
 <section class="px-4 pt-32 pb-24 md:px-8 md:pt-40 md:pb-32">
 	<div class="mx-auto max-w-4xl text-center">
 		<!-- Eyebrow -->
-		<p class="mb-6 text-sm font-medium tracking-[0.2em] text-forest-600 uppercase">
+		<p class="mb-6 text-sm font-medium tracking-[0.2em] text-landing-primary uppercase">
 			Route Optimization
 		</p>
 
@@ -25,7 +25,7 @@
 
 		<!-- CTA Buttons -->
 		<div class="mt-12 flex flex-col items-center justify-center gap-4 sm:flex-row">
-			<Button href="/signup" size="lg" class="h-12 gap-2 bg-forest-600 px-8 hover:bg-forest-700">
+			<Button href="/signup" size="lg" class="h-12 gap-2 bg-landing-primary px-8 hover:bg-landing-primary-hover">
 				Start for free
 				<ArrowRight class="h-4 w-4" />
 			</Button>

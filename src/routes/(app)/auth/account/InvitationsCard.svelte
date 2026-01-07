@@ -134,7 +134,7 @@
 									)}
 								{/if}
 								{#if invite.mailRecord.status === 'delivered'}
-									· <span class="text-green-600 dark:text-green-400">Delivered</span>
+									· <span class="text-muted-foreground">Delivered</span>
 								{:else if invite.mailRecord.status === 'bounced'}
 									· <span class="text-destructive">Bounced</span>
 								{:else if invite.mailRecord.status === 'failed'}
@@ -142,7 +142,7 @@
 								{:else if invite.mailRecord.status === 'complained'}
 									· <span class="text-destructive">Marked as spam</span>
 								{:else if invite.mailRecord.status === 'delivery_delayed'}
-									· <span class="text-yellow-600 dark:text-yellow-400">Delayed</span>
+									· <span class="text-warning-foreground">Delayed</span>
 								{/if}
 							</span>
 						</div>

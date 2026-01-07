@@ -66,7 +66,7 @@
 			.map((stop, index) => {
 				const lon = Number(stop.location.lon);
 				const lat = Number(stop.location.lat);
-				const colors = ['013328'];
+				const colors = [mode.current == 'light' ? '000000' : '000000'];
 				const color = colors[index % colors.length];
 				return `pin-s+${color}(${lon},${lat})`;
 			})
@@ -113,9 +113,9 @@
 	</a>
 {:else}
 	<div
-		class="flex h-32 w-full items-center justify-center rounded-lg border border-gray-300 bg-gray-100 sm:h-full sm:w-32"
+		class="flex h-32 w-full items-center justify-center rounded-lg border border-border bg-muted sm:h-full sm:w-32"
 		{...restProps}
 	>
-		<p class="text-sm text-gray-500">Mapbox token not configured</p>
+		<p class="text-sm text-muted-foreground">Mapbox token not configured</p>
 	</div>
 {/if}

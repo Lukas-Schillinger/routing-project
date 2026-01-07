@@ -17,40 +17,46 @@
 	} = $props();
 </script>
 
-<div class="min-w-48 p-1">
+<div class="min-w-52 space-y-3 rounded-lg p-1 shadow-xl">
 	{#if driver && stop.delivery_index}
-		<div class="flex place-items-center gap-2 pb-4">
-			<Avatar.Root>
-				<Avatar.Image src={getIdenticon(driver)} alt="@shadcn" />
-				<Avatar.Fallback>CN</Avatar.Fallback>
+		<div class="flex items-center gap-2.5">
+			<div
+				class="flex h-7 h-8 items-center justify-center rounded-full bg-primary px-3 text-xs font-semibold text-primary-foreground"
+			>
+				stop {stop.delivery_index}
+			</div>
+			<Avatar.Root class="h-8 w-8 ring-1 ring-border">
+				<Avatar.Image src={getIdenticon(driver)} alt={driver.name} />
+				<Avatar.Fallback class="bg-muted text-xs text-muted-foreground">
+					{driver.name?.slice(0, 2).toUpperCase() || 'DR'}
+				</Avatar.Fallback>
 			</Avatar.Root>
-			<div class="">
-				<div class="text-lg font-semibold">{driver.name}</div>
-				<div class="text-sm">stop #{stop.delivery_index}</div>
+			<div class="min-w-0 flex-1">
+				<div class="truncate text-sm font-medium">{driver.name}</div>
 			</div>
 		</div>
+		<div class="h-px bg-border"></div>
 	{/if}
-	<div class="">
-		{#if stop.contact_name}
-			<h3 class="pb-1 text-base font-medium">{stop.contact_name}</h3>
-		{/if}
-		<div>
-			<p class=" text-sm text-muted-foreground">{location.address_line_1}</p>
 
+	<div class="space-y-2">
+		{#if stop.contact_name}
+			<h3 class="text-sm leading-tight font-medium">{stop.contact_name}</h3>
+		{/if}
+		<div class="space-y-0.5">
+			<p class="text-xs leading-relaxed text-muted-foreground">{location.address_line_1}</p>
 			{#if location.city}
-				<p class="mb-1 text-sm text-muted-foreground">
-					{location.city}, {location.region || ''}
-					{location.postal_code || ''}
+				<p class="text-xs text-muted-foreground/70">
+					{location.city}{location.region ? `, ${location.region}` : ''}{location.postal_code
+						? ` ${location.postal_code}`
+						: ''}
 				</p>
 			{/if}
 		</div>
 
 		{#if stop.notes}
-			<p class="text-xs text-muted-foreground italic">{stop.notes}</p>
+			<div class="mt-2 rounded bg-muted px-2 py-1.5">
+				<p class="text-xs leading-relaxed text-muted-foreground">{stop.notes}</p>
+			</div>
 		{/if}
 	</div>
-
-	<!-- 	<div class="">
-		<Button class="h-6 w-full" size="sm" onclick={() => onGoToStop(stop.id)}>Go to Stop</Button>
-	</div> -->
 </div>

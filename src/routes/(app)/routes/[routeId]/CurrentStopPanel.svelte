@@ -149,8 +149,8 @@
 					<Button
 						onclick={toggleDeliveryStatus}
 						size="sm"
-						variant={isCompleted ? 'default' : 'outline'}
-						class="col-span-2 mb-0 {isCompleted ? 'bg-green-700 hover:bg-green-600' : ''}"
+						variant={isCompleted ? 'secondary' : 'default'}
+						class="col-span-2 mb-0"
 					>
 						{#if isCompleted}
 							<Check class="mr-2 h-4 w-4" />

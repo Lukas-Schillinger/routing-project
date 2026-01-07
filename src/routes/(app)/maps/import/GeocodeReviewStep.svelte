@@ -36,12 +36,12 @@
 		switch (confidence) {
 			case 'exact':
 			case 'high':
-				return 'bg-emerald-500';
+				return 'bg-muted-foreground';
 			case 'medium':
 			case 'low':
-				return 'bg-amber-500';
+				return 'bg-warning';
 			case 'none':
-				return 'bg-red-500';
+				return 'bg-destructive';
 		}
 	}
 
@@ -146,15 +146,15 @@
 				<span class="tabular-nums">{totalCount}</span> addresses
 				{#if validCount > 0}
 					<span class="mx-1.5 text-muted-foreground/50">·</span>
-					<span class="text-emerald-600">{validCount} valid</span>
+					<span>{validCount} valid</span>
 				{/if}
 				{#if lowConfidenceCount > 0}
 					<span class="mx-1.5 text-muted-foreground/50">·</span>
-					<span class="text-amber-600">{lowConfidenceCount} low confidence</span>
+					<span class="text-warning-foreground">{lowConfidenceCount} low confidence</span>
 				{/if}
 				{#if failedCount > 0}
 					<span class="mx-1.5 text-muted-foreground/50">·</span>
-					<span class="text-red-600">{failedCount} failed</span>
+					<span class="text-destructive">{failedCount} failed</span>
 				{/if}
 			{/if}
 		</p>
@@ -257,7 +257,7 @@
 													</div>
 												{:else}
 													<span
-														class="inline-flex items-center gap-1.5 text-red-600 underline decoration-red-300 decoration-dashed underline-offset-2"
+														class="inline-flex items-center gap-1.5 text-destructive underline decoration-destructive/50 decoration-dashed underline-offset-2"
 													>
 														Click to fix address
 														<Pencil class="h-3 w-3" />
@@ -358,7 +358,7 @@
 											</div>
 										{:else}
 											<span
-												class="inline-flex items-center gap-1.5 text-sm text-red-600 underline decoration-red-300 decoration-dashed underline-offset-2"
+												class="inline-flex items-center gap-1.5 text-sm text-destructive underline decoration-destructive/50 decoration-dashed underline-offset-2"
 											>
 												Tap to fix address
 												<Pencil class="h-3 w-3" />

@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
 	import { ArrowRight } from 'lucide-svelte';
-	import CloudflareImage from '../CloudflareImage.svelte';
+	import CloudflareImage from '$lib/components/CloudflareImage.svelte';
 </script>
 
-<section class="px-4 pt-16 pb-32 md:px-8">
-	<div class="mx-auto max-w-7xl">
-		<div class="relative aspect-[3/4] overflow-hidden rounded-xl md:aspect-auto">
+<section class="pt-16">
+	<div class="max-w-7xl md:mx-auto md:px-4 md:pb-32">
+		<div class="relative aspect-[3/4] overflow-hidden md:aspect-auto md:rounded-xl">
 			<!-- Background Image -->
 			<CloudflareImage
 				class="absolute inset-0 h-full w-full object-cover md:relative md:h-auto md:w-full"
@@ -26,13 +26,15 @@
 
 				<!-- Headline -->
 				<h2
-					class="max-w-3xl font-serif text-4xl leading-tight tracking-tight md:text-5xl lg:text-6xl"
+					class="max-w-3xl text-5xl leading-tight font-medium tracking-tight md:text-6xl lg:text-7xl"
 				>
-					Ready to optimize your routes?
+					Ready to start optimizing?
 				</h2>
 
 				<!-- Subtitle -->
-				<p class="text-amber/80 mx-auto mt-6 max-w-xl text-base leading-relaxed md:text-lg">
+				<p
+					class="text-amber/80 mx-auto mt-6 hidden max-w-xl text-base leading-relaxed font-semibold sm:block md:text-lg"
+				>
 					Join hundreds of delivery teams who save hours every day with intelligent route planning.
 				</p>
 
@@ -41,7 +43,7 @@
 					<Button
 						href="/signup"
 						size="lg"
-						class="h-12 gap-2 bg-amber-400 px-8 text-forest-900 hover:bg-white/90"
+						class="h-12 gap-2 bg-landing-secondary px-8 text-landing-secondary-foreground hover:bg-forest-600 hover:text-amber-400 dark:hover:bg-amber-400 dark:hover:text-forest-600"
 					>
 						Get started free
 						<ArrowRight class="h-4 w-4" />

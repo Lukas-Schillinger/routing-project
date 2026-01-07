@@ -1,6 +1,6 @@
 <script lang="ts">
-	import JSONData from '$lib/components/Landing/landing-data.json';
-	import RouteAnimation from '$lib/components/Landing/RouteAnimation.svelte';
+	import JSONData from './landing-data.json';
+	import RouteAnimation from './RouteAnimation.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { ArrowRight } from 'lucide-svelte';
 
