@@ -120,7 +120,7 @@
 
 			<!-- Map info -->
 			<div class="min-w-0 flex-1">
-				<div class="flex items-center gap-2">
+				<div class="flex flex-wrap items-center gap-2">
 					<h3 class="truncate font-medium group-hover:text-primary">
 						{map.title}
 					</h3>
@@ -131,7 +131,7 @@
 							>Routed</Badge
 						>
 					{:else if isRouted}
-						<Badge variant="default" class=" shrink-0 sm:inline-flex">Routed</Badge>
+						<Badge variant="default" class="hidden shrink-0 lg:inline-flex">Routed</Badge>
 					{/if}
 				</div>
 				<div

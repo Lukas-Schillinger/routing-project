@@ -1,5 +1,15 @@
 {
+  "permissions": {
+    "allow": [
+      "Edit",
+      "Bash(grep:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(git status:*)"
+    ]
+  },
   "enabledPlugins": {
-    "typescript-lsp@claude-plugins-official": true
+    "typescript-lsp@claude-plugins-official": true,
+    "linear@claude-plugins-official": true
   }
 }

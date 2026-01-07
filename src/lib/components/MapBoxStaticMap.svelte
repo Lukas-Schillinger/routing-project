@@ -114,7 +114,7 @@
 		{#if stops.length}
 			<img
 				src={mapUrl}
-				class="h-32 w-full object-cover shadow transition-transform duration-300 hover:scale-110 sm:h-full sm:w-32 md:w-42 lg:w-72"
+				class="h-32 w-full object-cover shadow transition-transform duration-300 group-hover:scale-110 sm:h-full sm:w-32 md:w-42 lg:w-72"
 				alt="Map showing {stops.length} stops"
 				{...restProps}
 			/>

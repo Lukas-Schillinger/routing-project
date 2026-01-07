@@ -1,8 +1,15 @@
 <script lang="ts">
+	import { page } from '$app/state';
 	import { Button } from '$lib/components/ui/button';
 	import type { PublicUser } from '$lib/schemas';
 	import { Map, User as UserIcon } from 'lucide-svelte';
 	import { mode } from 'mode-watcher';
+
+	// Nav items with their active route prefixes
+	const NAV_ACTIVE_PREFIXES = {
+		maps: '/maps',
+		auth: '/auth'
+	};
 
 	let {
 		user,
@@ -11,6 +18,11 @@
 		user?: PublicUser | null;
 		showLines?: boolean;
 	} = $props();
+
+	let isActive = $derived({
+		maps: page.url.pathname.startsWith(NAV_ACTIVE_PREFIXES.maps),
+		auth: page.url.pathname.startsWith(NAV_ACTIVE_PREFIXES.auth)
+	});
 </script>
 
 <div class="sticky top-2 z-50 sm:top-4">
@@ -36,15 +48,24 @@
 				</a>
 				<div class="flex gap-2">
 					{#if user}
-						<Button class="rounded-full" href="/maps" variant="ghost" size="sm">
+						<Button
+							class="rounded-full"
+							href="/maps"
+							variant={isActive.maps ? 'secondary' : 'ghost'}
+							size="sm"
+						>
 							<Map /> Maps
 						</Button>
-						<Button class="rounded-full" href="/auth/account" variant="ghost" size="sm">
+						<Button
+							class="rounded-full"
+							href="/auth/account"
+							variant={isActive.auth ? 'secondary' : 'ghost'}
+							size="sm"
+						>
 							<UserIcon /> Account
 						</Button>
 					{:else}
-						<Button class="rounded-full" href="/auth/login" variant="ghost" size="sm">Log in</Button
-						>
+						<Button class="rounded-full" href="/auth/login" variant="ghost" size="sm">Log in</Button>
 						<Button class="rounded-full" href="/auth/account" size="sm">
 							<UserIcon /> Create Account
 						</Button>
