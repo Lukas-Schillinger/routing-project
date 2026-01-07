@@ -43,7 +43,7 @@
 	}
 </script>
 
-<div class="rounded-lg border border-border/50 bg-card">
+<div class="overflow-hidden rounded-lg border border-border/50 bg-card">
 	<!-- Header -->
 	<div class="flex items-center justify-between border-b border-border/50 px-4 py-3">
 		<div class="flex items-center gap-2">
@@ -83,10 +83,10 @@
 				</EditOrCreateDriverPopover>
 			</div>
 		{:else}
-			<div class="flex flex-col gap-2 sm:grid sm:grid-cols-2 lg:flex lg:flex-col">
+			<div class="flex flex-col gap-2 sm:grid sm:grid-cols-2 md:flex md:flex-col">
 				{#each drivers.slice(0, 5) as driver (driver.id)}
 					<EditOrCreateDriverPopover
-						triggerClass="w-full"
+						triggerClass="block w-full min-w-0 overflow-hidden"
 						mode="edit"
 						{driver}
 						onSuccess={handleDriverSuccess}
@@ -95,27 +95,27 @@
 							<button
 								{...props}
 								type="button"
-								class="group flex w-full cursor-pointer items-center justify-between rounded-md px-2 py-2 text-left transition-colors hover:bg-accent/50"
+								class="group flex w-full max-w-full cursor-pointer items-center justify-between overflow-hidden rounded-md px-2 py-2 text-left transition-colors hover:bg-accent/50"
 							>
-								<div class="flex items-center gap-3">
-									<Avatar.Root class="h-8 w-8 border border-border/50">
+								<div class="flex min-w-0 flex-1 items-center gap-3">
+									<Avatar.Root class="h-8 w-8 shrink-0 border border-border/50">
 										<Avatar.Image src={getIdenticon(driver)} alt={driver.name} />
 										<Avatar.Fallback class="text-xs">
 											{driver.name.slice(0, 2).toUpperCase()}
 										</Avatar.Fallback>
 									</Avatar.Root>
-									<div class="min-w-0">
+									<div class="min-w-0 flex-1">
 										<p class="truncate text-sm font-medium">{driver.name}</p>
 										{#if driver.phone}
 											<p class="flex items-center gap-1 text-xs text-muted-foreground">
-												<Phone class="h-3 w-3" />
+												<Phone class="h-3 w-3 shrink-0" />
 												{formatPhoneNumber(driver.phone)}
 											</p>
 										{/if}
 									</div>
 								</div>
 
-								<div class="flex items-center gap-1 opacity-100">
+								<div class="flex shrink-0 items-center gap-1">
 									<DropdownMenu.Root>
 										<DropdownMenu.Trigger
 											onclick={(e: MouseEvent) => e.stopPropagation()}

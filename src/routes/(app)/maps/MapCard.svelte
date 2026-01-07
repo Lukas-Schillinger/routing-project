@@ -83,7 +83,7 @@
 >
 	<!-- Map Thumbnail -->
 	{#if showThumbnail}
-		<div class="relative h-32 shrink-0 overflow-hidden bg-muted sm:h-auto sm:w-32 md:w-56 lg:w-72">
+		<div class="relative h-32 shrink-0 overflow-hidden bg-muted sm:h-auto sm:w-32 md:w-42 lg:w-72">
 			{#if stops.length > 0}
 				<MapBoxStaticMap mapId={map.id} {stops} {drivers} />
 			{:else}

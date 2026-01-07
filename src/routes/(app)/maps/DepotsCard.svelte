@@ -50,7 +50,7 @@
 	}
 </script>
 
-<div class="rounded-lg border border-border/50 bg-card">
+<div class="overflow-hidden rounded-lg border border-border/50 bg-card">
 	<!-- Header -->
 	<div class="flex items-center justify-between border-b border-border/50 px-4 py-3">
 		<div class="flex items-center gap-2">
@@ -88,19 +88,19 @@
 				</EditOrCreateDepotPopover>
 			</div>
 		{:else}
-			<div class="flex flex-col gap-2 sm:grid sm:grid-cols-2 lg:flex lg:flex-col">
+			<div class="flex flex-col gap-2 sm:grid sm:grid-cols-2 md:flex md:flex-col">
 				{#each depots as depot (depot.depot.id)}
 					<EditOrCreateDepotPopover
-						triggerClass="w-full"
+						triggerClass="block w-full min-w-0 overflow-hidden"
 						mode="edit"
 						{depot}
 						onSuccess={handleDepotSuccess}
 					>
 						<button
 							type="button"
-							class="group flex w-full cursor-pointer items-center justify-between rounded-md px-2 py-2 text-left transition-colors hover:bg-accent/50"
+							class="group flex w-full cursor-pointer items-center justify-between overflow-hidden rounded-md px-2 py-2 text-left transition-colors hover:bg-accent/50"
 						>
-							<div class="flex items-center gap-3">
+							<div class="flex min-w-0 flex-1 items-center gap-3">
 								<div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted">
 									{#if depot.depot.default_depot}
 										<Star class="h-4 w-4 text-primary" />
@@ -108,20 +108,20 @@
 										<MapPin class="h-4 w-4 text-muted-foreground" />
 									{/if}
 								</div>
-								<div class="min-w-0">
-									<div class="flex items-center gap-2">
-										<p class="truncate text-sm font-medium">{depot.depot.name}</p>
+								<div class="min-w-0 flex-1">
+									<div class="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+										<p class="text-sm font-medium">{depot.depot.name}</p>
 										{#if depot.depot.default_depot}
 											<Badge variant="secondary" class="h-4 px-1 text-[10px]">Default</Badge>
 										{/if}
 									</div>
-									<p class="truncate text-xs text-muted-foreground">
+									<p class="text-xs text-muted-foreground">
 										{formatAddress(depot)}
 									</p>
 								</div>
 							</div>
 
-							<div class="flex items-center gap-1">
+							<div class="flex shrink-0 items-center gap-1">
 								<DropdownMenu.Root>
 									<DropdownMenu.Trigger
 										onclick={(e: MouseEvent) => e.stopPropagation()}

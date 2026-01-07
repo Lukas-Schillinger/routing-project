@@ -236,9 +236,9 @@
 	</div>
 
 	<!-- Main Content Grid -->
-	<div class="grid gap-8 lg:grid-cols-3">
+	<div class="grid gap-8 md:grid-cols-3">
 		<!-- Maps Section (2/3 width on large screens) -->
-		<div class="lg:col-span-2">
+		<div class="md:col-span-2">
 			{#if filteredMaps().length === 0}
 				<div
 					class="flex flex-col items-center justify-center rounded-lg border border-dashed border-border/50 bg-card/50 py-16"
@@ -347,7 +347,7 @@
 		</div>
 
 		<!-- Sidebar (1/3 width on large screens) -->
-		<div class="space-y-6">
+		<div class="min-w-0 space-y-6">
 			<!-- Drivers Section -->
 			<DriversCard drivers={data.drivers.filter((d) => !d.temporary)} />
 

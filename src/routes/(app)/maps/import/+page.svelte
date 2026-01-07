@@ -163,7 +163,7 @@
 						<div
 							class="mb-5 h-0.5 w-12 transition-colors duration-300
 								{importState.step > step.number ? 'bg-primary' : ''}
-								{importState.step === step.number ? 'bg-gradient-to-r from-primary to-muted' : ''}
+								{importState.step === step.number ? 'bg-primary/50' : ''}
 								{importState.step < step.number ? 'bg-muted' : ''}"
 						></div>
 					{/if}

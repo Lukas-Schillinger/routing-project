@@ -209,14 +209,18 @@
 							{@const isEditing = editingId === record.id}
 							<tr class="group transition-colors hover:bg-muted/20">
 								<!-- Status -->
-								<td class="py-4 pr-1 align-top">
-									<div class="flex items-center justify-end">
-										<span
-											class={cn('h-2.5 w-2.5 rounded-full', getStatusColor(confidence))}
-											title={getStatusLabel(confidence)}
-										></span>
-									</div>
-								</td>
+								{#if confidence != 'high' && confidence != 'exact'}
+									<td class="py-4 pr-1 align-top">
+										<div class="flex items-center justify-end">
+											<span
+												class={cn('h-2.5 w-2.5 rounded-full', getStatusColor(confidence))}
+												title={getStatusLabel(confidence)}
+											></span>
+										</div>
+									</td>
+								{:else}
+									<td></td>
+								{/if}
 
 								<!-- Name -->
 								<td class="max-w-64 overflow-clip px-4 py-3 align-top">
@@ -313,14 +317,23 @@
 						<!-- Header row with name and status -->
 						<div class="mb-3 flex items-start justify-between gap-3">
 							<div class="min-w-0 flex-1">
+								<div
+									class="mb-1 text-xs font-medium tracking-wider text-muted-foreground uppercase"
+								>
+									NAME
+								</div>
 								<div class="font-medium">
 									{record.raw.name || '—'}
 								</div>
 							</div>
-							<span
-								class={cn('mt-1 h-2.5 w-2.5 shrink-0 rounded-full', getStatusColor(confidence))}
-								title={getStatusLabel(confidence)}
-							></span>
+							{#if confidence != 'high' && confidence != 'exact'}
+								<span
+									class={cn('mt-1 h-2.5 w-2.5 shrink-0 rounded-full', getStatusColor(confidence))}
+									title={getStatusLabel(confidence)}
+								></span>
+							{:else}
+								<span></span>
+							{/if}
 						</div>
 
 						<!-- Address -->
@@ -402,5 +415,4 @@
 			</div>
 		{/if}
 	</div>
-
 </div>
