@@ -17,11 +17,11 @@
 	} = $props();
 </script>
 
-<div class="min-w-52 space-y-3 rounded-lg p-1 shadow-xl">
+<div class="min-w-52 space-y-3 rounded-lg p-1">
 	{#if driver && stop.delivery_index}
 		<div class="flex items-center gap-2.5">
 			<div
-				class="flex h-7 h-8 items-center justify-center rounded-full bg-primary px-3 text-xs font-semibold text-primary-foreground"
+				class="flex h-8 items-center justify-center rounded-full bg-primary px-3 text-xs font-semibold text-primary-foreground"
 			>
 				stop {stop.delivery_index}
 			</div>

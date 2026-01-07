@@ -272,6 +272,7 @@
 							{map}
 							stops={mapStops}
 							routes={mapRoutes}
+							drivers={data.drivers}
 							{driverCount}
 							showThumbnail={viewMode === 'list'}
 						/>

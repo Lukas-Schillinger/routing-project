@@ -1,11 +1,12 @@
 <script lang="ts">
 	import { PUBLIC_MAPBOX_ACCESS_TOKEN } from '$env/static/public';
-	import type { StopWithLocation } from '$lib/schemas';
+	import type { Driver, StopWithLocation } from '$lib/schemas';
 	import { mode } from 'mode-watcher';
 
 	interface Props {
 		stops: StopWithLocation[];
 		mapId: string;
+		drivers?: Driver[];
 		width?: number;
 		height?: number;
 		style?: string;
@@ -15,12 +16,23 @@
 	let {
 		stops,
 		mapId,
+		drivers = [],
 		width = 600,
 		height = 400,
 
 		padding = 20,
 		...restProps
 	}: Props = $props();
+
+	function getDriverColorById(driverId: string | null): string {
+		if (!driverId) return mode.current === 'light' ? '3a3a3a' : '000000';
+		const driver = drivers.find((d) => d.id === driverId);
+		if (driver?.color) {
+			// Remove # from hex color for Mapbox API
+			return driver.color.replace('#', '');
+		}
+		return mode.current === 'light' ? '000000' : '000000';
+	}
 
 	let style = $derived.by(() => {
 		return mode.current == 'light' ? 'streets-v12' : 'dark-v11';
@@ -63,11 +75,10 @@
 		// Create overlay for stop markers
 		const overlays = stops
 			.filter((stop) => stop.location.lon && stop.location.lat)
-			.map((stop, index) => {
+			.map((stop) => {
 				const lon = Number(stop.location.lon);
 				const lat = Number(stop.location.lat);
-				const colors = [mode.current == 'light' ? '000000' : '000000'];
-				const color = colors[index % colors.length];
+				const color = getDriverColorById(stop.stop.driver_id);
 				return `pin-s+${color}(${lon},${lat})`;
 			})
 			.join(',');

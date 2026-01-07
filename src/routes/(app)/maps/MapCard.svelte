@@ -5,7 +5,7 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-	import type { Map as MapType, Route, StopWithLocation } from '$lib/schemas';
+	import type { Driver, Map as MapType, Route, StopWithLocation } from '$lib/schemas';
 	import { mapApi } from '$lib/services/api';
 	import { formatDate } from '$lib/utils';
 	import {
@@ -27,12 +27,14 @@
 		map,
 		stops,
 		routes,
+		drivers = [],
 		driverCount,
 		showThumbnail = true
 	}: {
 		map: MapType;
 		stops: StopWithLocation[];
 		routes: Route[];
+		drivers?: Driver[];
 		driverCount: number;
 		showThumbnail?: boolean;
 	} = $props();
@@ -83,7 +85,7 @@
 	{#if showThumbnail}
 		<div class="relative h-32 shrink-0 overflow-hidden bg-muted sm:h-auto sm:w-32 md:w-56 lg:w-72">
 			{#if stops.length > 0}
-				<MapBoxStaticMap mapId={map.id} {stops} />
+				<MapBoxStaticMap mapId={map.id} {stops} {drivers} />
 			{:else}
 				<div class="flex h-full w-full items-center justify-center bg-muted">
 					<Map class="h-8 w-8 text-muted-foreground/50" />
@@ -123,11 +125,13 @@
 						{map.title}
 					</h3>
 					{#if isRouted && showThumbnail}
-						<Badge variant="default" class="hidden shrink-0 bg-primary text-primary-foreground sm:inline-flex"
+						<Badge
+							variant="default"
+							class="hidden shrink-0 bg-primary text-primary-foreground sm:inline-flex"
 							>Routed</Badge
 						>
 					{:else if isRouted}
-						<Badge variant="default" class="hidden shrink-0 sm:inline-flex">Routed</Badge>
+						<Badge variant="default" class=" shrink-0 sm:inline-flex">Routed</Badge>
 					{/if}
 				</div>
 				<div
