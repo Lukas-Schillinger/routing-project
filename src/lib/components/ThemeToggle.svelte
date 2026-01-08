@@ -3,12 +3,8 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Moon, Sun } from 'lucide-svelte';
 	import { mode, toggleMode } from 'mode-watcher';
-	import type { Snippet } from 'svelte';
 
-	let {
-		variant = 'default',
-		children
-	}: { variant?: ButtonVariant; children?: Snippet } = $props();
+	let { variant = 'default' }: { variant?: ButtonVariant } = $props();
 </script>
 
 <Button

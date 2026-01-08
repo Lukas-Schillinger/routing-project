@@ -6,13 +6,12 @@
 	import { pendingImport } from '$lib/stores/pending-import';
 	import { ArrowLeft, ArrowRight, Check, Loader2 } from 'lucide-svelte';
 	import { onMount } from 'svelte';
-	import type { PageData } from './$types';
 
 	import ColumnMappingStep from './ColumnMappingStep.svelte';
 	import FileUploadStep from './FileUploadStep.svelte';
 	import GeocodeReviewStep from './GeocodeReviewStep.svelte';
 
-	let { data }: { data: PageData } = $props();
+	// let { data }: { data: PageData } = $props();
 
 	let importState = $state<ImportState>(createImportState());
 	let isCreating = $state(false);

@@ -14,8 +14,6 @@
 		selectedIndex?: number;
 		onStopSelect?: (index: number) => void;
 		onStopFocus?: (stopId: string) => void;
-		title?: string;
-		showFocusButton?: boolean;
 		onScrollToIndex?: (scrollFn: (index: number) => void) => void;
 	}
 

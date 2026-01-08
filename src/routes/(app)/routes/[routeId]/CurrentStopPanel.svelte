@@ -17,6 +17,7 @@
 		Route,
 		User
 	} from 'lucide-svelte';
+	import { SvelteSet } from 'svelte/reactivity';
 
 	type DirectionsProvider = 'google' | 'apple';
 
@@ -44,13 +45,13 @@
 	const getStorageKey = (routeId: string) => `route-${routeId}-completed-stops`;
 
 	// Get completed stops from local storage
-	function getCompletedStops(): Set<string> {
-		if (!browser || !route?.id) return new Set();
+	function getCompletedStops(): SvelteSet<string> {
+		if (!browser || !route?.id) return new SvelteSet();
 		try {
 			const stored = localStorage.getItem(getStorageKey(route.id));
-			return new Set(stored ? JSON.parse(stored) : []);
+			return new SvelteSet(stored ? JSON.parse(stored) : []);
 		} catch {
-			return new Set();
+			return new SvelteSet();
 		}
 	}
 
@@ -94,7 +95,7 @@
 	function toggleDeliveryStatus() {
 		if (!stop) return;
 
-		const newCompletedStops = new Set(completedStops);
+		const newCompletedStops = new SvelteSet(completedStops);
 		if (completedStops.has(stop.stop.id)) {
 			newCompletedStops.delete(stop.stop.id);
 		} else {

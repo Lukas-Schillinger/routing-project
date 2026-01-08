@@ -138,7 +138,7 @@
 		{/if}
 
 		<!-- Stop markers -->
-		{#each stops as item, index}
+		{#each stops as item}
 			{@const { stop, location } = item}
 			{#if location.lat && location.lon && !hiddenDrivers.find((e) => e.id == stop.driver_id)}
 				{@const lat = location.lat}

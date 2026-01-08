@@ -3,7 +3,6 @@
 	import * as Drawer from '$lib/components/ui/drawer';
 	import * as Popover from '$lib/components/ui/popover';
 	import type { DepotWithLocationJoin } from '$lib/schemas/depot';
-	import type { LocationCreate } from '$lib/schemas/location';
 	import { Pencil } from 'lucide-svelte';
 	import { Garage } from 'phosphor-svelte';
 	import type { Snippet } from 'svelte';
@@ -35,47 +34,10 @@
 	// State
 	const isDesktop = new MediaQuery('(min-width: 768px)');
 	let open = $state(false);
-	let isSubmitting = $state(false);
-	let error = $state<string | null>(null);
-
-	// Form fields
-	let depotName = $state('');
-	let address = $state('');
-	let isDefault = $state(false);
-	let selectedLocation = $state<LocationCreate | null>(null);
-
-	// Initialize form with existing data in edit mode
-	$effect(() => {
-		if (mode === 'edit' && depot && open) {
-			depotName = depot.depot.name;
-			isDefault = depot.depot.default_depot;
-			const loc = depot.location;
-			address = loc.address_line_1;
-		}
-	});
-
-	// Reset form
-	function resetForm() {
-		if (mode === 'create') {
-			depotName = '';
-			address = '';
-			isDefault = false;
-			selectedLocation = null;
-		} else if (depot) {
-			depotName = depot.depot.name;
-			address = depot.location.address_line_1;
-			isDefault = depot.depot.default_depot;
-			selectedLocation = null;
-		}
-		error = null;
-	}
 
 	// Handle open change
 	function handleOpenChange(isOpen: boolean) {
 		open = isOpen;
-		if (!isOpen && !isSubmitting) {
-			resetForm();
-		}
 	}
 </script>
 

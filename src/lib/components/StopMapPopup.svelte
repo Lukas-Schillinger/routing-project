@@ -7,13 +7,11 @@
 	let {
 		stop,
 		location,
-		driver,
-		onGoToStop = () => {}
+		driver
 	}: {
 		stop: StopWithLocation['stop'];
 		location: StopWithLocation['location'];
 		driver?: Driver;
-		onGoToStop?: (stopId: string) => void;
 	} = $props();
 </script>
 

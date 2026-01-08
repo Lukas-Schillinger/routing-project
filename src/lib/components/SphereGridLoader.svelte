@@ -54,7 +54,7 @@
 		{/each}
 	{:else}
 		<!-- Render static placeholders to avoid layout shift before hydration/effect -->
-		{#each Array(rows * cols) as _}
+		{#each Array(rows * cols)}
 			<div
 				class="rounded-full {color} opacity-20"
 				style="

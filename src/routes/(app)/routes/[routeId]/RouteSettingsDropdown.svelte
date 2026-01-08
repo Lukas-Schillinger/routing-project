@@ -5,7 +5,7 @@
 	import * as Actions from '$lib/components/TableActionsDropdown.Items';
 	import TableActionsDropdown from '$lib/components/TableActionsDropdown.svelte';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
-	import type { Driver, Route as RouteType } from '$lib/schemas';
+	import type { Route as RouteType } from '$lib/schemas';
 	import { Moon, RotateCcw, Settings, Sun } from 'lucide-svelte';
 	import { mode, toggleMode } from 'mode-watcher';
 
@@ -13,12 +13,11 @@
 
 	interface Props {
 		route: RouteType;
-		driver: Driver;
 		directionsProvider: DirectionsProvider;
 		onDirectionsProviderChange: (provider: DirectionsProvider) => void;
 	}
 
-	let { route, driver, directionsProvider, onDirectionsProviderChange }: Props =
+	let { route, directionsProvider, onDirectionsProviderChange }: Props =
 		$props();
 
 	// Local state for radio group value
