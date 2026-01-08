@@ -1,4 +1,4 @@
-import { env } from '$env/dynamic/public';
+import { env } from '$env/dynamic/private';
 
 /**
  * Mapbox API error class
@@ -22,7 +22,7 @@ class MapboxClient {
 	private accessToken: string;
 
 	constructor(accessToken?: string) {
-		this.accessToken = accessToken || env.PUBLIC_MAPBOX_ACCESS_TOKEN || '';
+		this.accessToken = accessToken || env.MAPBOX_ACCESS_TOKEN || '';
 
 		if (!this.accessToken) {
 			throw new Error('Mapbox access token is required');

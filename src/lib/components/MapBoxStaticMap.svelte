@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { PUBLIC_MAPBOX_ACCESS_TOKEN } from '$env/static/public';
+	import { env } from '$env/dynamic/public';
 	import type { Driver, StopWithLocation } from '$lib/schemas';
 	import { mode } from 'mode-watcher';
 
@@ -102,7 +102,9 @@
 
 	const boundingBox = $derived(getBoundingBox(stops));
 	const mapUrl = $derived(
-		PUBLIC_MAPBOX_ACCESS_TOKEN ? getMapBoxURL(boundingBox, PUBLIC_MAPBOX_ACCESS_TOKEN) : ''
+		env.PUBLIC_MAPBOX_STATIC_MAP_TOKEN
+			? getMapBoxURL(boundingBox, env.PUBLIC_MAPBOX_STATIC_MAP_TOKEN)
+			: ''
 	);
 </script>
 

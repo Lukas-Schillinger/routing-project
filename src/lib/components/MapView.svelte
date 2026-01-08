@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { env } from '$env/dynamic/public';
 	import type { DepotWithLocationJoin, Driver, Route, StopWithLocation } from '$lib/schemas';
 	import { getTextColor } from '$lib/utils';
 	import type maplibregl from 'maplibre-gl';
@@ -34,8 +35,8 @@
 	let map: maplibregl.Map | undefined = $state();
 	let style = $derived.by(() => {
 		return mode.current == 'light'
-			? 'https://api.maptiler.com/maps/streets-v4/style.json?key=L2oyusC7bBTlsWRPZFQh'
-			: 'https://api.maptiler.com/maps/streets-v2-dark/style.json?key=L2oyusC7bBTlsWRPZFQh';
+			? `https://api.maptiler.com/maps/streets-v4/style.json?key=${env.PUBLIC_MAPTILER_KEY}`
+			: `https://api.maptiler.com/maps/streets-v2-dark/style.json?key=${env.PUBLIC_MAPTILER_KEY}`;
 	});
 
 	function getDriverColorById(driverId: string, drivers: Driver[]): string {
