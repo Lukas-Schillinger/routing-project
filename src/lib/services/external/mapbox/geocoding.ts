@@ -6,6 +6,18 @@ import {
 	type GeocodingResponse
 } from './types';
 
+export type AutocompleteOptions = {
+	country?: string;
+	proximity?: [number, number];
+	limit?: number;
+	bbox?: [number, number, number, number];
+};
+
+export type BatchGeocodingOptions = {
+	country?: string;
+	limit?: number;
+};
+
 /** Types of features returned by mapbox. The documentation lists [country, region,
  * postcode, district, place, locality, neighborhood, street, address] but only mentions
  * "secondary_address" (suite, apt.) later in the documentation.
@@ -28,12 +40,7 @@ export class MapboxGeocodingService {
 	 */
 	async autocomplete(
 		searchText: string,
-		options: {
-			country?: string;
-			proximity?: [number, number];
-			limit?: number;
-			bbox?: [number, number, number, number];
-		} = {}
+		options: AutocompleteOptions = {}
 	): Promise<GeocodingFeature[]> {
 		// Don't search if query is too short
 		if (searchText.trim().length < 2) {
@@ -70,10 +77,7 @@ export class MapboxGeocodingService {
 	 */
 	async batch(
 		searches: string[],
-		options: {
-			country?: string;
-			limit?: number;
-		} = {}
+		options: BatchGeocodingOptions = {}
 	): Promise<GeocodingResponse[]> {
 		if (searches.length === 0) {
 			return [];
