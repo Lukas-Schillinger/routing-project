@@ -1,54 +1,49 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { db } from '$lib/server/db';
-import {
-	loginTokens,
-	users,
-	organizations,
-	mailRecords
-} from '$lib/server/db/schema';
+import { loginTokens, mailRecords } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 import { LoginTokenService } from './login-token.service';
 import { TokenUtils } from './token.utils';
 import { ServiceError } from './errors';
+import {
+	createOrganization,
+	createUser,
+	createMailRecord,
+	type TestTransaction
+} from '$lib/testing';
 
 /**
  * Login Token Service Tests
  *
  * These tests use the real database. Test data is cleaned up after each suite.
- * Each test uses unique identifiers to avoid conflicts.
+ * Uses factories from $lib/testing for consistent test data generation.
  */
 
 const loginTokenService = new LoginTokenService();
-const testPrefix = `test-${Date.now()}`;
 
-// Test fixtures
+// Test fixtures - created via factories
 let testOrg: { id: string };
 let testUser: { id: string; email: string; organization_id: string };
 
 beforeAll(async () => {
-	// Create test organization
-	const [org] = await db
-		.insert(organizations)
-		.values({ name: `${testPrefix}-org` })
-		.returning();
-	testOrg = org;
+	// Use factories for consistent test data generation
+	// Cast db to TestTransaction since they share the same interface for inserts
+	const tx = db as unknown as TestTransaction;
 
-	// Create test user
-	const [user] = await db
-		.insert(users)
-		.values({
-			organization_id: testOrg.id,
-			email: `${testPrefix}@example.com`,
-			name: 'Test User',
-			role: 'member'
-		})
-		.returning();
-	testUser = user;
+	testOrg = await createOrganization(tx);
+	testUser = await createUser(tx, {
+		organization_id: testOrg.id,
+		role: 'member'
+	});
 });
 
 afterAll(async () => {
-	// Clean up test data
+	// Clean up test data in correct order (foreign key constraints)
 	await db.delete(loginTokens).where(eq(loginTokens.user_id, testUser.id));
+	await db
+		.delete(mailRecords)
+		.where(eq(mailRecords.organization_id, testOrg.id));
+	const { users, organizations } = await import('$lib/server/db/schema');
 	await db.delete(users).where(eq(users.id, testUser.id));
 	await db.delete(organizations).where(eq(organizations.id, testOrg.id));
 });
@@ -291,18 +286,13 @@ describe('LoginTokenService', () => {
 				email: testUser.email
 			});
 
-			// Create a real mail record (FK constraint)
-			const [mailRecord] = await db
-				.insert(mailRecords)
-				.values({
-					organization_id: testOrg.id,
-					resend_id: `test-resend-${Date.now()}`,
-					type: 'login_token',
-					to_email: testUser.email,
-					from_email: 'test@example.com',
-					status: 'sent'
-				})
-				.returning();
+			// Use factory to create mail record
+			const tx = db as unknown as TestTransaction;
+			const mailRecord = await createMailRecord(tx, {
+				organization_id: testOrg.id,
+				type: 'login_token',
+				to_email: testUser.email
+			});
 
 			await loginTokenService.setMailRecordId(loginToken.id, mailRecord.id);
 

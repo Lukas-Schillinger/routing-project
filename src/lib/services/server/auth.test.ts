@@ -14,18 +14,22 @@ import {
 	deleteSessionTokenCookie,
 	sessionCookieName
 } from './auth';
+import {
+	createOrganization,
+	createUser,
+	type TestTransaction
+} from '$lib/testing';
 
 /**
  * Session Service Tests
  *
  * Tests for session token generation, creation, validation, and invalidation.
- * Uses real database with cleanup after tests.
+ * Uses factories from $lib/testing for consistent test data generation.
  */
 
 const DAY_IN_MS = 1000 * 60 * 60 * 24;
-const testPrefix = `test-auth-${Date.now()}`;
 
-// Test fixtures
+// Test fixtures - created via factories
 let testOrg: { id: string };
 let testUser: { id: string; email: string };
 
@@ -33,24 +37,15 @@ let testUser: { id: string; email: string };
 const createdSessionIds: string[] = [];
 
 beforeAll(async () => {
-	// Create test organization
-	const [org] = await db
-		.insert(organizations)
-		.values({ name: `${testPrefix}-org` })
-		.returning();
-	testOrg = org;
+	// Use factories for consistent test data generation
+	// Cast db to TestTransaction since they share the same interface for inserts
+	const tx = db as unknown as TestTransaction;
 
-	// Create test user
-	const [user] = await db
-		.insert(users)
-		.values({
-			organization_id: testOrg.id,
-			email: `${testPrefix}@example.com`,
-			name: 'Test User',
-			role: 'member'
-		})
-		.returning();
-	testUser = user;
+	testOrg = await createOrganization(tx);
+	testUser = await createUser(tx, {
+		organization_id: testOrg.id,
+		role: 'member'
+	});
 });
 
 afterAll(async () => {
@@ -151,6 +146,7 @@ describe('Session Service', () => {
 
 		it('returns null for expired token and deletes session', async () => {
 			// Insert session with past expiry directly in DB
+			// (This is an edge case that can't be created via normal flow)
 			const token = generateSessionToken();
 			const sessionId = hashToken(token);
 			const expiredAt = new Date(Date.now() - DAY_IN_MS); // 1 day ago
@@ -176,6 +172,7 @@ describe('Session Service', () => {
 
 		it('auto-renews session within 15 days of expiry', async () => {
 			// Insert session expiring in 10 days (within 15-day renewal window)
+			// (This is an edge case that can't be created via normal flow)
 			const token = generateSessionToken();
 			const sessionId = hashToken(token);
 			const expiresIn10Days = new Date(Date.now() + DAY_IN_MS * 10);
