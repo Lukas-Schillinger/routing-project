@@ -56,40 +56,27 @@
 
 	// Calculate bounds from stops and depot for initial view
 	const bounds = $derived.by(() => {
-		if (stops.length === 0 && !depot) return undefined;
+		const coordinates: { lat: number; lon: number }[] = [];
 
-		let minLng = Infinity;
-		let maxLng = -Infinity;
-		let minLat = Infinity;
-		let maxLat = -Infinity;
-
-		stops.forEach((item) => {
-			if (!item.location.lat || !item.location.lon) return;
-
-			const lat = item.location.lat;
-			const lon = item.location.lon;
-
-			if (!isNaN(lat) && !isNaN(lon)) {
-				minLng = Math.min(minLng, lon);
-				maxLng = Math.max(maxLng, lon);
-				minLat = Math.min(minLat, lat);
-				maxLat = Math.max(maxLat, lat);
+		for (const item of stops) {
+			const { lat, lon } = item.location;
+			if (lat != null && lon != null && !isNaN(lat) && !isNaN(lon)) {
+				coordinates.push({ lat, lon });
 			}
-		});
-
-		// Include depot in bounds
-		if (depot?.location.lat && depot?.location.lon) {
-			minLng = Math.min(minLng, depot.location.lon);
-			maxLng = Math.max(maxLng, depot.location.lon);
-			minLat = Math.min(minLat, depot.location.lat);
-			maxLat = Math.max(maxLat, depot.location.lat);
 		}
 
-		if (minLng === Infinity) return undefined;
+		if (depot?.location.lat != null && depot?.location.lon != null) {
+			coordinates.push({ lat: depot.location.lat, lon: depot.location.lon });
+		}
+
+		if (coordinates.length === 0) return undefined;
+
+		const lons = coordinates.map((c) => c.lon);
+		const lats = coordinates.map((c) => c.lat);
 
 		return [
-			[minLng, minLat],
-			[maxLng, maxLat]
+			[Math.min(...lons), Math.min(...lats)],
+			[Math.max(...lons), Math.max(...lats)]
 		] as [[number, number], [number, number]];
 	});
 
