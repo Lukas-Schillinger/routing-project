@@ -141,3 +141,18 @@ For complex services (e.g., `src/lib/services/server/optimization.service.ts`):
 ## Auth Flow
 
 - Users log in with password or email (either OTP or magic link). Passwords are not required
+
+## Testing
+
+`src/lib/testing`
+
+Reference: `src/lib/testing/index.ts`
+
+- `withTestTransaction(fn)` - Wraps tests in a transaction that auto-rolls back
+- `createMock<Model>(overrides?)` - Returns plain object with fake data (no DB)
+- `create<Model>(tx, overrides)` - Inserts into DB via transaction
+- `createTestEnvironment(tx)` - Creates org + admin user
+- `createTestRouteSetup(tx)` - Creates full route setup for optimization tests
+- Service mocks for external APIs (R2, Mapbox, Resend) in `src/lib/testing/mocks.ts`
+
+Always prefer using factories over manually creating test data.
