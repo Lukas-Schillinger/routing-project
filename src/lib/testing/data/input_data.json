@@ -1,254 +1,254 @@
 [
-  {
-    "name": "Laura Perez",
-    "address": "215 N Kentucky Ave, Lakeland, FL 33801",
-    "phone": "(863) 555-0193",
-    "notes": ""
-  },
-  {
-    "name": "Marcus Allen",
-    "address": "930 E Lemon St, Lakeland, FL 33801",
-    "phone": "863-555-4472",
-    "notes": ""
-  },
-  {
-    "name": "Stephanie Wong",
-    "address": "420 Bartow Rd, Lakeland, FL 33803",
-    "phone": "(863) 555-8230",
-    "notes": ""
-  },
-  {
-    "name": "David Simmons",
-    "address": "100 Lake Morton Dr, Lakeland, FL 33801",
-    "phone": "(863) 555-3002",
-    "notes": ""
-  },
-  {
-    "name": "Rachel Green",
-    "address": "3700 Cleveland Heights Blvd, Lakeland, FL 33803",
-    "phone": "863-555-7625",
-    "notes": ""
-  },
-  {
-    "name": "Chris Martinez",
-    "address": "640 E Main St, Lakeland, FL 33801",
-    "phone": "(863) 555-2259",
-    "notes": ""
-  },
-  {
-    "name": "Sandra Patel",
-    "address": "1500 S Florida Ave, Lakeland, FL 33803",
-    "phone": "863-555-0086",
-    "notes": ""
-  },
-  {
-    "name": "Anthony Roberts",
-    "address": "1000 E Edgewood Dr, Lakeland, FL 33803",
-    "phone": "(863) 555-3910",
-    "notes": ""
-  },
-  {
-    "name": "Emma Johnson",
-    "address": "920 E Memorial Blvd, Lakeland, FL 33801",
-    "phone": "863-555-5721",
-    "notes": ""
-  },
-  {
-    "name": "Tyler Brooks",
-    "address": "701 W Lime St, Lakeland, FL 33815",
-    "phone": "(863) 555-6345",
-    "notes": ""
-  },
-  {
-    "name": "Walmart Supercenter #779",
-    "address": "3501 S Florida Ave, Lakeland, FL 33803",
-    "phone": "(863) 644-5676",
-    "notes": "https://www.walmart.com/store/779-lakeland-fl"
-  },
-  {
-    "name": "Walmart Supercenter #1245",
-    "address": "5800 US Highway 98 N, Lakeland, FL 33809",
-    "phone": "(863) 859-3626",
-    "notes": "https://www.walmart.com/store/1245-lakeland-fl"
-  },
-  {
-    "name": "Publix Southgate Shopping Center",
-    "address": "2515 S Florida Ave, Lakeland, FL 33803",
-    "phone": "(863) 683-9860",
-    "notes": "https://www.publix.com"
-  },
-  {
-    "name": "Publix Grove Park Shopping Center",
-    "address": "1617 US Highway 98 S, Lakeland, FL 33801",
-    "phone": "(863) 413-0626",
-    "notes": "https://www.publix.com"
-  },
-  {
-    "name": "Publix Oakbridge Square",
-    "address": "3636 Harden Blvd, Lakeland, FL 33803",
-    "phone": "(863) 647-3136",
-    "notes": ""
-  },
-  {
-    "name": "Publix Lake Miriam Square",
-    "address": "4730 S Florida Ave, Lakeland, FL 33813",
-    "phone": "(863) 646-8537",
-    "notes": ""
-  },
-  {
-    "name": "Publix Plantation Square",
-    "address": "5375 N Socrum Loop Rd, Lakeland, FL 33809",
-    "phone": "(863) 853-1778",
-    "notes": ""
-  },
-  {
-    "name": "Publix Lake Gibson Shopping Center",
-    "address": "6767 US Highway 98 N, Lakeland, FL 33809",
-    "phone": "(863) 858-4466",
-    "notes": ""
-  },
-  {
-    "name": "Publix Highlands",
-    "address": "2125 E County Rd 540A, Lakeland, FL 33813",
-    "phone": "(863) 619-8332",
-    "notes": ""
-  },
-  {
-    "name": "Publix Highland City Town Center",
-    "address": "5185 US Highway 98 S, Lakeland, FL 33812",
-    "phone": "(863) 644-0386",
-    "notes": ""
-  },
-  {
-    "name": "ALDI - Store 232",
-    "address": "6902 S Florida Ave, Lakeland, FL 33813",
-    "phone": "(863) 204-1486",
-    "notes": "https://stores.aldi.us/fl/lakeland/6902-south-florida-ave"
-  },
-  {
-    "name": "ALDI",
-    "address": "4745 US Highway 98 N, Lakeland, FL 33809",
-    "phone": "",
-    "notes": "https://stores.aldi.us/fl/lakeland/4745-us-hwy-98-north"
-  },
-  {
-    "name": "Super Choice Foods",
-    "address": "610 W Memorial Blvd, Lakeland, FL 33815",
-    "phone": "(863) 686-5489",
-    "notes": ""
-  },
-  {
-    "name": "Save-A-Lot",
-    "address": "2021 George Jenkins Blvd Unit 9a, Lakeland, FL 33815",
-    "phone": "",
-    "notes": "https://savealot.com/stores/30019"
-  },
-  {
-    "name": "Gordon Food Service Store",
-    "address": "3723 US Highway 98 N, Lakeland, FL 33809",
-    "phone": "(863) 859-9540",
-    "notes": "http://www.gfsstore.com"
-  },
-  {
-    "name": "Lakeland Discount Grocery",
-    "address": "1305 N Combee Rd, Lakeland, FL 33801",
-    "phone": "",
-    "notes": "https://lakelanddiscountgrocery.gbiz.shop/"
-  },
-  {
-    "name": "Dads Supermarket Meatmarket",
-    "address": "1510 Kathleen Rd, Lakeland, FL 33805",
-    "phone": "",
-    "notes": ""
-  },
-  {
-    "name": "Bravo Supermarkets",
-    "address": "2435 US Highway 98 N, Lakeland, FL 33805",
-    "phone": "",
-    "notes": "https://locations.bravosupermarkets.com/bravo-supermarkets-b8d6e89b2ce9"
-  },
-  {
-    "name": "Harveys Supermarket",
-    "address": "1305 Ariana St, Lakeland, FL 33803",
-    "phone": "",
-    "notes": "https://www.harveyssupermarkets.com"
-  },
-  {
-    "name": "Walmart Supercenter #547",
-    "address": "2602 James L Redman Pkwy, Plant City, FL 33566",
-    "phone": "(813) 752-1188",
-    "notes": "https://www.walmart.com/store/547-plant-city-fl"
-  },
-  {
-    "name": "Orthopedic Physical Therapy Associates",
-    "address": "4720 Cleveland Heights Blvd Suite 101, Lakeland, FL 33813",
-    "phone": "(863) 644-0007",
-    "notes": "https://www.optatherapy.com"
-  },
-  {
-    "name": "Leading Edge Physical Therapy",
-    "address": "801 S Florida Ave Suite 5, Lakeland, FL 33801",
-    "phone": "(863) 688-1800",
-    "notes": "https://leadingedgepolk.com"
-  },
-  {
-    "name": "PT Solutions Physical Therapy",
-    "address": "4227 US Highway 98 N, Lakeland, FL 33809",
-    "phone": "(863) 937-3346",
-    "notes": "https://ptsolutions.com/find-a-clinic/fl/lakeland/lakeland/"
-  },
-  {
-    "name": "CORA Physical Therapy",
-    "address": "3127 US Highway 98 N, Lakeland, FL 33805",
-    "phone": "(863) 665-8881",
-    "notes": "https://coraphysicaltherapy.com/location/lakeland-florida/"
-  },
-  {
-    "name": "Select Physical Therapy (Lakeland North)",
-    "address": "3037 Lakeland Hills Blvd Suite 5, Lakeland, FL 33805",
-    "phone": "(863) 688-6931",
-    "notes": "https://www.selectphysicaltherapy.com/contact/find-a-location/fl/lakeland/lakeland-north/"
-  },
-  {
-    "name": "Select Physical Therapy (Lakeland South)",
-    "address": "3900 S Florida Ave Suite 107, Lakeland, FL 33813",
-    "phone": "(863) 647-3665",
-    "notes": "https://www.selectphysicaltherapy.com/contact/find-a-location/fl/lakeland/lakeland-south/"
-  },
-  {
-    "name": "Select Physical Therapy (Lakeland East)",
-    "address": "5155 US Highway 98 S Suite 5C, Lakeland, FL 33812",
-    "phone": "(863) 815-2270",
-    "notes": "https://www.selectphysicaltherapy.com/contact/find-a-location/fl/lakeland/lakeland-east/"
-  },
-  {
-    "name": "Watson Clinic - Center for Rehabilitative Medicine",
-    "address": "1430 Lakeland Hills Blvd, Lakeland, FL 33805",
-    "phone": "(863) 680-7700",
-    "notes": "https://www.watsonclinic.com/locations/1430-lakeland-hills-blvd-lakeland-fl.html"
-  },
-  {
-    "name": "Watson Clinic - Center for Specialized Rehabilitation",
-    "address": "2190 E County Road 540A, Lakeland, FL 33813",
-    "phone": "(863) 607-3699",
-    "notes": "https://www.watsonclinic.com/locations/2190-e-county-road-540a-lakeland-fl.html"
-  },
-  {
-    "name": "Watson Clinic Highlands",
-    "address": "2300 E County Road 540A, Lakeland, FL 33813",
-    "phone": "(863) 607-3333",
-    "notes": "https://www.watsonclinic.com/locations/2300-e-county-road-540a-lakeland-highlands-fl-117.html"
-  },
-  {
-    "name": "Lakeland Regional Health - Outpatient Rehabilitation",
-    "address": "3030 Harden Blvd, Lakeland, FL 33803",
-    "phone": "(863) 687-1189",
-    "notes": "https://www.mylrh.org/outpatient-rehabilitation-medicine/"
-  },
-  {
-    "name": "Optimal Performance & Physical Therapies",
-    "address": "4525 S Florida Ave Suite 25, Lakeland, FL 33813",
-    "phone": "(863) 812-4065",
-    "notes": "https://www.theoppt.com/locations/lakeland-26110"
-  }
+	{
+		"name": "Laura Perez",
+		"address": "215 N Kentucky Ave, Lakeland, FL 33801",
+		"phone": "(863) 555-0193",
+		"notes": ""
+	},
+	{
+		"name": "Marcus Allen",
+		"address": "930 E Lemon St, Lakeland, FL 33801",
+		"phone": "863-555-4472",
+		"notes": ""
+	},
+	{
+		"name": "Stephanie Wong",
+		"address": "420 Bartow Rd, Lakeland, FL 33803",
+		"phone": "(863) 555-8230",
+		"notes": ""
+	},
+	{
+		"name": "David Simmons",
+		"address": "100 Lake Morton Dr, Lakeland, FL 33801",
+		"phone": "(863) 555-3002",
+		"notes": ""
+	},
+	{
+		"name": "Rachel Green",
+		"address": "3700 Cleveland Heights Blvd, Lakeland, FL 33803",
+		"phone": "863-555-7625",
+		"notes": ""
+	},
+	{
+		"name": "Chris Martinez",
+		"address": "640 E Main St, Lakeland, FL 33801",
+		"phone": "(863) 555-2259",
+		"notes": ""
+	},
+	{
+		"name": "Sandra Patel",
+		"address": "1500 S Florida Ave, Lakeland, FL 33803",
+		"phone": "863-555-0086",
+		"notes": ""
+	},
+	{
+		"name": "Anthony Roberts",
+		"address": "1000 E Edgewood Dr, Lakeland, FL 33803",
+		"phone": "(863) 555-3910",
+		"notes": ""
+	},
+	{
+		"name": "Emma Johnson",
+		"address": "920 E Memorial Blvd, Lakeland, FL 33801",
+		"phone": "863-555-5721",
+		"notes": ""
+	},
+	{
+		"name": "Tyler Brooks",
+		"address": "701 W Lime St, Lakeland, FL 33815",
+		"phone": "(863) 555-6345",
+		"notes": ""
+	},
+	{
+		"name": "Walmart Supercenter #779",
+		"address": "3501 S Florida Ave, Lakeland, FL 33803",
+		"phone": "(863) 644-5676",
+		"notes": "https://www.walmart.com/store/779-lakeland-fl"
+	},
+	{
+		"name": "Walmart Supercenter #1245",
+		"address": "5800 US Highway 98 N, Lakeland, FL 33809",
+		"phone": "(863) 859-3626",
+		"notes": "https://www.walmart.com/store/1245-lakeland-fl"
+	},
+	{
+		"name": "Publix Southgate Shopping Center",
+		"address": "2515 S Florida Ave, Lakeland, FL 33803",
+		"phone": "(863) 683-9860",
+		"notes": "https://www.publix.com"
+	},
+	{
+		"name": "Publix Grove Park Shopping Center",
+		"address": "1617 US Highway 98 S, Lakeland, FL 33801",
+		"phone": "(863) 413-0626",
+		"notes": "https://www.publix.com"
+	},
+	{
+		"name": "Publix Oakbridge Square",
+		"address": "3636 Harden Blvd, Lakeland, FL 33803",
+		"phone": "(863) 647-3136",
+		"notes": ""
+	},
+	{
+		"name": "Publix Lake Miriam Square",
+		"address": "4730 S Florida Ave, Lakeland, FL 33813",
+		"phone": "(863) 646-8537",
+		"notes": ""
+	},
+	{
+		"name": "Publix Plantation Square",
+		"address": "5375 N Socrum Loop Rd, Lakeland, FL 33809",
+		"phone": "(863) 853-1778",
+		"notes": ""
+	},
+	{
+		"name": "Publix Lake Gibson Shopping Center",
+		"address": "6767 US Highway 98 N, Lakeland, FL 33809",
+		"phone": "(863) 858-4466",
+		"notes": ""
+	},
+	{
+		"name": "Publix Highlands",
+		"address": "2125 E County Rd 540A, Lakeland, FL 33813",
+		"phone": "(863) 619-8332",
+		"notes": ""
+	},
+	{
+		"name": "Publix Highland City Town Center",
+		"address": "5185 US Highway 98 S, Lakeland, FL 33812",
+		"phone": "(863) 644-0386",
+		"notes": ""
+	},
+	{
+		"name": "ALDI - Store 232",
+		"address": "6902 S Florida Ave, Lakeland, FL 33813",
+		"phone": "(863) 204-1486",
+		"notes": "https://stores.aldi.us/fl/lakeland/6902-south-florida-ave"
+	},
+	{
+		"name": "ALDI",
+		"address": "4745 US Highway 98 N, Lakeland, FL 33809",
+		"phone": "",
+		"notes": "https://stores.aldi.us/fl/lakeland/4745-us-hwy-98-north"
+	},
+	{
+		"name": "Super Choice Foods",
+		"address": "610 W Memorial Blvd, Lakeland, FL 33815",
+		"phone": "(863) 686-5489",
+		"notes": ""
+	},
+	{
+		"name": "Save-A-Lot",
+		"address": "2021 George Jenkins Blvd Unit 9a, Lakeland, FL 33815",
+		"phone": "",
+		"notes": "https://savealot.com/stores/30019"
+	},
+	{
+		"name": "Gordon Food Service Store",
+		"address": "3723 US Highway 98 N, Lakeland, FL 33809",
+		"phone": "(863) 859-9540",
+		"notes": "http://www.gfsstore.com"
+	},
+	{
+		"name": "Lakeland Discount Grocery",
+		"address": "1305 N Combee Rd, Lakeland, FL 33801",
+		"phone": "",
+		"notes": "https://lakelanddiscountgrocery.gbiz.shop/"
+	},
+	{
+		"name": "Dads Supermarket Meatmarket",
+		"address": "1510 Kathleen Rd, Lakeland, FL 33805",
+		"phone": "",
+		"notes": ""
+	},
+	{
+		"name": "Bravo Supermarkets",
+		"address": "2435 US Highway 98 N, Lakeland, FL 33805",
+		"phone": "",
+		"notes": "https://locations.bravosupermarkets.com/bravo-supermarkets-b8d6e89b2ce9"
+	},
+	{
+		"name": "Harveys Supermarket",
+		"address": "1305 Ariana St, Lakeland, FL 33803",
+		"phone": "",
+		"notes": "https://www.harveyssupermarkets.com"
+	},
+	{
+		"name": "Walmart Supercenter #547",
+		"address": "2602 James L Redman Pkwy, Plant City, FL 33566",
+		"phone": "(813) 752-1188",
+		"notes": "https://www.walmart.com/store/547-plant-city-fl"
+	},
+	{
+		"name": "Orthopedic Physical Therapy Associates",
+		"address": "4720 Cleveland Heights Blvd Suite 101, Lakeland, FL 33813",
+		"phone": "(863) 644-0007",
+		"notes": "https://www.optatherapy.com"
+	},
+	{
+		"name": "Leading Edge Physical Therapy",
+		"address": "801 S Florida Ave Suite 5, Lakeland, FL 33801",
+		"phone": "(863) 688-1800",
+		"notes": "https://leadingedgepolk.com"
+	},
+	{
+		"name": "PT Solutions Physical Therapy",
+		"address": "4227 US Highway 98 N, Lakeland, FL 33809",
+		"phone": "(863) 937-3346",
+		"notes": "https://ptsolutions.com/find-a-clinic/fl/lakeland/lakeland/"
+	},
+	{
+		"name": "CORA Physical Therapy",
+		"address": "3127 US Highway 98 N, Lakeland, FL 33805",
+		"phone": "(863) 665-8881",
+		"notes": "https://coraphysicaltherapy.com/location/lakeland-florida/"
+	},
+	{
+		"name": "Select Physical Therapy (Lakeland North)",
+		"address": "3037 Lakeland Hills Blvd Suite 5, Lakeland, FL 33805",
+		"phone": "(863) 688-6931",
+		"notes": "https://www.selectphysicaltherapy.com/contact/find-a-location/fl/lakeland/lakeland-north/"
+	},
+	{
+		"name": "Select Physical Therapy (Lakeland South)",
+		"address": "3900 S Florida Ave Suite 107, Lakeland, FL 33813",
+		"phone": "(863) 647-3665",
+		"notes": "https://www.selectphysicaltherapy.com/contact/find-a-location/fl/lakeland/lakeland-south/"
+	},
+	{
+		"name": "Select Physical Therapy (Lakeland East)",
+		"address": "5155 US Highway 98 S Suite 5C, Lakeland, FL 33812",
+		"phone": "(863) 815-2270",
+		"notes": "https://www.selectphysicaltherapy.com/contact/find-a-location/fl/lakeland/lakeland-east/"
+	},
+	{
+		"name": "Watson Clinic - Center for Rehabilitative Medicine",
+		"address": "1430 Lakeland Hills Blvd, Lakeland, FL 33805",
+		"phone": "(863) 680-7700",
+		"notes": "https://www.watsonclinic.com/locations/1430-lakeland-hills-blvd-lakeland-fl.html"
+	},
+	{
+		"name": "Watson Clinic - Center for Specialized Rehabilitation",
+		"address": "2190 E County Road 540A, Lakeland, FL 33813",
+		"phone": "(863) 607-3699",
+		"notes": "https://www.watsonclinic.com/locations/2190-e-county-road-540a-lakeland-fl.html"
+	},
+	{
+		"name": "Watson Clinic Highlands",
+		"address": "2300 E County Road 540A, Lakeland, FL 33813",
+		"phone": "(863) 607-3333",
+		"notes": "https://www.watsonclinic.com/locations/2300-e-county-road-540a-lakeland-highlands-fl-117.html"
+	},
+	{
+		"name": "Lakeland Regional Health - Outpatient Rehabilitation",
+		"address": "3030 Harden Blvd, Lakeland, FL 33803",
+		"phone": "(863) 687-1189",
+		"notes": "https://www.mylrh.org/outpatient-rehabilitation-medicine/"
+	},
+	{
+		"name": "Optimal Performance & Physical Therapies",
+		"address": "4525 S Florida Ave Suite 25, Lakeland, FL 33813",
+		"phone": "(863) 812-4065",
+		"notes": "https://www.theoppt.com/locations/lakeland-26110"
+	}
 ]

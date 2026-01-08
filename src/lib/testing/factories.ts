@@ -324,10 +324,7 @@ export async function createInvitation(
 	overrides: Partial<MockInvitation> & { organization_id: string }
 ): Promise<typeof schema.invitations.$inferSelect> {
 	const data = createMockInvitation(overrides);
-	const [result] = await tx
-		.insert(schema.invitations)
-		.values(data)
-		.returning();
+	const [result] = await tx.insert(schema.invitations).values(data).returning();
 	return result;
 }
 
@@ -357,10 +354,7 @@ export async function createMailRecord(
 	overrides: Partial<MockMailRecord> & { organization_id: string }
 ): Promise<typeof schema.mailRecords.$inferSelect> {
 	const data = createMockMailRecord(overrides);
-	const [result] = await tx
-		.insert(schema.mailRecords)
-		.values(data)
-		.returning();
+	const [result] = await tx.insert(schema.mailRecords).values(data).returning();
 	return result;
 }
 
@@ -391,10 +385,7 @@ export async function createRouteShare(
 	}
 ): Promise<typeof schema.routeShares.$inferSelect> {
 	const data = createMockRouteShare(overrides);
-	const [result] = await tx
-		.insert(schema.routeShares)
-		.values(data)
-		.returning();
+	const [result] = await tx.insert(schema.routeShares).values(data).returning();
 	return result;
 }
 
@@ -438,9 +429,7 @@ export async function createDriverMapMembership(
 
 export type MockMatrix = typeof schema.matrices.$inferInsert;
 
-export function createMockMatrix(
-	overrides?: Partial<MockMatrix>
-): MockMatrix {
+export function createMockMatrix(overrides?: Partial<MockMatrix>): MockMatrix {
 	return {
 		organization_id: '', // Must be provided
 		map_id: '', // Must be provided

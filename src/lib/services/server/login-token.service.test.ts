@@ -1,6 +1,11 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { db } from '$lib/server/db';
-import { loginTokens, users, organizations, mailRecords } from '$lib/server/db/schema';
+import {
+	loginTokens,
+	users,
+	organizations,
+	mailRecords
+} from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 import { LoginTokenService } from './login-token.service';
 import { TokenUtils } from './token.utils';
@@ -79,7 +84,9 @@ describe('LoginTokenService', () => {
 			// Expiry should be ~2 hours from now
 			const expectedExpiry = new Date(Date.now() + 2 * 60 * 60 * 1000);
 			const actualExpiry = new Date(loginToken.expires_at);
-			const diffMs = Math.abs(actualExpiry.getTime() - expectedExpiry.getTime());
+			const diffMs = Math.abs(
+				actualExpiry.getTime() - expectedExpiry.getTime()
+			);
 
 			// Allow 5 second tolerance
 			expect(diffMs).toBeLessThan(5000);

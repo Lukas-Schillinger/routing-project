@@ -68,10 +68,16 @@ export function createMockGeocodingService() {
 
 	// Custom response overrides
 	let autocompleteOverride:
-		| ((searchText: string, options?: AutocompleteOptions) => GeocodingFeature[])
+		| ((
+				searchText: string,
+				options?: AutocompleteOptions
+		  ) => GeocodingFeature[])
 		| null = null;
 	let batchOverride:
-		| ((searches: string[], options?: BatchGeocodingOptions) => GeocodingResponse[])
+		| ((
+				searches: string[],
+				options?: BatchGeocodingOptions
+		  ) => GeocodingResponse[])
 		| null = null;
 
 	return {
@@ -168,7 +174,10 @@ export function createMockGeocodingService() {
 		 */
 		setBatchOverride: (
 			fn:
-				| ((searches: string[], options?: BatchGeocodingOptions) => GeocodingResponse[])
+				| ((
+						searches: string[],
+						options?: BatchGeocodingOptions
+				  ) => GeocodingResponse[])
 				| null
 		) => {
 			batchOverride = fn;
@@ -303,8 +312,7 @@ export function createMockDistanceMatrixService() {
 		createDistanceMatrix: []
 	};
 
-	let override: ((data: CoordinatesData) => DistanceMatrixResult) | null =
-		null;
+	let override: ((data: CoordinatesData) => DistanceMatrixResult) | null = null;
 
 	return {
 		/**
@@ -333,9 +341,7 @@ export function createMockDistanceMatrixService() {
 				throw new Error('Maximum 25 coordinates allowed');
 			}
 			if (coordinates.length !== locationIds.length) {
-				throw new Error(
-					'Coordinates and locationIds must have same length'
-				);
+				throw new Error('Coordinates and locationIds must have same length');
 			}
 
 			// Generate deterministic matrix based on indices
@@ -786,13 +792,17 @@ export function createMockSqsService() {
 		},
 
 		/** Mock send method matching SQSClient interface */
-		send: vi.fn().mockImplementation((command: { input: { QueueUrl?: string; MessageBody?: string } }) => {
-			const input = command.input;
-			messages.push({
-				queueUrl: input.QueueUrl ?? '',
-				body: JSON.parse(input.MessageBody ?? '{}')
-			});
-			return Promise.resolve({ MessageId: `mock-${messages.length}` });
-		})
+		send: vi
+			.fn()
+			.mockImplementation(
+				(command: { input: { QueueUrl?: string; MessageBody?: string } }) => {
+					const input = command.input;
+					messages.push({
+						queueUrl: input.QueueUrl ?? '',
+						body: JSON.parse(input.MessageBody ?? '{}')
+					});
+					return Promise.resolve({ MessageId: `mock-${messages.length}` });
+				}
+			)
 	};
 }
