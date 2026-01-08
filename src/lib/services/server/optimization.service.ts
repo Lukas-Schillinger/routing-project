@@ -78,14 +78,16 @@ export class OptimizationService {
 		end_at_depot: true
 	} as const;
 
-	constructor() {
-		this.sqsClient = new SQSClient({
-			region: env.AWS_REGION || '',
-			credentials: {
-				accessKeyId: env.AWS_ACCESS_KEY_ID || '',
-				secretAccessKey: env.AWS_SECRET_ACCESS_KEY || ''
-			}
-		});
+	constructor(sqsClient?: SQSClient) {
+		this.sqsClient =
+			sqsClient ??
+			new SQSClient({
+				region: env.AWS_REGION || '',
+				credentials: {
+					accessKeyId: env.AWS_ACCESS_KEY_ID || '',
+					secretAccessKey: env.AWS_SECRET_ACCESS_KEY || ''
+				}
+			});
 		this.queueUrl = env.OPTIMIZATION_QUEUE_URL;
 	}
 
