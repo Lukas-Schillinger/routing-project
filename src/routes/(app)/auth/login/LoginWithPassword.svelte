@@ -19,7 +19,7 @@
 	let isResending = $state(false);
 	let emailValue = $state('');
 
-	let url = $state(
+	let url = $derived(
 		`/auth/password-reset?email=${encodeURIComponent(emailValue)}`
 	);
 </script>
