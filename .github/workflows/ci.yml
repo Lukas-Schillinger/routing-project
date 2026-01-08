@@ -39,3 +39,31 @@ jobs:
 
       - name: Run type check
         run: npm run check
+        env:
+          # Database
+          DATABASE_URL: "postgres://user:pass@localhost:5432/db"
+          # Email (Resend)
+          RESEND_API_KEY: "re_placeholder"
+          EMAIL_FROM: "noreply@example.com"
+          RESEND_WEBHOOK_SECRET: "placeholder"
+          # Render
+          RENDER_SERVICE_URL: "https://placeholder.render.com"
+          RENDER_TOKEN_WEND: "placeholder"
+          # Mapbox
+          MAPBOX_ACCESS_TOKEN: "pk.placeholder"
+          PUBLIC_MAPBOX_STATIC_MAP_TOKEN: "pk.placeholder"
+          PUBLIC_MAPTILER_KEY: "placeholder"
+          # Cloudflare R2
+          CLOUDFLARE_ACCOUNT_ID: "placeholder"
+          CLOUDFLARE_R2_ACCESS_KEY_ID: "placeholder"
+          CLOUDFLARE_R2_SECRET_ACCESS_KEY: "placeholder"
+          CLOUDFLARE_R2_DEV_BUCKET_NAME: "placeholder"
+          # AWS (SQS)
+          AWS_REGION: "us-east-1"
+          AWS_ACCESS_KEY_ID: "placeholder"
+          AWS_SECRET_ACCESS_KEY: "placeholder"
+          OPTIMIZATION_QUEUE_URL: "https://sqs.us-east-1.amazonaws.com/placeholder"
+          OPTIMIZATION_WEBHOOK_SECRET: "placeholder"
+          # Upstash (Rate limiting)
+          UPSTASH_REDIS_REST_URL: "https://placeholder.upstash.io"
+          UPSTASH_REDIS_REST_TOKEN: "placeholder"
