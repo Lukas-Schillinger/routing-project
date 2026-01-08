@@ -122,8 +122,9 @@
 				disabled={isSubmitting}
 			/>
 		</div>
+		<!-- Resolve doesn't support query parameters -->
 		<a
-			href="/auth/password-reset?email={encodeURIComponent(emailValue)}"
+			href={`/auth/password-reset?email=${encodeURIComponent(emailValue)}`}
 			class="text-xs text-muted-foreground transition-colors hover:text-foreground"
 		>
 			Reset password

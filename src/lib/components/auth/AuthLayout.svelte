@@ -1,9 +1,11 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { mode } from 'mode-watcher';
+	import type { Snippet } from 'svelte';
 	import CloudflareImage from '../CloudflareImage.svelte';
 
 	interface Props {
-		children: any;
+		children: Snippet;
 	}
 
 	let { children }: Props = $props();
@@ -15,7 +17,10 @@
 		class="relative z-10 flex flex-1 flex-col items-center justify-center px-4 py-12"
 	>
 		<!-- Logo -->
-		<a href="/" class="mb-10 flex items-center gap-2.5 hover:opacity-80">
+		<a
+			href={resolve('/')}
+			class="mb-10 flex items-center gap-2.5 hover:opacity-80"
+		>
 			<div class="relative size-36">
 				{#if mode.current === 'light'}
 					<CloudflareImage

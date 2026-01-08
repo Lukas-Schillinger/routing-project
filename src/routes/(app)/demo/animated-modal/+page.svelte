@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { fly, fade, scale } from 'svelte/transition';
-	import { cubicOut, backOut } from 'svelte/easing';
+	import { backOut, cubicOut } from 'svelte/easing';
+	import { fade, fly, scale } from 'svelte/transition';
 
 	const cards = [
 		{
@@ -72,7 +72,7 @@
 						<div
 							class="relative flex h-full w-full items-center justify-center"
 						>
-							{#each [0, 1, 2, 3, 4] as i}
+							{#each [0, 1, 2, 3, 4] as i (i)}
 								<div
 									class="absolute rounded-lg border border-white/10"
 									style="
@@ -117,7 +117,7 @@
 							>
 								50ms
 							</div>
-							{#each Array(12) as _, i}
+							{#each Array(12), i}
 								<div
 									class="absolute h-0.5 rounded-sm"
 									style="
@@ -226,7 +226,7 @@
 						<div
 							class="relative flex h-full w-full items-center justify-center"
 						>
-							{#each [0, 1, 2, 3, 4] as i}
+							{#each [0, 1, 2, 3, 4] as i (i)}
 								<div
 									class="absolute rounded-lg border border-white/10 transition-all duration-500"
 									style="
@@ -271,7 +271,7 @@
 							>
 								50ms
 							</div>
-							{#each Array(12) as _, i}
+							{#each Array(12), i}
 								<div
 									class="absolute h-0.5 rounded-sm transition-all duration-500"
 									style="

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { Button } from '$lib/components/ui/button';
 	import { mode } from 'mode-watcher';
 </script>
@@ -6,7 +7,7 @@
 <div class="sticky top-2 z-50 sm:top-4">
 	<div class="mx-2 mt-0 rounded-full border bg-background shadow sm:mx-8">
 		<div class="flex justify-between px-1 py-1">
-			<a href="/" class="flex items-center space-x-1">
+			<a href={resolve('/')} class="flex items-center space-x-1">
 				<div class="flex size-8 items-center justify-center rounded-lg">
 					{#if mode.current == 'light'}
 						<img

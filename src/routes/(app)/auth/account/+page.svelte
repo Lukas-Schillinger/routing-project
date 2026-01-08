@@ -1,6 +1,7 @@
 <!-- @component Account page with user profile and organization settings -->
 <script lang="ts">
 	import { goto, invalidateAll } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { ConfirmDeleteDialog } from '$lib/components/ConfirmDeleteDialog';
 	import { Button } from '$lib/components/ui/button';
 	import { Separator } from '$lib/components/ui/separator';
@@ -20,7 +21,7 @@
 		try {
 			await usersApi.deleteMe();
 			toast.success('Account deleted');
-			goto('/auth/login');
+			goto(resolve('/auth/login'));
 		} catch (error) {
 			toast.error(
 				error instanceof Error ? error.message : 'Failed to delete account'

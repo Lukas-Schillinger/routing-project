@@ -90,7 +90,7 @@
 
 		<!-- Showcase Items -->
 		<div class="space-y-8">
-			{#each showcaseItems as item, index}
+			{#each showcaseItems as item, index (item.step)}
 				<div class="group relative overflow-hidden rounded-3xl">
 					<div
 						class="grid grid-cols-1 items-center gap-8 p-6 sm:grid-cols-2 md:gap-12 md:p-10 lg:p-12"
@@ -111,7 +111,7 @@
 							<!-- Feature pills -->
 							{#if item.features.length > 0}
 								<div class="mt-8 flex flex-wrap gap-3">
-									{#each item.features as feature}
+									{#each item.features as feature (feature.label)}
 										<span
 											class="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm {feature.fake
 												? 'border-dashed border-foreground/10 text-muted-foreground/60'

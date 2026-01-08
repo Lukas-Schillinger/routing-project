@@ -34,7 +34,7 @@
 	</div>
 </div>
 <div class="border-y">
-	{#each features as feature, index}
+	{#each features as feature, index (feature.title)}
 		<div class="grid grid-cols-8 border-t first:border-t-0 sm:grid-cols-3">
 			{#if index % 2 === 1}
 				<div class="bg-texture col-span-1 border-r">&nbsp;</div>

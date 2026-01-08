@@ -4,6 +4,7 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
+	import { ServiceError } from '$lib/errors';
 	import type { DepotWithLocationJoin } from '$lib/schemas/depot';
 	import { depotApi } from '$lib/services/api/depots';
 	import {
@@ -32,8 +33,12 @@
 			await depotApi.delete(depot.depot.id);
 			depots = depots.filter((d) => d.depot.id !== depot.depot.id);
 			toast.success('Depot deleted');
-		} catch (error) {
-			toast.error('Failed to delete depot');
+		} catch (err) {
+			if (err instanceof ServiceError) {
+				toast.error(err.message);
+			} else {
+				toast.error('Failed to delete depot');
+			}
 		}
 	}
 

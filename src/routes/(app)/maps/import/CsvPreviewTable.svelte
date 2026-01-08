@@ -17,7 +17,7 @@
 		notesColumn = $bindable(''),
 		maxRows = 5
 	}: {
-		csvData: any[];
+		csvData: Record<string, string>[];
 		csvHeaders: string[];
 		nameColumn?: string;
 		addressColumn?: string;
@@ -43,6 +43,7 @@
 	});
 
 	function getFieldForColumn(header: string): string {
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		const entry = Object.entries(columnMap).find(([_, col]) => col === header);
 		return entry?.[0] || '';
 	}
@@ -118,7 +119,7 @@
 					<table class="w-full text-sm">
 						<thead>
 							<tr class="border-b">
-								{#each csvHeaders as header}
+								{#each csvHeaders as header (header)}
 									<th class="min-w-[200px] space-y-2 p-2 text-left align-top">
 										<Select.Root
 											type="single"
@@ -143,7 +144,7 @@
 													></Select.Item
 												>
 												<Select.Separator />
-												{#each fieldOptions as field}
+												{#each fieldOptions as field (field.key)}
 													<Select.Item
 														value={field.key}
 														disabled={isFieldMapped(field.key) &&
@@ -169,9 +170,9 @@
 							</tr>
 						</thead>
 						<tbody>
-							{#each previewData as row}
+							{#each previewData as row, rowIndex (rowIndex)}
 								<tr class="border-b font-mono">
-									{#each csvHeaders as header}
+									{#each csvHeaders as header (header)}
 										<td class="font p-2 text-muted-foreground">
 											<div class="line-clamp-2">{row[header] || ''}</div>
 										</td>

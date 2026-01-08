@@ -45,7 +45,7 @@
 			<div
 				class="grid max-w-7xl grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-8 lg:grid-cols-4"
 			>
-				{#each metrics as metric}
+				{#each metrics as metric (metric.label)}
 					<div class="rounded-lg border border-foreground/5 bg-background p-8">
 						<p
 							class="font-mono text-5xl font-medium tracking-tight text-landing-primary"

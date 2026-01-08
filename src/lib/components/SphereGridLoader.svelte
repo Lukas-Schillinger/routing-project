@@ -42,7 +42,7 @@
     "
 >
 	{#if spheres.length > 0}
-		{#each spheres as sphere}
+		{#each spheres as sphere, index (index)}
 			<div
 				class="rounded-full {color}"
 				style="

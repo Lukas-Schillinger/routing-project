@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import * as Table from '$lib/components/ui/table';
 	import { formatDate } from '$lib/utils';
 	import type { PageData } from './$types';
@@ -17,10 +18,10 @@
 		</Table.Row>
 	</Table.Header>
 	<Table.Body>
-		{#each data.routes as route}
+		{#each data.routes as route (route.id)}
 			<Table.Row>
 				<Table.Cell class="font-medium">
-					<a class="hover:underline" href={`/routes/${route.id}`}>
+					<a class="hover:underline" href={resolve(`/routes/${route.id}`)}>
 						{route.id}
 					</a>
 				</Table.Cell>

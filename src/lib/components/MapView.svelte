@@ -23,8 +23,9 @@
 		center = [-98.5795, 39.8283],
 		zoom = 4,
 		focusedStopId = $bindable(null),
-		hiddenDrivers = $bindable([]),
-		onGoToStop = (stopId: string) => {}
+		hiddenDrivers = $bindable([])
+
+		// onGoToStop = (stopId: string) => {}
 	}: {
 		stops?: StopWithLocation[];
 		routes?: Route[] | null;
@@ -33,7 +34,7 @@
 		center?: [number, number];
 		zoom?: number;
 		focusedStopId?: string | null;
-		onGoToStop?: (stopId: string) => void;
+		// onGoToStop?: (stopId: string) => void;
 		hiddenDrivers?: Driver[];
 	} = $props();
 
@@ -116,9 +117,10 @@
 	>
 		<!-- Route lines -->
 		{#if routes && routes.length > 0}
-			{#each routes as route}
+			{#each routes as route (route.id)}
 				{#if !hiddenDrivers.find((e) => e.id == route.driver_id)}
 					<!-- I don't know how this works -->
+					<!-- eslint-disable-next-line @typescript-eslint/no-explicit-any -->
 					{@const data = route.geometry as any}
 					<GeoJSON id={`route-${route.driver_id}`} {data}>
 						<LineLayer
@@ -138,7 +140,7 @@
 		{/if}
 
 		<!-- Stop markers -->
-		{#each stops as item}
+		{#each stops as item (item.stop.id)}
 			{@const { stop, location } = item}
 			{#if location.lat && location.lon && !hiddenDrivers.find((e) => e.id == stop.driver_id)}
 				{@const lat = location.lat}
@@ -180,9 +182,6 @@
 								{stop}
 								{location}
 								driver={drivers.find((e) => e.id == stop.driver_id)}
-								onGoToStop={(stopId) => {
-									onGoToStop(stopId);
-								}}
 							/>
 						</Popup>
 					</Marker>

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { env } from '$env/dynamic/public';
 	import type { Driver, StopWithLocation } from '$lib/schemas';
 	import { mode } from 'mode-watcher';
@@ -13,16 +14,7 @@
 		padding?: number;
 	}
 
-	let {
-		stops,
-		mapId,
-		drivers = [],
-		width = 600,
-		height = 400,
-
-		padding = 20,
-		...restProps
-	}: Props = $props();
+	let { stops, mapId, drivers = [], ...restProps }: Props = $props();
 
 	function getDriverColorById(driverId: string | null): string {
 		if (!driverId) return mode.current === 'light' ? '3a3a3a' : '000000';
@@ -120,7 +112,7 @@
 
 {#if mapUrl}
 	<a
-		href="/maps/{mapId}"
+		href={resolve(`/maps/${mapId}`)}
 		class="block h-full overflow-hidden rounded-t-lg sm:rounded-r-none sm:rounded-bl-lg"
 	>
 		{#if stops.length}

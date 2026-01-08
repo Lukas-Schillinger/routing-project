@@ -127,7 +127,7 @@
 				{role ? role : 'select role'}
 			</Select.Trigger>
 			<Select.Content>
-				{#each roleDescriptions as role}
+				{#each roleDescriptions as role (role.name)}
 					<Select.Item
 						value={role.name}
 						class="flex flex-col items-start gap-1"

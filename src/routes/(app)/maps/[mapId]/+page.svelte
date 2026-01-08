@@ -1,14 +1,14 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
+	import DebugToolbar from '$lib/components/DebugToolbar.svelte';
 	import MapView from '$lib/components/MapView.svelte';
-	import type { Driver } from '$lib/schemas';
+	import { Button } from '$lib/components/ui/button';
 	import { ServiceError } from '$lib/errors';
+	import type { Driver } from '$lib/schemas';
 	import { mapApi } from '$lib/services/api';
 	import { onDestroy } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import type { PageData } from './$types';
-	import DebugToolbar from '$lib/components/DebugToolbar.svelte';
-	import { Button } from '$lib/components/ui/button';
 	import MapDetailLayout from './components/MapDetailLayout.svelte';
 	import MapHeader from './components/MapHeader.svelte';
 	import OptimizationFooter from './components/OptimizationFooter.svelte';
@@ -183,7 +183,11 @@
 			isViewMode = false;
 			await invalidateAll();
 		} catch (err) {
-			toast.error('Failed to switch to edit mode');
+			if (err instanceof ServiceError) {
+				toast.error(err.message);
+			} else {
+				toast.error('An unknonwn error occurred');
+			}
 		} finally {
 			isLoading = false;
 		}
@@ -203,7 +207,11 @@
 			toast.success('Map deleted');
 			window.location.href = '/maps';
 		} catch (err) {
-			toast.error('Failed to delete map');
+			if (err instanceof ServiceError) {
+				toast.error(err.message);
+			} else {
+				toast.error('An unknonwn error occurred');
+			}
 		}
 	}
 </script>
@@ -222,22 +230,20 @@
 	/>
 
 	<MapDetailLayout>
-		{#snippet children()}
-			<div class="relative h-full">
-				<MapView
-					stops={data.stops}
-					routes={data.routes}
-					drivers={data.allDrivers}
-					depot={selectedDepot}
-					bind:hiddenDrivers
-					bind:focusedStopId
-				/>
+		<div class="relative h-full">
+			<MapView
+				stops={data.stops}
+				routes={data.routes}
+				drivers={data.allDrivers}
+				depot={selectedDepot}
+				bind:hiddenDrivers
+				bind:focusedStopId
+			/>
 
-				{#if pageState === 'optimizing'}
-					<OptimizationOverlay startTime={optimizationStartTime} />
-				{/if}
-			</div>
-		{/snippet}
+			{#if pageState === 'optimizing'}
+				<OptimizationOverlay startTime={optimizationStartTime} />
+			{/if}
+		</div>
 
 		{#snippet sidebar()}
 			<SidebarPanel
@@ -300,7 +306,7 @@
 		<div class="flex flex-col gap-1.5">
 			<span class="text-xs font-medium text-muted-foreground">Page State</span>
 			<div class="flex gap-1">
-				{#each ['editing', 'viewing', 'optimizing'] as state}
+				{#each ['editing', 'viewing', 'optimizing'] as state (state)}
 					{@const isActive = debugPageStateOverride === state}
 					<Button
 						variant={isActive ? 'default' : 'outline'}

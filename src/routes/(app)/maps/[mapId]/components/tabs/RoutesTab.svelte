@@ -15,6 +15,7 @@
 		Printer,
 		Route
 	} from 'lucide-svelte';
+	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 	import { slide } from 'svelte/transition';
 
 	let {
@@ -36,7 +37,7 @@
 
 	// Group stops by driver
 	const routesByDriver = $derived.by(() => {
-		const grouped = new Map<string, StopWithLocation[]>();
+		const grouped = new SvelteMap<string, StopWithLocation[]>();
 
 		assignedDrivers.forEach((driver) => {
 			grouped.set(driver.id, []);
@@ -88,7 +89,7 @@
 		} else {
 			expandedRoutes.add(driverId);
 		}
-		expandedRoutes = new Set(expandedRoutes);
+		expandedRoutes = new SvelteSet(expandedRoutes);
 	}
 
 	function toggleDriverVisibility(driver: Driver) {

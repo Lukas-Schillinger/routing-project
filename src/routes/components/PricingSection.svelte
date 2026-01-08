@@ -112,7 +112,7 @@
 
 		<!-- Pricing Cards -->
 		<div class="grid grid-cols-1 gap-6 md:grid-cols-3">
-			{#each plans as plan}
+			{#each plans as plan (plan.name)}
 				<div
 					class="relative flex flex-col rounded-lg border bg-background p-8 {plan.highlighted
 						? 'border-landing-primary shadow-lg shadow-landing-primary/10'
@@ -152,7 +152,7 @@
 					</Button>
 
 					<ul class="mt-auto space-y-3">
-						{#each plan.features as feature}
+						{#each plan.features as feature (feature)}
 							<li class="flex items-start gap-3 text-sm">
 								<Check class="mt-0.5 h-4 w-4 shrink-0 text-landing-primary" />
 								<span class="text-muted-foreground">{feature}</span>

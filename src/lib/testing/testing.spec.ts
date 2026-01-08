@@ -1,18 +1,18 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
-	withTestTransaction,
-	createOrganization,
-	createUser,
+	createDepot,
 	createDriver,
 	createLocation,
 	createMap,
-	createStop,
-	createDepot,
+	createMockOrganization,
+	createMockUser,
+	createOrganization,
 	createRoute,
+	createStop,
 	createTestEnvironment,
 	createTestRouteSetup,
-	createMockOrganization,
-	createMockUser
+	createUser,
+	withTestTransaction
 } from './index';
 
 describe('Testing Utilities', () => {
@@ -176,12 +176,11 @@ describe('Testing Utilities', () => {
 	describe('Transaction Isolation', () => {
 		it('rolls back changes after test', async () => {
 			expect.assertions(1);
-			let orgId: string | undefined;
 
 			await withTestTransaction(async (tx) => {
 				const org = await createOrganization(tx, { name: 'Rollback Test Org' });
-				orgId = org.id;
-				expect(org.id).toBeDefined();
+				const orgId = org.id;
+				expect(orgId).toBeDefined();
 			});
 
 			// The org should be rolled back - we can't easily verify this without

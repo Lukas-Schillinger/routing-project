@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { Button } from '$lib/components/ui/button';
 	import { createImportState, type ImportState } from '$lib/schemas/import';
 	import { mapApi } from '$lib/services/api';
@@ -47,7 +48,7 @@
 			const { map } = await mapApi.create({
 				title: `Map ${new Date().toLocaleDateString()}`
 			});
-			await goto(`/maps/${map.id}`);
+			await goto(resolve(`/maps/${map.id}`));
 		} catch (error) {
 			console.error('Failed to create map:', error);
 			alert('Failed to create map. Please try again.');
@@ -76,7 +77,7 @@
 			stops
 		});
 
-		goto(`/maps/${res.map.id}`);
+		goto(resolve(`/maps/${res.map.id}`));
 	}
 
 	function handleBack() {
@@ -157,7 +158,7 @@
 
 			<!-- Step Indicators -->
 			<div class="flex items-center">
-				{#each steps as step, index}
+				{#each steps as step, index (step.number)}
 					{@const isCompleted = importState.step > step.number}
 					{@const isCurrent = importState.step === step.number}
 					{@const isClickable = isCompleted}

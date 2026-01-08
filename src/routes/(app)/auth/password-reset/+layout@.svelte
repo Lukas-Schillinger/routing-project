@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { AuthLayout } from '$lib/components/auth';
+	import type { Snippet } from 'svelte';
 
-	let { children }: { children: any } = $props();
+	let { children }: { children: Snippet } = $props();
 </script>
 
 <AuthLayout>

@@ -58,7 +58,7 @@
 </div>
 <div class="bg-texture border-x border-y sm:border-x-0">
 	<div class="grid gap-6 px-6 sm:grid-cols-3">
-		{#each plans as plan, index}
+		{#each plans as plan, index (plan.name)}
 			<div
 				class="border-x bg-background p-6 even:bg-foreground even:text-primary-foreground"
 			>
@@ -84,7 +84,7 @@
 				</div>
 				<div class="pt-8">
 					<ul class="">
-						{#each plan.features as feature}
+						{#each plan.features as feature (feature)}
 							<li class="flex items-center gap-2 py-1">
 								<Check class="shrink-0" />
 								{feature}
