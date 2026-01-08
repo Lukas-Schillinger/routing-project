@@ -10,6 +10,7 @@
 	import type maplibregl from 'maplibre-gl';
 	import { mode } from 'mode-watcher';
 	import { Garage, MapPin } from 'phosphor-svelte';
+	// @ts-expect-error - svelte-maplibre GeoJSON export has type/value conflict with verbatimModuleSyntax
 	import { GeoJSON, LineLayer, MapLibre, Marker, Popup } from 'svelte-maplibre';
 	import DepotMapPopup from './DepotMapPopup.svelte';
 	import StopMapPopup from './StopMapPopup.svelte';
@@ -128,9 +129,11 @@
 	>
 		<!-- Route lines -->
 		{#if routes && routes.length > 0}
-			{#each routes as route, index}
+			{#each routes as route}
 				{#if !hiddenDrivers.find((e) => e.id == route.driver_id)}
-					<GeoJSON id={`route-${route.driver_id}`} data={route.geometry}>
+					<!-- I don't know how this works -->
+					{@const data = route.geometry as any}
+					<GeoJSON id={`route-${route.driver_id}`} {data}>
 						<LineLayer
 							paint={{
 								'line-color': getDriverColorById(route.driver_id, drivers),

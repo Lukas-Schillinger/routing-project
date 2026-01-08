@@ -149,9 +149,7 @@
 	let sortDirection = $state<'asc' | 'desc'>('desc');
 
 	// Table state
-	let sorting = $state<SortingState>([
-		{ id: sortColumn, desc: sortDirection === 'desc' }
-	]);
+	let sorting = $state<SortingState>([{ id: 'updated_at', desc: true }]);
 	let columnFilters = $state<ColumnFiltersState>([]);
 	let columnVisibility = $state<VisibilityState>({});
 	let rowSelection = $state({});
@@ -176,10 +174,7 @@
 	// Add types for table columns
 	const columnHelper = createColumnHelper<StopWithLocation>();
 
-	let pagination = $state<PaginationState>({
-		pageIndex: 0,
-		pageSize: calculatedPageSize
-	});
+	let pagination = $state<PaginationState>({ pageIndex: 0, pageSize: 10 });
 
 	// Define columns
 	const columns: ColumnDef<StopWithLocation, any>[] = [
