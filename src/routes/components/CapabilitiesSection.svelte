@@ -7,7 +7,7 @@
 	<div class="mx-auto max-w-6xl">
 		<!-- Section Header -->
 		<div class="mb-16 text-center">
-			<p class="mb-4 text-sm font-medium uppercase tracking-[0.2em] text-forest-400">
+			<p class="mb-4 text-sm font-medium tracking-[0.2em] text-forest-400 uppercase">
 				Capabilities
 			</p>
 			<h2 class="font-serif text-4xl leading-tight tracking-tight text-white md:text-5xl">
@@ -22,9 +22,7 @@
 				class="group relative col-span-1 overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-forest-900/80 to-forest-950 p-8 md:col-span-4"
 			>
 				<div class="relative z-10 flex h-full flex-col">
-					<div
-						class="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/20"
-					>
+					<div class="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/20">
 						<Upload class="h-5 w-5 text-emerald-400" />
 					</div>
 					<h3 class="mb-2 text-xl font-semibold text-white">Intelligent Data Uploads</h3>
@@ -75,7 +73,7 @@
 
 				<!-- Gradient orb -->
 				<div
-					class="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-emerald-500/10 blur-3xl"
+					class="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-emerald-500/10 blur-3xl"
 				></div>
 			</div>
 
@@ -101,8 +99,9 @@
 								<span class="font-mono text-2xl font-semibold text-white">2.4s</span>
 							</div>
 							<div class="h-2 overflow-hidden rounded-full bg-forest-800">
-								<div class="h-full w-[85%] rounded-full bg-gradient-to-r from-amber-500 to-amber-400">
-								</div>
+								<div
+									class="h-full w-[85%] rounded-full bg-gradient-to-r from-amber-500 to-amber-400"
+								></div>
 							</div>
 						</div>
 
@@ -126,7 +125,7 @@
 
 				<!-- Gradient orb -->
 				<div
-					class="absolute -bottom-32 -right-32 h-64 w-64 rounded-full bg-amber-500/10 blur-3xl"
+					class="absolute -right-32 -bottom-32 h-64 w-64 rounded-full bg-amber-500/10 blur-3xl"
 				></div>
 			</div>
 
@@ -214,7 +213,7 @@
 
 				<!-- Gradient orb -->
 				<div
-					class="absolute -right-20 -top-20 h-48 w-48 rounded-full bg-violet-500/10 blur-3xl"
+					class="absolute -top-20 -right-20 h-48 w-48 rounded-full bg-violet-500/10 blur-3xl"
 				></div>
 			</div>
 		</div>

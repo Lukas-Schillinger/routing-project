@@ -1,7 +1,12 @@
 import { z } from 'zod';
 
 // Mail record type enum
-export const mailRecordTypeEnum = z.enum(['invitation', 'login_token', 'route_share', 'password_reset']);
+export const mailRecordTypeEnum = z.enum([
+	'invitation',
+	'login_token',
+	'route_share',
+	'password_reset'
+]);
 export type MailRecordType = z.infer<typeof mailRecordTypeEnum>;
 
 // Mail record status enum

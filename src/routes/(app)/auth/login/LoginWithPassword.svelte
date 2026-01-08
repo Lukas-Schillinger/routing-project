@@ -108,7 +108,7 @@
 		</div>
 		<a
 			href="/auth/password-reset?email={encodeURIComponent(emailValue)}"
-			class="text-xs text-muted-foreground hover:text-foreground transition-colors"
+			class="text-xs text-muted-foreground transition-colors hover:text-foreground"
 		>
 			Reset password
 		</a>

@@ -78,9 +78,7 @@
 					Email address
 				</Label>
 				<div class="relative">
-					<Mail
-						class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground/50"
-					/>
+					<Mail class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground/50" />
 					<Input
 						id="email"
 						type="email"

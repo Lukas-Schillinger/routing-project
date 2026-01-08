@@ -27,7 +27,9 @@
 	<div class="mx-auto">
 		<!-- Section Header -->
 		<div class="mb-16 text-center">
-			<p class="mb-4 text-sm font-medium tracking-[0.2em] text-landing-primary uppercase">The impact</p>
+			<p class="mb-4 text-sm font-medium tracking-[0.2em] text-landing-primary uppercase">
+				The impact
+			</p>
 			<h2 class="font-serif text-4xl leading-tight tracking-tight md:text-5xl">
 				Results that speak for themselves
 			</h2>

@@ -1,10 +1,12 @@
 <script lang="ts">
+	import { Button } from '$lib/components/ui/button';
+	import type { Route } from '$lib/schemas';
+	import type { StopWithLocation } from '$lib/schemas/stop';
+	import { ArrowRight } from 'lucide-svelte';
 	import JSONData from './landing-data.json';
 	import RouteAnimation from './RouteAnimation.svelte';
-	import { Button } from '$lib/components/ui/button';
-	import { ArrowRight } from 'lucide-svelte';
 
-	let data = JSONData;
+	const data = JSONData as unknown as { route: Route; stops: StopWithLocation[] };
 </script>
 
 <div

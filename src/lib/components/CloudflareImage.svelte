@@ -36,4 +36,12 @@ Component for resizing images using Cloudflare image transformations.
 	const imgSrc = $derived(cfUrl(src, config.widths[0]));
 </script>
 
-<img {alt} src={imgSrc} {srcset} sizes={config.sizes} {loading} class={cn(className)} {...restProps} />
+<img
+	{alt}
+	src={imgSrc}
+	{srcset}
+	sizes={config.sizes}
+	{loading}
+	class={cn(className)}
+	{...restProps}
+/>

@@ -125,7 +125,11 @@ export class UserService {
 	}
 
 	/** Update user's password hash - used by password reset flow */
-	async updatePasswordHash(userId: string, organizationId: string, passwordHash: string): Promise<void> {
+	async updatePasswordHash(
+		userId: string,
+		organizationId: string,
+		passwordHash: string
+	): Promise<void> {
 		await this.getUser(userId, organizationId);
 
 		await db

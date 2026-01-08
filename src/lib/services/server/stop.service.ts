@@ -203,18 +203,19 @@ export class StopService {
 			locationId = data.location_id;
 		}
 
-		const updateData: Partial<typeof stops.$inferInsert> & { updated_at: Date; updated_by: string } =
-			{
-				location_id: locationId,
-				driver_id: data.driver_id !== undefined ? data.driver_id : stop.driver_id,
-				delivery_index:
-					data.delivery_index !== undefined ? data.delivery_index : stop.delivery_index,
-				contact_name: data.contact_name !== undefined ? data.contact_name : stop.contact_name,
-				contact_phone: data.contact_phone !== undefined ? data.contact_phone : stop.contact_phone,
-				notes: data.notes !== undefined ? data.notes : stop.notes,
-				updated_at: new Date(),
-				updated_by: userId
-			};
+		const updateData: Partial<typeof stops.$inferInsert> & {
+			updated_at: Date;
+			updated_by: string;
+		} = {
+			location_id: locationId,
+			driver_id: data.driver_id !== undefined ? data.driver_id : stop.driver_id,
+			delivery_index: data.delivery_index !== undefined ? data.delivery_index : stop.delivery_index,
+			contact_name: data.contact_name !== undefined ? data.contact_name : stop.contact_name,
+			contact_phone: data.contact_phone !== undefined ? data.contact_phone : stop.contact_phone,
+			notes: data.notes !== undefined ? data.notes : stop.notes,
+			updated_at: new Date(),
+			updated_by: userId
+		};
 
 		const [updatedStop] = await db
 			.update(stops)

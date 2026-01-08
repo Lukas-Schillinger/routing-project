@@ -66,7 +66,9 @@
 	<div class="mx-auto max-w-5xl">
 		<!-- Section Header -->
 		<div class="mb-12 text-center">
-			<p class="mb-4 text-sm font-medium tracking-[0.2em] text-landing-primary uppercase">Pricing</p>
+			<p class="mb-4 text-sm font-medium tracking-[0.2em] text-landing-primary uppercase">
+				Pricing
+			</p>
 			<h2 class="font-serif text-4xl leading-tight tracking-tight md:text-5xl">
 				Simple, transparent pricing
 			</h2>

@@ -8,13 +8,13 @@ Make Wend a production-ready, open-source exemplary SaaS codebase. Organized int
 
 ### Priority Legend
 
-| Priority | Meaning | Timeline |
-|----------|---------|----------|
-| **P0** | CRITICAL - Security/blocking | Immediate |
-| **P1** | HIGH - Production readiness | This week |
-| **P2** | MEDIUM - Quality of life | Near-term |
-| **P3** | LOW - Nice to have | When time permits |
-| **P4** | DEFER - Not needed yet | Future |
+| Priority | Meaning                      | Timeline          |
+| -------- | ---------------------------- | ----------------- |
+| **P0**   | CRITICAL - Security/blocking | Immediate         |
+| **P1**   | HIGH - Production readiness  | This week         |
+| **P2**   | MEDIUM - Quality of life     | Near-term         |
+| **P3**   | LOW - Nice to have           | When time permits |
+| **P4**   | DEFER - Not needed yet       | Future            |
 
 ---
 
@@ -24,17 +24,20 @@ Make Wend a production-ready, open-source exemplary SaaS codebase. Organized int
 **Effort**: ~3-4 hours
 
 ### 1.1 Fix Session Cookie Security ✅ `P0` `30m`
+
 - Add HttpOnly flag to prevent XSS token theft
 - Add Secure flag for HTTPS-only in production
 - Add SameSite=lax for CSRF protection
 - **File**: `src/lib/services/server/auth.ts`
 
 ### 1.2 Fix Organization Service Bug `P0` `30m`
+
 - Fix incorrect WHERE clause in getOrganization method
 - Verify requester belongs to organization
 - **File**: `src/lib/services/server/user.service.ts`
 
 ### 1.3 Implement Rate Limiting `P0` `2h`
+
 - Create rate limiting middleware using `rate-limiter-flexible` or similar
 - Apply to auth endpoints: login, OTP, password reset
 - Apply to API endpoints with per-user limits
@@ -49,11 +52,13 @@ Make Wend a production-ready, open-source exemplary SaaS codebase. Organized int
 **Effort**: ~3-4 hours
 
 ### 2.1 Create .env.example & LICENSE `P2` `1h`
+
 - Create `.env.example` with all required environment variables
 - Group by service (Database, Auth, Mapbox, Resend, AWS, R2)
 - Add MIT LICENSE file
 
 ### 2.2 Rewrite README.md `P3` `1h`
+
 - Project overview
 - Features list & tech stack
 - Quick start (clone, install, copy .env.example, run)
@@ -61,10 +66,12 @@ Make Wend a production-ready, open-source exemplary SaaS codebase. Organized int
 - Brief microservices overview (TSP solver, email renderer)
 
 ### 2.3 Add SECURITY.md `P3` `30m`
+
 - Security contact email
 - Vulnerability disclosure process (1-2 paragraphs)
 
 **Deferred:**
+
 - CONTRIBUTING.md (add when contributors appear)
 - CODE_OF_CONDUCT.md (add when community forms)
 - Setup scripts (manual setup is fine initially)

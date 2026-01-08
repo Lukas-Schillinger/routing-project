@@ -639,4 +639,3 @@ export const loginTokensRelations = relations(loginTokens, ({ one }) => ({
 		references: [mailRecords.id]
 	})
 }));
-

@@ -147,10 +147,10 @@
 								</div>
 							</div>
 							<div
-								class="absolute left-[20%] top-1/4 h-[100px] w-[150px] rounded border border-dashed border-white/20 opacity-50"
+								class="absolute top-1/4 left-[20%] h-[100px] w-[150px] rounded border border-dashed border-white/20 opacity-50"
 							>
-								<div class="absolute -left-1 -top-1 h-2 w-2 rounded-sm bg-white/40"></div>
-								<div class="absolute -bottom-1 -right-1 h-2 w-2 rounded-sm bg-white/40"></div>
+								<div class="absolute -top-1 -left-1 h-2 w-2 rounded-sm bg-white/40"></div>
+								<div class="absolute -right-1 -bottom-1 h-2 w-2 rounded-sm bg-white/40"></div>
 							</div>
 						</div>
 					{/if}
@@ -158,11 +158,11 @@
 
 				<!-- Content -->
 				<div class="p-6">
-					<h3 class="text-lg font-semibold leading-tight tracking-[-0.02em] text-white">
+					<h3 class="text-lg leading-tight font-semibold tracking-[-0.02em] text-white">
 						{card.title}
 					</h3>
 					<div
-						class="absolute bottom-5 right-5 flex h-8 w-8 items-center justify-center rounded-full bg-white/8 text-lg text-white/50"
+						class="absolute right-5 bottom-5 flex h-8 w-8 items-center justify-center rounded-full bg-white/8 text-lg text-white/50"
 					>
 						+
 					</div>
@@ -193,7 +193,7 @@
 				<button
 					type="button"
 					onclick={() => (selectedId = null)}
-					class="absolute right-4 top-4 z-10 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-white/15 bg-white/5 text-xl text-white/60"
+					class="absolute top-4 right-4 z-10 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-white/15 bg-white/5 text-xl text-white/60"
 					transition:fade={{ delay: 200 }}
 				>
 					&times;
@@ -286,10 +286,10 @@
 								</div>
 							</div>
 							<div
-								class="absolute left-[20%] top-1/4 h-[100px] w-[150px] rounded border border-dashed border-white/20 opacity-80 transition-opacity duration-500"
+								class="absolute top-1/4 left-[20%] h-[100px] w-[150px] rounded border border-dashed border-white/20 opacity-80 transition-opacity duration-500"
 							>
-								<div class="absolute -left-1 -top-1 h-2 w-2 rounded-sm bg-white/40"></div>
-								<div class="absolute -bottom-1 -right-1 h-2 w-2 rounded-sm bg-white/40"></div>
+								<div class="absolute -top-1 -left-1 h-2 w-2 rounded-sm bg-white/40"></div>
+								<div class="absolute -right-1 -bottom-1 h-2 w-2 rounded-sm bg-white/40"></div>
 							</div>
 						</div>
 					{/if}
@@ -297,7 +297,7 @@
 
 				<!-- Content -->
 				<div class="px-10 py-8 pb-10">
-					<h2 class="mb-5 text-[28px] font-semibold leading-tight tracking-[-0.02em] text-white">
+					<h2 class="mb-5 text-[28px] leading-tight font-semibold tracking-[-0.02em] text-white">
 						{selectedCard.title}
 					</h2>
 

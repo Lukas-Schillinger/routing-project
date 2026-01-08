@@ -39,25 +39,25 @@
 </script>
 
 <div
-	class="bg-background relative flex min-h-svh w-full items-center justify-center overflow-hidden px-6 py-12"
+	class="relative flex min-h-svh w-full items-center justify-center overflow-hidden bg-background px-6 py-12"
 >
 	<!-- Main content -->
 	<div class="relative z-10 flex max-w-lg flex-col items-center text-center">
 		<!-- Giant icon -->
-		<SmileyXEyes class="text-muted-foreground/30 mb-4 size-32 md:size-48" weight="thin" />
+		<SmileyXEyes class="mb-4 size-32 text-muted-foreground/30 md:size-48" weight="thin" />
 
 		<!-- Status code -->
-		<span class="text-foreground mb-2 font-serif text-7xl font-semibold tracking-tight md:text-6xl">
+		<span class="mb-2 font-serif text-7xl font-semibold tracking-tight text-foreground md:text-6xl">
 			{status}
 		</span>
 
 		<!-- Error title -->
-		<h1 class="text-foreground mb-3 text-2xl font-semibold md:text-3xl">
+		<h1 class="mb-3 text-2xl font-semibold text-foreground md:text-3xl">
 			{errorInfo.title}
 		</h1>
 
 		<!-- Error description -->
-		<p class="text-muted-foreground mb-8 max-w-md text-base leading-relaxed">
+		<p class="mb-8 max-w-md text-base leading-relaxed text-muted-foreground">
 			{errorInfo.description}
 		</p>
 

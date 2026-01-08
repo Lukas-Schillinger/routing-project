@@ -28,8 +28,8 @@
 	});
 
 	// Child component refs
-	let columnMappingStep: ColumnMappingStep;
-	let geocodeReviewStep: GeocodeReviewStep;
+	let columnMappingStep: ColumnMappingStep | undefined = $state();
+	let geocodeReviewStep: GeocodeReviewStep | undefined = $state();
 
 	// Child component state
 	let step2CanProceed = $state(false);

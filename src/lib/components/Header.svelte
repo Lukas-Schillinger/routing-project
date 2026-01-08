@@ -65,7 +65,8 @@
 							<UserIcon /> Account
 						</Button>
 					{:else}
-						<Button class="rounded-full" href="/auth/login" variant="ghost" size="sm">Log in</Button>
+						<Button class="rounded-full" href="/auth/login" variant="ghost" size="sm">Log in</Button
+						>
 						<Button class="rounded-full" href="/auth/account" size="sm">
 							<UserIcon /> Create Account
 						</Button>

@@ -40,9 +40,7 @@
 	});
 </script>
 
-<div
-	class="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm"
->
+<div class="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm">
 	<div class="flex flex-col items-center gap-4">
 		<SphereGridLoader rows={4} cols={4} size={12} gap={6} />
 		<div class="flex flex-col items-center gap-1">

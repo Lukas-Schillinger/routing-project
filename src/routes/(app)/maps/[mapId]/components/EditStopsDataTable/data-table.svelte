@@ -44,7 +44,7 @@
 	interface Props {
 		stops: StopWithLocation[];
 		mapId: string;
-		onDelete?: (id: string) => Promise<void>;
+		onDelete?: () => Promise<void>;
 		onToggleInclude?: (id: string, included: boolean) => Promise<void>;
 		onUpdate?: (stop: StopWithLocation) => void;
 		onCreate?: (stop: StopWithLocation) => void;

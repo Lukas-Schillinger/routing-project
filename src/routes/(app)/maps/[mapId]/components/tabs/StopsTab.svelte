@@ -17,7 +17,7 @@
 		readonly?: boolean;
 		onUpdate?: () => void;
 		onCreate?: () => void;
-		onDelete?: () => void;
+		onDelete?: () => Promise<void>;
 		onZoomToStop: (stopId: string) => void;
 	} = $props();
 </script>

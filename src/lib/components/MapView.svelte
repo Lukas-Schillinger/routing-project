@@ -5,8 +5,7 @@
 	import type maplibregl from 'maplibre-gl';
 	import { mode } from 'mode-watcher';
 	import { Garage, MapPin } from 'phosphor-svelte';
-	import { LineLayer, MapLibre, Marker, Popup } from 'svelte-maplibre';
-	import GeoJSON from 'svelte-maplibre/GeoJSON.svelte';
+	import { GeoJSON, LineLayer, MapLibre, Marker, Popup } from 'svelte-maplibre';
 	import DepotMapPopup from './DepotMapPopup.svelte';
 	import StopMapPopup from './StopMapPopup.svelte';
 

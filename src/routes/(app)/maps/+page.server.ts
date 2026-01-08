@@ -1,4 +1,10 @@
-import { depotService, driverService, mapService, stopService, routeService } from '$lib/services/server';
+import {
+	depotService,
+	driverService,
+	mapService,
+	stopService,
+	routeService
+} from '$lib/services/server';
 import { requirePermission } from '$lib/services/server/permissions';
 import type { PageServerLoad } from './$types';
 
@@ -8,7 +14,8 @@ export const load: PageServerLoad = async ({ url }) => {
 	// Parse URL params for persisted state
 	const searchQuery = url.searchParams.get('q') ?? '';
 	const viewMode = (url.searchParams.get('view') as 'list' | 'compact') || 'list';
-	const sortColumn = (url.searchParams.get('sort') as 'created_at' | 'title' | 'stops') || 'created_at';
+	const sortColumn =
+		(url.searchParams.get('sort') as 'created_at' | 'title' | 'stops') || 'created_at';
 	const sortDirection = (url.searchParams.get('dir') as 'asc' | 'desc') || 'desc';
 	const currentPage = Math.max(1, parseInt(url.searchParams.get('page') ?? '1', 10) || 1);
 

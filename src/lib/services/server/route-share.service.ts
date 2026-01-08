@@ -167,13 +167,7 @@ export class RouteShareService {
 		}
 
 		// Create and send new share
-		return this.createAndSendEmailShare(
-			routeId,
-			recipientEmail,
-			organizationId,
-			createdBy,
-			origin
-		);
+		return this.createAndSendEmailShare(routeId, recipientEmail, organizationId, createdBy, origin);
 	}
 
 	/**

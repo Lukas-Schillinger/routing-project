@@ -25,7 +25,11 @@
 
 		<!-- CTA Buttons -->
 		<div class="mt-12 flex flex-col items-center justify-center gap-4 sm:flex-row">
-			<Button href="/signup" size="lg" class="h-12 gap-2 bg-landing-primary px-8 hover:bg-landing-primary-hover">
+			<Button
+				href="/signup"
+				size="lg"
+				class="h-12 gap-2 bg-landing-primary px-8 hover:bg-landing-primary-hover"
+			>
 				Start for free
 				<ArrowRight class="h-4 w-4" />
 			</Button>

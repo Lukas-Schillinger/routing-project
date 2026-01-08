@@ -26,7 +26,11 @@ export const POST: RequestHandler = async ({ request }) => {
 		const body = await request.json();
 		const validatedData = driverCreateSchema.parse(body);
 
-		const newDriver = await driverService.createDriver(validatedData, user.organization_id, user.id);
+		const newDriver = await driverService.createDriver(
+			validatedData,
+			user.organization_id,
+			user.id
+		);
 
 		return json(newDriver, { status: 201 });
 	} catch (err) {

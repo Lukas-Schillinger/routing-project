@@ -25,7 +25,11 @@ export const POST: RequestHandler = async ({ request }) => {
 		const body = await request.json();
 		const validatedData = depotCreateSchema.parse(body);
 
-		const depotWithLocation = await depotService.createDepot(validatedData, user.organization_id, user.id);
+		const depotWithLocation = await depotService.createDepot(
+			validatedData,
+			user.organization_id,
+			user.id
+		);
 
 		return json(depotWithLocation, { status: 201 });
 	} catch (err) {
