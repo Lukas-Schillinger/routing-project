@@ -11,3 +11,6 @@ bun.lockb
 
 # shadcn-svelte components (use as-is)
 /src/lib/components/ui/
+
+# GitHub workflows (avoid permission issues in CI)
+/.github/
