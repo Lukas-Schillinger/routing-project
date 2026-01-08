@@ -18,6 +18,10 @@
 	let isSubmitting = $state(false);
 	let isResending = $state(false);
 	let emailValue = $state('');
+
+	let url = $state(
+		`/auth/password-reset?email=${encodeURIComponent(emailValue)}`
+	);
 </script>
 
 {#if form?.message}
@@ -122,13 +126,15 @@
 				disabled={isSubmitting}
 			/>
 		</div>
-		<!-- Resolve doesn't support query parameters -->
-		<a
-			href={`/auth/password-reset?email=${encodeURIComponent(emailValue)}`}
-			class="text-xs text-muted-foreground transition-colors hover:text-foreground"
-		>
-			Reset password
-		</a>
+		<!-- Resolve doesn't support query parameters. The ignore comment only works when 
+		 directly above the line and prettier wraps the anchor element when the full URL 
+		 is present. -->
+		<div class="text-xs text-muted-foreground">
+			<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+			<a href={url} class="transition-colors hover:text-foreground">
+				Reset password
+			</a>
+		</div>
 	</div>
 
 	<div class="flex flex-col gap-3 pt-2">
