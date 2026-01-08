@@ -103,7 +103,11 @@
 					location: selectedLocation!
 				});
 			} else {
-				const updateData: any = {
+				const updateData: {
+					name: string;
+					default_depot: boolean;
+					location?: LocationCreate;
+				} = {
 					name: depotName.trim(),
 					default_depot: isDefault
 				};

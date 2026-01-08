@@ -28,12 +28,16 @@ export const updateUserRoleSchema = z.object({
 export const userSchema = z.object({
 	id: uuidSchema,
 	organization_id: uuidSchema,
+
+	created_at: timestampSchema,
+	created_by: uuidSchema.nullable(),
+	updated_at: timestampSchema,
+	updated_by: uuidSchema.nullable(),
+
 	name: z.string().max(200).nullable(),
 	email: emailSchema,
 	passwordHash: z.string().nullable(),
 	role: roleEnum,
-	created_at: timestampSchema,
-	updated_at: timestampSchema,
 	email_confirmed_at: timestampSchema.nullable()
 });
 

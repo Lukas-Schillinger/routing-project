@@ -151,16 +151,7 @@ export class InvitationService {
 				name: null
 			});
 
-			return {
-				id: user.id,
-				organization_id: user.organization_id,
-				email: user.email,
-				name: user.name,
-				role: user.role,
-				created_at: user.created_at,
-				updated_at: user.updated_at,
-				email_confirmed_at: user.email_confirmed_at
-			};
+			return userService.toPublicUser(user);
 		});
 	}
 

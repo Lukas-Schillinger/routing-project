@@ -6,6 +6,7 @@
 	import type { LocationCreate } from '$lib/schemas/location';
 	import { Pencil } from 'lucide-svelte';
 	import { Garage } from 'phosphor-svelte';
+	import type { Snippet } from 'svelte';
 	import { MediaQuery } from 'svelte/reactivity';
 	import Form from './Form.svelte';
 
@@ -20,7 +21,7 @@
 		mode?: 'create' | 'edit';
 		depot?: DepotWithLocationJoin;
 		triggerClass?: string; // annoying hack for making the slotted component able to fill the full length of a dropdown
-		children?: any;
+		children?: Snippet;
 		onSuccess?: (depot: DepotWithLocationJoin) => void;
 	} = $props();
 

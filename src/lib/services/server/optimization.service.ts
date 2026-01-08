@@ -20,6 +20,61 @@ import { depotService } from './depot.service';
 import { ServiceError } from './errors';
 import { routeService } from './route.service';
 
+// ============================================================================
+// Validated Types (Parse, Don't Validate)
+// ============================================================================
+
+/** Branded type utility - carries proof of validation in the type */
+type Brand<T, B extends string> = T & { readonly __brand: B };
+
+/** A coordinate that has been validated (not NaN, within valid ranges) */
+type ValidatedCoordinate = Brand<Coordinate, 'ValidatedCoordinate'>;
+
+/** An array guaranteed to have at least one element */
+type NonEmptyArray<T> = [T, ...T[]];
+
+/** Type guard to check if array is non-empty */
+function isNonEmpty<T>(arr: T[]): arr is NonEmptyArray<T> {
+	return arr.length > 0;
+}
+
+/** Parse array into NonEmptyArray or throw with context */
+function parseNonEmptyOrThrow<T>(arr: T[], context: string): NonEmptyArray<T> {
+	if (!isNonEmpty(arr)) {
+		throw ServiceError.validation(`Expected non-empty array for ${context}`);
+	}
+	return arr;
+}
+
+/** Parse and validate a coordinate, throwing with context if invalid */
+function parseCoordinateOrThrow(
+	lon: string | number | null,
+	lat: string | number | null,
+	context: string
+): ValidatedCoordinate {
+	if (lon === null || lat === null) {
+		throw ServiceError.validation(`Missing coordinates for ${context}`);
+	}
+
+	const lonNum = typeof lon === 'string' ? parseFloat(lon) : lon;
+	const latNum = typeof lat === 'string' ? parseFloat(lat) : lat;
+
+	if (Number.isNaN(lonNum) || Number.isNaN(latNum)) {
+		throw ServiceError.validation(
+			`Invalid coordinates for ${context}: lon=${lon}, lat=${lat}`
+		);
+	}
+
+	// Valid longitude: -180 to 180, latitude: -90 to 90
+	if (lonNum < -180 || lonNum > 180 || latNum < -90 || latNum > 90) {
+		throw ServiceError.validation(
+			`Coordinates out of range for ${context}: lon=${lonNum}, lat=${latNum}`
+		);
+	}
+
+	return [lonNum, latNum] as ValidatedCoordinate;
+}
+
 export const optimizationConfigSchema = z.object({
 	fairness: z.enum(['high', 'medium', 'low']).default('medium'),
 	time_limit_sec: z.number().int().positive().default(10),
@@ -50,12 +105,25 @@ export const optimizationResultSchema = z.object({
 	total_cost: z.number().int().nullable()
 });
 
-export const optimizationResponseSchema = z.object({
-	success: z.boolean(),
+// Discriminated union for optimization response - TypeScript narrows automatically
+const successfulResponseSchema = z.object({
+	success: z.literal(true),
 	job_id: z.string().uuid(),
-	error_message: z.string().optional().nullable(),
-	result: optimizationResultSchema.optional().nullable()
+	error_message: z.null().optional(),
+	result: optimizationResultSchema
 });
+
+const failedResponseSchema = z.object({
+	success: z.literal(false),
+	job_id: z.string().uuid(),
+	error_message: z.string(),
+	result: z.null().optional()
+});
+
+export const optimizationResponseSchema = z.discriminatedUnion('success', [
+	successfulResponseSchema,
+	failedResponseSchema
+]);
 
 export type OptimizationConfig = z.infer<typeof optimizationConfigSchema>;
 export type MatrixPayload = z.infer<typeof matrixPayloadSchema>;
@@ -63,6 +131,10 @@ export type Leg = z.infer<typeof legSchema>;
 export type Route = z.infer<typeof routeSchema>;
 export type OptimizationResult = z.infer<typeof optimizationResultSchema>;
 export type OptimizationResponse = z.infer<typeof optimizationResponseSchema>;
+export type SuccessfulOptimizationResponse = z.infer<
+	typeof successfulResponseSchema
+>;
+export type FailedOptimizationResponse = z.infer<typeof failedResponseSchema>;
 
 /**
  * Optimization Service
@@ -118,11 +190,11 @@ export class OptimizationService {
 			organizationId
 		);
 
-		if (assignedDrivers.length === 0) {
-			throw ServiceError.validation(
-				'No active drivers assigned to this map. Assign at least one driver before optimizing.'
-			);
-		}
+		// Parse to non-empty - throws with clear message if no drivers
+		const nonEmptyDrivers = parseNonEmptyOrThrow(
+			assignedDrivers,
+			'active drivers assigned to this map. Assign at least one driver before optimizing'
+		);
 
 		const { coordinatesData } = await this.getCoordinatesData(
 			mapId,
@@ -136,7 +208,7 @@ export class OptimizationService {
 			coordinatesData
 		);
 
-		const vehicleIds = assignedDrivers.map((d) => d.driver.id);
+		const vehicleIds = nonEmptyDrivers.map((d) => d.driver.id);
 
 		const [job] = await db
 			.insert(optimizationJobs)
@@ -160,11 +232,17 @@ export class OptimizationService {
 			}
 		};
 
+		// Validate payload matches expected schema BEFORE sending to SQS
+		const sqsPayloadSchema = matrixPayloadSchema.extend({
+			job_id: z.string().uuid()
+		});
+		const validatedPayload = sqsPayloadSchema.parse(payload);
+
 		try {
 			await this.sqsClient.send(
 				new SendMessageCommand({
 					QueueUrl: this.queueUrl,
-					MessageBody: JSON.stringify(payload)
+					MessageBody: JSON.stringify(validatedPayload)
 				})
 			);
 		} catch (error) {
@@ -209,23 +287,18 @@ export class OptimizationService {
 
 			await this.updateJobStatus(response.job_id, 'completing');
 
+			// Discriminated union: TypeScript narrows type based on success field
 			if (!response.success) {
 				await this.updateJobStatus(
 					response.job_id,
 					'failed',
-					response.error_message ? response.error_message : 'No error message'
+					response.error_message // Type-safe: guaranteed to exist when success=false
 				);
 				throw ServiceError.internal('Optimization failed');
 			}
 
-			if (!response.result) {
-				await this.updateJobStatus(
-					response.job_id,
-					'failed',
-					'Job reported success with empty result'
-				);
-				throw ServiceError.internal('Optimization failed');
-			}
+			// TypeScript now knows: response.success === true, so response.result exists
+			const result = response.result;
 
 			const { depotCoord, locationCoordMap } = await this.getCoordinatesData(
 				mapId,
@@ -234,12 +307,12 @@ export class OptimizationService {
 			);
 
 			await this.clearStopAssignments(mapId);
-			await this.applyOptimizedRoutes(mapId, response.result);
+			await this.applyOptimizedRoutes(mapId, result);
 			await this.computeAndSaveRoutes(
 				mapId,
 				organizationId,
 				depotId,
-				response.result,
+				result,
 				depotCoord,
 				locationCoordMap
 			);
@@ -318,8 +391,8 @@ export class OptimizationService {
 		organizationId: string,
 		depotId: string,
 		result: OptimizationResult,
-		depotCoord: Coordinate,
-		locationCoordMap: Map<string, Coordinate>
+		depotCoord: ValidatedCoordinate,
+		locationCoordMap: Map<string, ValidatedCoordinate>
 	): Promise<void> {
 		const routePromises = result.routes.map(async (route) => {
 			try {
@@ -328,9 +401,29 @@ export class OptimizationService {
 					return null;
 				}
 
+				// Validate all leg stop_ids exist in the map BEFORE using them
+				const legStopIds = route.legs.map((leg) => leg.stop_id);
+				const missingIds = legStopIds.filter((id) => !locationCoordMap.has(id));
+
+				if (missingIds.length > 0) {
+					console.error(
+						`Missing coordinates for stops in driver ${route.driver_id}: ${missingIds.join(', ')}`
+					);
+					return {
+						driver_id: route.driver_id,
+						success: false,
+						error: 'Missing coordinates for stops'
+					};
+				}
+
+				// Safe to use - we've validated all keys exist
+				const legCoords = route.legs.map(
+					(leg) => locationCoordMap.get(leg.stop_id)!
+				);
+
 				const directions = await mapboxNavigation.getDirections([
 					depotCoord,
-					...route.legs.map((leg) => locationCoordMap.get(leg.stop_id)!),
+					...legCoords,
 					depotCoord
 				]);
 
@@ -395,10 +488,6 @@ export class OptimizationService {
 			.where(eq(optimizationJobs.id, jobId));
 	}
 
-	private toCoordinate(lon: string | number, lat: string | number): Coordinate {
-		return [Number(lon), Number(lat)];
-	}
-
 	private async getOrCreateDistanceMatrix(
 		organizationId: string,
 		mapId: string,
@@ -460,18 +549,16 @@ export class OptimizationService {
 		organizationId: string
 	): Promise<{
 		coordinatesData: CoordinatesData;
-		depotCoord: Coordinate;
-		locationCoordMap: Map<string, Coordinate>;
+		depotCoord: ValidatedCoordinate;
+		locationCoordMap: Map<string, ValidatedCoordinate>;
 	}> {
 		const depot = await depotService.getDepotById(depotId, organizationId);
 
-		if (!depot.location.lon || !depot.location.lat) {
-			throw ServiceError.validation('Depot location missing coordinates');
-		}
-
-		const depotCoord = this.toCoordinate(
+		// Parse depot coordinate - throws with context if invalid
+		const depotCoord = parseCoordinateOrThrow(
 			depot.location.lon,
-			depot.location.lat
+			depot.location.lat,
+			`depot ${depot.depot.name}`
 		);
 
 		const mapStops = await db
@@ -483,23 +570,27 @@ export class OptimizationService {
 			.innerJoin(locations, eq(stops.location_id, locations.id))
 			.where(eq(stops.map_id, mapId));
 
-		if (mapStops.length === 0) {
-			throw ServiceError.validation('No stops found for this map');
-		}
+		// Parse into non-empty array - throws if no stops
+		const nonEmptyStops = parseNonEmptyOrThrow(mapStops, 'stops for this map');
 
-		mapStops.sort((a, b) =>
+		nonEmptyStops.sort((a, b) =>
 			(a.location.address_hash ?? '').localeCompare(
 				b.location.address_hash ?? ''
 			)
 		);
 
-		const coordinates: [number, number][] = [depotCoord];
+		const coordinates: ValidatedCoordinate[] = [depotCoord];
 		const locationIds: string[] = [depot.location.id];
-		const locationCoordMap = new Map<string, Coordinate>();
+		const locationCoordMap = new Map<string, ValidatedCoordinate>();
 		locationCoordMap.set(depot.location.id, depotCoord);
 
-		for (const { location } of mapStops) {
-			const coord = this.toCoordinate(location.lon, location.lat);
+		for (const { location } of nonEmptyStops) {
+			// Parse each location coordinate - throws with context if invalid
+			const coord = parseCoordinateOrThrow(
+				location.lon,
+				location.lat,
+				`location ${location.address_line_1}`
+			);
 			coordinates.push(coord);
 			locationIds.push(location.id);
 			locationCoordMap.set(location.id, coord);

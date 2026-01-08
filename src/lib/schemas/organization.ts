@@ -16,7 +16,9 @@ export const organizationSchema = z.object({
 	id: uuidSchema,
 	name: nameSchema,
 	created_at: timestampSchema,
-	updated_at: timestampSchema
+	created_by: uuidSchema.nullable(),
+	updated_at: timestampSchema,
+	updated_by: uuidSchema.nullable()
 });
 
 // Type exports

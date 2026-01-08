@@ -5,6 +5,7 @@ import { sha256 } from '@oslojs/crypto/sha2';
 import { encodeBase64url, encodeHexLowerCase } from '@oslojs/encoding';
 import type { RequestEvent } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
+import { publicUserColumns } from './user.service';
 
 const DAY_IN_MS = 1000 * 60 * 60 * 24;
 
@@ -35,16 +36,7 @@ export async function validateSessionToken(token: string): Promise<{
 	const [result] = await db
 		.select({
 			// Adjust user table here to tweak returned data
-			user: {
-				id: table.users.id,
-				organization_id: table.users.organization_id,
-				name: table.users.name,
-				email: table.users.email,
-				role: table.users.role,
-				created_at: table.users.created_at,
-				updated_at: table.users.updated_at,
-				email_confirmed_at: table.users.email_confirmed_at
-			},
+			user: publicUserColumns,
 			session: table.session
 		})
 		.from(table.session)

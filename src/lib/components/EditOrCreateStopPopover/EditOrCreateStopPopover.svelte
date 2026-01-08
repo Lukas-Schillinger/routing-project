@@ -4,6 +4,7 @@
 	import * as Popover from '$lib/components/ui/popover';
 	import type { StopWithLocation } from '$lib/schemas/stop';
 	import { Pencil, Plus } from 'lucide-svelte';
+	import type { Snippet } from 'svelte';
 	import { MediaQuery } from 'svelte/reactivity';
 	import Form from './Form.svelte';
 
@@ -20,7 +21,7 @@
 		stop?: StopWithLocation;
 		mapId?: string;
 		triggerClass?: string;
-		children?: any;
+		children?: Snippet;
 		onSuccess?: (stop: StopWithLocation) => void;
 	} = $props();
 

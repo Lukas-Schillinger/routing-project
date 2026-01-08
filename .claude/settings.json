@@ -12,10 +12,12 @@
 
 			"Bash(git status:*)",
 			"Bash(npm run check:*)",
+			"Bash(npm run test:*)",
 			"Bash(npm run test:unit:*)",
 
 			"mcp__plugin_linear_linear__get_issue",
-			"mcp__plugin_linear_linear__list_issues"
+			"mcp__plugin_linear_linear__list_issues",
+			"mcp__plugin_linear_linear__update_issue"
 		]
 	},
 	"enabledPlugins": {
