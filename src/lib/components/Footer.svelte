@@ -27,8 +27,8 @@
 				</div>
 				<p class="max-w-xs pb-2">Effortless routes from start to finish</p>
 				<p class="max-w-xs text-sm text-muted-foreground">
-					Plan, optimize, and dispatch routes for your entire fleet in seconds. Built for teams who
-					deliver.
+					Plan, optimize, and dispatch routes for your entire fleet in seconds.
+					Built for teams who deliver.
 				</p>
 			</div>
 
@@ -38,13 +38,20 @@
 				<div class="flex gap-8">
 					<ul class="space-y-3 text-sm text-muted-foreground">
 						<li>
-							<a href="/auth/account" class="transition-colors hover:text-foreground">Account</a>
+							<a
+								href="/auth/account"
+								class="transition-colors hover:text-foreground">Account</a
+							>
 						</li>
 						<li>
-							<a href="/maps" class="transition-colors hover:text-foreground">Maps</a>
+							<a href="/maps" class="transition-colors hover:text-foreground"
+								>Maps</a
+							>
 						</li>
 						<li>
-							<a href="/routes" class="transition-colors hover:text-foreground">Routes</a>
+							<a href="/routes" class="transition-colors hover:text-foreground"
+								>Routes</a
+							>
 						</li>
 					</ul>
 					<ul class="space-y-3 text-sm text-muted-foreground"></ul>
@@ -56,10 +63,14 @@
 				<h3 class="mb-4 font-semibold">Company</h3>
 				<ul class="space-y-3 text-sm text-muted-foreground">
 					<li>
-						<a href="/about" class="transition-colors hover:text-foreground">About</a>
+						<a href="/about" class="transition-colors hover:text-foreground"
+							>About</a
+						>
 					</li>
 					<li>
-						<a href="/contact" class="transition-colors hover:text-foreground">Contact</a>
+						<a href="/contact" class="transition-colors hover:text-foreground"
+							>Contact</a
+						>
 					</li>
 				</ul>
 			</div>

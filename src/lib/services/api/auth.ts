@@ -16,7 +16,9 @@ class InvitationsApiService {
 	}
 
 	async deleteInvitation(invitationId: string): Promise<{ success: true }> {
-		return apiClient.delete<{ success: true }>(`/auth/invitations/${invitationId}`);
+		return apiClient.delete<{ success: true }>(
+			`/auth/invitations/${invitationId}`
+		);
 	}
 }
 
@@ -51,8 +53,14 @@ class UsersApiService {
 }
 
 class OrganizationApiService {
-	async update(organizationId: string, data: UpdateOrganization): Promise<Organization> {
-		return apiClient.patch<Organization>(`/auth/organizations/${organizationId}`, data);
+	async update(
+		organizationId: string,
+		data: UpdateOrganization
+	): Promise<Organization> {
+		return apiClient.patch<Organization>(
+			`/auth/organizations/${organizationId}`,
+			data
+		);
 	}
 }
 

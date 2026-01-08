@@ -8,7 +8,10 @@ export class LocationService {
 	/**
 	 * Verify a location exists and belongs to the organization
 	 */
-	async verifyLocationOwnership(locationId: string, organizationId: string): Promise<Location> {
+	async verifyLocationOwnership(
+		locationId: string,
+		organizationId: string
+	): Promise<Location> {
 		const [location] = await db
 			.select()
 			.from(locations)
@@ -20,7 +23,9 @@ export class LocationService {
 		}
 
 		if (location.organization_id !== organizationId) {
-			throw ServiceError.forbidden('Location does not belong to your organization');
+			throw ServiceError.forbidden(
+				'Location does not belong to your organization'
+			);
 		}
 
 		return location;
@@ -40,14 +45,20 @@ export class LocationService {
 	/**
 	 * Get a specific location by ID
 	 */
-	async getLocationById(locationId: string, organizationId: string): Promise<Location> {
+	async getLocationById(
+		locationId: string,
+		organizationId: string
+	): Promise<Location> {
 		return this.verifyLocationOwnership(locationId, organizationId);
 	}
 
 	/**
 	 * Create a location from the provided data
 	 */
-	async createLocation(locationData: LocationCreate, organizationId: string): Promise<Location> {
+	async createLocation(
+		locationData: LocationCreate,
+		organizationId: string
+	): Promise<Location> {
 		const [newLocation] = await db
 			.insert(locations)
 			.values({
@@ -73,14 +84,19 @@ export class LocationService {
 	): Promise<string> {
 		if (locationData && !locationId) {
 			// Create new location
-			const newLocation = await this.createLocation(locationData, organizationId);
+			const newLocation = await this.createLocation(
+				locationData,
+				organizationId
+			);
 			return newLocation.id;
 		} else if (locationId) {
 			// Verify existing location
 			await this.verifyLocationOwnership(locationId, organizationId);
 			return locationId;
 		} else {
-			throw ServiceError.validation('Either location_id or location data must be provided');
+			throw ServiceError.validation(
+				'Either location_id or location data must be provided'
+			);
 		}
 	}
 
@@ -92,11 +108,19 @@ export class LocationService {
 	 * Get a location by address hash
 	 * Used to find existing locations with the same address
 	 */
-	async getLocationByHash(hash: string, organizationId: string): Promise<Location | null> {
+	async getLocationByHash(
+		hash: string,
+		organizationId: string
+	): Promise<Location | null> {
 		const [location] = await db
 			.select()
 			.from(locations)
-			.where(and(eq(locations.address_hash, hash), eq(locations.organization_id, organizationId)))
+			.where(
+				and(
+					eq(locations.address_hash, hash),
+					eq(locations.organization_id, organizationId)
+				)
+			)
 			.limit(1);
 
 		return location || null;
@@ -105,7 +129,10 @@ export class LocationService {
 	/**
 	 * Delete a location
 	 */
-	async deleteLocation(locationId: string, organizationId: string): Promise<{ success: boolean }> {
+	async deleteLocation(
+		locationId: string,
+		organizationId: string
+	): Promise<{ success: boolean }> {
 		// Verify location ownership
 		await this.verifyLocationOwnership(locationId, organizationId);
 

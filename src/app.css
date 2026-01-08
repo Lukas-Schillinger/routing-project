@@ -68,7 +68,9 @@
 	--accent-foreground: var(--color-forest-700);
 
 	/* Destructive: keep a dedicated red so it's unambiguous */
-	--destructive: oklch(0.62 0.25 25); /* clear red; keep your existing if preferred */
+	--destructive: oklch(
+		0.62 0.25 25
+	); /* clear red; keep your existing if preferred */
 	--destructive-foreground: oklch(0.98 0 0);
 
 	/* Borders / inputs / focus */

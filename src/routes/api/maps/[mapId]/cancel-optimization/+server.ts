@@ -11,7 +11,10 @@ export const POST: RequestHandler = async ({ params }) => {
 	const { mapId } = params;
 
 	try {
-		const result = await optimizationService.cancelOptimization(mapId, user.organization_id);
+		const result = await optimizationService.cancelOptimization(
+			mapId,
+			user.organization_id
+		);
 		return json(result);
 	} catch (err) {
 		handleApiError(err, 'Failed to cancel optimization');

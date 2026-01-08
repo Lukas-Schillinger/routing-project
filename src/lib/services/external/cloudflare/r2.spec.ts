@@ -33,7 +33,9 @@ describe.skipIf(!RUN_METERED)('R2Service Integration Tests', () => {
 			uploadedKeys.push(key);
 
 			// Upload should complete without throwing
-			await expect(r2Service.uploadFile(key, fileBuffer, 'text/plain')).resolves.toBeUndefined();
+			await expect(
+				r2Service.uploadFile(key, fileBuffer, 'text/plain')
+			).resolves.toBeUndefined();
 		});
 	});
 
@@ -50,7 +52,9 @@ describe.skipIf(!RUN_METERED)('R2Service Integration Tests', () => {
 			// Generate signed URL
 			const signedUrl = await r2Service.getSignedDownloadUrl(key, 300); // 5 minutes
 
-			expect(signedUrl).toMatch(/^https:\/\/.*\.r2\.cloudflarestorage\.com.*X-Amz-Signature/);
+			expect(signedUrl).toMatch(
+				/^https:\/\/.*\.r2\.cloudflarestorage\.com.*X-Amz-Signature/
+			);
 			expect(signedUrl).toContain(env.CLOUDFLARE_R2_DEV_BUCKET_NAME);
 		});
 	});

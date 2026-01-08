@@ -21,7 +21,11 @@ export const actions: Actions = {
 		const password = formData.get('password');
 		const passwordConfirm = formData.get('password-confirm');
 
-		const validation = registerSchema.safeParse({ email, password, passwordConfirm });
+		const validation = registerSchema.safeParse({
+			email,
+			password,
+			passwordConfirm
+		});
 		if (!validation.success) {
 			const errors = validation.error.issues;
 			const firstError = errors[0];
@@ -54,13 +58,27 @@ export const actions: Actions = {
 			});
 
 			// Send welcome email
-			await resendClient.sendLoginEmail(loginToken, validEmail, token, event.url.origin, true);
+			await resendClient.sendLoginEmail(
+				loginToken,
+				validEmail,
+				token,
+				event.url.origin,
+				true
+			);
 
 			// Redirect to login page - confirm=true shows OTP entry with confirmation message
-			return redirect(302, `/auth/login?email=${encodeURIComponent(validEmail)}&confirm=true`);
+			return redirect(
+				302,
+				`/auth/login?email=${encodeURIComponent(validEmail)}&confirm=true`
+			);
 		} catch (error) {
 			// Re-throw redirect errors
-			if (error && typeof error === 'object' && 'status' in error && error.status === 302) {
+			if (
+				error &&
+				typeof error === 'object' &&
+				'status' in error &&
+				error.status === 302
+			) {
 				throw error;
 			}
 

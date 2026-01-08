@@ -25,7 +25,11 @@ export const POST: RequestHandler = async ({ request }) => {
 		const body = await request.json();
 		const data = createMapSchema.parse(body);
 
-		const result = await mapService.createMap(data, user.organization_id, user.id);
+		const result = await mapService.createMap(
+			data,
+			user.organization_id,
+			user.id
+		);
 
 		return json(result, { status: 201 });
 	} catch (err) {

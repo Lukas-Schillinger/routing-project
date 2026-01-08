@@ -7,7 +7,10 @@ export const emailSchema = z
 	.min(3, 'Email must be at least 3 characters')
 	.max(255, 'Email must be less than 255 characters')
 	.email('Please enter a valid email address')
-	.refine((email) => !email.includes('..'), 'Email cannot contain consecutive dots')
+	.refine(
+		(email) => !email.includes('..'),
+		'Email cannot contain consecutive dots'
+	)
 	.refine((email) => !/\s/.test(email), 'Email cannot contain spaces');
 
 export const passwordSchema = z

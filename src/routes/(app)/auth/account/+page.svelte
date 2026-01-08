@@ -22,14 +22,19 @@
 			toast.success('Account deleted');
 			goto('/auth/login');
 		} catch (error) {
-			toast.error(error instanceof Error ? error.message : 'Failed to delete account');
+			toast.error(
+				error instanceof Error ? error.message : 'Failed to delete account'
+			);
 		}
 	}
 </script>
 
 <svelte:head>
 	<title>Account Settings | Routing Project</title>
-	<meta name="description" content="Manage your account settings and organization preferences" />
+	<meta
+		name="description"
+		content="Manage your account settings and organization preferences"
+	/>
 </svelte:head>
 
 <div class="flex justify-center">
@@ -74,7 +79,8 @@
 				<div class="flex flex-col gap-2">
 					<h2 class="text-lg font-semibold text-destructive">Danger Zone</h2>
 					<p class="text-sm text-muted-foreground">
-						Once you delete your account, there is no going back. Please be certain.
+						Once you delete your account, there is no going back. Please be
+						certain.
 					</p>
 					<div class="mt-2">
 						<ConfirmDeleteDialog

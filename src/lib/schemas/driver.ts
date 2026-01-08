@@ -7,7 +7,10 @@ import { phoneSchema } from './common';
 export const driverSchema = z.object({
 	id: z.string().uuid(),
 	organization_id: z.string().uuid(),
-	name: z.string().min(1, 'Name is required').max(200, 'Name must be 200 characters or less'),
+	name: z
+		.string()
+		.min(1, 'Name is required')
+		.max(200, 'Name must be 200 characters or less'),
 	phone: phoneSchema.nullable(),
 	notes: z.string().nullable(),
 	active: z.boolean(),

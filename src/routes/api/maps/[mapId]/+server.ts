@@ -33,7 +33,12 @@ export const PATCH: RequestHandler = async ({ request, params }) => {
 		const body = await request.json();
 		const data = updateMapSchema.parse(body);
 
-		const map = await mapService.updateMap(mapId, data, user.organization_id, user.id);
+		const map = await mapService.updateMap(
+			mapId,
+			data,
+			user.organization_id,
+			user.id
+		);
 
 		return json({ map });
 	} catch (err) {

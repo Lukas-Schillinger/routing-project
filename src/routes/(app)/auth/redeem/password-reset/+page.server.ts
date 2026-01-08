@@ -25,15 +25,24 @@ export const load: PageServerLoad = async (event) => {
 
 	// Validate the token exists and is not expired (don't consume it yet)
 	try {
-		const loginToken = await loginTokenService.getLoginTokenFromToken(token, email);
+		const loginToken = await loginTokenService.getLoginTokenFromToken(
+			token,
+			email
+		);
 
 		if (!loginToken) {
-			error(400, { code: 'INVALID_TOKEN', message: 'Invalid or expired reset link' });
+			error(400, {
+				code: 'INVALID_TOKEN',
+				message: 'Invalid or expired reset link'
+			});
 		}
 
 		// Check expiration
 		if (Date.now() >= loginToken.expires_at.getTime()) {
-			error(400, { code: 'EXPIRED_TOKEN', message: 'This reset link has expired' });
+			error(400, {
+				code: 'EXPIRED_TOKEN',
+				message: 'This reset link has expired'
+			});
 		}
 	} catch (err) {
 		if (err instanceof ServiceError) {
@@ -72,7 +81,10 @@ export const actions: Actions = {
 			const user = await loginTokenService.validateLoginToken(token, email);
 
 			// Get the login token to delete it after
-			const loginToken = await loginTokenService.getLoginTokenFromToken(token, email);
+			const loginToken = await loginTokenService.getLoginTokenFromToken(
+				token,
+				email
+			);
 
 			// Hash the new password
 			const passwordHash = await hash(newPassword, {
@@ -83,7 +95,11 @@ export const actions: Actions = {
 			});
 
 			// Update the user's password
-			await userService.updatePasswordHash(user.id, user.organization_id, passwordHash);
+			await userService.updatePasswordHash(
+				user.id,
+				user.organization_id,
+				passwordHash
+			);
 
 			// Delete the used token
 			if (loginToken) {
@@ -99,7 +115,12 @@ export const actions: Actions = {
 			redirect(302, '/auth/account');
 		} catch (err) {
 			// Re-throw redirect errors
-			if (err && typeof err === 'object' && 'status' in err && err.status === 302) {
+			if (
+				err &&
+				typeof err === 'object' &&
+				'status' in err &&
+				err.status === 302
+			) {
 				throw err;
 			}
 

@@ -24,11 +24,19 @@ export class DriverMapService {
 	/**
 	 * Verify driver ownership
 	 */
-	private async verifyDriverOwnership(driverId: string, organizationId: string) {
+	private async verifyDriverOwnership(
+		driverId: string,
+		organizationId: string
+	) {
 		const [driver] = await db
 			.select()
 			.from(drivers)
-			.where(and(eq(drivers.id, driverId), eq(drivers.organization_id, organizationId)))
+			.where(
+				and(
+					eq(drivers.id, driverId),
+					eq(drivers.organization_id, organizationId)
+				)
+			)
 			.limit(1);
 
 		if (!driver) {
@@ -77,7 +85,11 @@ export class DriverMapService {
 	/**
 	 * Add a driver to a map
 	 */
-	async addDriverToMap(driverId: string, mapId: string, organizationId: string) {
+	async addDriverToMap(
+		driverId: string,
+		mapId: string,
+		organizationId: string
+	) {
 		await this.verifyDriverOwnership(driverId, organizationId);
 		await this.verifyMapOwnership(mapId, organizationId);
 
@@ -86,7 +98,10 @@ export class DriverMapService {
 			.select()
 			.from(driverMapMemberships)
 			.where(
-				and(eq(driverMapMemberships.driver_id, driverId), eq(driverMapMemberships.map_id, mapId))
+				and(
+					eq(driverMapMemberships.driver_id, driverId),
+					eq(driverMapMemberships.map_id, mapId)
+				)
 			)
 			.limit(1);
 
@@ -108,14 +123,21 @@ export class DriverMapService {
 	/**
 	 * Remove a driver from a map
 	 */
-	async removeDriverFromMap(driverId: string, mapId: string, organizationId: string) {
+	async removeDriverFromMap(
+		driverId: string,
+		mapId: string,
+		organizationId: string
+	) {
 		await this.verifyDriverOwnership(driverId, organizationId);
 		await this.verifyMapOwnership(mapId, organizationId);
 
 		const [deleted] = await db
 			.delete(driverMapMemberships)
 			.where(
-				and(eq(driverMapMemberships.driver_id, driverId), eq(driverMapMemberships.map_id, mapId))
+				and(
+					eq(driverMapMemberships.driver_id, driverId),
+					eq(driverMapMemberships.map_id, mapId)
+				)
 			)
 			.returning();
 

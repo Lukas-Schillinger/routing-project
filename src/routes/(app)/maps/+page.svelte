@@ -60,12 +60,16 @@
 	}
 
 	// Responsive page size
-	const pageSize = $derived(isMobile.current ? 5 : viewMode === 'compact' ? 12 : 8);
+	const pageSize = $derived(
+		isMobile.current ? 5 : viewMode === 'compact' ? 12 : 8
+	);
 
 	// Filter and sort maps
 	const filteredMaps = $derived(() => {
 		let maps = searchQuery
-			? data.maps.filter((map) => map.title.toLowerCase().includes(searchQuery.toLowerCase()))
+			? data.maps.filter((map) =>
+					map.title.toLowerCase().includes(searchQuery.toLowerCase())
+				)
 			: [...data.maps];
 
 		// Sort maps
@@ -73,7 +77,8 @@
 			let comparison = 0;
 			switch (sortColumn) {
 				case 'created_at':
-					comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+					comparison =
+						new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
 					break;
 				case 'title':
 					comparison = a.title.localeCompare(b.title);
@@ -170,7 +175,9 @@
 <div class="min-h-screen">
 	<!-- Header Section -->
 	<div class="mb-3">
-		<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+		<div
+			class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+		>
 			<div>
 				<h1 class="text-xl font-semibold tracking-tight">Maps</h1>
 			</div>
@@ -192,7 +199,9 @@
 	<div class="mb-6 flex flex-col gap-3">
 		<!-- Search -->
 		<div class="relative">
-			<Search class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+			<Search
+				class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+			/>
 			<Input
 				type="search"
 				placeholder="Search maps..."
@@ -219,7 +228,11 @@
 				</Tabs.Root>
 
 				<!-- Sort Button -->
-				<SortButton options={sortOptions} bind:value={sortColumn} bind:direction={sortDirection} />
+				<SortButton
+					options={sortOptions}
+					bind:value={sortColumn}
+					bind:direction={sortDirection}
+				/>
 			</div>
 
 			<!-- Results count -->
@@ -243,18 +256,28 @@
 				<div
 					class="flex flex-col items-center justify-center rounded-lg border border-dashed border-border/50 bg-card/50 py-16"
 				>
-					<div class="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+					<div
+						class="flex h-12 w-12 items-center justify-center rounded-full bg-muted"
+					>
 						<MapPin class="h-6 w-6 text-muted-foreground" />
 					</div>
 					{#if searchQuery}
 						<h3 class="mt-4 font-medium">No maps found</h3>
-						<p class="mt-1 text-sm text-muted-foreground">Try adjusting your search query</p>
-						<Button class="mt-4" variant="outline" onclick={() => (searchQuery = '')}>
+						<p class="mt-1 text-sm text-muted-foreground">
+							Try adjusting your search query
+						</p>
+						<Button
+							class="mt-4"
+							variant="outline"
+							onclick={() => (searchQuery = '')}
+						>
 							Clear search
 						</Button>
 					{:else}
 						<h3 class="mt-4 font-medium">No maps yet</h3>
-						<p class="mt-1 text-sm text-muted-foreground">Get started by creating your first map</p>
+						<p class="mt-1 text-sm text-muted-foreground">
+							Get started by creating your first map
+						</p>
 						<Button href="/maps/import" class="mt-4 gap-2" variant="outline">
 							<Plus class="h-4 w-4" />
 							Create Map
@@ -263,7 +286,11 @@
 				</div>
 			{:else}
 				<!-- Maps Grid/List -->
-				<div class={viewMode === 'compact' ? 'grid grid-cols-1 gap-2 sm:grid-cols-2' : 'space-y-3'}>
+				<div
+					class={viewMode === 'compact'
+						? 'grid grid-cols-1 gap-2 sm:grid-cols-2'
+						: 'space-y-3'}
+				>
 					{#each paginatedMaps as map (map.id)}
 						{@const mapStops = getMapStops(map.id)}
 						{@const mapRoutes = getMapRoutes(map.id)}
@@ -281,7 +308,9 @@
 
 				<!-- Pagination -->
 				{#if totalPages > 1}
-					<div class="mt-6 flex items-center justify-between border-t border-border/50 pt-4">
+					<div
+						class="mt-6 flex items-center justify-between border-t border-border/50 pt-4"
+					>
 						<div class="flex items-center gap-1">
 							<!-- First page -->
 							<Button

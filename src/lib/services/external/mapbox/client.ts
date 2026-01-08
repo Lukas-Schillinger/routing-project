@@ -64,7 +64,11 @@ class MapboxClient {
 	/**
 	 * Make a POST request to the Mapbox API
 	 */
-	async post<T>(endpoint: string, body: unknown, params?: Record<string, string>): Promise<T> {
+	async post<T>(
+		endpoint: string,
+		body: unknown,
+		params?: Record<string, string>
+	): Promise<T> {
 		const url = new URL(`${this.baseUrl}${endpoint}`);
 		url.searchParams.set('access_token', this.accessToken);
 

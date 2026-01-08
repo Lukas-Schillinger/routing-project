@@ -18,14 +18,16 @@
 	} from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
-	let { depots = $bindable([]) }: { depots: DepotWithLocationJoin[] } = $props();
+	let { depots = $bindable([]) }: { depots: DepotWithLocationJoin[] } =
+		$props();
 
 	async function handleDepotSuccess() {
 		await invalidateAll();
 	}
 
 	async function handleDelete(depot: DepotWithLocationJoin) {
-		if (!confirm(`Are you sure you want to delete "${depot.depot.name}"?`)) return;
+		if (!confirm(`Are you sure you want to delete "${depot.depot.name}"?`))
+			return;
 		try {
 			await depotApi.delete(depot.depot.id);
 			depots = depots.filter((d) => d.depot.id !== depot.depot.id);
@@ -52,7 +54,9 @@
 
 <div class="overflow-hidden rounded-lg border border-border/50 bg-card">
 	<!-- Header -->
-	<div class="flex items-center justify-between border-b border-border/50 px-4 py-3">
+	<div
+		class="flex items-center justify-between border-b border-border/50 px-4 py-3"
+	>
 		<div class="flex items-center gap-2">
 			<Building2 class="h-4 w-4 text-muted-foreground" />
 			<h3 class="text-sm font-medium">Depots</h3>
@@ -73,7 +77,9 @@
 	<div class="p-2">
 		{#if depots.length === 0}
 			<div class="flex flex-col items-center justify-center py-8 text-center">
-				<div class="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+				<div
+					class="flex h-10 w-10 items-center justify-center rounded-full bg-muted"
+				>
 					<Building2 class="h-5 w-5 text-muted-foreground" />
 				</div>
 				<p class="mt-3 text-sm font-medium">No depots yet</p>
@@ -88,7 +94,9 @@
 				</EditOrCreateDepotPopover>
 			</div>
 		{:else}
-			<div class="flex flex-col gap-2 sm:grid sm:grid-cols-2 md:flex md:flex-col">
+			<div
+				class="flex flex-col gap-2 sm:grid sm:grid-cols-2 md:flex md:flex-col"
+			>
 				{#each depots as depot (depot.depot.id)}
 					<EditOrCreateDepotPopover
 						triggerClass="block w-full min-w-0 overflow-hidden"
@@ -101,7 +109,9 @@
 							class="group flex w-full cursor-pointer items-center justify-between overflow-hidden rounded-md px-2 py-2 text-left transition-colors hover:bg-accent/50"
 						>
 							<div class="flex min-w-0 flex-1 items-center gap-3">
-								<div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted">
+								<div
+									class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted"
+								>
 									{#if depot.depot.default_depot}
 										<Star class="h-4 w-4 text-primary" />
 									{:else}
@@ -112,7 +122,9 @@
 									<div class="flex flex-wrap items-center gap-x-2 gap-y-0.5">
 										<p class="text-sm font-medium">{depot.depot.name}</p>
 										{#if depot.depot.default_depot}
-											<Badge variant="secondary" class="h-4 px-1 text-[10px]">Default</Badge>
+											<Badge variant="secondary" class="h-4 px-1 text-[10px]"
+												>Default</Badge
+											>
 										{/if}
 									</div>
 									<p class="text-xs text-muted-foreground">
@@ -130,12 +142,17 @@
 										<MoreHorizontal class="h-3.5 w-3.5" />
 									</DropdownMenu.Trigger>
 									<DropdownMenu.Content align="end">
-										<DropdownMenu.Item onclick={() => handleCopyId(depot.depot.id)}>
+										<DropdownMenu.Item
+											onclick={() => handleCopyId(depot.depot.id)}
+										>
 											<Copy class="mr-2 h-4 w-4" />
 											Copy ID
 										</DropdownMenu.Item>
 										<DropdownMenu.Separator />
-										<DropdownMenu.Item class="text-destructive" onclick={() => handleDelete(depot)}>
+										<DropdownMenu.Item
+											class="text-destructive"
+											onclick={() => handleDelete(depot)}
+										>
 											<Trash2 class="mr-2 h-4 w-4" />
 											Delete
 										</DropdownMenu.Item>
@@ -149,7 +166,11 @@
 
 			{#if depots.length > 4}
 				<div class="mt-2 border-t border-border/50 pt-2">
-					<Button variant="ghost" size="sm" class="w-full justify-between text-xs">
+					<Button
+						variant="ghost"
+						size="sm"
+						class="w-full justify-between text-xs"
+					>
 						<span>View all {depots.length} depots</span>
 						<ChevronRight class="h-3.5 w-3.5" />
 					</Button>

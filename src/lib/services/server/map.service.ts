@@ -1,7 +1,13 @@
 import type { StopWithLocation } from '$lib/schemas';
 import type { CreateMap, Map, UpdateMap } from '$lib/schemas/map';
 import { db } from '$lib/server/db';
-import { driverMapMemberships, drivers, maps, routes, stops } from '$lib/server/db/schema';
+import {
+	driverMapMemberships,
+	drivers,
+	maps,
+	routes,
+	stops
+} from '$lib/server/db/schema';
 import { and, eq, sql } from 'drizzle-orm';
 import { driverService } from './driver.service';
 import { ServiceError } from './errors';
@@ -12,7 +18,11 @@ export class MapService {
 	 * Verify map ownership
 	 */
 	private async verifyMapOwnership(mapId: string, organizationId: string) {
-		const [map] = await db.select().from(maps).where(eq(maps.id, mapId)).limit(1);
+		const [map] = await db
+			.select()
+			.from(maps)
+			.where(eq(maps.id, mapId))
+			.limit(1);
 
 		if (!map) {
 			throw ServiceError.notFound('Map not found');
@@ -78,7 +88,12 @@ export class MapService {
 	/**
 	 * Update a map
 	 */
-	async updateMap(mapId: string, data: UpdateMap, organizationId: string, userId: string) {
+	async updateMap(
+		mapId: string,
+		data: UpdateMap,
+		organizationId: string,
+		userId: string
+	) {
 		await this.verifyMapOwnership(mapId, organizationId);
 
 		const [updatedMap] = await db
@@ -108,7 +123,11 @@ export class MapService {
 	/**
 	 * Reset optimization for a map (clear driver assignments)
 	 */
-	async resetOptimization(mapId: string, organizationId: string, userId: string) {
+	async resetOptimization(
+		mapId: string,
+		organizationId: string,
+		userId: string
+	) {
 		await this.verifyMapOwnership(mapId, organizationId);
 
 		await db
@@ -131,11 +150,19 @@ export class MapService {
 	/**
 	 * Verify driver ownership
 	 */
-	private async verifyDriverOwnership(driverId: string, organizationId: string) {
+	private async verifyDriverOwnership(
+		driverId: string,
+		organizationId: string
+	) {
 		const [driver] = await db
 			.select()
 			.from(drivers)
-			.where(and(eq(drivers.id, driverId), eq(drivers.organization_id, organizationId)))
+			.where(
+				and(
+					eq(drivers.id, driverId),
+					eq(drivers.organization_id, organizationId)
+				)
+			)
 			.limit(1);
 
 		if (!driver) {
@@ -184,7 +211,11 @@ export class MapService {
 	/**
 	 * Add a driver to a map
 	 */
-	async addDriverToMap(driverId: string, mapId: string, organizationId: string) {
+	async addDriverToMap(
+		driverId: string,
+		mapId: string,
+		organizationId: string
+	) {
 		await this.verifyDriverOwnership(driverId, organizationId);
 		await this.verifyMapOwnership(mapId, organizationId);
 
@@ -193,7 +224,10 @@ export class MapService {
 			.select()
 			.from(driverMapMemberships)
 			.where(
-				and(eq(driverMapMemberships.driver_id, driverId), eq(driverMapMemberships.map_id, mapId))
+				and(
+					eq(driverMapMemberships.driver_id, driverId),
+					eq(driverMapMemberships.map_id, mapId)
+				)
 			)
 			.limit(1);
 
@@ -216,14 +250,21 @@ export class MapService {
 	/**
 	 * Remove a driver from a map
 	 */
-	async removeDriverFromMap(driverId: string, mapId: string, organizationId: string) {
+	async removeDriverFromMap(
+		driverId: string,
+		mapId: string,
+		organizationId: string
+	) {
 		const driver = await this.verifyDriverOwnership(driverId, organizationId);
 		await this.verifyMapOwnership(mapId, organizationId);
 
 		const [deleted] = await db
 			.delete(driverMapMemberships)
 			.where(
-				and(eq(driverMapMemberships.driver_id, driverId), eq(driverMapMemberships.map_id, mapId))
+				and(
+					eq(driverMapMemberships.driver_id, driverId),
+					eq(driverMapMemberships.map_id, mapId)
+				)
 			)
 			.returning();
 

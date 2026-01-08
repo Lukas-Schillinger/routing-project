@@ -38,7 +38,9 @@
 		return mode.current == 'light' ? 'streets-v12' : 'dark-v11';
 	});
 
-	function getBoundingBox(stops: StopWithLocation[]): [number, number, number, number] {
+	function getBoundingBox(
+		stops: StopWithLocation[]
+	): [number, number, number, number] {
 		if (stops.length === 0) {
 			// Default bounding box if no stops
 			return [-74.006, 40.7128, -73.9352, 40.7589]; // NYC area
@@ -65,10 +67,18 @@
 		const lonPadding = (maxLon - minLon) * 0.4 || 0.01;
 		const latPadding = (maxLat - minLat) * 0.4 || 0.01;
 
-		return [minLon - lonPadding, minLat - latPadding, maxLon + lonPadding, maxLat + latPadding];
+		return [
+			minLon - lonPadding,
+			minLat - latPadding,
+			maxLon + lonPadding,
+			maxLat + latPadding
+		];
 	}
 
-	function getMapBoxURL(boundingBox: [number, number, number, number], token: string): string {
+	function getMapBoxURL(
+		boundingBox: [number, number, number, number],
+		token: string
+	): string {
 		// Construct Mapbox Static Images API URL
 		const [minLon, minLat, maxLon, maxLat] = boundingBox;
 

@@ -20,14 +20,20 @@ export const POST: RequestHandler = async ({ request }) => {
 
 		if (!id || !timeStamp || !signature) {
 			console.warn('Missing Svix headers in webhook request');
-			return json({ success: false, error: 'Missing webhook headers' }, { status: 400 });
+			return json(
+				{ success: false, error: 'Missing webhook headers' },
+				{ status: 400 }
+			);
 		}
 
 		// Verify webhook signature
 		const webhookSecret = env.RESEND_WEBHOOK_SECRET;
 		if (!webhookSecret) {
 			console.error('RESEND_WEBHOOK_SECRET not configured');
-			return json({ success: false, error: 'Server configuration error' }, { status: 500 });
+			return json(
+				{ success: false, error: 'Server configuration error' },
+				{ status: 500 }
+			);
 		}
 
 		let verifiedPayload: unknown;
@@ -44,7 +50,10 @@ export const POST: RequestHandler = async ({ request }) => {
 			});
 		} catch (err) {
 			console.warn('Webhook signature verification failed:', err);
-			return json({ success: false, error: 'Invalid signature' }, { status: 401 });
+			return json(
+				{ success: false, error: 'Invalid signature' },
+				{ status: 401 }
+			);
 		}
 
 		// Parse and validate payload

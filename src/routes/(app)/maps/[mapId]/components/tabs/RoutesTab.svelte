@@ -111,7 +111,10 @@
 	// Calculate totals
 	const totals = $derived.by(() => {
 		const totalStops = stops.length;
-		const totalDuration = routes.reduce((acc, r) => acc + (Number(r.duration) || 0), 0);
+		const totalDuration = routes.reduce(
+			(acc, r) => acc + (Number(r.duration) || 0),
+			0
+		);
 		const durationMinutes = Math.floor(totalDuration / 60);
 		const hours = Math.floor(durationMinutes / 60);
 		const minutes = durationMinutes % 60;
@@ -152,7 +155,10 @@
 			{@const isHidden = isDriverHidden(driver.id)}
 			{@const isExpanded = expandedRoutes.has(driver.id)}
 
-			<div class="rounded-lg border border-border/50 transition-colors" class:opacity-50={isHidden}>
+			<div
+				class="rounded-lg border border-border/50 transition-colors"
+				class:opacity-50={isHidden}
+			>
 				<!-- Route Header -->
 				<button
 					type="button"
@@ -216,14 +222,19 @@
 						{/if}
 
 						<ChevronDown
-							class="h-4 w-4 transition-transform duration-200 {isExpanded ? 'rotate-180' : ''}"
+							class="h-4 w-4 transition-transform duration-200 {isExpanded
+								? 'rotate-180'
+								: ''}"
 						/>
 					</div>
 				</button>
 
 				<!-- Stops List (Collapsible) -->
 				{#if isExpanded}
-					<div class="border-t border-border/50 px-3 py-2" transition:slide={{ duration: 200 }}>
+					<div
+						class="border-t border-border/50 px-3 py-2"
+						transition:slide={{ duration: 200 }}
+					>
 						{#each driverStops as stop, index (stop.stop.id)}
 							{@const addr = addressDisplay(stop.location)}
 							<button
@@ -252,7 +263,9 @@
 						{/each}
 
 						{#if driverStops.length === 0}
-							<p class="py-4 text-center text-sm text-muted-foreground">No stops assigned</p>
+							<p class="py-4 text-center text-sm text-muted-foreground">
+								No stops assigned
+							</p>
 						{/if}
 					</div>
 				{/if}

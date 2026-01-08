@@ -58,7 +58,10 @@
 	function saveCompletedStops(completedStops: Set<string>) {
 		if (!browser || !route?.id) return;
 		try {
-			localStorage.setItem(getStorageKey(route?.id), JSON.stringify([...completedStops]));
+			localStorage.setItem(
+				getStorageKey(route?.id),
+				JSON.stringify([...completedStops])
+			);
 		} catch (error) {
 			console.error('Failed to save completed stops:', error);
 		}
@@ -113,8 +116,10 @@
 						{stop.location.address_line_1}
 					</h3>
 					<div class="text-sm text-muted-foreground">
-						{stop.location.city || ''}{stop.location.city && stop.location.region ? ', ' : ''}{stop
-							.location.region || ''}
+						{stop.location.city || ''}{stop.location.city &&
+						stop.location.region
+							? ', '
+							: ''}{stop.location.region || ''}
 						{stop.location.postal_code || ''}
 					</div>
 				</div>
@@ -163,7 +168,13 @@
 
 					<!-- Get Directions Button -->
 					{#if directionsUrl}
-						<Button href={directionsUrl} size="sm" target="_blank" variant="outline" class="w-full">
+						<Button
+							href={directionsUrl}
+							size="sm"
+							target="_blank"
+							variant="outline"
+							class="w-full"
+						>
 							<Navigation class="mr-2 h-4" />
 							Directions
 						</Button>

@@ -99,7 +99,9 @@
 
 {#if stops.length === 0}
 	<!-- Empty State -->
-	<div class="flex h-full items-center justify-center rounded-lg border bg-background">
+	<div
+		class="flex h-full items-center justify-center rounded-lg border bg-background"
+	>
 		<div class="flex flex-col items-center justify-center py-8">
 			<Route class="mb-3 h-12 w-12 text-muted-foreground" />
 			<h3 class="mb-1 font-medium">No Stops Found</h3>
@@ -113,7 +115,9 @@
 	<div class="h-full rounded-lg border bg-background">
 		<div class="border-b p-3">
 			<ul class="flex gap-4 text-sm text-muted-foreground">
-				<li class="flex items-center gap-1"><MapPin class="size-4" />{stops.length}</li>
+				<li class="flex items-center gap-1">
+					<MapPin class="size-4" />{stops.length}
+				</li>
 				<li class="flex items-center gap-1">
 					<Clock class="size-4" />{Math.floor(Number(route.duration) / 60)}m
 				</li>
@@ -123,10 +127,15 @@
 				</li>
 			</ul>
 		</div>
-		<div class="h-full max-h-[calc(100%-4rem)] overflow-y-auto" bind:this={scrollContainer}>
+		<div
+			class="h-full max-h-[calc(100%-4rem)] overflow-y-auto"
+			bind:this={scrollContainer}
+		>
 			<!-- Depot -->
 			{#if depot}
-				<div class="border-b transition-colors hover:bg-sand-100 dark:hover:bg-secondary/55">
+				<div
+					class="border-b transition-colors hover:bg-sand-100 dark:hover:bg-secondary/55"
+				>
 					<div class="flex items-center justify-between p-3">
 						<div class="min-w-0 flex-1 text-left">
 							<div class="flex items-center gap-4">
@@ -137,7 +146,9 @@
 								</span>
 								<div>
 									<h4>{depot.depot.name}</h4>
-									<p class="text-sm text-muted-foreground">{depot.location.address_line_1}</p>
+									<p class="text-sm text-muted-foreground">
+										{depot.location.address_line_1}
+									</p>
 								</div>
 							</div>
 						</div>
@@ -177,12 +188,18 @@
 								</span>
 
 								<div class={isCompleted ? 'opacity-60' : ''}>
-									<h4 class={isCompleted ? 'line-through' : ''}>{location.address_line_1}</h4>
+									<h4 class={isCompleted ? 'line-through' : ''}>
+										{location.address_line_1}
+									</h4>
 									{#if stop.contact_name}
-										<p class="mt-1 text-sm text-muted-foreground">{stop.contact_name}</p>
+										<p class="mt-1 text-sm text-muted-foreground">
+											{stop.contact_name}
+										</p>
 									{/if}
 									{#if stop.contact_phone}
-										<p class="text-xs text-muted-foreground">{stop.contact_phone}</p>
+										<p class="text-xs text-muted-foreground">
+											{stop.contact_phone}
+										</p>
 									{/if}
 								</div>
 							</div>

@@ -36,7 +36,10 @@ export const load: PageServerLoad = async (event) => {
 
 		// Set email_confirmed_at if this is first login (email confirmation)
 		if (!user.email_confirmed_at) {
-			await db.update(users).set({ email_confirmed_at: new Date() }).where(eq(users.id, user.id));
+			await db
+				.update(users)
+				.set({ email_confirmed_at: new Date() })
+				.where(eq(users.id, user.id));
 		}
 
 		// Create session
@@ -54,11 +57,19 @@ export const load: PageServerLoad = async (event) => {
 		}
 
 		// Re-throw redirect errors
-		if (err && typeof err === 'object' && 'status' in err && err.status === 302) {
+		if (
+			err &&
+			typeof err === 'object' &&
+			'status' in err &&
+			err.status === 302
+		) {
 			throw err;
 		}
 
 		console.error('Error redeeming login token:', err);
-		error(500, { code: 'INTERNAL_ERROR', message: 'Failed to redeem login token' });
+		error(500, {
+			code: 'INTERNAL_ERROR',
+			message: 'Failed to redeem login token'
+		});
 	}
 };

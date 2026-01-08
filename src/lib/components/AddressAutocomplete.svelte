@@ -50,7 +50,10 @@
 		}
 	};
 
-	const saveLocationToCache = (location: [number, number], key: string): void => {
+	const saveLocationToCache = (
+		location: [number, number],
+		key: string
+	): void => {
 		sessionStorage.setItem(key, JSON.stringify(location));
 	};
 
@@ -61,7 +64,9 @@
 			if (!response.ok) return null;
 
 			const data = await response.json();
-			return data.longitude && data.latitude ? [data.longitude, data.latitude] : null;
+			return data.longitude && data.latitude
+				? [data.longitude, data.latitude]
+				: null;
 		} catch (error) {
 			console.warn('Failed to get IP-based location:', error);
 			return null;
@@ -97,7 +102,10 @@
 		if ('geolocation' in navigator) {
 			navigator.geolocation.getCurrentPosition(
 				(position) => {
-					const location: [number, number] = [position.coords.longitude, position.coords.latitude];
+					const location: [number, number] = [
+						position.coords.longitude,
+						position.coords.latitude
+					];
 					userProximity = location;
 					saveLocationToCache(location, LOCATION_STORAGE_KEY);
 					console.log('Using device location for proximity bias');
@@ -210,7 +218,10 @@
 		</div>
 		<ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
 	</Popover.Trigger>
-	<Popover.Content align="start" class="w-[var(--bits-popover-anchor-width)] p-0">
+	<Popover.Content
+		align="start"
+		class="w-[var(--bits-popover-anchor-width)] p-0"
+	>
 		<Command.Root shouldFilter={false}>
 			<Command.Input
 				class="text-base"
@@ -243,7 +254,9 @@
 						<div class="flex items-start gap-2">
 							<MapPin class="mt-0.5 h-4 w-4 shrink-0 opacity-50" />
 							<div class="min-w-0 flex-1">
-								<div class="truncate font-medium">{feature.properties.name}</div>
+								<div class="truncate font-medium">
+									{feature.properties.name}
+								</div>
 								<div class="truncate text-sm text-muted-foreground">
 									{[
 										feature.properties.context?.place?.name,
@@ -266,7 +279,10 @@
 			{#if selectedFeature}
 				<Command.Separator />
 				<Command.Group>
-					<Command.Item onSelect={handleClearSelection} class="cursor-pointer justify-center">
+					<Command.Item
+						onSelect={handleClearSelection}
+						class="cursor-pointer justify-center"
+					>
 						<span class="text-sm text-muted-foreground">Clear selection</span>
 					</Command.Item>
 				</Command.Group>

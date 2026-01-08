@@ -49,7 +49,9 @@
 
 		isSavingName = true;
 		try {
-			const updatedOrg = await organizationApi.update(organization.id, { name: newName });
+			const updatedOrg = await organizationApi.update(organization.id, {
+				name: newName
+			});
 			organization = updatedOrg;
 			await invalidateAll();
 			toast.success('Organization updated');
@@ -82,7 +84,9 @@
 	async function handleRoleChange(userId: string, newRole: Role) {
 		try {
 			const updatedUser = await usersApi.updateRole(userId, { role: newRole });
-			organizationUsers = organizationUsers.map((u) => (u.id === userId ? updatedUser : u));
+			organizationUsers = organizationUsers.map((u) =>
+				u.id === userId ? updatedUser : u
+			);
 			toast.success('Role updated');
 		} catch (error) {
 			console.error('Failed to update role:', error);
@@ -95,7 +99,9 @@
 <Card.Root>
 	<Card.Header>
 		<Card.Title>Organization</Card.Title>
-		<Card.Description>Manage your organization settings and information</Card.Description>
+		<Card.Description
+			>Manage your organization settings and information</Card.Description
+		>
 	</Card.Header>
 	<Card.Content class="space-y-1">
 		<!-- Organization Name (editable) -->
@@ -123,7 +129,9 @@
 			<div class="shrink-0 md:w-48">
 				<p class="text-sm font-medium">Created</p>
 			</div>
-			<p class="text-sm text-muted-foreground">{formatDate(organization.created_at)}</p>
+			<p class="text-sm text-muted-foreground">
+				{formatDate(organization.created_at)}
+			</p>
 		</div>
 
 		<!-- Organization ID (read-only) -->
@@ -144,9 +152,15 @@
 			<Table.Root class="">
 				<Table.Header>
 					<Table.Row class="p-0">
-						<Table.Head class="p-0 text-sm font-semibold text-muted-foreground">email</Table.Head>
-						<Table.Head class="p-0 text-sm text-muted-foreground">role</Table.Head>
-						<Table.Head class="hidden p-0 text-sm text-muted-foreground sm:block">joined</Table.Head
+						<Table.Head class="p-0 text-sm font-semibold text-muted-foreground"
+							>email</Table.Head
+						>
+						<Table.Head class="p-0 text-sm text-muted-foreground"
+							>role</Table.Head
+						>
+						<Table.Head
+							class="hidden p-0 text-sm text-muted-foreground sm:block"
+							>joined</Table.Head
 						>
 						{#if canDeleteUsers}
 							<Table.Head class="w-8 p-0"></Table.Head>
@@ -156,20 +170,26 @@
 				<Table.Body class="text-sm text-muted-foreground">
 					{#each organizationUsers as user (user.id)}
 						<Table.Row>
-							<Table.Cell class="px-0 text-card-foreground">{user.email}</Table.Cell>
+							<Table.Cell class="px-0 text-card-foreground"
+								>{user.email}</Table.Cell
+							>
 							<Table.Cell class="px-0">
 								{#if canUpdateUsers && user.id !== currentUser.id}
 									<Select.Root
 										type="single"
 										value={user.role}
-										onValueChange={(value) => value && handleRoleChange(user.id, value as Role)}
+										onValueChange={(value) =>
+											value && handleRoleChange(user.id, value as Role)}
 									>
 										<Select.Trigger class="h-7 w-24 text-xs">
 											{user.role}
 										</Select.Trigger>
 										<Select.Content>
 											{#each roleDescriptions as role}
-												<Select.Item value={role.name} class="flex flex-col items-start gap-1">
+												<Select.Item
+													value={role.name}
+													class="flex flex-col items-start gap-1"
+												>
 													<div class="text-sm">{role.name}</div>
 													<div class="text-xs text-muted-foreground">
 														{role.desc}
@@ -184,7 +204,9 @@
 									</Badge>
 								{/if}
 							</Table.Cell>
-							<Table.Cell class="hidden px-0 text-sm text-muted-foreground sm:table-cell">
+							<Table.Cell
+								class="hidden px-0 text-sm text-muted-foreground sm:table-cell"
+							>
 								{formatDate(user.created_at)}
 							</Table.Cell>
 							{#if canDeleteUsers}

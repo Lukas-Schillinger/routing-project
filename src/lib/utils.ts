@@ -7,7 +7,11 @@ import { parsePhoneNumber } from 'libphonenumber-js';
 import Papa from 'papaparse';
 import { twMerge } from 'tailwind-merge';
 import type { Driver } from './schemas';
-import { locationCreateSchema, type Location, type LocationCreate } from './schemas/location';
+import {
+	locationCreateSchema,
+	type Location,
+	type LocationCreate
+} from './schemas/location';
 import type { GeocodingFeature } from './services/external/mapbox/types';
 import type { Permission } from './services/server/permissions';
 
@@ -59,7 +63,9 @@ export function getTextColor(hex: string) {
  * Based on Mapbox Geocoding v6 API response structure
  * @see https://docs.mapbox.com/api/search/geocoding/#geocoding-response-object
  */
-export function geocodingFeatureToLocation(feature: GeocodingFeature): LocationCreate {
+export function geocodingFeatureToLocation(
+	feature: GeocodingFeature
+): LocationCreate {
 	const context = feature.properties.context || {};
 
 	// Extract confidence level and validate it's one of the expected values
@@ -176,9 +182,13 @@ export function generateRandomColor(): string {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type WithoutChild<T> = T extends { child?: any } ? Omit<T, 'child'> : T;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type WithoutChildren<T> = T extends { children?: any } ? Omit<T, 'children'> : T;
+export type WithoutChildren<T> = T extends { children?: any }
+	? Omit<T, 'children'>
+	: T;
 export type WithoutChildrenOrChild<T> = WithoutChildren<WithoutChild<T>>;
-export type WithElementRef<T, U extends HTMLElement = HTMLElement> = T & { ref?: U | null };
+export type WithElementRef<T, U extends HTMLElement = HTMLElement> = T & {
+	ref?: U | null;
+};
 
 /**
  * Client side permission checking utility. Used **only** for selectively displaying UI elements
@@ -187,7 +197,10 @@ export type WithElementRef<T, U extends HTMLElement = HTMLElement> = T & { ref?:
  *
  * Unfortunately the Permission type is imported from `/src/services/server`
  */
-export function checkPermission(permissions: Permission[], permission: Permission): boolean {
+export function checkPermission(
+	permissions: Permission[],
+	permission: Permission
+): boolean {
 	return permissions.includes(permission);
 }
 
@@ -201,7 +214,9 @@ type AddressDisplayInput = Pick<
  * Returns top line (street address), bottom line (city, state, zip), and full address.
  */
 export function addressDisplay(location: AddressDisplayInput) {
-	const topLine = [location.address_line_1, location.address_line_2].filter(Boolean).join(', ');
+	const topLine = [location.address_line_1, location.address_line_2]
+		.filter(Boolean)
+		.join(', ');
 
 	const bottomLine = [
 		location.city,
@@ -219,7 +234,9 @@ export function addressDisplay(location: AddressDisplayInput) {
  * Format an E.164 phone number for display.
  * Converts "+15551234567" to "(555) 123-4567".
  */
-export function formatPhoneNumber(phone: string | null | undefined): string | null {
+export function formatPhoneNumber(
+	phone: string | null | undefined
+): string | null {
 	if (!phone) return null;
 	try {
 		const parsed = parsePhoneNumber(phone);
@@ -254,7 +271,10 @@ export function parseCsvFile(file: File): Promise<CsvParseResult> {
 		if (!file.name.endsWith('.csv')) {
 			resolve({
 				success: false,
-				error: { type: 'invalid_extension', message: 'Please select a CSV file' }
+				error: {
+					type: 'invalid_extension',
+					message: 'Please select a CSV file'
+				}
 			});
 			return;
 		}
@@ -280,7 +300,10 @@ export function parseCsvFile(file: File): Promise<CsvParseResult> {
 				if (headers.length === 0) {
 					resolve({
 						success: false,
-						error: { type: 'no_columns', message: 'No columns found in CSV file' }
+						error: {
+							type: 'no_columns',
+							message: 'No columns found in CSV file'
+						}
 					});
 					return;
 				}
@@ -288,7 +311,10 @@ export function parseCsvFile(file: File): Promise<CsvParseResult> {
 				if (rows.length === 0) {
 					resolve({
 						success: false,
-						error: { type: 'no_data', message: 'No data rows found in CSV file' }
+						error: {
+							type: 'no_data',
+							message: 'No data rows found in CSV file'
+						}
 					});
 					return;
 				}
@@ -301,7 +327,10 @@ export function parseCsvFile(file: File): Promise<CsvParseResult> {
 			error: (err) => {
 				resolve({
 					success: false,
-					error: { type: 'parse_error', message: `Failed to read file: ${err.message}` }
+					error: {
+						type: 'parse_error',
+						message: `Failed to read file: ${err.message}`
+					}
 				});
 			}
 		});

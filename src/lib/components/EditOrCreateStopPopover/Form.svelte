@@ -126,7 +126,10 @@
 			onSuccess(updatedStop);
 			resetForm();
 		} catch (err) {
-			console.error(`Error ${mode === 'create' ? 'creating' : 'updating'} stop:`, err);
+			console.error(
+				`Error ${mode === 'create' ? 'creating' : 'updating'} stop:`,
+				err
+			);
 
 			if (err instanceof ServiceError) {
 				error = err.message;
@@ -167,14 +170,20 @@
 
 	<div class="space-y-2">
 		<Label for="contact-phone">Contact Phone</Label>
-		<PhoneInput id="contact-phone" bind:value={contactPhone} disabled={isSubmitting} />
+		<PhoneInput
+			id="contact-phone"
+			bind:value={contactPhone}
+			disabled={isSubmitting}
+		/>
 	</div>
 
 	<div class="space-y-2">
 		<Label for="stop-address">Address</Label>
 		<AddressAutocomplete
 			bind:value={address}
-			placeholder={mode === 'create' ? 'Search for address...' : 'Search to update address...'}
+			placeholder={mode === 'create'
+				? 'Search for address...'
+				: 'Search to update address...'}
 			onSelect={handleAddressSelect}
 			onClear={handleAddressClear}
 			disabled={isSubmitting}

@@ -32,4 +32,6 @@ export type CreateEmailShare = z.infer<typeof createEmailShareSchema>;
 export const routeShareWithMailRecordSchema = routeShareSchema.extend({
 	mailRecord: mailRecordSchema.nullable()
 });
-export type RouteShareWithMailRecord = z.infer<typeof routeShareWithMailRecordSchema>;
+export type RouteShareWithMailRecord = z.infer<
+	typeof routeShareWithMailRecordSchema
+>;

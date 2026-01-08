@@ -3,7 +3,9 @@ import { z } from 'zod';
 /**
  * Mapbox Geocoding v6 confidence levels
  */
-export const geocodeConfidenceSchema = z.enum(['exact', 'high', 'medium', 'low']).nullable();
+export const geocodeConfidenceSchema = z
+	.enum(['exact', 'high', 'medium', 'low'])
+	.nullable();
 
 /**
  * Location schema - represents a geocoded physical address

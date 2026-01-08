@@ -11,7 +11,9 @@
 
 <div class="relative flex min-h-svh flex-col bg-background">
 	<!-- Main content -->
-	<div class="relative z-10 flex flex-1 flex-col items-center justify-center px-4 py-12">
+	<div
+		class="relative z-10 flex flex-1 flex-col items-center justify-center px-4 py-12"
+	>
 		<!-- Logo -->
 		<a href="/" class="mb-10 flex items-center gap-2.5 hover:opacity-80">
 			<div class="relative size-36">

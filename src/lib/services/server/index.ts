@@ -12,7 +12,10 @@ export { LocationService, locationService } from './location.service';
 export { LoginTokenService, loginTokenService } from './login-token.service';
 export { MailRecordService, mailRecordService } from './mail-record.service';
 export { MapService, mapService } from './map.service';
-export { OptimizationService, optimizationService } from './optimization.service';
+export {
+	OptimizationService,
+	optimizationService
+} from './optimization.service';
 export { RouteShareService, routeShareService } from './route-share.service';
 export { RouteService, routeService } from './route.service';
 export { StopService, stopService } from './stop.service';

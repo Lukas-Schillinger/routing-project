@@ -17,7 +17,8 @@ import {
 
 const id = uuid('id').defaultRandom().primaryKey();
 const orgId = uuid('organization_id').defaultRandom().notNull();
-const ts = (c: string) => timestamp(c, { withTimezone: true }).defaultNow().notNull();
+const ts = (c: string) =>
+	timestamp(c, { withTimezone: true }).defaultNow().notNull();
 
 export const organizations = pgTable('organizations', {
 	id,
@@ -33,7 +34,9 @@ export const users = pgTable(
 	'users',
 	{
 		id,
-		organization_id: orgId.references(() => organizations.id, { onDelete: 'cascade' }),
+		organization_id: orgId.references(() => organizations.id, {
+			onDelete: 'cascade'
+		}),
 		created_at: ts('created_at'),
 		created_by: uuid('created_by'),
 		updated_at: ts('updated_at'),
@@ -57,7 +60,10 @@ export const users = pgTable(
 export const session = pgTable('session', {
 	id: text('id').primaryKey(),
 	user_id: uuid().references(() => users.id, { onDelete: 'cascade' }),
-	expires_at: timestamp('expires_at', { withTimezone: true, mode: 'date' }).notNull(),
+	expires_at: timestamp('expires_at', {
+		withTimezone: true,
+		mode: 'date'
+	}).notNull(),
 	created_at: ts('created_at'),
 	updated_at: ts('updated_at')
 });
@@ -66,11 +72,17 @@ export const invitations = pgTable(
 	'invitations',
 	{
 		id,
-		organization_id: orgId.references(() => organizations.id, { onDelete: 'cascade' }),
+		organization_id: orgId.references(() => organizations.id, {
+			onDelete: 'cascade'
+		}),
 		created_at: ts('created_at'),
-		created_by: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
+		created_by: uuid('created_by').references(() => users.id, {
+			onDelete: 'set null'
+		}),
 		updated_at: ts('updated_at').$onUpdate(() => new Date()),
-		updated_by: uuid('updated_by').references(() => users.id, { onDelete: 'set null' }),
+		updated_by: uuid('updated_by').references(() => users.id, {
+			onDelete: 'set null'
+		}),
 
 		email: text('email').notNull(),
 		role: varchar('role', { length: 32 })
@@ -93,7 +105,9 @@ export const loginTokens = pgTable(
 	'login_tokens',
 	{
 		id,
-		organization_id: orgId.references(() => organizations.id, { onDelete: 'cascade' }),
+		organization_id: orgId.references(() => organizations.id, {
+			onDelete: 'cascade'
+		}),
 		created_at: ts('created_at'),
 
 		user_id: uuid('user_id')
@@ -119,13 +133,21 @@ export const drivers = pgTable(
 	'drivers',
 	{
 		id,
-		organization_id: orgId.references(() => organizations.id, { onDelete: 'cascade' }),
+		organization_id: orgId.references(() => organizations.id, {
+			onDelete: 'cascade'
+		}),
 		created_at: ts('created_at'),
-		created_by: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
+		created_by: uuid('created_by').references(() => users.id, {
+			onDelete: 'set null'
+		}),
 		updated_at: ts('updated_at'),
-		updated_by: uuid('updated_by').references(() => users.id, { onDelete: 'set null' }),
+		updated_by: uuid('updated_by').references(() => users.id, {
+			onDelete: 'set null'
+		}),
 
-		user_id: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
+		user_id: uuid('user_id').references(() => users.id, {
+			onDelete: 'set null'
+		}),
 		name: varchar('name', { length: 200 }).notNull(),
 		phone: varchar('phone', { length: 32 }),
 		notes: text('notes'),
@@ -145,11 +167,17 @@ export const maps = pgTable(
 	'maps',
 	{
 		id,
-		organization_id: orgId.references(() => organizations.id, { onDelete: 'cascade' }),
+		organization_id: orgId.references(() => organizations.id, {
+			onDelete: 'cascade'
+		}),
 		created_at: ts('created_at'),
-		created_by: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
+		created_by: uuid('created_by').references(() => users.id, {
+			onDelete: 'set null'
+		}),
 		updated_at: ts('updated_at'),
-		updated_by: uuid('updated_by').references(() => users.id, { onDelete: 'set null' }),
+		updated_by: uuid('updated_by').references(() => users.id, {
+			onDelete: 'set null'
+		}),
 
 		title: varchar('title', { length: 200 }).notNull()
 	},
@@ -160,7 +188,9 @@ export const locations = pgTable(
 	'locations',
 	{
 		id,
-		organization_id: orgId.references(() => organizations.id, { onDelete: 'cascade' }),
+		organization_id: orgId.references(() => organizations.id, {
+			onDelete: 'cascade'
+		}),
 		created_at: ts('created_at'),
 		updated_at: ts('updated_at'),
 
@@ -196,11 +226,17 @@ export const stops = pgTable(
 	'stops',
 	{
 		id,
-		organization_id: orgId.references(() => organizations.id, { onDelete: 'cascade' }),
+		organization_id: orgId.references(() => organizations.id, {
+			onDelete: 'cascade'
+		}),
 		created_at: ts('created_at'),
-		created_by: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
+		created_by: uuid('created_by').references(() => users.id, {
+			onDelete: 'set null'
+		}),
 		updated_at: ts('updated_at'),
-		updated_by: uuid('updated_by').references(() => users.id, { onDelete: 'set null' }),
+		updated_by: uuid('updated_by').references(() => users.id, {
+			onDelete: 'set null'
+		}),
 
 		map_id: uuid('map_id')
 			.notNull()
@@ -208,24 +244,35 @@ export const stops = pgTable(
 		location_id: uuid('location_id')
 			.notNull()
 			.references(() => locations.id, { onDelete: 'cascade' }),
-		driver_id: uuid('driver_id').references(() => drivers.id, { onDelete: 'set null' }),
+		driver_id: uuid('driver_id').references(() => drivers.id, {
+			onDelete: 'set null'
+		}),
 		delivery_index: integer('delivery_index'),
 		contact_name: varchar('contact_name', { length: 200 }),
 		contact_phone: varchar('contact_phone', { length: 32 }),
 		notes: text('notes')
 	},
-	(t) => [index('stops_org_idx').on(t.organization_id), index('stops_map_idx').on(t.map_id)]
+	(t) => [
+		index('stops_org_idx').on(t.organization_id),
+		index('stops_map_idx').on(t.map_id)
+	]
 );
 
 export const depots = pgTable(
 	'depots',
 	{
 		id,
-		organization_id: orgId.references(() => organizations.id, { onDelete: 'cascade' }),
+		organization_id: orgId.references(() => organizations.id, {
+			onDelete: 'cascade'
+		}),
 		created_at: ts('created_at'),
-		created_by: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
+		created_by: uuid('created_by').references(() => users.id, {
+			onDelete: 'set null'
+		}),
 		updated_at: ts('updated_at'),
-		updated_by: uuid('updated_by').references(() => users.id, { onDelete: 'set null' }),
+		updated_by: uuid('updated_by').references(() => users.id, {
+			onDelete: 'set null'
+		}),
 
 		location_id: uuid('location_id')
 			.notNull()
@@ -247,7 +294,9 @@ export const driverMapMemberships = pgTable(
 	'driver_map_memberships',
 	{
 		id,
-		organization_id: orgId.references(() => organizations.id, { onDelete: 'cascade' }),
+		organization_id: orgId.references(() => organizations.id, {
+			onDelete: 'cascade'
+		}),
 		driver_id: uuid('driver_id')
 			.notNull()
 			.references(() => drivers.id, { onDelete: 'cascade' }),
@@ -269,7 +318,9 @@ export const routes = pgTable(
 	'routes',
 	{
 		id,
-		organization_id: orgId.references(() => organizations.id, { onDelete: 'cascade' }),
+		organization_id: orgId.references(() => organizations.id, {
+			onDelete: 'cascade'
+		}),
 		map_id: uuid('map_id')
 			.notNull()
 			.references(() => maps.id, { onDelete: 'cascade' }),
@@ -296,15 +347,21 @@ export const routeShares = pgTable(
 	'route_shares',
 	{
 		id,
-		organization_id: orgId.references(() => organizations.id, { onDelete: 'cascade' }),
+		organization_id: orgId.references(() => organizations.id, {
+			onDelete: 'cascade'
+		}),
 		route_id: uuid('route_id')
 			.notNull()
 			.references(() => routes.id, { onDelete: 'cascade' }),
-		created_by: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
+		created_by: uuid('created_by').references(() => users.id, {
+			onDelete: 'set null'
+		}),
 		created_at: ts('created_at'),
 		updated_at: ts('updated_at'),
 
-		share_type: varchar('share_type', { length: 16 }).$type<'email' | 'sms'>().notNull(),
+		share_type: varchar('share_type', { length: 16 })
+			.$type<'email' | 'sms'>()
+			.notNull(),
 
 		// Access control
 		access_token_hash: varchar('access_token_hash', { length: 64 }).notNull(),
@@ -325,7 +382,9 @@ export const routeShares = pgTable(
 
 export const matrices = pgTable('matrices', {
 	id,
-	organization_id: orgId.references(() => organizations.id, { onDelete: 'cascade' }),
+	organization_id: orgId.references(() => organizations.id, {
+		onDelete: 'cascade'
+	}),
 	map_id: uuid()
 		.references(() => maps.id, { onDelete: 'cascade' })
 		.notNull(),
@@ -339,7 +398,9 @@ export const files = pgTable(
 	'files',
 	{
 		id,
-		organization_id: orgId.references(() => organizations.id, { onDelete: 'cascade' }),
+		organization_id: orgId.references(() => organizations.id, {
+			onDelete: 'cascade'
+		}),
 		filename: text('filename').notNull(),
 		original_filename: text('original_filename').notNull(),
 		content_type: text('content_type').notNull(),
@@ -359,10 +420,19 @@ export const files = pgTable(
 
 export const optimizationJobs = pgTable('optimization_jobs', {
 	id,
-	organization_id: orgId.references(() => organizations.id, { onDelete: 'cascade' }),
+	organization_id: orgId.references(() => organizations.id, {
+		onDelete: 'cascade'
+	}),
 	status: varchar('status', { length: 20 })
 		.notNull()
-		.$type<'pending' | 'running' | 'completing' | 'completed' | 'failed' | 'cancelled'>(),
+		.$type<
+			| 'pending'
+			| 'running'
+			| 'completing'
+			| 'completed'
+			| 'failed'
+			| 'cancelled'
+		>(),
 	matrix_id: uuid()
 		.references(() => matrices.id, { onDelete: 'cascade' })
 		.notNull(),
@@ -381,7 +451,9 @@ export const mailRecords = pgTable(
 	'mail_records',
 	{
 		id,
-		organization_id: orgId.references(() => organizations.id, { onDelete: 'cascade' }),
+		organization_id: orgId.references(() => organizations.id, {
+			onDelete: 'cascade'
+		}),
 		created_at: ts('created_at'),
 
 		resend_id: varchar('resend_id', { length: 64 }).notNull().unique(),
@@ -392,7 +464,14 @@ export const mailRecords = pgTable(
 		from_email: text('from_email').notNull(),
 		subject: varchar('subject', { length: 500 }),
 		status: varchar('status', { length: 32 })
-			.$type<'sent' | 'delivered' | 'bounced' | 'complained' | 'delivery_delayed' | 'failed'>()
+			.$type<
+				| 'sent'
+				| 'delivered'
+				| 'bounced'
+				| 'complained'
+				| 'delivery_delayed'
+				| 'failed'
+			>()
 			.default('sent')
 			.notNull(),
 		delivered_at: timestamp('delivered_at', { withTimezone: true }),
@@ -495,20 +574,23 @@ export const stopsRelations = relations(stops, ({ one }) => ({
 	})
 }));
 
-export const driverMapMembershipsRelations = relations(driverMapMemberships, ({ one }) => ({
-	organization: one(organizations, {
-		fields: [driverMapMemberships.organization_id],
-		references: [organizations.id]
-	}),
-	driver: one(drivers, {
-		fields: [driverMapMemberships.driver_id],
-		references: [drivers.id]
-	}),
-	map: one(maps, {
-		fields: [driverMapMemberships.map_id],
-		references: [maps.id]
+export const driverMapMembershipsRelations = relations(
+	driverMapMemberships,
+	({ one }) => ({
+		organization: one(organizations, {
+			fields: [driverMapMemberships.organization_id],
+			references: [organizations.id]
+		}),
+		driver: one(drivers, {
+			fields: [driverMapMemberships.driver_id],
+			references: [drivers.id]
+		}),
+		map: one(maps, {
+			fields: [driverMapMemberships.map_id],
+			references: [maps.id]
+		})
 	})
-}));
+);
 
 export const depotsRelations = relations(depots, ({ one, many }) => ({
 	organization: one(organizations, {
@@ -585,24 +667,27 @@ export const matricesRelations = relations(matrices, ({ one, many }) => ({
 	optimizationJobs: many(optimizationJobs)
 }));
 
-export const optimizationJobsRelations = relations(optimizationJobs, ({ one }) => ({
-	organization: one(organizations, {
-		fields: [optimizationJobs.organization_id],
-		references: [organizations.id]
-	}),
-	matrix: one(matrices, {
-		fields: [optimizationJobs.matrix_id],
-		references: [matrices.id]
-	}),
-	map: one(maps, {
-		fields: [optimizationJobs.map_id],
-		references: [maps.id]
-	}),
-	depot: one(depots, {
-		fields: [optimizationJobs.depot_id],
-		references: [depots.id]
+export const optimizationJobsRelations = relations(
+	optimizationJobs,
+	({ one }) => ({
+		organization: one(organizations, {
+			fields: [optimizationJobs.organization_id],
+			references: [organizations.id]
+		}),
+		matrix: one(matrices, {
+			fields: [optimizationJobs.matrix_id],
+			references: [matrices.id]
+		}),
+		map: one(maps, {
+			fields: [optimizationJobs.map_id],
+			references: [maps.id]
+		}),
+		depot: one(depots, {
+			fields: [optimizationJobs.depot_id],
+			references: [depots.id]
+		})
 	})
-}));
+);
 
 export const mailRecordsRelations = relations(mailRecords, ({ one, many }) => ({
 	organization: one(organizations, {

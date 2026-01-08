@@ -2,7 +2,10 @@
 	import * as Popover from '$lib/components/ui/popover/index.js';
 	import type { Snippet } from 'svelte';
 
-	let { item, children }: { item: { created_at: Date; updated_at: Date }; children: Snippet } =
+	let {
+		item,
+		children
+	}: { item: { created_at: Date; updated_at: Date }; children: Snippet } =
 		$props();
 </script>
 

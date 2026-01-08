@@ -140,8 +140,16 @@ describe('Registration Server Actions', () => {
 
 			it('should reject invalid registration input', () => {
 				const invalidInputs = [
-					{ email: 'invalid', password: 'password123', passwordConfirm: 'password123' },
-					{ email: 'test@example.com', password: '123', passwordConfirm: '123' },
+					{
+						email: 'invalid',
+						password: 'password123',
+						passwordConfirm: 'password123'
+					},
+					{
+						email: 'test@example.com',
+						password: '123',
+						passwordConfirm: '123'
+					},
 					{ email: '', password: '', passwordConfirm: '' },
 					{ email: 'test@example.com', passwordConfirm: 'password123' }, // missing password
 					{ password: 'password123', passwordConfirm: 'password123' }, // missing email
@@ -199,7 +207,9 @@ describe('Registration Server Actions', () => {
 					locals: { user: null, session: null }
 				};
 
-				await expect(actions.register(mockEvent as never)).rejects.toThrow('redirect');
+				await expect(actions.register(mockEvent as never)).rejects.toThrow(
+					'redirect'
+				);
 				expect(redirect).toHaveBeenCalledWith(302, '/auth/account');
 			});
 
@@ -232,7 +242,9 @@ describe('Registration Server Actions', () => {
 				// Mock database error
 				vi.mocked(db.insert).mockReturnValue({
 					values: vi.fn().mockReturnValue({
-						returning: vi.fn().mockRejectedValue(new Error('Unique constraint violation'))
+						returning: vi
+							.fn()
+							.mockRejectedValue(new Error('Unique constraint violation'))
 					})
 				} as never);
 

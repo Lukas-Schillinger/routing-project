@@ -16,7 +16,9 @@ class MapboxNavigationService {
 	 * @param locations - Array of coordinates [longitude, latitude] to navigate through
 	 * @returns Directions API response with routes and waypoints (GeoJSON format)
 	 */
-	async getDirections(locations: Coordinate[]): Promise<DirectionsResponseGeoJson> {
+	async getDirections(
+		locations: Coordinate[]
+	): Promise<DirectionsResponseGeoJson> {
 		if (locations.length < 2) {
 			throw new Error('At least 2 locations are required for directions');
 		}
@@ -26,7 +28,9 @@ class MapboxNavigationService {
 		}
 
 		// Format coordinates as "lon,lat;lon,lat;..."
-		const coordinatesString = locations.map((coord) => `${coord[0]},${coord[1]}`).join(';');
+		const coordinatesString = locations
+			.map((coord) => `${coord[0]},${coord[1]}`)
+			.join(';');
 
 		// Build API endpoint
 		// Using driving profile with geometries in geojson format

@@ -59,6 +59,13 @@
 		</div>
 	{:else}
 		<!-- Editable data table -->
-		<EditStopsDataTable {stops} {mapId} {onUpdate} {onCreate} {onDelete} {onZoomToStop} />
+		<EditStopsDataTable
+			{stops}
+			{mapId}
+			{onUpdate}
+			{onCreate}
+			{onDelete}
+			{onZoomToStop}
+		/>
 	{/if}
 </div>

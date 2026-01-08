@@ -23,10 +23,16 @@ export const load: PageServerLoad = async (event) => {
 	}
 
 	try {
-		const invitation = await invitationService.getInvitationFromToken(token, email);
+		const invitation = await invitationService.getInvitationFromToken(
+			token,
+			email
+		);
 
 		if (!invitation) {
-			error(400, { code: 'BAD_REQUEST', message: 'Invalid or expired invitation link' });
+			error(400, {
+				code: 'BAD_REQUEST',
+				message: 'Invalid or expired invitation link'
+			});
 		}
 
 		// The intended user of the invitation is already logged in
@@ -52,11 +58,19 @@ export const load: PageServerLoad = async (event) => {
 		}
 
 		// Re-throw redirect errors
-		if (err && typeof err === 'object' && 'status' in err && err.status === 302) {
+		if (
+			err &&
+			typeof err === 'object' &&
+			'status' in err &&
+			err.status === 302
+		) {
 			throw err;
 		}
 
 		console.error('Error redeeming invitation:', err);
-		error(500, { code: 'INTERNAL_ERROR', message: 'Failed to redeem invitation' });
+		error(500, {
+			code: 'INTERNAL_ERROR',
+			message: 'Failed to redeem invitation'
+		});
 	}
 };

@@ -18,7 +18,12 @@ export const POST: RequestHandler = async ({ request, url }) => {
 			});
 
 			// Send password reset email
-			await mailService.sendPasswordResetEmail(loginToken, email, token, url.origin);
+			await mailService.sendPasswordResetEmail(
+				loginToken,
+				email,
+				token,
+				url.origin
+			);
 
 			if (dev) {
 				// In dev mode, return the token for easier testing

@@ -51,9 +51,12 @@
 		isSubmitting = true;
 
 		try {
-			const updatedOrganization = await organizationApi.update(organization.id, {
-				name: organizationName.trim()
-			});
+			const updatedOrganization = await organizationApi.update(
+				organization.id,
+				{
+					name: organizationName.trim()
+				}
+			);
 
 			onSuccess(updatedOrganization as Organization);
 			resetForm();
@@ -78,7 +81,9 @@
 <form onsubmit={handleSubmit} class="space-y-4">
 	<div class="space-y-2">
 		<h3 class="text-lg font-semibold">Edit Organization</h3>
-		<p class="text-sm text-muted-foreground">Update your organization details</p>
+		<p class="text-sm text-muted-foreground">
+			Update your organization details
+		</p>
 	</div>
 
 	{#if error}

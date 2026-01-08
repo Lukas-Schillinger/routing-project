@@ -24,7 +24,12 @@
 				<span class="pb-0.5 text-xl font-bold tracking-tighter">wend</span>
 			</a>
 			<div>
-				<Button class="rounded-full" href="/auth/login" variant="outline" size="sm">Log in</Button>
+				<Button
+					class="rounded-full"
+					href="/auth/login"
+					variant="outline"
+					size="sm">Log in</Button
+				>
 			</div>
 		</div>
 	</div>

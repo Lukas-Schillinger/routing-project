@@ -33,7 +33,9 @@
 	}
 	function snapToNearest() {
 		const targets = snapsVH.map(vhToPx);
-		const nearest = targets.reduce((a, b) => (Math.abs(y - b) < Math.abs(y - a) ? b : a));
+		const nearest = targets.reduce((a, b) =>
+			Math.abs(y - b) < Math.abs(y - a) ? b : a
+		);
 		y = nearest;
 	}
 

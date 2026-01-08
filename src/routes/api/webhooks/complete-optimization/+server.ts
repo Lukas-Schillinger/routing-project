@@ -15,7 +15,10 @@ export const POST: RequestHandler = async ({ request }) => {
 
 		if (!expectedToken) {
 			console.error('OPTIMIZATION_WEBHOOK_SECRET not configured');
-			return json({ success: false, error: 'Server configuration error' }, { status: 500 });
+			return json(
+				{ success: false, error: 'Server configuration error' },
+				{ status: 500 }
+			);
 		}
 
 		if (authHeader !== `Bearer ${expectedToken}`) {

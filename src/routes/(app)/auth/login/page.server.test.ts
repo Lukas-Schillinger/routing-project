@@ -198,7 +198,9 @@ describe('Authentication Server Actions', () => {
 				const mockEvent = createMockEvent('test@example.com', 'password123');
 
 				// Should throw redirect
-				await expect(actions.login(mockEvent as never)).rejects.toThrow('redirect');
+				await expect(actions.login(mockEvent as never)).rejects.toThrow(
+					'redirect'
+				);
 				expect(redirect).toHaveBeenCalledWith(302, '/auth/account');
 			});
 
@@ -225,7 +227,10 @@ describe('Authentication Server Actions', () => {
 				} as never);
 
 				vi.mocked(fail).mockReturnValue({ status: 400 } as never);
-				const mockEvent = createMockEvent('nonexistent@example.com', 'password123');
+				const mockEvent = createMockEvent(
+					'nonexistent@example.com',
+					'password123'
+				);
 
 				await actions.login(mockEvent as never);
 				expect(fail).toHaveBeenCalledWith(400, {

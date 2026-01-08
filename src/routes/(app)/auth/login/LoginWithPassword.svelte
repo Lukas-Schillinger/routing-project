@@ -36,7 +36,13 @@
 				}}
 			>
 				<input type="hidden" name="email" value={form.email} />
-				<Button type="submit" variant="outline" size="sm" class="w-full" disabled={isResending}>
+				<Button
+					type="submit"
+					variant="outline"
+					size="sm"
+					class="w-full"
+					disabled={isResending}
+				>
 					{#if isResending}
 						<Loader2 class="mr-2 h-4 w-4 animate-spin" />
 						Sending...
@@ -51,7 +57,10 @@
 
 {#if form?.resendSuccess}
 	<div class="pb-4">
-		<AuthAlert message="Confirmation email sent! Check your inbox." variant="success" />
+		<AuthAlert
+			message="Confirmation email sent! Check your inbox."
+			variant="success"
+		/>
 	</div>
 {/if}
 
@@ -69,11 +78,16 @@
 	novalidate
 >
 	<div class="space-y-1.5">
-		<Label for="email" class="text-xs font-medium tracking-wider text-muted-foreground uppercase">
+		<Label
+			for="email"
+			class="text-xs font-medium tracking-wider text-muted-foreground uppercase"
+		>
 			Email
 		</Label>
 		<div class="relative">
-			<Mail class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground/50" />
+			<Mail
+				class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground/50"
+			/>
 			<Input
 				id="email"
 				type="email"
@@ -95,7 +109,9 @@
 			Password
 		</Label>
 		<div class="relative">
-			<Lock class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground/50" />
+			<Lock
+				class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground/50"
+			/>
 			<Input
 				id="password"
 				type="password"
@@ -115,7 +131,11 @@
 	</div>
 
 	<div class="flex flex-col gap-3 pt-2">
-		<Button type="submit" class="h-11 w-full font-medium" disabled={isSubmitting}>
+		<Button
+			type="submit"
+			class="h-11 w-full font-medium"
+			disabled={isSubmitting}
+		>
 			{#if isSubmitting}
 				<Loader2 class="mr-2 h-4 w-4 animate-spin" />
 				Signing in...

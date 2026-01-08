@@ -1,4 +1,8 @@
-import type { DepotCreate, DepotUpdate, DepotWithLocationJoin } from '$lib/schemas/depot';
+import type {
+	DepotCreate,
+	DepotUpdate,
+	DepotWithLocationJoin
+} from '$lib/schemas/depot';
 import { apiClient } from './base';
 
 class DepotApiService {
@@ -26,7 +30,10 @@ class DepotApiService {
 	/**
 	 * Update a depot
 	 */
-	async update(depotId: string, data: DepotUpdate): Promise<DepotWithLocationJoin> {
+	async update(
+		depotId: string,
+		data: DepotUpdate
+	): Promise<DepotWithLocationJoin> {
 		return apiClient.patch<DepotWithLocationJoin>(`/depots/${depotId}`, data);
 	}
 

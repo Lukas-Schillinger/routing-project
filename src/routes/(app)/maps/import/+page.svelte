@@ -70,7 +70,8 @@
 		}));
 
 		const title =
-			importState.file?.name.replace('.csv', '') ?? `Map ${new Date().toLocaleDateString()}`;
+			importState.file?.name.replace('.csv', '') ??
+			`Map ${new Date().toLocaleDateString()}`;
 		const res = await mapApi.create({
 			title,
 			stops
@@ -104,14 +105,18 @@
 
 	// Derived states for button visibility and disabled states
 	const showBackButton = $derived(importState.step > 1);
-	const showNextButton = $derived(importState.step === 2 || importState.step === 3);
+	const showNextButton = $derived(
+		importState.step === 2 || importState.step === 3
+	);
 
 	const nextButtonDisabled = $derived(() => {
 		if (importState.step === 2) {
 			return !step2CanProceed || importState.isProcessing;
 		}
 		if (importState.step === 3) {
-			return step3ValidCount === 0 || step3IsImporting || importState.isProcessing;
+			return (
+				step3ValidCount === 0 || step3IsImporting || importState.isProcessing
+			);
 		}
 		return true;
 	});
@@ -180,7 +185,9 @@
 							class="flex h-8 w-8 items-center justify-center rounded-full border-2 text-sm font-medium transition-all duration-300
 								{isCompleted ? 'border-primary bg-primary text-primary-foreground' : ''}
 								{isCurrent ? 'border-primary bg-primary/10 text-primary' : ''}
-								{!isCompleted && !isCurrent ? 'border-muted bg-muted/50 text-muted-foreground' : ''}
+								{!isCompleted && !isCurrent
+								? 'border-muted bg-muted/50 text-muted-foreground'
+								: ''}
 								{isClickable ? 'group-hover:scale-105' : ''}"
 						>
 							{#if isCompleted}
@@ -204,7 +211,12 @@
 			<!-- Next/Import Button -->
 			<div class="flex w-20 justify-end">
 				{#if showNextButton}
-					<Button size="sm" onclick={handleNext} disabled={nextButtonDisabled()} class="gap-1.5">
+					<Button
+						size="sm"
+						onclick={handleNext}
+						disabled={nextButtonDisabled()}
+						class="gap-1.5"
+					>
 						{#if isProcessing}
 							<Loader2 class="h-4 w-4 animate-spin" />
 						{/if}
@@ -221,7 +233,12 @@
 	<!-- Step Content -->
 	{#if importState.step === 1}
 		<div class="space-y-6">
-			<Button class="w-full" onclick={createEmptyMap} variant="outline" disabled={isCreating}>
+			<Button
+				class="w-full"
+				onclick={createEmptyMap}
+				variant="outline"
+				disabled={isCreating}
+			>
 				{isCreating ? 'Creating...' : 'Create empty map'}
 			</Button>
 			<FileUploadStep bind:importState />

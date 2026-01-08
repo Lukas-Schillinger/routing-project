@@ -18,7 +18,11 @@
 			priceMonthly: '$8',
 			priceAnnual: '$36',
 			buttonText: 'get started',
-			features: ['up to 100 users', 'unlimited stops', 'unlimited optimizations']
+			features: [
+				'up to 100 users',
+				'unlimited stops',
+				'unlimited optimizations'
+			]
 		},
 		{
 			name: 'Enterprise',
@@ -36,7 +40,9 @@
 </script>
 
 <div class="pb-12">
-	<div class="text-center text-6xl font-medium tracking-tighter sm:text-7xl">plans & pricing</div>
+	<div class="text-center text-6xl font-medium tracking-tighter sm:text-7xl">
+		plans & pricing
+	</div>
 	<div class="px-0 py-4 text-center text-2xl font-extralight sm:px-18 md:px-36">
 		Find the right solution for your team.
 	</div>
@@ -53,7 +59,9 @@
 <div class="bg-texture border-x border-y sm:border-x-0">
 	<div class="grid gap-6 px-6 sm:grid-cols-3">
 		{#each plans as plan, index}
-			<div class="border-x bg-background p-6 even:bg-foreground even:text-primary-foreground">
+			<div
+				class="border-x bg-background p-6 even:bg-foreground even:text-primary-foreground"
+			>
 				<div class="font-serif text-4xl">{plan.name}</div>
 				<div class="pt-18 pb-12">
 					<span class="text-4xl md:text-5xl">
@@ -67,7 +75,9 @@
 					<Button
 						size="sm"
 						href="/auth/register"
-						class="w-full {index % 2 === 1 ? 'bg-background text-foreground' : ''}"
+						class="w-full {index % 2 === 1
+							? 'bg-background text-foreground'
+							: ''}"
 					>
 						{plan.buttonText}
 					</Button>
@@ -75,7 +85,10 @@
 				<div class="pt-8">
 					<ul class="">
 						{#each plan.features as feature}
-							<li class="flex items-center gap-2 py-1"><Check class="shrink-0" /> {feature}</li>
+							<li class="flex items-center gap-2 py-1">
+								<Check class="shrink-0" />
+								{feature}
+							</li>
 						{/each}
 					</ul>
 				</div>

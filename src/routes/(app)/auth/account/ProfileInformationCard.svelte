@@ -67,7 +67,8 @@
 <Card.Root>
 	<Card.Header>
 		<Card.Title>Profile Information</Card.Title>
-		<Card.Description>Manage your personal account information</Card.Description>
+		<Card.Description>Manage your personal account information</Card.Description
+		>
 	</Card.Header>
 	<Card.Content class="space-y-1">
 		<!-- Name (editable) -->
@@ -124,7 +125,9 @@
 		>
 			<div class="shrink-0 pb-2 md:pb-0">
 				<p class="text-sm font-medium">Password</p>
-				<p class="text-sm text-muted-foreground">Reset your password via email</p>
+				<p class="text-sm text-muted-foreground">
+					Reset your password via email
+				</p>
 			</div>
 			<Button
 				href="/auth/password-reset?email={encodeURIComponent(user.email)}"
@@ -136,10 +139,14 @@
 		</div>
 
 		<!-- Theme toggle -->
-		<div class="flex flex-col gap-1 py-4 md:flex-row md:items-center md:justify-between md:gap-4">
+		<div
+			class="flex flex-col gap-1 py-4 md:flex-row md:items-center md:justify-between md:gap-4"
+		>
 			<div class="shrink-0 pb-2 md:pb-0">
 				<p class="text-sm font-medium">Theme</p>
-				<p class="text-sm text-muted-foreground">Switch between light and dark mode</p>
+				<p class="text-sm text-muted-foreground">
+					Switch between light and dark mode
+				</p>
 			</div>
 			<Button onclick={toggleMode} variant="outline" size="sm">
 				<div class="relative">

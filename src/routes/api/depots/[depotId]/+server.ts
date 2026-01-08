@@ -15,7 +15,10 @@ export const GET: RequestHandler = async ({ params }) => {
 	const { depotId } = params;
 
 	try {
-		const depotWithLocation = await depotService.getDepotById(depotId, user.organization_id);
+		const depotWithLocation = await depotService.getDepotById(
+			depotId,
+			user.organization_id
+		);
 		return json(depotWithLocation);
 	} catch (err) {
 		handleApiError(err, 'Failed to fetch depot');
@@ -50,7 +53,10 @@ export const DELETE: RequestHandler = async ({ params }) => {
 	const { depotId } = params;
 
 	try {
-		const result = await depotService.deleteDepot(depotId, user.organization_id);
+		const result = await depotService.deleteDepot(
+			depotId,
+			user.organization_id
+		);
 		return json(result);
 	} catch (err) {
 		handleApiError(err, 'Failed to delete depot');

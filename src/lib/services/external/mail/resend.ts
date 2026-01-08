@@ -27,7 +27,9 @@ export class ResendClient {
 	constructor(apiKey?: string) {
 		const key = apiKey || env.RESEND_API_KEY;
 		if (!key) {
-			throw new Error('Resend API key is required. Set RESEND_API_KEY environment variable.');
+			throw new Error(
+				'Resend API key is required. Set RESEND_API_KEY environment variable.'
+			);
 		}
 		this.resend = new Resend(key);
 	}
@@ -98,7 +100,11 @@ export class ResendClient {
 		await invitationService.setMailRecordId(invitation.id, mailRecordId);
 	}
 
-	private async renderLoginEmail(login_url: string, token: string, isWelcome?: boolean) {
+	private async renderLoginEmail(
+		login_url: string,
+		token: string,
+		isWelcome?: boolean
+	) {
 		if (isWelcome) {
 			return renderClient.renderConfirmEmail({ login_url, token });
 		}
@@ -116,7 +122,9 @@ export class ResendClient {
 	): Promise<void> {
 		const login_url = `${origin}/auth/redeem/password-reset?token=${token}&email=${encodeURIComponent(email)}`;
 
-		const { html, text } = await renderClient.renderPasswordReset({ login_url });
+		const { html, text } = await renderClient.renderPasswordReset({
+			login_url
+		});
 
 		const mailRecordId = await this.sendEmail({
 			organizationId: loginToken.organization_id,

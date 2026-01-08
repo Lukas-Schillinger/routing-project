@@ -6,7 +6,10 @@
 	import JSONData from './landing-data.json';
 	import RouteAnimation from './RouteAnimation.svelte';
 
-	const data = JSONData as unknown as { route: Route; stops: StopWithLocation[] };
+	const data = JSONData as unknown as {
+		route: Route;
+		stops: StopWithLocation[];
+	};
 </script>
 
 <div
@@ -17,11 +20,14 @@
 	<div>start <span class="italic">to</span> finish</div>
 </div>
 <div class="px-0 py-4 text-center text-2xl font-extralight sm:px-18 md:px-36">
-	Multi stop route optimization in seconds. Share routes with your team and track progress in
-	real-time.
+	Multi stop route optimization in seconds. Share routes with your team and
+	track progress in real-time.
 </div>
 <div class="flex justify-center">
-	<Button class="flex justify-between gap-8 bg-foreground" href="/auth/register">
+	<Button
+		class="flex justify-between gap-8 bg-foreground"
+		href="/auth/register"
+	>
 		Start your first map
 		<ArrowRight />
 	</Button>

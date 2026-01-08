@@ -14,8 +14,12 @@
 		return formatDate(dateObj);
 	};
 
-	const created = $derived(item?.created_at ? formatTimestamp(item.created_at) : null);
-	const updated = $derived(item?.updated_at ? formatTimestamp(item.updated_at) : null);
+	const created = $derived(
+		item?.created_at ? formatTimestamp(item.created_at) : null
+	);
+	const updated = $derived(
+		item?.updated_at ? formatTimestamp(item.updated_at) : null
+	);
 </script>
 
 {#if created || updated}

@@ -8,9 +8,18 @@ describe('Login Page Component Logic', () => {
 		// Test the email validation regex that would be used in the component
 		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-		const validEmails = ['test@example.com', 'user.name@domain.co.uk', 'test+tag@example.org'];
+		const validEmails = [
+			'test@example.com',
+			'user.name@domain.co.uk',
+			'test+tag@example.org'
+		];
 
-		const invalidEmails = ['notanemail', '@domain.com', 'user@', 'user name@domain.com'];
+		const invalidEmails = [
+			'notanemail',
+			'@domain.com',
+			'user@',
+			'user name@domain.com'
+		];
 
 		validEmails.forEach((email) => {
 			expect(emailRegex.test(email)).toBe(true);

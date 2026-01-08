@@ -6,7 +6,9 @@
 
 <section class="pt-16">
 	<div class="max-w-7xl md:mx-auto md:px-4 md:pb-32">
-		<div class="relative aspect-[3/4] overflow-hidden md:aspect-auto md:rounded-xl">
+		<div
+			class="relative aspect-[3/4] overflow-hidden md:aspect-auto md:rounded-xl"
+		>
 			<!-- Background Image -->
 			<CloudflareImage
 				class="absolute inset-0 h-full w-full object-cover md:relative md:h-auto md:w-full"
@@ -20,7 +22,9 @@
 				class="absolute inset-x-0 top-0 flex min-h-[60%] flex-col items-center justify-center px-6 py-16 text-center text-amber-400 md:px-12 md:py-24"
 			>
 				<!-- Eyebrow -->
-				<p class="text-amber/70 mb-4 text-sm font-medium tracking-[0.2em] uppercase">
+				<p
+					class="text-amber/70 mb-4 text-sm font-medium tracking-[0.2em] uppercase"
+				>
 					Get started today
 				</p>
 
@@ -35,11 +39,14 @@
 				<p
 					class="text-amber/80 mx-auto mt-6 hidden max-w-xl text-base leading-relaxed font-semibold sm:block md:text-lg"
 				>
-					Join hundreds of delivery teams who save hours every day with intelligent route planning.
+					Join hundreds of delivery teams who save hours every day with
+					intelligent route planning.
 				</p>
 
 				<!-- CTA Buttons -->
-				<div class="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
+				<div
+					class="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row"
+				>
 					<Button
 						href="/signup"
 						size="lg"

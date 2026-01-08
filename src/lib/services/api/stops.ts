@@ -1,4 +1,8 @@
-import type { CreateStop, StopWithLocation, UpdateStop } from '$lib/schemas/stop';
+import type {
+	CreateStop,
+	StopWithLocation,
+	UpdateStop
+} from '$lib/schemas/stop';
 import { apiClient } from './base';
 
 class StopApiService {

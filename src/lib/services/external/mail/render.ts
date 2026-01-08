@@ -42,7 +42,9 @@ export class RenderClient {
 	private get token(): string {
 		const token = env.RENDER_TOKEN_WEND;
 		if (!token) {
-			throw new Error('Render token is required. Set RENDER_TOKEN_WEND environment variable.');
+			throw new Error(
+				'Render token is required. Set RENDER_TOKEN_WEND environment variable.'
+			);
 		}
 		return token;
 	}
@@ -59,14 +61,20 @@ export class RenderClient {
 
 		if (!response.ok) {
 			const error = await response.json().catch(() => ({}));
-			throw new RenderApiError(`Render API error: ${response.statusText}`, response.status, error);
+			throw new RenderApiError(
+				`Render API error: ${response.statusText}`,
+				response.status,
+				error
+			);
 		}
 
 		const data: RenderResponse = await response.json();
 
 		if (!data.success) {
 			throw new RenderApiError(
-				typeof data.error === 'string' ? data.error : 'Render service returned an error',
+				typeof data.error === 'string'
+					? data.error
+					: 'Render service returned an error',
 				undefined,
 				data.error
 			);

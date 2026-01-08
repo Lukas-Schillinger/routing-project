@@ -16,7 +16,11 @@ export const POST: RequestHandler = async ({ request }) => {
 		const body = await request.json();
 		const validatedData = createStopSchema.parse(body);
 
-		const stop = await stopService.createStop(validatedData, user.organization_id, user.id);
+		const stop = await stopService.createStop(
+			validatedData,
+			user.organization_id,
+			user.id
+		);
 
 		return json(stop, { status: 201 });
 	} catch (err) {

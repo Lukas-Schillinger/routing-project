@@ -32,7 +32,9 @@ class MapboxDistanceMatrixService {
 	 * @param coordinatesData - Pre-fetched coordinates, addresses, and location IDs
 	 * @returns Distance matrix with depot first, followed by stops
 	 */
-	async createDistanceMatrix(coordinatesData: CoordinatesData): Promise<DistanceMatrixResult> {
+	async createDistanceMatrix(
+		coordinatesData: CoordinatesData
+	): Promise<DistanceMatrixResult> {
 		const { coordinates, locationIds } = coordinatesData;
 
 		// Validate coordinate count (Mapbox limit: 2-25 for most profiles, 2-10 for driving-traffic)
@@ -46,11 +48,15 @@ class MapboxDistanceMatrixService {
 		}
 
 		if (coordinates.length < 2) {
-			throw ServiceError.validation('At least 2 locations required (depot + 1 stop minimum)');
+			throw ServiceError.validation(
+				'At least 2 locations required (depot + 1 stop minimum)'
+			);
 		}
 
 		// Build request
-		const coordinatesParam = coordinates.map(([lon, lat]) => `${lon},${lat}`).join(';');
+		const coordinatesParam = coordinates
+			.map(([lon, lat]) => `${lon},${lat}`)
+			.join(';');
 		const endpoint = `/directions-matrix/v1/${profile}/${coordinatesParam}`;
 
 		const params: Record<string, string> = {
@@ -70,7 +76,9 @@ class MapboxDistanceMatrixService {
 		}
 
 		if (!validatedResponse.durations) {
-			throw ServiceError.internal('Mapbox Matrix API returned no distance or duration data');
+			throw ServiceError.internal(
+				'Mapbox Matrix API returned no distance or duration data'
+			);
 		}
 
 		return {

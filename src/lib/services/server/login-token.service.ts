@@ -11,7 +11,10 @@ import { userService } from './user.service';
 const LOGIN_TOKEN_DURATION_HOURS = 0.25; // 15 minutes
 
 export class LoginTokenService {
-	async getLoginTokenFromToken(token: string, email: string): Promise<LoginToken | null> {
+	async getLoginTokenFromToken(
+		token: string,
+		email: string
+	): Promise<LoginToken | null> {
 		const hashed = TokenUtils.hash(token);
 
 		// First find user by email to get their ID
@@ -23,7 +26,12 @@ export class LoginTokenService {
 		const [loginToken] = await db
 			.select()
 			.from(loginTokens)
-			.where(and(eq(loginTokens.token_hash, hashed), eq(loginTokens.user_id, user.id)))
+			.where(
+				and(
+					eq(loginTokens.token_hash, hashed),
+					eq(loginTokens.user_id, user.id)
+				)
+			)
 			.limit(1);
 
 		if (!loginToken) {
@@ -37,14 +45,17 @@ export class LoginTokenService {
 		loginTokenData: z.input<typeof createLoginTokenSchema>
 	): Promise<{ loginToken: LoginToken; token: string }> {
 		// Check if user exists
-		const existingUser = await userService.findAnyUserByEmail(loginTokenData.email);
+		const existingUser = await userService.findAnyUserByEmail(
+			loginTokenData.email
+		);
 		if (!existingUser) {
 			throw ServiceError.notFound('User with that email could not be found');
 		}
 
 		const token = TokenUtils.generateOTP();
 		const tokenHash = TokenUtils.hash(token);
-		const duration = loginTokenData.token_duration_hours ?? LOGIN_TOKEN_DURATION_HOURS;
+		const duration =
+			loginTokenData.token_duration_hours ?? LOGIN_TOKEN_DURATION_HOURS;
 
 		const [loginToken] = await db
 			.insert(loginTokens)
@@ -71,12 +82,18 @@ export class LoginTokenService {
 			throw ServiceError.forbidden('Login token expired');
 		}
 
-		const user = await userService.getPublicUser(loginToken.user_id, loginToken.organization_id);
+		const user = await userService.getPublicUser(
+			loginToken.user_id,
+			loginToken.organization_id
+		);
 
 		return user;
 	}
 
-	async setMailRecordId(loginTokenId: string, mailRecordId: string): Promise<void> {
+	async setMailRecordId(
+		loginTokenId: string,
+		mailRecordId: string
+	): Promise<void> {
 		await db
 			.update(loginTokens)
 			.set({ mail_record_id: mailRecordId })

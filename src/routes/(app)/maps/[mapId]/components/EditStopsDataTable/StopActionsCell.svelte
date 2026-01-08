@@ -50,14 +50,22 @@
 </script>
 
 <TableActionsDropdown>
-	<EditOrCreateStopPopover mode="edit" triggerClass="w-full" {stop} onSuccess={handleStopUpdate}>
+	<EditOrCreateStopPopover
+		mode="edit"
+		triggerClass="w-full"
+		{stop}
+		onSuccess={handleStopUpdate}
+	>
 		<DropdownMenuItem onSelect={(e) => e.preventDefault()} class="w-full">
 			<Pencil />
 			Edit
 		</DropdownMenuItem>
 	</EditOrCreateStopPopover>
 	<Actions.Copy onclick={handleCopyId} label="Copy ID" />
-	<Actions.Zoom onclick={() => (onZoomToStop ? onZoomToStop(stop.stop.id) : '')} label="Zoom to" />
+	<Actions.Zoom
+		onclick={() => (onZoomToStop ? onZoomToStop(stop.stop.id) : '')}
+		label="Zoom to"
+	/>
 	<Actions.Delete onclick={handleDelete} />
 	<Actions.MetadataLabel item={stop.stop} />
 </TableActionsDropdown>

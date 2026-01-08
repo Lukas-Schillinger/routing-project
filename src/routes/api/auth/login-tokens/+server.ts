@@ -11,10 +11,16 @@ export const POST: RequestHandler = async ({ request, url }) => {
 
 		try {
 			// Create login token db entry (service checks if user exists)
-			const { loginToken, token } = await loginTokenService.createLoginToken(loginTokenData);
+			const { loginToken, token } =
+				await loginTokenService.createLoginToken(loginTokenData);
 
 			// Send OTP code and login link via email
-			await mailService.sendLoginEmail(loginToken, loginTokenData.email, token, url.origin);
+			await mailService.sendLoginEmail(
+				loginToken,
+				loginTokenData.email,
+				token,
+				url.origin
+			);
 		} catch (err) {
 			// If user not found, return 204 to prevent email enumeration
 			if (err instanceof ServiceError && err.statusCode === 404) {

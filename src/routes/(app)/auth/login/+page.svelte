@@ -11,7 +11,9 @@
 
 	// Registration flow: ?confirm=true&email=... (shows OTP entry with confirmation message)
 	// Normal login: no params (shows password login)
-	const isRegistrationFlow = $derived($page.url.searchParams.get('confirm') === 'true');
+	const isRegistrationFlow = $derived(
+		$page.url.searchParams.get('confirm') === 'true'
+	);
 	const emailParam = $derived($page.url.searchParams.get('email') ?? '');
 
 	// Default to magic login - passwords are optional so email login is primary
@@ -26,7 +28,8 @@
 	// Derive active login method from debug state or user selection
 	const loginMethod = $derived.by(() => {
 		if (debugState === 'password') return 'password';
-		if (debugState === 'magic-email' || debugState === 'magic-otp') return 'magic';
+		if (debugState === 'magic-email' || debugState === 'magic-otp')
+			return 'magic';
 		return userLoginMethod;
 	});
 
@@ -43,7 +46,9 @@
 	const debugMagicError = $derived(
 		debugShowError ? 'Error sending login code. Please try again.' : null
 	);
-	const debugSuccess = $derived(debugShowSuccess ? 'Check your inbox for a login code' : null);
+	const debugSuccess = $derived(
+		debugShowSuccess ? 'Check your inbox for a login code' : null
+	);
 	const debugOtpSent = $derived(debugState === 'magic-otp');
 	const debugFormMessage = $derived(
 		debugState === 'password' && debugShowError ? debugError : null
@@ -75,7 +80,9 @@
 				onBack={() => (userLoginMethod = 'password')}
 				debugOtpSent={debugState ? debugOtpSent : undefined}
 				debugError={debugState && debugShowError ? debugMagicError : undefined}
-				debugSuccess={debugState === 'magic-otp' && debugShowSuccess ? debugSuccess : undefined}
+				debugSuccess={debugState === 'magic-otp' && debugShowSuccess
+					? debugSuccess
+					: undefined}
 				debugEmail={debugState ? 'user@example.com' : emailParam || undefined}
 				initialEmail={emailParam}
 				initialOtpSent={isRegistrationFlow}

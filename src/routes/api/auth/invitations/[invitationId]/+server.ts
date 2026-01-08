@@ -8,7 +8,10 @@ export const DELETE: RequestHandler = async ({ params }) => {
 	try {
 		const user = requirePermissionApi('users:delete');
 
-		await invitationService.deleteInvitation(params.invitationId, user.organization_id);
+		await invitationService.deleteInvitation(
+			params.invitationId,
+			user.organization_id
+		);
 		return json({ success: true });
 	} catch (err) {
 		handleApiError(err, 'Failed to delete invitation');

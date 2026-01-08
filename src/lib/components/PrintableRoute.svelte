@@ -18,10 +18,14 @@
 	let { route, stops, driver, map, mapsProvider = 'google' }: Props = $props();
 
 	const sortedStops = $derived(
-		[...stops].sort((a, b) => (a.stop.delivery_index || 0) - (b.stop.delivery_index || 0))
+		[...stops].sort(
+			(a, b) => (a.stop.delivery_index || 0) - (b.stop.delivery_index || 0)
+		)
 	);
 
-	const totalDurationMinutes = $derived(Math.floor(Number(route.duration) / 60));
+	const totalDurationMinutes = $derived(
+		Math.floor(Number(route.duration) / 60)
+	);
 
 	function getDirectionsUrl(lat: number, lon: number): string {
 		const destination = { lat, lng: lon };
@@ -42,7 +46,9 @@
 
 <article class="route-page bg-white text-black">
 	<!-- Route Header -->
-	<header class="mb-4 flex items-start justify-between border-b-2 border-black pb-3">
+	<header
+		class="mb-4 flex items-start justify-between border-b-2 border-black pb-3"
+	>
 		<div class="flex gap-4">
 			<img
 				class="size-18"
@@ -59,14 +65,19 @@
 		<div class="text-right text-base">
 			<p class="m-0"><strong>Date:</strong> {formatDate(route.updated_at)}</p>
 			<p class="m-0"><strong>Stops:</strong> {sortedStops.length}</p>
-			<p class="m-0"><strong>Est. Duration:</strong> {totalDurationMinutes} min</p>
+			<p class="m-0">
+				<strong>Est. Duration:</strong>
+				{totalDurationMinutes} min
+			</p>
 		</div>
 	</header>
 
 	<!-- Stops List -->
 	<ol class="m-0 list-none p-0">
 		{#each sortedStops as { stop, location }, index}
-			<li class="stop-item flex items-start gap-3 border-b border-gray-300 py-2.5">
+			<li
+				class="stop-item flex items-start gap-3 border-b border-gray-300 py-2.5"
+			>
 				<div
 					class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border bg-black text-lg font-bold text-white"
 				>
@@ -80,7 +91,9 @@
 							<p class="m-0 text-gray-600">{location.address_line_2}</p>
 						{/if}
 						<p class="text-base text-gray-500">
-							{[location.city, location.region, location.postal_code].filter(Boolean).join(', ')}
+							{[location.city, location.region, location.postal_code]
+								.filter(Boolean)
+								.join(', ')}
 						</p>
 					</div>
 
@@ -96,7 +109,9 @@
 					{/if}
 
 					{#if stop.notes}
-						<div class="mt-1 border-l-2 border-gray-400 bg-gray-100 px-2 py-1 text-sm italic">
+						<div
+							class="mt-1 border-l-2 border-gray-400 bg-gray-100 px-2 py-1 text-sm italic"
+						>
 							<p class="m-0">{stop.notes}</p>
 						</div>
 					{/if}

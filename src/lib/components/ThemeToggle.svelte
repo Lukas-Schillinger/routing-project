@@ -5,7 +5,10 @@
 	import { mode, toggleMode } from 'mode-watcher';
 	import type { Snippet } from 'svelte';
 
-	let { variant = 'default', children }: { variant?: ButtonVariant; children?: Snippet } = $props();
+	let {
+		variant = 'default',
+		children
+	}: { variant?: ButtonVariant; children?: Snippet } = $props();
 </script>
 
 <Button

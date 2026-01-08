@@ -12,7 +12,16 @@
 	import { ServiceError } from '$lib/errors';
 	import { mapApi } from '$lib/services/api';
 	import { formatPhoneNumber, getIdenticon } from '$lib/utils';
-	import { Copy, Ellipsis, Pencil, Phone, Plus, Trash2, Truck, UserPlus } from 'lucide-svelte';
+	import {
+		Copy,
+		Ellipsis,
+		Pencil,
+		Phone,
+		Plus,
+		Trash2,
+		Truck,
+		UserPlus
+	} from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
 	let {
@@ -33,7 +42,9 @@
 	// Get available drivers (non-temporary, not already assigned)
 	const availableDrivers = $derived.by(() => {
 		const assignedDriverIds = new Set(assignedDrivers.map((d) => d.id));
-		return allDrivers.filter((driver) => !driver.temporary && !assignedDriverIds.has(driver.id));
+		return allDrivers.filter(
+			(driver) => !driver.temporary && !assignedDriverIds.has(driver.id)
+		);
 	});
 
 	async function addExistingDriver(driverId: string) {
@@ -46,7 +57,8 @@
 			await invalidateAll();
 			addPopoverOpen = false;
 		} catch (err) {
-			const message = err instanceof ServiceError ? err.message : 'Failed to assign driver';
+			const message =
+				err instanceof ServiceError ? err.message : 'Failed to assign driver';
 			toast.error('Error adding driver', { description: message });
 		} finally {
 			localIsLoading = false;
@@ -69,7 +81,11 @@
 	<div class="flex items-center justify-between border-b border-border/50 py-3">
 		<div class="flex items-center gap-1.5 text-sm text-muted-foreground">
 			<Truck class="h-3.5 w-3.5" />
-			<span>{assignedDrivers.length} driver{assignedDrivers.length !== 1 ? 's' : ''}</span>
+			<span
+				>{assignedDrivers.length} driver{assignedDrivers.length !== 1
+					? 's'
+					: ''}</span
+			>
 		</div>
 
 		<Popover.Root bind:open={addPopoverOpen}>
@@ -83,7 +99,10 @@
 			</Popover.Trigger>
 			<Popover.Content class="w-[260px] p-0" align="end">
 				<Command.Root>
-					<Command.Input placeholder="Search existing drivers..." disabled={localIsLoading} />
+					<Command.Input
+						placeholder="Search existing drivers..."
+						disabled={localIsLoading}
+					/>
 					<Command.Empty>No drivers found.</Command.Empty>
 					{#if availableDrivers.length > 0}
 						<Command.Group heading="Existing Drivers">
@@ -95,7 +114,10 @@
 								>
 									<div class="flex items-center gap-2">
 										<Avatar.Root class="h-6 w-6">
-											<Avatar.Image src={getIdenticon(driver)} alt={driver.name} />
+											<Avatar.Image
+												src={getIdenticon(driver)}
+												alt={driver.name}
+											/>
 											<Avatar.Fallback class="text-xs">
 												{driver.name.slice(0, 2).toUpperCase()}
 											</Avatar.Fallback>
@@ -108,7 +130,11 @@
 					{/if}
 					<Command.Separator />
 					<Command.Group heading="Create New">
-						<EditOrCreateDriverPopover mode="create" {mapId} onSuccess={handleDriverCreated}>
+						<EditOrCreateDriverPopover
+							mode="create"
+							{mapId}
+							onSuccess={handleDriverCreated}
+						>
 							{#snippet children({ props })}
 								<button
 									{...props}
@@ -152,7 +178,9 @@
 						<Truck />
 					</Empty.Media>
 					<Empty.Title>No drivers yet</Empty.Title>
-					<Empty.Description>Add your first driver to get started</Empty.Description>
+					<Empty.Description
+						>Add your first driver to get started</Empty.Description
+					>
 				</Empty.Header>
 			</Empty.Root>
 		{:else}
@@ -171,7 +199,9 @@
 						<div class="flex items-center gap-2">
 							<p class="truncate text-sm font-medium">{driver.name}</p>
 							{#if driver.temporary}
-								<Badge variant="secondary" class="h-4 px-1 text-[10px]">Temp</Badge>
+								<Badge variant="secondary" class="h-4 px-1 text-[10px]"
+									>Temp</Badge
+								>
 							{/if}
 						</div>
 						{#if driver.phone}
@@ -214,7 +244,10 @@
 								Copy ID
 							</DropdownMenu.Item>
 							<DropdownMenu.Separator />
-							<DropdownMenu.Item class="text-destructive" onclick={() => onRemoveDriver(driver.id)}>
+							<DropdownMenu.Item
+								class="text-destructive"
+								onclick={() => onRemoveDriver(driver.id)}
+							>
 								<Trash2 class="mr-2 h-4 w-4" />
 								Remove
 							</DropdownMenu.Item>

@@ -31,7 +31,9 @@
 	let containerWidth = $state(browser ? window.innerWidth : 1200);
 
 	// Calculate min sizes as percentages based on pixel values
-	const sidebarMinSize = $derived(Math.ceil((SIDEBAR_MIN_PX / containerWidth) * 100));
+	const sidebarMinSize = $derived(
+		Math.ceil((SIDEBAR_MIN_PX / containerWidth) * 100)
+	);
 	const mapMinSize = $derived(Math.ceil((MAP_MIN_PX / containerWidth) * 100));
 
 	// Pane component reference
@@ -134,9 +136,20 @@
 	</div>
 {:else}
 	<!-- Desktop Layout: Resizable Split-pane -->
-	<div bind:this={containerRef} class="h-[85vh]" style:min-height="{LAYOUT_MIN_HEIGHT_PX}px">
-		<Resizable.PaneGroup direction="horizontal" class="h-full" onLayoutChange={handleLayoutChange}>
-			<Resizable.Pane defaultSize={savedLayout?.[0] ?? 100 - SIDEBAR_DEFAULT} minSize={mapMinSize}>
+	<div
+		bind:this={containerRef}
+		class="h-[85vh]"
+		style:min-height="{LAYOUT_MIN_HEIGHT_PX}px"
+	>
+		<Resizable.PaneGroup
+			direction="horizontal"
+			class="h-full"
+			onLayoutChange={handleLayoutChange}
+		>
+			<Resizable.Pane
+				defaultSize={savedLayout?.[0] ?? 100 - SIDEBAR_DEFAULT}
+				minSize={mapMinSize}
+			>
 				<div class="@container relative h-full">
 					{@render children()}
 

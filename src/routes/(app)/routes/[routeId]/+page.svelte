@@ -94,7 +94,9 @@
 
 	// Sort stops by delivery order
 	const sortedStops = $derived(
-		stops.sort((a, b) => (a.stop.delivery_index || 0) - (b.stop.delivery_index || 0))
+		stops.sort(
+			(a, b) => (a.stop.delivery_index || 0) - (b.stop.delivery_index || 0)
+		)
 	);
 
 	// Current stop for mobile view
@@ -151,8 +153,12 @@
 </script>
 
 <svelte:head>
-	<title>{driver?.name || 'Driver'} Route - {map.title} | Routing Project</title>
-	<meta name="description" content="View route for {driver?.name || 'driver'} in {map.title}" />
+	<title>{driver?.name || 'Driver'} Route - {map.title} | Routing Project</title
+	>
+	<meta
+		name="description"
+		content="View route for {driver?.name || 'driver'} in {map.title}"
+	/>
 </svelte:head>
 
 <div class="flex h-[100svh] flex-col">
@@ -168,7 +174,9 @@
 						</Avatar.Root>
 						<div>
 							<h1 class="text-lg font-semibold">{driver.name}</h1>
-							<div class="flex items-center gap-2 text-sm text-muted-foreground">
+							<div
+								class="flex items-center gap-2 text-sm text-muted-foreground"
+							>
 								<Map class="size-4" />
 								<span>{map.title}</span>
 							</div>
@@ -252,7 +260,9 @@
 
 			<!-- Side Panel -->
 			{#if showPanel}
-				<div class="flex w-96 flex-shrink-0 flex-col overflow-hidden bg-muted/30">
+				<div
+					class="flex w-96 flex-shrink-0 flex-col overflow-hidden bg-muted/30"
+				>
 					<!-- Current Stop Panel -->
 					<CurrentStopPanel
 						stop={selectedStop}

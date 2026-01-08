@@ -74,7 +74,8 @@
 			resetForm();
 		} catch (err) {
 			console.error('Error creating invitation:', err);
-			error = err instanceof Error ? err.message : 'An unexpected error occurred';
+			error =
+				err instanceof Error ? err.message : 'An unexpected error occurred';
 		} finally {
 			isSubmitting = false;
 		}
@@ -111,17 +112,26 @@
 			required
 			autocomplete="email"
 		/>
-		<p class="text-xs text-muted-foreground">The invitation will be sent to this email address</p>
+		<p class="text-xs text-muted-foreground">
+			The invitation will be sent to this email address
+		</p>
 	</div>
 	<div class="space-y-2">
 		<Label for="invite-role">Role</Label>
-		<Select.Root type="single" value={role} onValueChange={(value) => (role = value)}>
+		<Select.Root
+			type="single"
+			value={role}
+			onValueChange={(value) => (role = value)}
+		>
 			<Select.Trigger class="h-7 w-full">
 				{role ? role : 'select role'}
 			</Select.Trigger>
 			<Select.Content>
 				{#each roleDescriptions as role}
-					<Select.Item value={role.name} class="flex flex-col items-start gap-1">
+					<Select.Item
+						value={role.name}
+						class="flex flex-col items-start gap-1"
+					>
 						<div class="text-sm">{role.name}</div>
 						<div class="text-xs text-muted-foreground">
 							{role.desc}
@@ -142,7 +152,11 @@
 		>
 			Cancel
 		</Button>
-		<Button type="submit" class="flex-1" disabled={isSubmitting || !email.trim()}>
+		<Button
+			type="submit"
+			class="flex-1"
+			disabled={isSubmitting || !email.trim()}
+		>
 			{#if isSubmitting}
 				<LoaderCircle class="mr-2 h-4 w-4 animate-spin" />
 				Sending...

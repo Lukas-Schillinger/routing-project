@@ -16,7 +16,10 @@
 	<title>Create account - Wend</title>
 </svelte:head>
 
-<AuthCard title="Create your account" description="Start optimizing your routes today">
+<AuthCard
+	title="Create your account"
+	description="Start optimizing your routes today"
+>
 	{#snippet children()}
 		<div class="space-y-6">
 			<AuthAlert message={form?.message} />
@@ -101,7 +104,11 @@
 				</div>
 
 				<div class="pt-2">
-					<Button type="submit" class="h-11 w-full font-medium" disabled={isSubmitting}>
+					<Button
+						type="submit"
+						class="h-11 w-full font-medium"
+						disabled={isSubmitting}
+					>
 						{#if isSubmitting}
 							<Loader2 class="mr-2 h-4 w-4 animate-spin" />
 							Creating account...

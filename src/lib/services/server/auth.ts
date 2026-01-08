@@ -27,9 +27,10 @@ export async function createSession(token: string, userId: string) {
 	return session;
 }
 
-export async function validateSessionToken(
-	token: string
-): Promise<{ session: typeof table.session.$inferSelect | null; user: PublicUser | null }> {
+export async function validateSessionToken(token: string): Promise<{
+	session: typeof table.session.$inferSelect | null;
+	user: PublicUser | null;
+}> {
 	const sessionId = encodeHexLowerCase(sha256(new TextEncoder().encode(token)));
 	const [result] = await db
 		.select({
@@ -61,7 +62,8 @@ export async function validateSessionToken(
 		return { session: null, user: null };
 	}
 
-	const renewSession = Date.now() >= session.expires_at.getTime() - DAY_IN_MS * 15;
+	const renewSession =
+		Date.now() >= session.expires_at.getTime() - DAY_IN_MS * 15;
 	if (renewSession) {
 		session.expires_at = new Date(Date.now() + DAY_IN_MS * 30);
 		await db
@@ -73,13 +75,19 @@ export async function validateSessionToken(
 	return { session, user };
 }
 
-export type SessionValidationResult = Awaited<ReturnType<typeof validateSessionToken>>;
+export type SessionValidationResult = Awaited<
+	ReturnType<typeof validateSessionToken>
+>;
 
 export async function invalidateSession(sessionId: string) {
 	await db.delete(table.session).where(eq(table.session.id, sessionId));
 }
 
-export function setSessionTokenCookie(event: RequestEvent, token: string, expiresAt: Date) {
+export function setSessionTokenCookie(
+	event: RequestEvent,
+	token: string,
+	expiresAt: Date
+) {
 	event.cookies.set(sessionCookieName, token, {
 		expires: expiresAt,
 		path: '/',

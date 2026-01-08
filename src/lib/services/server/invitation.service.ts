@@ -1,4 +1,9 @@
-import type { CreateInvitation, Invitation, MailRecord, PublicUser } from '$lib/schemas';
+import type {
+	CreateInvitation,
+	Invitation,
+	MailRecord,
+	PublicUser
+} from '$lib/schemas';
 import { db } from '$lib/server/db';
 import { invitations, mailRecords } from '$lib/server/db/schema';
 import { and, eq } from 'drizzle-orm';
@@ -9,11 +14,19 @@ import { userService } from './user.service';
 const INVITATION_DURATION_HOURS = 720; // 30 days
 
 export class InvitationService {
-	async getInvitation(invitationId: string, organizationId: string): Promise<Invitation> {
+	async getInvitation(
+		invitationId: string,
+		organizationId: string
+	): Promise<Invitation> {
 		const [invitation] = await db
 			.select()
 			.from(invitations)
-			.where(and(eq(invitations.id, invitationId), eq(invitations.organization_id, organizationId)))
+			.where(
+				and(
+					eq(invitations.id, invitationId),
+					eq(invitations.organization_id, organizationId)
+				)
+			)
 			.limit(1);
 
 		if (!invitation) {
@@ -23,7 +36,10 @@ export class InvitationService {
 	}
 
 	async getInvitations(organizationId: string): Promise<Invitation[]> {
-		return db.select().from(invitations).where(eq(invitations.organization_id, organizationId));
+		return db
+			.select()
+			.from(invitations)
+			.where(eq(invitations.organization_id, organizationId));
 	}
 
 	async getInvitationsWithMailRecord(
@@ -45,13 +61,18 @@ export class InvitationService {
 		return { success: true };
 	}
 
-	async getInvitationFromToken(token: string, email: string): Promise<Invitation | null> {
+	async getInvitationFromToken(
+		token: string,
+		email: string
+	): Promise<Invitation | null> {
 		const hashed = TokenUtils.hash(token);
 
 		const [invitation] = await db
 			.select()
 			.from(invitations)
-			.where(and(eq(invitations.token_hash, hashed), eq(invitations.email, email)))
+			.where(
+				and(eq(invitations.token_hash, hashed), eq(invitations.email, email))
+			)
 			.limit(1);
 
 		if (!invitation) {
@@ -67,7 +88,9 @@ export class InvitationService {
 		userId: string
 	): Promise<{ invitation: Invitation; token: string }> {
 		// Check if user with this email already exists
-		const existingUser = await userService.findAnyUserByEmail(invitationData.email);
+		const existingUser = await userService.findAnyUserByEmail(
+			invitationData.email
+		);
 		if (existingUser) {
 			throw ServiceError.conflict('A user with this email already exists');
 		}
@@ -79,7 +102,9 @@ export class InvitationService {
 			.where(eq(invitations.email, invitationData.email))
 			.limit(1);
 		if (existingInvite) {
-			throw ServiceError.conflict('An invitation has already been sent to this email');
+			throw ServiceError.conflict(
+				'An invitation has already been sent to this email'
+			);
 		}
 
 		const token = TokenUtils.generateOTP();
@@ -139,7 +164,10 @@ export class InvitationService {
 		});
 	}
 
-	async setMailRecordId(invitationId: string, mailRecordId: string): Promise<void> {
+	async setMailRecordId(
+		invitationId: string,
+		mailRecordId: string
+	): Promise<void> {
 		await db
 			.update(invitations)
 			.set({ mail_record_id: mailRecordId })

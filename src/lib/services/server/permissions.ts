@@ -25,7 +25,12 @@ export const rolePermissions: Record<Role, Permission[]> = {
 		'resources:delete',
 		'routes:read'
 	],
-	member: ['resources:read', 'resources:create', 'resources:update', 'routes:read'],
+	member: [
+		'resources:read',
+		'resources:create',
+		'resources:update',
+		'routes:read'
+	],
 	viewer: ['resources:read', 'routes:read'],
 	driver: ['routes:read']
 };
@@ -69,7 +74,10 @@ export function requirePermission(permission: Permission): PublicUser {
 	const user = request.locals.user as PublicUser;
 
 	if (!hasPermission(user.role, permission)) {
-		throw error(403, { code: 'FORBIDDEN', message: 'Insufficient permissions' });
+		throw error(403, {
+			code: 'FORBIDDEN',
+			message: 'Insufficient permissions'
+		});
 	}
 
 	return user;
@@ -87,7 +95,10 @@ export function requirePermissionApi(permission: Permission): PublicUser {
 	const user = request.locals.user as PublicUser;
 
 	if (!hasPermission(user.role, permission)) {
-		throw error(403, { code: 'FORBIDDEN', message: 'Insufficient permissions' });
+		throw error(403, {
+			code: 'FORBIDDEN',
+			message: 'Insufficient permissions'
+		});
 	}
 
 	return user;

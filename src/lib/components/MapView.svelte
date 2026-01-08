@@ -1,6 +1,11 @@
 <script lang="ts">
 	import { env } from '$env/dynamic/public';
-	import type { DepotWithLocationJoin, Driver, Route, StopWithLocation } from '$lib/schemas';
+	import type {
+		DepotWithLocationJoin,
+		Driver,
+		Route,
+		StopWithLocation
+	} from '$lib/schemas';
 	import { getTextColor } from '$lib/utils';
 	import type maplibregl from 'maplibre-gl';
 	import { mode } from 'mode-watcher';
@@ -152,13 +157,18 @@
 					<Marker lngLat={[lon, lat]} class=" cursor-pointer">
 						{#if stop.delivery_index && stop.driver_id}
 							{@const color = getDriverColorById(stop.driver_id, drivers)}
-							<div class="relative transition-transform duration-100 hover:scale-110">
+							<div
+								class="relative transition-transform duration-100 hover:scale-110"
+							>
 								<MapPin class="size-8" style="fill: {color}" weight="fill" />
 								<div
 									class="absolute top-1 left-1/2 flex size-5 -translate-x-1/2 items-center justify-center rounded-full"
 									style="background-color: {color};"
 								>
-									<span class="text-xs font-bold" style="color: {getTextColor(color)};">
+									<span
+										class="text-xs font-bold"
+										style="color: {getTextColor(color)};"
+									>
 										{stop.delivery_index}
 									</span>
 								</div>
@@ -170,7 +180,12 @@
 							/>
 						{/if}
 
-						<Popup openOn="click" offset={[0, -15]} closeOnClickOutside closeButton>
+						<Popup
+							openOn="click"
+							offset={[0, -15]}
+							closeOnClickOutside
+							closeButton
+						>
 							<StopMapPopup
 								{stop}
 								{location}
@@ -187,9 +202,15 @@
 
 		<!-- Depot marker -->
 		{#if depot?.location.lat && depot?.location.lon}
-			<Marker lngLat={[depot.location.lon, depot.location.lat]} class="cursor-pointer">
+			<Marker
+				lngLat={[depot.location.lon, depot.location.lat]}
+				class="cursor-pointer"
+			>
 				<div class="transition-transform duration-100 hover:scale-110">
-					<Garage weight="fill" class="size-7 text-forest-600 dark:text-white" />
+					<Garage
+						weight="fill"
+						class="size-7 text-forest-600 dark:text-white"
+					/>
 				</div>
 				<Popup openOn="click" offset={[0, -10]} closeOnClickOutside closeButton>
 					<DepotMapPopup {depot} />

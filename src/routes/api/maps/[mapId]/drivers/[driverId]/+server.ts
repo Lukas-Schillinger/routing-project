@@ -13,13 +13,19 @@ export const DELETE: RequestHandler = async ({ params }) => {
 	const driverId = params.driverId;
 
 	if (!mapId || !driverId) {
-		return json({ error: 'Map ID and Driver ID are required' }, { status: 400 });
+		return json(
+			{ error: 'Map ID and Driver ID are required' },
+			{ status: 400 }
+		);
 	}
 
 	try {
 		await mapService.removeDriverFromMap(driverId, mapId, user.organization_id);
 
-		return json({ success: true, message: 'Driver removed from map successfully' });
+		return json({
+			success: true,
+			message: 'Driver removed from map successfully'
+		});
 	} catch (err) {
 		handleApiError(err, 'Failed to remove driver from map');
 	}

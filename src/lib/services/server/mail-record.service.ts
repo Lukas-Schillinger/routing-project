@@ -60,7 +60,12 @@ export class MailRecordService {
 		}
 
 		// Update mail record status based on event type
-		await this.updateMailRecordStatus(mailRecord.id, type, eventTimestamp, data);
+		await this.updateMailRecordStatus(
+			mailRecord.id,
+			type,
+			eventTimestamp,
+			data
+		);
 	}
 
 	/**
@@ -73,7 +78,13 @@ export class MailRecordService {
 		data: ResendWebhookData
 	): Promise<void> {
 		const updates: Partial<{
-			status: 'sent' | 'delivered' | 'bounced' | 'complained' | 'delivery_delayed' | 'failed';
+			status:
+				| 'sent'
+				| 'delivered'
+				| 'bounced'
+				| 'complained'
+				| 'delivery_delayed'
+				| 'failed';
 			delivered_at: Date;
 			bounced_at: Date;
 			error: string;
@@ -108,7 +119,10 @@ export class MailRecordService {
 		}
 
 		if (Object.keys(updates).length > 0) {
-			await db.update(mailRecords).set(updates).where(eq(mailRecords.id, mailRecordId));
+			await db
+				.update(mailRecords)
+				.set(updates)
+				.where(eq(mailRecords.id, mailRecordId));
 		}
 	}
 }

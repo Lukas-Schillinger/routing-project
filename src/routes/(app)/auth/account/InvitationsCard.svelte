@@ -19,7 +19,10 @@
 		onCreateInvitation = () => {},
 		onDeleteInvitation = () => {}
 	}: {
-		invitationsWithMailRecord: { invitation: Invitation; mailRecord: MailRecord }[];
+		invitationsWithMailRecord: {
+			invitation: Invitation;
+			mailRecord: MailRecord;
+		}[];
 		onCreateInvitation: (invitation: Invitation) => void;
 		onDeleteInvitation: () => void;
 	} = $props();
@@ -70,14 +73,16 @@
 
 			// Within same status, newest first
 			return (
-				new Date(b.invitation.created_at).getTime() - new Date(a.invitation.created_at).getTime()
+				new Date(b.invitation.created_at).getTime() -
+				new Date(a.invitation.created_at).getTime()
 			);
 		})
 	);
 
 	const pendingCount = $derived(
-		invitationsWithMailRecord.filter((invite) => getInviteStatus(invite.invitation) === 'pending')
-			.length
+		invitationsWithMailRecord.filter(
+			(invite) => getInviteStatus(invite.invitation) === 'pending'
+		).length
 	);
 </script>
 
@@ -86,7 +91,9 @@
 		<div class="flex items-start justify-between gap-4">
 			<div>
 				<Card.Title>Team Invitations</Card.Title>
-				<Card.Description>Invite new members to your organization</Card.Description>
+				<Card.Description
+					>Invite new members to your organization</Card.Description
+				>
 			</div>
 			<CreateInvitationPopover {onCreateInvitation} />
 		</div>
@@ -109,23 +116,30 @@
 			<!-- Pending count summary -->
 			<div class="border-b py-4">
 				<p class="text-sm text-muted-foreground">
-					{pendingCount} pending, {invitationsWithMailRecord.length - pendingCount} accepted/expired
+					{pendingCount} pending, {invitationsWithMailRecord.length -
+						pendingCount} accepted/expired
 				</p>
 			</div>
 
 			<!-- Invitations list -->
 			{#each sortedInvites as invite (invite.invitation.id)}
 				{@const status = getInviteStatus(invite.invitation)}
-				<div class="flex items-center justify-between gap-4 border-b py-4 last:border-b-0">
+				<div
+					class="flex items-center justify-between gap-4 border-b py-4 last:border-b-0"
+				>
 					<div class="min-w-0 flex-1">
-						<p class="truncate text-sm font-medium">{invite.invitation.email}</p>
+						<p class="truncate text-sm font-medium">
+							{invite.invitation.email}
+						</p>
 						<div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
 							<Badge variant={getStatusBadgeVariant(status)} class="text-xs">
 								{status}
 							</Badge>
 							<span class="text-xs text-muted-foreground">
 								{#if status === 'accepted'}
-									Joined {formatDate(invite.invitation.used_at || invite.invitation.created_at)}
+									Joined {formatDate(
+										invite.invitation.used_at || invite.invitation.created_at
+									)}
 								{:else if status === 'expired'}
 									Expired {formatDate(invite.invitation.expires_at)}
 								{:else}
@@ -152,8 +166,8 @@
 						<div class="shrink-0 pr-0">
 							<ConfirmDeleteDialog
 								title="Revoke Invitation"
-								description="Are you sure you want to revoke the invitation for {invite.invitation
-									.email}? The email link will no longer work."
+								description="Are you sure you want to revoke the invitation for {invite
+									.invitation.email}? The email link will no longer work."
 								confirmText="Revoke"
 								onConfirm={() => handleDeleteInvitation(invite.invitation.id)}
 							>

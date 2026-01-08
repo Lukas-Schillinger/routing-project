@@ -5,7 +5,12 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-	import type { Driver, Map as MapType, Route, StopWithLocation } from '$lib/schemas';
+	import type {
+		Driver,
+		Map as MapType,
+		Route,
+		StopWithLocation
+	} from '$lib/schemas';
 	import { mapApi } from '$lib/services/api';
 	import { formatDate } from '$lib/utils';
 	import {
@@ -41,7 +46,9 @@
 
 	const isRouted = $derived(
 		stops.length > 0 &&
-			stops.every((s) => s.stop.driver_id !== null && s.stop.delivery_index !== null)
+			stops.every(
+				(s) => s.stop.driver_id !== null && s.stop.delivery_index !== null
+			)
 	);
 
 	const totalDuration = $derived(() => {
@@ -83,7 +90,9 @@
 >
 	<!-- Map Thumbnail -->
 	{#if showThumbnail}
-		<div class="relative h-32 shrink-0 overflow-hidden bg-muted sm:h-auto sm:w-32 md:w-42 lg:w-72">
+		<div
+			class="relative h-32 shrink-0 overflow-hidden bg-muted sm:h-auto sm:w-32 md:w-42 lg:w-72"
+		>
 			{#if stops.length > 0}
 				<MapBoxStaticMap mapId={map.id} {stops} {drivers} />
 			{:else}
@@ -94,7 +103,9 @@
 			<!-- Status overlay -->
 			<div class="absolute top-2 left-2 sm:hidden">
 				{#if isRouted}
-					<Badge variant="default" class="bg-primary text-primary-foreground">Routed</Badge>
+					<Badge variant="default" class="bg-primary text-primary-foreground"
+						>Routed</Badge
+					>
 				{/if}
 			</div>
 		</div>
@@ -107,11 +118,15 @@
 			{#if !showThumbnail}
 				<div class="hidden sm:block">
 					{#if isRouted}
-						<div class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+						<div
+							class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10"
+						>
 							<RouteIcon class="h-5 w-5 text-primary" />
 						</div>
 					{:else}
-						<div class="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
+						<div
+							class="flex h-10 w-10 items-center justify-center rounded-lg bg-muted"
+						>
 							<MapPin class="h-5 w-5 text-muted-foreground" />
 						</div>
 					{/if}
@@ -131,7 +146,9 @@
 							>Routed</Badge
 						>
 					{:else if isRouted}
-						<Badge variant="default" class="hidden shrink-0 lg:inline-flex">Routed</Badge>
+						<Badge variant="default" class="hidden shrink-0 lg:inline-flex"
+							>Routed</Badge
+						>
 					{/if}
 				</div>
 				<div
@@ -165,7 +182,12 @@
 		<div class="flex shrink-0 items-center gap-2">
 			<DropdownMenu.Root>
 				<DropdownMenu.Trigger>
-					<Button variant="ghost" size="icon" class="h-8 w-8 " onclick={(e) => e.preventDefault()}>
+					<Button
+						variant="ghost"
+						size="icon"
+						class="h-8 w-8 "
+						onclick={(e) => e.preventDefault()}
+					>
 						<MoreHorizontal class="h-4 w-4" />
 					</Button>
 				</DropdownMenu.Trigger>

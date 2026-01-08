@@ -19,7 +19,11 @@ const redis = new Redis({
 	token: env.UPSTASH_REDIS_REST_TOKEN!
 });
 
-function createLimiter(points: number, windowSeconds: number, prefix: string): RateLimiter {
+function createLimiter(
+	points: number,
+	windowSeconds: number,
+	prefix: string
+): RateLimiter {
 	const limiter = new Ratelimit({
 		redis,
 		limiter: Ratelimit.slidingWindow(points, `${windowSeconds} s`),

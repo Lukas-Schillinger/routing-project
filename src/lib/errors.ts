@@ -86,7 +86,10 @@ export class ServiceError extends Error {
 	/**
 	 * Construct from API response data (used by client API wrapper)
 	 */
-	static fromResponse(status: number, data: { code?: string; message?: string }): ServiceError {
+	static fromResponse(
+		status: number,
+		data: { code?: string; message?: string }
+	): ServiceError {
 		const code = (data.code as ServiceErrorCode) || 'UNKNOWN';
 		const message = data.message || 'An error occurred';
 		return new ServiceError(message, code, status);
@@ -103,7 +106,9 @@ export function handleApiError(err: unknown, fallbackMessage: string): never {
 	}
 
 	if (err instanceof ZodError) {
-		const messages = err.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ');
+		const messages = err.errors
+			.map((e) => `${e.path.join('.')}: ${e.message}`)
+			.join(', ');
 		error(400, { code: 'VALIDATION', message: messages });
 	}
 

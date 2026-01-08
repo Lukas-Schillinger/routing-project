@@ -56,7 +56,10 @@ export class MapboxGeocodingService {
 			params.bbox = options.bbox.join(',');
 		}
 
-		const response = await mapboxClient.get<unknown>('/search/geocode/v6/forward', params);
+		const response = await mapboxClient.get<unknown>(
+			'/search/geocode/v6/forward',
+			params
+		);
 		const validated = geocodingResponseSchema.parse(response);
 		return validated.features;
 	}
@@ -77,7 +80,9 @@ export class MapboxGeocodingService {
 		}
 
 		if (searches.length > 50) {
-			throw new Error('Batch geocoding supports a maximum of 50 searches per request');
+			throw new Error(
+				'Batch geocoding supports a maximum of 50 searches per request'
+			);
 		}
 
 		const params: Record<string, string> = {
@@ -88,13 +93,18 @@ export class MapboxGeocodingService {
 
 		const body = searches.map((search) => ({ q: search }));
 
-		const response = await mapboxClient.post<unknown>('/search/geocode/v6/batch', body, params);
+		const response = await mapboxClient.post<unknown>(
+			'/search/geocode/v6/batch',
+			body,
+			params
+		);
 		const batch = batchGeocodingResponseSchema.parse(response);
 
 		const filtered = batch.batch.map((e) => {
 			e.features = e.features.filter(
 				(e) =>
-					e.properties.feature_type == 'address' || e.properties.feature_type == 'secondary_address'
+					e.properties.feature_type == 'address' ||
+					e.properties.feature_type == 'secondary_address'
 			);
 			return e;
 		});

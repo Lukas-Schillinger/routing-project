@@ -1,4 +1,10 @@
-import type { CreateStop, Stop, StopFilter, StopWithLocation, UpdateStop } from '$lib/schemas/stop';
+import type {
+	CreateStop,
+	Stop,
+	StopFilter,
+	StopWithLocation,
+	UpdateStop
+} from '$lib/schemas/stop';
 import { db } from '$lib/server/db';
 import { locations, maps, stops } from '$lib/server/db/schema';
 import { and, eq, isNotNull } from 'drizzle-orm';
@@ -10,7 +16,11 @@ export class StopService {
 	 * Verify stop ownership
 	 */
 	private async verifyStopOwnership(stopId: string, organizationId: string) {
-		const [stop] = await db.select().from(stops).where(eq(stops.id, stopId)).limit(1);
+		const [stop] = await db
+			.select()
+			.from(stops)
+			.where(eq(stops.id, stopId))
+			.limit(1);
 
 		if (!stop) {
 			throw ServiceError.notFound('Stop not found');
@@ -24,11 +34,16 @@ export class StopService {
 	}
 
 	async getStops(organizationId: string): Promise<Stop[]> {
-		const results = await db.select().from(stops).where(eq(stops.organization_id, organizationId));
+		const results = await db
+			.select()
+			.from(stops)
+			.where(eq(stops.organization_id, organizationId));
 		return results;
 	}
 
-	async getStopsWithLocation(organization_id: string): Promise<StopWithLocation[]> {
+	async getStopsWithLocation(
+		organization_id: string
+	): Promise<StopWithLocation[]> {
 		const results = await db
 			.select({
 				stop: stops,
@@ -107,7 +122,10 @@ export class StopService {
 	/**
 	 * Get a single stop with location details
 	 */
-	async getStopById(stopId: string, organizationId: string): Promise<StopWithLocation> {
+	async getStopById(
+		stopId: string,
+		organizationId: string
+	): Promise<StopWithLocation> {
 		await this.verifyStopOwnership(stopId, organizationId);
 
 		const [result] = await db
@@ -140,12 +158,17 @@ export class StopService {
 
 		// Create location if data is provided
 		if (data.location && !locationId) {
-			const location = await locationService.createLocation(data.location, organizationId);
+			const location = await locationService.createLocation(
+				data.location,
+				organizationId
+			);
 			locationId = location.id;
 		}
 
 		if (!locationId) {
-			throw ServiceError.validation('Either location_id or location data must be provided');
+			throw ServiceError.validation(
+				'Either location_id or location data must be provided'
+			);
 		}
 
 		// Verify location ownership
@@ -155,7 +178,9 @@ export class StopService {
 		const [map] = await db
 			.select()
 			.from(maps)
-			.where(and(eq(maps.id, data.map_id), eq(maps.organization_id, organizationId)))
+			.where(
+				and(eq(maps.id, data.map_id), eq(maps.organization_id, organizationId))
+			)
 			.limit(1);
 
 		if (!map) {
@@ -195,11 +220,17 @@ export class StopService {
 
 		// Create new location if data is provided
 		if (data.location) {
-			const location = await locationService.createLocation(data.location, organizationId);
+			const location = await locationService.createLocation(
+				data.location,
+				organizationId
+			);
 			locationId = location.id;
 		} else if (data.location_id) {
 			// Verify ownership if location_id is provided
-			await locationService.verifyLocationOwnership(data.location_id, organizationId);
+			await locationService.verifyLocationOwnership(
+				data.location_id,
+				organizationId
+			);
 			locationId = data.location_id;
 		}
 
@@ -209,9 +240,16 @@ export class StopService {
 		} = {
 			location_id: locationId,
 			driver_id: data.driver_id !== undefined ? data.driver_id : stop.driver_id,
-			delivery_index: data.delivery_index !== undefined ? data.delivery_index : stop.delivery_index,
-			contact_name: data.contact_name !== undefined ? data.contact_name : stop.contact_name,
-			contact_phone: data.contact_phone !== undefined ? data.contact_phone : stop.contact_phone,
+			delivery_index:
+				data.delivery_index !== undefined
+					? data.delivery_index
+					: stop.delivery_index,
+			contact_name:
+				data.contact_name !== undefined ? data.contact_name : stop.contact_name,
+			contact_phone:
+				data.contact_phone !== undefined
+					? data.contact_phone
+					: stop.contact_phone,
 			notes: data.notes !== undefined ? data.notes : stop.notes,
 			updated_at: new Date(),
 			updated_by: userId
@@ -229,7 +267,10 @@ export class StopService {
 	/**
 	 * Delete a stop
 	 */
-	async deleteStop(stopId: string, organizationId: string): Promise<{ success: boolean }> {
+	async deleteStop(
+		stopId: string,
+		organizationId: string
+	): Promise<{ success: boolean }> {
 		await this.verifyStopOwnership(stopId, organizationId);
 
 		await db.delete(stops).where(eq(stops.id, stopId));
@@ -258,7 +299,9 @@ export class StopService {
 		}
 
 		return await Promise.all(
-			stopsData.map((stop) => this.createStop({ ...stop, map_id: mapId }, organizationId, userId))
+			stopsData.map((stop) =>
+				this.createStop({ ...stop, map_id: mapId }, organizationId, userId)
+			)
 		);
 	}
 }

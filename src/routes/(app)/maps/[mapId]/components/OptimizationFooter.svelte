@@ -5,9 +5,22 @@
 	import * as ButtonGroup from '$lib/components/ui/button-group';
 	import * as Popover from '$lib/components/ui/popover';
 	import * as Select from '$lib/components/ui/select';
-	import type { DepotWithLocationJoin, Driver, Map, StopWithLocation } from '$lib/schemas';
+	import type {
+		DepotWithLocationJoin,
+		Driver,
+		Map,
+		StopWithLocation
+	} from '$lib/schemas';
 	import { mapApi } from '$lib/services/api';
-	import { AlertCircle, Building2, Loader2, Plus, Sparkles, TriangleAlert, X } from 'lucide-svelte';
+	import {
+		AlertCircle,
+		Building2,
+		Loader2,
+		Plus,
+		Sparkles,
+		TriangleAlert,
+		X
+	} from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
 	type PageState = 'viewing' | 'optimizing' | 'editing';
@@ -47,7 +60,10 @@
 	});
 
 	const canOptimize = $derived(
-		selectedDepotId && assignedDrivers.length > 0 && stops.length > 0 && !isSubmitting
+		selectedDepotId &&
+			assignedDrivers.length > 0 &&
+			stops.length > 0 &&
+			!isSubmitting
 	);
 
 	const validationMessage = $derived.by(() => {
@@ -94,7 +110,9 @@
 <div class="@container pb-2">
 	{#if pageState === 'viewing'}
 		<!-- Viewing Mode -->
-		<Button variant="outline" class="w-full" onclick={onSwitchToEdit}>Switch to Edit Mode</Button>
+		<Button variant="outline" class="w-full" onclick={onSwitchToEdit}
+			>Switch to Edit Mode</Button
+		>
 	{:else if pageState === 'optimizing'}
 		<!-- Optimizing Mode -->
 		<div
@@ -125,12 +143,21 @@
 				<!-- Depot + Add button -->
 				<ButtonGroup.Root class="grow @lg:min-w-48">
 					<Select.Root type="single" bind:value={selectedDepotId}>
-						<Select.Trigger size="sm" class="h-7 w-32 grow rounded-r-none border-r-0">
+						<Select.Trigger
+							size="sm"
+							class="h-7 w-32 grow rounded-r-none border-r-0"
+						>
 							{#if selectedDepotId}
-								{@const selected = depots.find((d) => d.depot.id === selectedDepotId)}
+								{@const selected = depots.find(
+									(d) => d.depot.id === selectedDepotId
+								)}
 								<div class="flex items-center gap-1.5 truncate">
-									<Building2 class="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-									<span class="truncate text-xs">{selected?.depot.name || 'Depot'}</span>
+									<Building2
+										class="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+									/>
+									<span class="truncate text-xs"
+										>{selected?.depot.name || 'Depot'}</span
+									>
 								</div>
 							{:else}
 								<span class="text-xs text-muted-foreground">Select depot</span>
@@ -143,7 +170,9 @@
 										<Building2 class="h-3.5 w-3.5" />
 										<span>{depot.depot.name}</span>
 										{#if depot.depot.default_depot}
-											<span class="text-xs text-muted-foreground">(Default)</span>
+											<span class="text-xs text-muted-foreground"
+												>(Default)</span
+											>
 										{/if}
 									</div>
 								</Select.Item>
@@ -164,10 +193,13 @@
 				</ButtonGroup.Root>
 
 				<!-- Fairness Toggle -->
-				<div class="flex h-8 shrink-0 rounded-md border border-input bg-muted/30 p-0.5">
+				<div
+					class="flex h-8 shrink-0 rounded-md border border-input bg-muted/30 p-0.5"
+				>
 					<button
 						type="button"
-						class="h-7 rounded px-2 text-xs transition-colors {fairness === 'low'
+						class="h-7 rounded px-2 text-xs transition-colors {fairness ===
+						'low'
 							? 'bg-background text-foreground shadow-sm'
 							: 'text-muted-foreground hover:text-foreground'}"
 						onclick={() => (fairness = 'low')}
@@ -176,7 +208,8 @@
 					</button>
 					<button
 						type="button"
-						class="h-7 rounded px-2 text-xs transition-colors {fairness === 'medium'
+						class="h-7 rounded px-2 text-xs transition-colors {fairness ===
+						'medium'
 							? 'bg-background text-foreground shadow-sm'
 							: 'text-muted-foreground hover:text-foreground'}"
 						onclick={() => (fairness = 'medium')}
@@ -185,7 +218,8 @@
 					</button>
 					<button
 						type="button"
-						class="h-7 rounded px-2 text-xs transition-colors {fairness === 'high'
+						class="h-7 rounded px-2 text-xs transition-colors {fairness ===
+						'high'
 							? 'bg-background text-foreground shadow-sm'
 							: 'text-muted-foreground hover:text-foreground'}"
 						onclick={() => (fairness = 'high')}
@@ -197,7 +231,12 @@
 
 			<!-- Optimize Button with validation info -->
 			<div class="flex grow gap-2 @lg:max-w-40">
-				<Button class="h-8 grow gap-1.5" size="sm" disabled={!canOptimize} onclick={handleOptimize}>
+				<Button
+					class="h-8 grow gap-1.5"
+					size="sm"
+					disabled={!canOptimize}
+					onclick={handleOptimize}
+				>
 					{#if isSubmitting}
 						<Loader2 class="h-3.5 w-3.5 animate-spin" />
 						Starting

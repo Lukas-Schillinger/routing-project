@@ -78,7 +78,9 @@
 	<div class="mx-auto max-w-7xl px-4 md:px-8">
 		<!-- Section Header -->
 		<div class="mb-20 text-center">
-			<p class="mb-4 text-sm font-medium tracking-[0.2em] text-landing-primary uppercase">
+			<p
+				class="mb-4 text-sm font-medium tracking-[0.2em] text-landing-primary uppercase"
+			>
 				How it works
 			</p>
 			<h2 class="font-serif text-4xl leading-tight tracking-tight md:text-5xl">
@@ -95,10 +97,14 @@
 					>
 						<!-- Content -->
 						<div class={index % 2 === 1 ? 'md:order-2' : ''}>
-							<h3 class="mb-4 font-serif text-3xl leading-tight tracking-tight md:text-4xl">
+							<h3
+								class="mb-4 font-serif text-3xl leading-tight tracking-tight md:text-4xl"
+							>
 								{item.title}
 							</h3>
-							<p class="text-base leading-relaxed text-muted-foreground md:text-lg">
+							<p
+								class="text-base leading-relaxed text-muted-foreground md:text-lg"
+							>
 								{item.description}
 							</p>
 
@@ -118,7 +124,9 @@
 											/>
 											{feature.label}
 											{#if feature.fake}
-												<span class="text-xs text-muted-foreground/40">Soon</span>
+												<span class="text-xs text-muted-foreground/40"
+													>Soon</span
+												>
 											{/if}
 										</span>
 									{/each}

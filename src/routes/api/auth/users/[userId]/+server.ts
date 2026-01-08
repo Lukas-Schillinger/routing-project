@@ -9,7 +9,10 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
 // PATCH /api/auth/users/[userId] - Update user role
-export const PATCH: RequestHandler = async ({ params, request }): Promise<Response> => {
+export const PATCH: RequestHandler = async ({
+	params,
+	request
+}): Promise<Response> => {
 	const user = requirePermissionApi('users:update');
 
 	const { userId } = params;
@@ -46,7 +49,10 @@ export const DELETE: RequestHandler = async ({ params }): Promise<Response> => {
 	}
 
 	try {
-		const result: { success: true } = await userService.deleteUser(userId, user.organization_id);
+		const result: { success: true } = await userService.deleteUser(
+			userId,
+			user.organization_id
+		);
 		return json(result);
 	} catch (err) {
 		handleApiError(err, 'Failed to delete user');

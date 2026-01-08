@@ -1,5 +1,10 @@
 <script lang="ts">
-	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
+	import {
+		Card,
+		CardContent,
+		CardHeader,
+		CardTitle
+	} from '$lib/components/ui/card';
 	import { FileUpload } from '$lib/components/ui/file-upload';
 	import type { ImportState } from '$lib/schemas/import';
 	import { parseCsvFile } from '$lib/utils';
@@ -20,7 +25,10 @@
 			return;
 		}
 
-		importState.file = { name: result.data.fileName, headers: result.data.headers };
+		importState.file = {
+			name: result.data.fileName,
+			headers: result.data.headers
+		};
 		importState.rawRows = result.data.rows;
 		importState.step = 2;
 	}

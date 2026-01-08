@@ -66,7 +66,9 @@
 	<div class="mx-auto max-w-5xl">
 		<!-- Section Header -->
 		<div class="mb-12 text-center">
-			<p class="mb-4 text-sm font-medium tracking-[0.2em] text-landing-primary uppercase">
+			<p
+				class="mb-4 text-sm font-medium tracking-[0.2em] text-landing-primary uppercase"
+			>
 				Pricing
 			</p>
 			<h2 class="font-serif text-4xl leading-tight tracking-tight md:text-5xl">
@@ -132,7 +134,9 @@
 					</div>
 
 					<div class="mb-6">
-						<span class="font-mono text-5xl font-medium tracking-tight">${getPrice(plan)}</span>
+						<span class="font-mono text-5xl font-medium tracking-tight"
+							>${getPrice(plan)}</span
+						>
 						<span class="ml-1 text-sm text-muted-foreground">
 							{plan.unit}
 						</span>

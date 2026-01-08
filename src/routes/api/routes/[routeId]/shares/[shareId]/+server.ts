@@ -11,7 +11,10 @@ export const DELETE: RequestHandler = async ({ params }) => {
 
 	const { routeId, shareId } = params;
 	if (!routeId || !shareId) {
-		return json({ error: 'Route ID and Share ID are required' }, { status: 400 });
+		return json(
+			{ error: 'Route ID and Share ID are required' },
+			{ status: 400 }
+		);
 	}
 
 	try {

@@ -19,7 +19,9 @@
 	<Card.Root>
 		<Card.Header>
 			<Card.Title>Phone Number Input</Card.Title>
-			<Card.Description>US phone number with as-you-type formatting</Card.Description>
+			<Card.Description
+				>US phone number with as-you-type formatting</Card.Description
+			>
 		</Card.Header>
 		<Card.Content class="space-y-4">
 			<div class="space-y-2">
@@ -31,7 +33,9 @@
 				<p><strong>Raw value:</strong> {phoneNumber || '(empty)'}</p>
 				<p>
 					<strong>Valid:</strong>
-					<span class={isValid ? 'text-green-600' : 'text-red-600'}>{isValid}</span>
+					<span class={isValid ? 'text-green-600' : 'text-red-600'}
+						>{isValid}</span
+					>
 				</p>
 			</div>
 		</Card.Content>

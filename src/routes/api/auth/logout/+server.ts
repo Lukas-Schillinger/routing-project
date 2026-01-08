@@ -1,5 +1,8 @@
 import { ServiceError } from '$lib/errors';
-import { deleteSessionTokenCookie, invalidateSession } from '$lib/services/server/auth';
+import {
+	deleteSessionTokenCookie,
+	invalidateSession
+} from '$lib/services/server/auth';
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 

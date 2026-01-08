@@ -106,8 +106,15 @@ export class OptimizationService {
 		return job ?? null;
 	}
 
-	async queueOptimization(mapId: string, organizationId: string, options: OptimizationOptions) {
-		const assignedDrivers = await this.fetchAssignedDrivers(mapId, organizationId);
+	async queueOptimization(
+		mapId: string,
+		organizationId: string,
+		options: OptimizationOptions
+	) {
+		const assignedDrivers = await this.fetchAssignedDrivers(
+			mapId,
+			organizationId
+		);
 
 		if (assignedDrivers.length === 0) {
 			throw ServiceError.validation(
@@ -160,7 +167,11 @@ export class OptimizationService {
 			);
 		} catch (error) {
 			console.error('Failed to send message to SQS:', error);
-			await this.updateJobStatus(job.id, 'failed', 'Failed to queue optimization job');
+			await this.updateJobStatus(
+				job.id,
+				'failed',
+				'Failed to queue optimization job'
+			);
 			throw ServiceError.internal('Failed to queue optimization job');
 		}
 
@@ -176,15 +187,23 @@ export class OptimizationService {
 				.limit(1);
 
 			if (!job) {
-				throw ServiceError.validation(`Optimization job ${response.job_id} not found`);
+				throw ServiceError.validation(
+					`Optimization job ${response.job_id} not found`
+				);
 			}
 
 			if (job.status === 'cancelled') {
-				console.log(`Optimization job ${response.job_id} was cancelled, skipping completion`);
+				console.log(
+					`Optimization job ${response.job_id} was cancelled, skipping completion`
+				);
 				return;
 			}
 
-			const { map_id: mapId, organization_id: organizationId, depot_id: depotId } = job;
+			const {
+				map_id: mapId,
+				organization_id: organizationId,
+				depot_id: depotId
+			} = job;
 
 			await this.updateJobStatus(response.job_id, 'completing');
 
@@ -226,7 +245,8 @@ export class OptimizationService {
 			await this.updateJobStatus(response.job_id, 'completed');
 		} catch (error) {
 			console.error('Error completing optimization:', error);
-			const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+			const errorMessage =
+				error instanceof Error ? error.message : 'Unknown error';
 			await this.updateJobStatus(response.job_id, 'failed', errorMessage);
 			throw error;
 		}
@@ -256,9 +276,13 @@ export class OptimizationService {
 		const matchingStops = await db
 			.select({ id: stops.id, location_id: stops.location_id })
 			.from(stops)
-			.where(and(eq(stops.map_id, mapId), inArray(stops.location_id, allLocationIds)));
+			.where(
+				and(eq(stops.map_id, mapId), inArray(stops.location_id, allLocationIds))
+			);
 
-		const locationToStopId = new Map(matchingStops.map((s) => [s.location_id, s.id]));
+		const locationToStopId = new Map(
+			matchingStops.map((s) => [s.location_id, s.id])
+		);
 
 		const updates = optimizationResult.routes
 			.flatMap((route) =>
@@ -326,7 +350,10 @@ export class OptimizationService {
 
 				return { driver_id: route.driver_id, success: true };
 			} catch (error) {
-				console.error(`Error computing route for driver ${route.driver_id}:`, error);
+				console.error(
+					`Error computing route for driver ${route.driver_id}:`,
+					error
+				);
 				return { driver_id: route.driver_id, success: false, error };
 			}
 		});
@@ -342,7 +369,9 @@ export class OptimizationService {
 		const job = await this.getActiveJobForMap(mapId, organizationId);
 
 		if (!job) {
-			throw ServiceError.validation('No active optimization job found for this map');
+			throw ServiceError.validation(
+				'No active optimization job found for this map'
+			);
 		}
 
 		await this.updateJobStatus(job.id, 'cancelled');
@@ -379,7 +408,12 @@ export class OptimizationService {
 		const existingMatrix = await db
 			.select()
 			.from(matrices)
-			.where(and(eq(matrices.organization_id, organizationId), eq(matrices.inputsHash, inputHash)))
+			.where(
+				and(
+					eq(matrices.organization_id, organizationId),
+					eq(matrices.inputsHash, inputHash)
+				)
+			)
 			.limit(1);
 
 		if (existingMatrix.length > 0) {
@@ -387,7 +421,8 @@ export class OptimizationService {
 		}
 
 		// Create new matrix via API using pre-fetched coordinates
-		const matrixResult = await mapboxDistanceMatrix.createDistanceMatrix(coordinatesData);
+		const matrixResult =
+			await mapboxDistanceMatrix.createDistanceMatrix(coordinatesData);
 
 		// Save matrix to database
 		const matrix = await db
@@ -432,7 +467,10 @@ export class OptimizationService {
 			throw ServiceError.validation('Depot location missing coordinates');
 		}
 
-		const depotCoord = this.toCoordinate(depot.location.lon, depot.location.lat);
+		const depotCoord = this.toCoordinate(
+			depot.location.lon,
+			depot.location.lat
+		);
 
 		const mapStops = await db
 			.select({
@@ -448,7 +486,9 @@ export class OptimizationService {
 		}
 
 		mapStops.sort((a, b) =>
-			(a.location.address_hash ?? '').localeCompare(b.location.address_hash ?? '')
+			(a.location.address_hash ?? '').localeCompare(
+				b.location.address_hash ?? ''
+			)
 		);
 
 		const coordinates: [number, number][] = [depotCoord];
@@ -470,7 +510,9 @@ export class OptimizationService {
 		};
 	}
 
-	private createInputHash(coordinatesData: { coordinates: [number, number][] }): string {
+	private createInputHash(coordinatesData: {
+		coordinates: [number, number][];
+	}): string {
 		const coordsString = coordinatesData.coordinates
 			.map((coord) => `${coord[0].toFixed(6)},${coord[1].toFixed(6)}`)
 			.join('|');

@@ -23,7 +23,14 @@ Component for resizing images using Cloudflare image transformations.
 		'2xl': { widths: [960, 1920], sizes: '960px' }
 	};
 
-	let { src, alt, size = 'lg', class: className, loading = 'lazy', ...restProps }: Props = $props();
+	let {
+		src,
+		alt,
+		size = 'lg',
+		class: className,
+		loading = 'lazy',
+		...restProps
+	}: Props = $props();
 
 	const CF_ZONE = 'https://images.wend-routing.com';
 
@@ -32,7 +39,9 @@ Component for resizing images using Cloudflare image transformations.
 	}
 
 	const config = $derived(sizeConfig[size]);
-	const srcset = $derived(config.widths.map((w) => `${cfUrl(src, w)} ${w}w`).join(', '));
+	const srcset = $derived(
+		config.widths.map((w) => `${cfUrl(src, w)} ${w}w`).join(', ')
+	);
 	const imgSrc = $derived(cfUrl(src, config.widths[0]));
 </script>
 

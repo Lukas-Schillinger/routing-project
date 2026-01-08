@@ -216,6 +216,10 @@ export type DirectionsWaypoint = z.infer<typeof directionsWaypointSchema>;
 export type DirectionsStep = z.infer<typeof directionsStepSchema>;
 export type DirectionsLeg = z.infer<typeof directionsLegSchema>;
 export type DirectionsRoute = z.infer<typeof directionsRouteSchema>;
-export type DirectionsRouteGeoJson = z.infer<typeof directionsRouteGeoJsonSchema>;
+export type DirectionsRouteGeoJson = z.infer<
+	typeof directionsRouteGeoJsonSchema
+>;
 export type DirectionsResponse = z.infer<typeof directionsResponseSchema>;
-export type DirectionsResponseGeoJson = z.infer<typeof directionsResponseGeoJsonSchema>;
+export type DirectionsResponseGeoJson = z.infer<
+	typeof directionsResponseGeoJsonSchema
+>;

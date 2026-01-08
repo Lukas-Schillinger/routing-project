@@ -6,28 +6,30 @@
 	import RotateCcw from 'lucide-svelte/icons/rotate-ccw';
 	import { SmileyXEyes } from 'phosphor-svelte';
 
-	const errorMessages: Record<number, { title: string; description: string }> = {
-		400: {
-			title: 'Bad Request',
-			description: "The request couldn't be understood. Please check and try again."
-		},
-		401: {
-			title: 'Unauthorized',
-			description: 'You need to sign in to access this page.'
-		},
-		403: {
-			title: 'Access Denied',
-			description: "You don't have permission to view this page."
-		},
-		404: {
-			title: 'Page Not Found',
-			description: "We looked and couldn't find anything there."
-		},
-		500: {
-			title: 'Server Error',
-			description: 'Something went wrong on our end.'
-		}
-	};
+	const errorMessages: Record<number, { title: string; description: string }> =
+		{
+			400: {
+				title: 'Bad Request',
+				description:
+					"The request couldn't be understood. Please check and try again."
+			},
+			401: {
+				title: 'Unauthorized',
+				description: 'You need to sign in to access this page.'
+			},
+			403: {
+				title: 'Access Denied',
+				description: "You don't have permission to view this page."
+			},
+			404: {
+				title: 'Page Not Found',
+				description: "We looked and couldn't find anything there."
+			},
+			500: {
+				title: 'Server Error',
+				description: 'Something went wrong on our end.'
+			}
+		};
 
 	const status = $derived(page.status);
 	const errorInfo = $derived(
@@ -44,10 +46,15 @@
 	<!-- Main content -->
 	<div class="relative z-10 flex max-w-lg flex-col items-center text-center">
 		<!-- Giant icon -->
-		<SmileyXEyes class="mb-4 size-32 text-muted-foreground/30 md:size-48" weight="thin" />
+		<SmileyXEyes
+			class="mb-4 size-32 text-muted-foreground/30 md:size-48"
+			weight="thin"
+		/>
 
 		<!-- Status code -->
-		<span class="mb-2 font-serif text-7xl font-semibold tracking-tight text-foreground md:text-6xl">
+		<span
+			class="mb-2 font-serif text-7xl font-semibold tracking-tight text-foreground md:text-6xl"
+		>
 			{status}
 		</span>
 

@@ -35,7 +35,10 @@ export const actions: Actions = {
 
 		const { email: validEmail, password: validatedPassword } = validation.data;
 
-		const results = await db.select().from(table.users).where(eq(table.users.email, validEmail));
+		const results = await db
+			.select()
+			.from(table.users)
+			.where(eq(table.users.email, validEmail));
 
 		const existingUser = results.at(0);
 		if (!existingUser) {
@@ -46,12 +49,16 @@ export const actions: Actions = {
 			return fail(400, { message: 'Use email link to sign in' });
 		}
 
-		const isPasswordValid = await verify(existingUser.passwordHash, validatedPassword, {
-			memoryCost: 19456,
-			timeCost: 2,
-			outputLen: 32,
-			parallelism: 1
-		});
+		const isPasswordValid = await verify(
+			existingUser.passwordHash,
+			validatedPassword,
+			{
+				memoryCost: 19456,
+				timeCost: 2,
+				outputLen: 32,
+				parallelism: 1
+			}
+		);
 		if (!isPasswordValid) {
 			return fail(400, { message: 'Incorrect email or password' });
 		}
@@ -88,7 +95,13 @@ export const actions: Actions = {
 			});
 
 			// Send welcome email
-			await resendClient.sendLoginEmail(loginToken, email, token, event.url.origin, true);
+			await resendClient.sendLoginEmail(
+				loginToken,
+				email,
+				token,
+				event.url.origin,
+				true
+			);
 
 			// Always return success to prevent email enumeration
 			return { resendSuccess: true };
@@ -116,7 +129,10 @@ export const actions: Actions = {
 		const { email: validEmail, code: validCode } = validation.data;
 
 		try {
-			const user = await loginTokenService.validateLoginToken(validCode, validEmail);
+			const user = await loginTokenService.validateLoginToken(
+				validCode,
+				validEmail
+			);
 
 			// Set email_confirmed_at if this is first login (email confirmation)
 			if (!user.email_confirmed_at) {

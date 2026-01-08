@@ -104,7 +104,9 @@
 
 	const totalCount = $derived(importState.records.length);
 	const validCount = $derived(
-		importState.records.filter((r) => r.status === 'success' || r.status === 'edited').length
+		importState.records.filter(
+			(r) => r.status === 'success' || r.status === 'edited'
+		).length
 	);
 
 	// Notify parent when validCount or isImporting changes
@@ -118,7 +120,9 @@
 			return conf === 'low' || conf === 'medium';
 		}).length
 	);
-	const failedCount = $derived(importState.records.filter((r) => r.status === 'failed').length);
+	const failedCount = $derived(
+		importState.records.filter((r) => r.status === 'failed').length
+	);
 
 	const sortedRecords = $derived(
 		importState.records
@@ -150,7 +154,9 @@
 				{/if}
 				{#if lowConfidenceCount > 0}
 					<span class="mx-1.5 text-muted-foreground/50">·</span>
-					<span class="text-warning-foreground">{lowConfidenceCount} low confidence</span>
+					<span class="text-warning-foreground"
+						>{lowConfidenceCount} low confidence</span
+					>
 				{/if}
 				{#if failedCount > 0}
 					<span class="mx-1.5 text-muted-foreground/50">·</span>
@@ -181,7 +187,9 @@
 				{/each}
 			</div>
 		{:else if importState.records.length === 0}
-			<div class="px-4 py-12 text-center text-sm text-muted-foreground">No addresses to review</div>
+			<div class="px-4 py-12 text-center text-sm text-muted-foreground">
+				No addresses to review
+			</div>
 		{:else}
 			<!-- Desktop Table -->
 			<div class="hidden md:block">
@@ -189,16 +197,20 @@
 					<thead>
 						<tr class="border-b bg-muted/30">
 							<th class="w-8 py-2"></th>
-							<th class="px-4 py-2.5 text-left font-medium tracking-wider text-muted-foreground"
+							<th
+								class="px-4 py-2.5 text-left font-medium tracking-wider text-muted-foreground"
 								>Name</th
 							>
-							<th class="px-4 py-2.5 text-left font-medium tracking-wider text-muted-foreground"
+							<th
+								class="px-4 py-2.5 text-left font-medium tracking-wider text-muted-foreground"
 								>Address</th
 							>
-							<th class="px-4 py-2.5 text-left font-medium tracking-wider text-muted-foreground"
+							<th
+								class="px-4 py-2.5 text-left font-medium tracking-wider text-muted-foreground"
 								>Phone</th
 							>
-							<th class="px-4 py-2.5 text-left font-medium tracking-wider text-muted-foreground"
+							<th
+								class="px-4 py-2.5 text-left font-medium tracking-wider text-muted-foreground"
 								>Notes</th
 							>
 						</tr>
@@ -213,7 +225,10 @@
 									<td class="py-4 pr-1 align-top">
 										<div class="flex items-center justify-end">
 											<span
-												class={cn('h-2.5 w-2.5 rounded-full', getStatusColor(confidence))}
+												class={cn(
+													'h-2.5 w-2.5 rounded-full',
+													getStatusColor(confidence)
+												)}
 												title={getStatusLabel(confidence)}
 											></span>
 										</div>
@@ -234,7 +249,8 @@
 											<AddressAutocomplete
 												bind:value={editAddressValue}
 												placeholder="Search for address..."
-												onSelect={(location) => handleAddressSelected(record.id, location)}
+												onSelect={(location) =>
+													handleAddressSelected(record.id, location)}
 												onClear={cancelEditing}
 											/>
 											<button
@@ -328,7 +344,10 @@
 							</div>
 							{#if confidence != 'high' && confidence != 'exact'}
 								<span
-									class={cn('mt-1 h-2.5 w-2.5 shrink-0 rounded-full', getStatusColor(confidence))}
+									class={cn(
+										'mt-1 h-2.5 w-2.5 shrink-0 rounded-full',
+										getStatusColor(confidence)
+									)}
 									title={getStatusLabel(confidence)}
 								></span>
 							{:else}
@@ -338,7 +357,9 @@
 
 						<!-- Address -->
 						<div class="mb-3">
-							<div class="mb-1 text-xs font-medium tracking-wider text-muted-foreground uppercase">
+							<div
+								class="mb-1 text-xs font-medium tracking-wider text-muted-foreground uppercase"
+							>
 								Address
 							</div>
 							{#if isEditing}
@@ -346,7 +367,8 @@
 									<AddressAutocomplete
 										bind:value={editAddressValue}
 										placeholder="Search for address..."
-										onSelect={(location) => handleAddressSelected(record.id, location)}
+										onSelect={(location) =>
+											handleAddressSelected(record.id, location)}
 										onClear={cancelEditing}
 									/>
 									<button
@@ -367,7 +389,9 @@
 										{#if record.location}
 											<div class="flex items-center gap-1.5 text-sm">
 												<span>{getFormattedAddress(record)}</span>
-												<Pencil class="h-3 w-3 shrink-0 text-muted-foreground" />
+												<Pencil
+													class="h-3 w-3 shrink-0 text-muted-foreground"
+												/>
 											</div>
 										{:else}
 											<span
@@ -377,7 +401,9 @@
 												<Pencil class="h-3 w-3" />
 											</span>
 										{/if}
-										<div class="mt-0.5 font-mono text-xs text-muted-foreground/70">
+										<div
+											class="mt-0.5 font-mono text-xs text-muted-foreground/70"
+										>
 											{record.raw.address}
 										</div>
 									</div>
@@ -406,7 +432,9 @@
 									>
 										Notes
 									</div>
-									<span class="text-xs text-muted-foreground">{record.raw.notes}</span>
+									<span class="text-xs text-muted-foreground"
+										>{record.raw.notes}</span
+									>
 								</div>
 							{/if}
 						</div>

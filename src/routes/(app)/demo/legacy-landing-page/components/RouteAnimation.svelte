@@ -17,7 +17,13 @@
 		loopDelayMs?: number;
 	}
 
-	let { route, stops, intervalMs = 2000, loop = true, loopDelayMs = 3000 }: Props = $props();
+	let {
+		route,
+		stops,
+		intervalMs = 2000,
+		loop = true,
+		loopDelayMs = 3000
+	}: Props = $props();
 
 	// Track which stops have been completed (by index)
 	let completedIndices = $state<Set<number>>(new Set());
@@ -47,7 +53,8 @@
 			const elementHeight = targetElement.offsetHeight;
 
 			// Center the element in the container
-			const scrollTop = elementTopRelativeToContainer - containerHeight / 2 + elementHeight / 2;
+			const scrollTop =
+				elementTopRelativeToContainer - containerHeight / 2 + elementHeight / 2;
 
 			scrollContainer.scrollTo({
 				top: Math.max(0, scrollTop),
@@ -97,7 +104,9 @@
 
 {#if stops.length === 0}
 	<!-- Empty State -->
-	<div class="flex h-full items-center justify-center rounded-lg border bg-background">
+	<div
+		class="flex h-full items-center justify-center rounded-lg border bg-background"
+	>
 		<div class="flex flex-col items-center justify-center py-8">
 			<Route class="mb-3 h-12 w-12 text-muted-foreground" />
 			<h3 class="mb-1 font-medium">No Stops Found</h3>
@@ -113,10 +122,13 @@
 			<div class="flex justify-between">
 				<div>
 					<div class="pb-2 font-medium">
-						{new Date().toLocaleDateString('en-us', { weekday: 'long' })} Morning Dropoffs
+						{new Date().toLocaleDateString('en-us', { weekday: 'long' })} Morning
+						Dropoffs
 					</div>
 					<ul class="flex gap-4 text-sm text-muted-foreground">
-						<li class="flex items-center gap-1"><MapPin class="size-4" />{stops.length}</li>
+						<li class="flex items-center gap-1">
+							<MapPin class="size-4" />{stops.length}
+						</li>
 						<li class="flex items-center gap-1">
 							<Clock class="size-4" />{Math.floor(Number(route.duration) / 60)}m
 						</li>
@@ -127,7 +139,8 @@
 					</ul>
 				</div>
 				<div
-					class="text-4xl font-medium diagonal-fractions {currentIndex == stops.length
+					class="text-4xl font-medium diagonal-fractions {currentIndex ==
+					stops.length
 						? 'text-green-800'
 						: ''}"
 				>
@@ -135,7 +148,10 @@
 				</div>
 			</div>
 		</div>
-		<div class="h-full max-h-[calc(100%-5rem)] overflow-y-auto" bind:this={scrollContainer}>
+		<div
+			class="h-full max-h-[calc(100%-5rem)] overflow-y-auto"
+			bind:this={scrollContainer}
+		>
 			{#each stops as { stop, location }, index}
 				{@const isCompleted = completedIndices.has(index)}
 				{@const isCurrent = index === currentIndex && !isCompleted}
@@ -164,15 +180,27 @@
 									{/if}
 								</span>
 
-								<div class="transition-opacity duration-300 {isCompleted ? 'opacity-60' : ''}">
-									<h4 class="transition-all duration-300 {isCompleted ? 'line-through' : ''}">
+								<div
+									class="transition-opacity duration-300 {isCompleted
+										? 'opacity-60'
+										: ''}"
+								>
+									<h4
+										class="transition-all duration-300 {isCompleted
+											? 'line-through'
+											: ''}"
+									>
 										{location.address_line_1}
 									</h4>
 									{#if stop.contact_name}
-										<p class="mt-1 text-sm text-muted-foreground">{stop.contact_name}</p>
+										<p class="mt-1 text-sm text-muted-foreground">
+											{stop.contact_name}
+										</p>
 									{/if}
 									{#if stop.contact_phone}
-										<p class="text-xs text-muted-foreground">{stop.contact_phone}</p>
+										<p class="text-xs text-muted-foreground">
+											{stop.contact_phone}
+										</p>
 									{/if}
 								</div>
 							</div>

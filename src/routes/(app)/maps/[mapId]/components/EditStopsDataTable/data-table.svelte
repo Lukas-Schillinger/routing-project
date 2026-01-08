@@ -12,7 +12,11 @@
 	import EditOrCreateStopPopover from '$lib/components/EditOrCreateStopPopover';
 	import { Button, buttonVariants } from '$lib/components/ui/button';
 	import * as ButtonGroup from '$lib/components/ui/button-group/index.js';
-	import { createSvelteTable, FlexRender, renderComponent } from '$lib/components/ui/data-table';
+	import {
+		createSvelteTable,
+		FlexRender,
+		renderComponent
+	} from '$lib/components/ui/data-table';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import * as Empty from '$lib/components/ui/empty';
 	import { FileUpload } from '$lib/components/ui/file-upload';
@@ -51,8 +55,15 @@
 		onZoomToStop: (stopId: string) => void;
 	}
 
-	let { stops, mapId, onDelete, onToggleInclude, onUpdate, onCreate, onZoomToStop }: Props =
-		$props();
+	let {
+		stops,
+		mapId,
+		onDelete,
+		onToggleInclude,
+		onUpdate,
+		onCreate,
+		onZoomToStop
+	}: Props = $props();
 
 	// CSV upload state
 	let csvError = $state<string | null>(null);
@@ -138,7 +149,9 @@
 	let sortDirection = $state<'asc' | 'desc'>('desc');
 
 	// Table state
-	let sorting = $state<SortingState>([{ id: sortColumn, desc: sortDirection === 'desc' }]);
+	let sorting = $state<SortingState>([
+		{ id: sortColumn, desc: sortDirection === 'desc' }
+	]);
 	let columnFilters = $state<ColumnFiltersState>([]);
 	let columnVisibility = $state<VisibilityState>({});
 	let rowSelection = $state({});
@@ -163,7 +176,10 @@
 	// Add types for table columns
 	const columnHelper = createColumnHelper<StopWithLocation>();
 
-	let pagination = $state<PaginationState>({ pageIndex: 0, pageSize: calculatedPageSize });
+	let pagination = $state<PaginationState>({
+		pageIndex: 0,
+		pageSize: calculatedPageSize
+	});
 
 	// Define columns
 	const columns: ColumnDef<StopWithLocation, any>[] = [
@@ -358,10 +374,14 @@
 				<MapPin />
 			</Empty.Media>
 			<Empty.Title>No stops yet</Empty.Title>
-			<Empty.Description>Upload a CSV file or create stops manually.</Empty.Description>
+			<Empty.Description
+				>Upload a CSV file or create stops manually.</Empty.Description
+			>
 		</Empty.Header>
 
-		<div class="flex w-full flex-row items-center justify-center lg:flex-col lg:gap-6">
+		<div
+			class="flex w-full flex-row items-center justify-center lg:flex-col lg:gap-6"
+		>
 			<!-- File Upload: Simple button on mobile, dropzone on desktop -->
 			{#if isMobile.current}
 				<div class="flex flex-col gap-2">
@@ -402,7 +422,9 @@
 {:else}
 	<div class="@container flex h-full flex-col">
 		<!-- Toolbar -->
-		<div class="flex flex-col justify-between gap-2 pb-4 @lg:flex-row @lg:items-center">
+		<div
+			class="flex flex-col justify-between gap-2 pb-4 @lg:flex-row @lg:items-center"
+		>
 			<!-- Search input with field selector -->
 			<ButtonGroup.Root class="w-full flex-1">
 				<Input
@@ -425,8 +447,13 @@
 						<ChevronDown class="ml-1 h-3 w-3" />
 					</DropdownMenu.Trigger>
 					<DropdownMenu.Content align="end" class="w-40">
-						{#each table.getAllColumns().filter((column) => column.getCanHide()) as column}
-							<DropdownMenu.Item onclick={() => (searchField = column.id)} class="justify-between">
+						{#each table
+							.getAllColumns()
+							.filter((column) => column.getCanHide()) as column}
+							<DropdownMenu.Item
+								onclick={() => (searchField = column.id)}
+								class="justify-between"
+							>
 								<span class="flex items-center">
 									<span class="mr-2 inline-block h-4 w-4">
 										{#if searchField === column.id}
@@ -453,17 +480,24 @@
 					<!-- Column visibility dropdown -->
 					<DropdownMenu.Root>
 						<DropdownMenu.Trigger
-							class="{buttonVariants({ variant: 'outline', size: 'sm' })} grow gap-2"
+							class="{buttonVariants({
+								variant: 'outline',
+								size: 'sm'
+							})} grow gap-2"
 						>
 							Columns <ChevronDown class="h-4 w-4" />
 						</DropdownMenu.Trigger>
 						<DropdownMenu.Content align="end">
-							{#each table.getAllColumns().filter((column) => column.getCanHide()) as column}
+							{#each table
+								.getAllColumns()
+								.filter((column) => column.getCanHide()) as column}
 								<DropdownMenu.CheckboxItem
 									checked={column.getIsVisible()}
 									onCheckedChange={(value) => column.toggleVisibility(!!value)}
 								>
-									{typeof column.columnDef.header == 'string' ? column.columnDef.header : null}
+									{typeof column.columnDef.header == 'string'
+										? column.columnDef.header
+										: null}
 								</DropdownMenu.CheckboxItem>
 							{/each}
 						</DropdownMenu.Content>
@@ -512,14 +546,19 @@
 							<Table.Row data-state={row.getIsSelected() && 'selected'}>
 								{#each row.getVisibleCells() as cell}
 									<Table.Cell>
-										<FlexRender content={cell.column.columnDef.cell} context={cell.getContext()} />
+										<FlexRender
+											content={cell.column.columnDef.cell}
+											context={cell.getContext()}
+										/>
 									</Table.Cell>
 								{/each}
 							</Table.Row>
 						{/each}
 					{:else}
 						<Table.Row>
-							<Table.Cell colspan={columns.length} class="h-24 text-center">No results.</Table.Cell>
+							<Table.Cell colspan={columns.length} class="h-24 text-center"
+								>No results.</Table.Cell
+							>
 						</Table.Row>
 					{/if}
 				</Table.Body>
@@ -529,9 +568,12 @@
 		<!-- Pagination -->
 		<div class="flex shrink-0 items-center justify-center px-2">
 			<div class="flex items-center space-x-4 @sm:space-x-6">
-				<div class="flex items-center justify-center text-xs text-muted-foreground">
+				<div
+					class="flex items-center justify-center text-xs text-muted-foreground"
+				>
 					<span class="tabular-nums @sm:hidden"
-						>{table.getState().pagination.pageIndex + 1}/{table.getPageCount()}</span
+						>{table.getState().pagination.pageIndex +
+							1}/{table.getPageCount()}</span
 					>
 					<span class="hidden tabular-nums @sm:inline">
 						Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}

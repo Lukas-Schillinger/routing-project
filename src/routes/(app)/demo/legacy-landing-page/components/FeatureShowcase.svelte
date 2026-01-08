@@ -7,7 +7,9 @@
 	<!-- Share Routes -->
 	<div class="grid grid-cols-1 items-center gap-8 md:grid-cols-2 md:gap-12">
 		<div class="flex h-full flex-col justify-end space-y-4">
-			<h3 class="font-serif text-4xl leading-tight md:text-5xl">Share routes</h3>
+			<h3 class="font-serif text-4xl leading-tight md:text-5xl">
+				Share routes
+			</h3>
 			<p class="text-lg font-light text-muted-foreground md:text-xl">
 				Send drivers their routes directly from the app.
 			</p>
@@ -59,10 +61,12 @@
 			/>
 		</div>
 		<div class="order-1 flex h-full flex-col justify-end space-y-4 md:order-2">
-			<h3 class="font-serif text-4xl leading-tight md:text-5xl">Track & complete</h3>
+			<h3 class="font-serif text-4xl leading-tight md:text-5xl">
+				Track & complete
+			</h3>
 			<p class="text-lg font-light text-muted-foreground md:text-xl">
-				Monitor progress in real-time. Drivers mark stops complete and capture proof of delivery
-				(coming soon).
+				Monitor progress in real-time. Drivers mark stops complete and capture
+				proof of delivery (coming soon).
 			</p>
 		</div>
 	</div>
@@ -70,9 +74,12 @@
 	<!-- One Click Optimization -->
 	<div class="grid grid-cols-1 items-center gap-8 md:grid-cols-2 md:gap-12">
 		<div class="flex h-full flex-col justify-end space-y-4">
-			<h3 class="font-serif text-4xl leading-tight md:text-5xl">One click optimization</h3>
+			<h3 class="font-serif text-4xl leading-tight md:text-5xl">
+				One click optimization
+			</h3>
 			<p class="text-lg font-light text-muted-foreground md:text-xl">
-				Multi-stop and multi-agent route optimization for up to 14 drivers and 100 stops.
+				Multi-stop and multi-agent route optimization for up to 14 drivers and
+				100 stops.
 			</p>
 		</div>
 		<div class="overflow-hidden rounded-3xl">

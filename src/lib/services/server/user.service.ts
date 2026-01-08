@@ -17,7 +17,9 @@ export class UserService {
 		const [user] = await db
 			.select()
 			.from(users)
-			.where(and(eq(users.id, userId), eq(users.organization_id, organizationId)))
+			.where(
+				and(eq(users.id, userId), eq(users.organization_id, organizationId))
+			)
 			.limit(1);
 
 		if (!user) {
@@ -27,7 +29,10 @@ export class UserService {
 		return user;
 	}
 
-	async getPublicUser(userId: string, organization_id: string): Promise<PublicUser> {
+	async getPublicUser(
+		userId: string,
+		organization_id: string
+	): Promise<PublicUser> {
 		const user = await this.getUser(userId, organization_id);
 		return {
 			id: user.id,
@@ -59,17 +64,29 @@ export class UserService {
 
 	/** Does not validate requester organization ID! Used by magic links service */
 	async getAnyUser(userId: string): Promise<User | null> {
-		const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+		const [user] = await db
+			.select()
+			.from(users)
+			.where(eq(users.id, userId))
+			.limit(1);
 		return user;
 	}
 
 	/** Does not validate requester organization ID! */
 	async findAnyUserByEmail(email: string): Promise<User | null> {
-		const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+		const [user] = await db
+			.select()
+			.from(users)
+			.where(eq(users.email, email))
+			.limit(1);
 		return user;
 	}
 
-	async updateUser(userId: string, organizationId: string, data: UpdateUser): Promise<PublicUser> {
+	async updateUser(
+		userId: string,
+		organizationId: string,
+		data: UpdateUser
+	): Promise<PublicUser> {
 		const user = await this.getUser(userId, organizationId);
 
 		const [updatedUser] = await db
@@ -79,7 +96,9 @@ export class UserService {
 				updated_at: new Date(),
 				updated_by: userId
 			})
-			.where(and(eq(users.id, userId), eq(users.organization_id, organizationId)))
+			.where(
+				and(eq(users.id, userId), eq(users.organization_id, organizationId))
+			)
 			.returning();
 
 		return {
@@ -109,7 +128,9 @@ export class UserService {
 				updated_at: new Date(),
 				updated_by: updatedByUserId
 			})
-			.where(and(eq(users.id, userId), eq(users.organization_id, organizationId)))
+			.where(
+				and(eq(users.id, userId), eq(users.organization_id, organizationId))
+			)
 			.returning();
 
 		return {
@@ -139,16 +160,23 @@ export class UserService {
 				updated_at: new Date(),
 				updated_by: userId
 			})
-			.where(and(eq(users.id, userId), eq(users.organization_id, organizationId)));
+			.where(
+				and(eq(users.id, userId), eq(users.organization_id, organizationId))
+			);
 	}
 
-	async deleteUser(userId: string, organizationId: string): Promise<{ success: true }> {
+	async deleteUser(
+		userId: string,
+		organizationId: string
+	): Promise<{ success: true }> {
 		// Verify user exists and belongs to organization
 		const user = await this.getUser(userId, organizationId);
 
 		await db
 			.delete(users)
-			.where(and(eq(users.id, userId), eq(users.organization_id, organizationId)));
+			.where(
+				and(eq(users.id, userId), eq(users.organization_id, organizationId))
+			);
 
 		// delete their invitations so they can be invited again
 		await db.delete(invitations).where(eq(invitations.email, user.email));
@@ -171,7 +199,9 @@ export class UserService {
 
 	async createUser(data: CreateUser): Promise<User> {
 		// If no organization ID provided, create a new organization with a random name
-		const orgId = data.organization_id ? data.organization_id : await this.generateOrganization();
+		const orgId = data.organization_id
+			? data.organization_id
+			: await this.generateOrganization();
 
 		// Create the user with the organization ID
 		const [result] = await db
@@ -201,7 +231,11 @@ export class OrganizationService {
 		return organization;
 	}
 
-	async updateOrganization(organizationId: string, data: UpdateOrganization, userId: string) {
+	async updateOrganization(
+		organizationId: string,
+		data: UpdateOrganization,
+		userId: string
+	) {
 		const [organization] = await db
 			.select()
 			.from(organizations)

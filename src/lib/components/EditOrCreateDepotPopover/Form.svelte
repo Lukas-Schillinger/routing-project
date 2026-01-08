@@ -118,7 +118,10 @@
 			onSuccess(updatedDepot);
 			resetForm();
 		} catch (err) {
-			console.error(`Error ${mode === 'create' ? 'creating' : 'updating'} depot:`, err);
+			console.error(
+				`Error ${mode === 'create' ? 'creating' : 'updating'} depot:`,
+				err
+			);
 
 			if (err instanceof ServiceError) {
 				if (err.statusCode === 409) {
@@ -180,8 +183,14 @@
 	</div>
 
 	<div class="flex items-center justify-between space-x-2">
-		<Label for="default-depot" class="flex-1 cursor-pointer">Set as default depot</Label>
-		<Switch id="default-depot" bind:checked={isDefault} disabled={isSubmitting} />
+		<Label for="default-depot" class="flex-1 cursor-pointer"
+			>Set as default depot</Label
+		>
+		<Switch
+			id="default-depot"
+			bind:checked={isDefault}
+			disabled={isSubmitting}
+		/>
 	</div>
 
 	<div class="flex gap-2">

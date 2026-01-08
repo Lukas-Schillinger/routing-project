@@ -18,7 +18,10 @@ export const GET: RequestHandler = async ({ params }) => {
 	}
 
 	try {
-		const shares = await routeShareService.getSharesForRoute(routeId, user.organization_id);
+		const shares = await routeShareService.getSharesForRoute(
+			routeId,
+			user.organization_id
+		);
 		return json({ shares });
 	} catch (err) {
 		handleApiError(err, 'Failed to fetch route shares');
@@ -35,7 +38,10 @@ export const POST: RequestHandler = async ({ params, request }) => {
 
 	try {
 		const body = await request.json();
-		const validated = createEmailShareSchema.parse({ ...body, route_id: routeId });
+		const validated = createEmailShareSchema.parse({
+			...body,
+			route_id: routeId
+		});
 
 		const event = getRequestEvent();
 		const origin = event?.url.origin ?? '';

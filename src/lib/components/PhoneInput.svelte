@@ -76,7 +76,11 @@
 		const formatted = formatter.input(rawValue);
 
 		// Calculate new cursor position before updating value
-		const newCursorPosition = findNewCursorPosition(rawValue, formatted, cursorPosition);
+		const newCursorPosition = findNewCursorPosition(
+			rawValue,
+			formatted,
+			cursorPosition
+		);
 
 		displayValue = formatted;
 		value = rawValue.replace(/\D/g, '');

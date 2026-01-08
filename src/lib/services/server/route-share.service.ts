@@ -1,4 +1,8 @@
-import type { RouteShare, RouteShareWithMailRecord, RouteWithDetails } from '$lib/schemas';
+import type {
+	RouteShare,
+	RouteShareWithMailRecord,
+	RouteWithDetails
+} from '$lib/schemas';
 import { db } from '$lib/server/db';
 import { mailRecords, routeShares, routes } from '$lib/server/db/schema';
 import { mailService } from '$lib/services/external/mail';
@@ -55,14 +59,21 @@ export class RouteShareService {
 	 * Validate a share token and return the route with details if valid
 	 * Returns null if token is invalid, expired, or revoked
 	 */
-	async validateTokenAndGetRoute(token: string): Promise<RouteWithDetails | null> {
+	async validateTokenAndGetRoute(
+		token: string
+	): Promise<RouteWithDetails | null> {
 		const tokenHash = TokenUtils.hash(token);
 
 		const [result] = await db
 			.select({ share: routeShares, route: routes })
 			.from(routeShares)
 			.innerJoin(routes, eq(routeShares.route_id, routes.id))
-			.where(and(eq(routeShares.access_token_hash, tokenHash), isNull(routeShares.revoked_at)))
+			.where(
+				and(
+					eq(routeShares.access_token_hash, tokenHash),
+					isNull(routeShares.revoked_at)
+				)
+			)
 			.limit(1);
 
 		if (!result) {
@@ -77,7 +88,10 @@ export class RouteShareService {
 		}
 
 		// Get full route details
-		return routeService.getRouteWithDetails(share.route_id, share.organization_id);
+		return routeService.getRouteWithDetails(
+			share.route_id,
+			share.organization_id
+		);
 	}
 
 	/**
@@ -95,7 +109,10 @@ export class RouteShareService {
 			.from(routeShares)
 			.leftJoin(mailRecords, eq(routeShares.mail_record_id, mailRecords.id))
 			.where(
-				and(eq(routeShares.route_id, routeId), eq(routeShares.organization_id, organizationId))
+				and(
+					eq(routeShares.route_id, routeId),
+					eq(routeShares.organization_id, organizationId)
+				)
 			);
 
 		return results.map((r) => ({
@@ -111,7 +128,12 @@ export class RouteShareService {
 		const [share] = await db
 			.select()
 			.from(routeShares)
-			.where(and(eq(routeShares.id, shareId), eq(routeShares.organization_id, organizationId)))
+			.where(
+				and(
+					eq(routeShares.id, shareId),
+					eq(routeShares.organization_id, organizationId)
+				)
+			)
 			.limit(1);
 
 		if (!share) {
@@ -155,7 +177,9 @@ export class RouteShareService {
 		const existingShare = shares.find((s) => s.id === shareId);
 
 		if (!existingShare?.mailRecord?.to_email) {
-			throw ServiceError.badRequest('Cannot resend: no email address on original share');
+			throw ServiceError.badRequest(
+				'Cannot resend: no email address on original share'
+			);
 		}
 
 		const recipientEmail = existingShare.mailRecord.to_email;
@@ -167,7 +191,13 @@ export class RouteShareService {
 		}
 
 		// Create and send new share
-		return this.createAndSendEmailShare(routeId, recipientEmail, organizationId, createdBy, origin);
+		return this.createAndSendEmailShare(
+			routeId,
+			recipientEmail,
+			organizationId,
+			createdBy,
+			origin
+		);
 	}
 
 	/**
@@ -199,7 +229,10 @@ export class RouteShareService {
 		);
 
 		// Get route details for email
-		const routeDetails = await routeService.getRouteWithDetails(routeId, organizationId);
+		const routeDetails = await routeService.getRouteWithDetails(
+			routeId,
+			organizationId
+		);
 
 		// Send the email
 		await mailService.sendRouteShareEmail(

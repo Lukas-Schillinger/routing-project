@@ -41,8 +41,13 @@ class MapApiService {
 	/**
 	 * Create a new map
 	 */
-	async create(data: CreateMap): Promise<{ map: Map; stops: StopWithLocation[] | null }> {
-		return apiClient.post<{ map: Map; stops: StopWithLocation[] | null }>('/maps', data);
+	async create(
+		data: CreateMap
+	): Promise<{ map: Map; stops: StopWithLocation[] | null }> {
+		return apiClient.post<{ map: Map; stops: StopWithLocation[] | null }>(
+			'/maps',
+			data
+		);
 	}
 
 	/**
@@ -74,19 +79,26 @@ class MapApiService {
 	/**
 	 * Assign a driver to a map
 	 */
-	async addDriver(mapId: string, driverId: string): Promise<DriverMembership['membership']> {
-		const result = await apiClient.post<{ membership: DriverMembership['membership'] }>(
-			`/maps/${mapId}/drivers`,
-			{ driver_id: driverId }
-		);
+	async addDriver(
+		mapId: string,
+		driverId: string
+	): Promise<DriverMembership['membership']> {
+		const result = await apiClient.post<{
+			membership: DriverMembership['membership'];
+		}>(`/maps/${mapId}/drivers`, { driver_id: driverId });
 		return result.membership;
 	}
 
 	/**
 	 * Remove a driver from a map
 	 */
-	async removeDriver(mapId: string, driverId: string): Promise<{ success: boolean }> {
-		return apiClient.delete<{ success: boolean }>(`/maps/${mapId}/drivers/${driverId}`);
+	async removeDriver(
+		mapId: string,
+		driverId: string
+	): Promise<{ success: boolean }> {
+		return apiClient.delete<{ success: boolean }>(
+			`/maps/${mapId}/drivers/${driverId}`
+		);
 	}
 
 	// Optimization Methods
@@ -94,8 +106,12 @@ class MapApiService {
 	/**
 	 * Get current optimization job status for a map
 	 */
-	async getOptimizationStatus(mapId: string): Promise<{ job: OptimizationJob | null }> {
-		return apiClient.get<{ job: OptimizationJob | null }>(`/maps/${mapId}/optimize`);
+	async getOptimizationStatus(
+		mapId: string
+	): Promise<{ job: OptimizationJob | null }> {
+		return apiClient.get<{ job: OptimizationJob | null }>(
+			`/maps/${mapId}/optimize`
+		);
 	}
 
 	/**
@@ -105,21 +121,28 @@ class MapApiService {
 		mapId: string,
 		options: OptimizationOptions
 	): Promise<OptimizationResult> {
-		return apiClient.post<OptimizationResult>(`/maps/${mapId}/optimize`, options);
+		return apiClient.post<OptimizationResult>(
+			`/maps/${mapId}/optimize`,
+			options
+		);
 	}
 
 	/**
 	 * Reset optimization for a map (clear driver assignments)
 	 */
 	async resetOptimization(mapId: string): Promise<{ success: boolean }> {
-		return apiClient.post<{ success: boolean }>(`/maps/${mapId}/reset-optimization`);
+		return apiClient.post<{ success: boolean }>(
+			`/maps/${mapId}/reset-optimization`
+		);
 	}
 
 	/**
 	 * Cancel an active optimization job for a map
 	 */
 	async cancelOptimization(mapId: string): Promise<{ success: boolean }> {
-		return apiClient.post<{ success: boolean }>(`/maps/${mapId}/cancel-optimization`);
+		return apiClient.post<{ success: boolean }>(
+			`/maps/${mapId}/cancel-optimization`
+		);
 	}
 }
 

@@ -13,7 +13,10 @@ export const GET: RequestHandler = async ({ params }) => {
 	const { mapId } = params;
 
 	try {
-		const job = await optimizationService.getActiveJobForMap(mapId, user.organization_id);
+		const job = await optimizationService.getActiveJobForMap(
+			mapId,
+			user.organization_id
+		);
 		return json({ job });
 	} catch (err) {
 		handleApiError(err, 'Failed to get optimization status');

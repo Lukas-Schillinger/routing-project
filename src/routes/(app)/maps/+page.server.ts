@@ -13,11 +13,17 @@ export const load: PageServerLoad = async ({ url }) => {
 
 	// Parse URL params for persisted state
 	const searchQuery = url.searchParams.get('q') ?? '';
-	const viewMode = (url.searchParams.get('view') as 'list' | 'compact') || 'list';
+	const viewMode =
+		(url.searchParams.get('view') as 'list' | 'compact') || 'list';
 	const sortColumn =
-		(url.searchParams.get('sort') as 'created_at' | 'title' | 'stops') || 'created_at';
-	const sortDirection = (url.searchParams.get('dir') as 'asc' | 'desc') || 'desc';
-	const currentPage = Math.max(1, parseInt(url.searchParams.get('page') ?? '1', 10) || 1);
+		(url.searchParams.get('sort') as 'created_at' | 'title' | 'stops') ||
+		'created_at';
+	const sortDirection =
+		(url.searchParams.get('dir') as 'asc' | 'desc') || 'desc';
+	const currentPage = Math.max(
+		1,
+		parseInt(url.searchParams.get('page') ?? '1', 10) || 1
+	);
 
 	// Fetch all data in parallel since they're independent
 	const [userMaps, userDepots, userDrivers, stops, routes] = await Promise.all([

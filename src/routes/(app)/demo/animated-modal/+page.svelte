@@ -49,8 +49,8 @@
 			Made for modern product teams
 		</h2>
 		<p class="max-w-[500px] text-base leading-relaxed text-white/50">
-			Linear is shaped by the practices and principles that distinguish world-class product teams
-			from the rest.
+			Linear is shaped by the practices and principles that distinguish
+			world-class product teams from the rest.
 		</p>
 	</div>
 
@@ -69,14 +69,17 @@
 					style="background: linear-gradient(180deg, rgba(20,20,20,1) 0%, rgba(15,15,15,1) 100%);"
 				>
 					{#if card.id === 'purpose-built'}
-						<div class="relative flex h-full w-full items-center justify-center">
+						<div
+							class="relative flex h-full w-full items-center justify-center"
+						>
 							{#each [0, 1, 2, 3, 4] as i}
 								<div
 									class="absolute rounded-lg border border-white/10"
 									style="
 										width: 100px;
 										height: 70px;
-										transform: translateX({-60 + i * 35}px) translateY({-15 + i * 10}px) rotateY(-25deg) rotateX(15deg);
+										transform: translateX({-60 + i * 35}px) translateY({-15 +
+										i * 10}px) rotateY(-25deg) rotateX(15deg);
 										background: {i === 4
 										? 'linear-gradient(145deg, rgba(60,60,60,0.9) 0%, rgba(40,40,40,0.9) 100%)'
 										: 'linear-gradient(145deg, rgba(45,45,45,0.6) 0%, rgba(30,30,30,0.6) 100%)'};
@@ -84,7 +87,9 @@
 									"
 								>
 									<div class="p-3 opacity-40">
-										<div class="mb-1.5 h-1.5 w-3/5 rounded-sm bg-white/30"></div>
+										<div
+											class="mb-1.5 h-1.5 w-3/5 rounded-sm bg-white/30"
+										></div>
 										<div class="mb-1 h-1 w-4/5 rounded-sm bg-white/15"></div>
 										<div class="h-1 w-1/2 rounded-sm bg-white/15"></div>
 									</div>
@@ -107,7 +112,9 @@
 						<div
 							class="relative flex h-full w-full flex-col items-center justify-center overflow-hidden"
 						>
-							<div class="z-2 mb-5 font-mono text-[32px] font-medium tracking-tight text-white/70">
+							<div
+								class="z-2 mb-5 font-mono text-[32px] font-medium tracking-tight text-white/70"
+							>
 								50ms
 							</div>
 							{#each Array(12) as _, i}
@@ -117,14 +124,17 @@
 										width: {40 + (i % 4) * 20}px;
 										left: {10 + (i % 5) * 15}%;
 										top: {25 + i * 5}%;
-										background: linear-gradient(90deg, rgba(255,255,255,{0.6 - i * 0.04}) 0%, transparent 100%);
+										background: linear-gradient(90deg, rgba(255,255,255,{0.6 -
+										i * 0.04}) 0%, transparent 100%);
 										transform: translateX({-30 + (i % 3) * 18}px) rotate({25 + i * 0.5}deg);
 									"
 								></div>
 							{/each}
 						</div>
 					{:else if card.id === 'crafted'}
-						<div class="relative flex h-full w-full items-center justify-center">
+						<div
+							class="relative flex h-full w-full items-center justify-center"
+						>
 							<div
 								class="absolute inset-[10%]"
 								style="
@@ -149,8 +159,12 @@
 							<div
 								class="absolute top-1/4 left-[20%] h-[100px] w-[150px] rounded border border-dashed border-white/20 opacity-50"
 							>
-								<div class="absolute -top-1 -left-1 h-2 w-2 rounded-sm bg-white/40"></div>
-								<div class="absolute -right-1 -bottom-1 h-2 w-2 rounded-sm bg-white/40"></div>
+								<div
+									class="absolute -top-1 -left-1 h-2 w-2 rounded-sm bg-white/40"
+								></div>
+								<div
+									class="absolute -right-1 -bottom-1 h-2 w-2 rounded-sm bg-white/40"
+								></div>
 							</div>
 						</div>
 					{/if}
@@ -158,7 +172,9 @@
 
 				<!-- Content -->
 				<div class="p-6">
-					<h3 class="text-lg leading-tight font-semibold tracking-[-0.02em] text-white">
+					<h3
+						class="text-lg leading-tight font-semibold tracking-[-0.02em] text-white"
+					>
 						{card.title}
 					</h3>
 					<div
@@ -183,7 +199,9 @@
 		></button>
 
 		<!-- Modal -->
-		<div class="pointer-events-none fixed inset-0 z-[101] flex items-center justify-center p-6">
+		<div
+			class="pointer-events-none fixed inset-0 z-[101] flex items-center justify-center p-6"
+		>
 			<div
 				class="pointer-events-auto relative max-h-[90vh] w-full max-w-[680px] overflow-hidden rounded-[20px] border border-white/10 shadow-[0_40px_100px_rgba(0,0,0,0.5)]"
 				style="background: linear-gradient(180deg, rgba(30,30,30,1) 0%, rgba(22,22,22,1) 100%);"
@@ -205,14 +223,17 @@
 					style="background: linear-gradient(180deg, rgba(20,20,20,1) 0%, rgba(18,18,18,1) 100%);"
 				>
 					{#if selectedCard.id === 'purpose-built'}
-						<div class="relative flex h-full w-full items-center justify-center">
+						<div
+							class="relative flex h-full w-full items-center justify-center"
+						>
 							{#each [0, 1, 2, 3, 4] as i}
 								<div
 									class="absolute rounded-lg border border-white/10 transition-all duration-500"
 									style="
 										width: 140px;
 										height: 100px;
-										transform: translateX({-80 + i * 45}px) translateY({-20 + i * 12}px) rotateY(-25deg) rotateX(15deg);
+										transform: translateX({-80 + i * 45}px) translateY({-20 +
+										i * 12}px) rotateY(-25deg) rotateX(15deg);
 										background: {i === 4
 										? 'linear-gradient(145deg, rgba(60,60,60,0.9) 0%, rgba(40,40,40,0.9) 100%)'
 										: 'linear-gradient(145deg, rgba(45,45,45,0.6) 0%, rgba(30,30,30,0.6) 100%)'};
@@ -220,7 +241,9 @@
 									"
 								>
 									<div class="p-3 opacity-40">
-										<div class="mb-1.5 h-1.5 w-3/5 rounded-sm bg-white/30"></div>
+										<div
+											class="mb-1.5 h-1.5 w-3/5 rounded-sm bg-white/30"
+										></div>
 										<div class="mb-1 h-1 w-4/5 rounded-sm bg-white/15"></div>
 										<div class="h-1 w-1/2 rounded-sm bg-white/15"></div>
 									</div>
@@ -255,7 +278,8 @@
 										width: {60 + (i % 4) * 30}px;
 										left: {10 + (i % 5) * 15}%;
 										top: {25 + i * 5}%;
-										background: linear-gradient(90deg, rgba(255,255,255,{0.6 - i * 0.04}) 0%, transparent 100%);
+										background: linear-gradient(90deg, rgba(255,255,255,{0.6 -
+										i * 0.04}) 0%, transparent 100%);
 										transform: translateX({-40 + (i % 3) * 25}px) rotate({25 + i * 0.5}deg);
 										transition-delay: {i * 20}ms;
 									"
@@ -263,7 +287,9 @@
 							{/each}
 						</div>
 					{:else if selectedCard.id === 'crafted'}
-						<div class="relative flex h-full w-full items-center justify-center">
+						<div
+							class="relative flex h-full w-full items-center justify-center"
+						>
 							<div
 								class="absolute inset-[10%]"
 								style="
@@ -288,8 +314,12 @@
 							<div
 								class="absolute top-1/4 left-[20%] h-[100px] w-[150px] rounded border border-dashed border-white/20 opacity-80 transition-opacity duration-500"
 							>
-								<div class="absolute -top-1 -left-1 h-2 w-2 rounded-sm bg-white/40"></div>
-								<div class="absolute -right-1 -bottom-1 h-2 w-2 rounded-sm bg-white/40"></div>
+								<div
+									class="absolute -top-1 -left-1 h-2 w-2 rounded-sm bg-white/40"
+								></div>
+								<div
+									class="absolute -right-1 -bottom-1 h-2 w-2 rounded-sm bg-white/40"
+								></div>
 							</div>
 						</div>
 					{/if}
@@ -297,20 +327,32 @@
 
 				<!-- Content -->
 				<div class="px-10 py-8 pb-10">
-					<h2 class="mb-5 text-[28px] leading-tight font-semibold tracking-[-0.02em] text-white">
+					<h2
+						class="mb-5 text-[28px] leading-tight font-semibold tracking-[-0.02em] text-white"
+					>
 						{selectedCard.title}
 					</h2>
 
 					<p
 						class="mb-4 text-base leading-relaxed text-white/60"
-						transition:fly={{ y: 12, duration: 500, delay: 200, easing: backOut }}
+						transition:fly={{
+							y: 12,
+							duration: 500,
+							delay: 200,
+							easing: backOut
+						}}
 					>
 						{selectedCard.description}
 					</p>
 
 					<p
 						class="text-base leading-relaxed text-white/60"
-						transition:fly={{ y: 12, duration: 500, delay: 350, easing: backOut }}
+						transition:fly={{
+							y: 12,
+							duration: 500,
+							delay: 350,
+							easing: backOut
+						}}
 					>
 						{selectedCard.fullDescription}
 					</p>
@@ -327,16 +369,17 @@
 		<h3 class="mb-4 text-base font-semibold text-white">How This Works</h3>
 		<div class="text-sm leading-relaxed text-white/50">
 			<p class="mb-3">
-				<strong class="text-white/80">Svelte Transitions:</strong> Elements use built-in Svelte transitions
-				like fade, fly, and scale for smooth enter/exit animations.
+				<strong class="text-white/80">Svelte Transitions:</strong> Elements use built-in
+				Svelte transitions like fade, fly, and scale for smooth enter/exit animations.
 			</p>
 			<p class="mb-3">
-				<strong class="text-white/80">Key components:</strong> The card container, illustration area,
-				and content sections animate with CSS transitions and Svelte's transition directives.
+				<strong class="text-white/80">Key components:</strong> The card container,
+				illustration area, and content sections animate with CSS transitions and
+				Svelte's transition directives.
 			</p>
 			<p>
-				<strong class="text-white/80">Content reveal:</strong> Description text uses fly transitions
-				with staggered delays for a polished feel.
+				<strong class="text-white/80">Content reveal:</strong> Description text uses
+				fly transitions with staggered delays for a polished feel.
 			</p>
 		</div>
 	</div>

@@ -1,6 +1,19 @@
-import type { CreateRoute, Driver, Map, PublicUser, Route, RouteWithDetails } from '$lib/schemas';
+import type {
+	CreateRoute,
+	Driver,
+	Map,
+	PublicUser,
+	Route,
+	RouteWithDetails
+} from '$lib/schemas';
 import { db } from '$lib/server/db';
-import { depots, drivers, locations, maps, routes } from '$lib/server/db/schema';
+import {
+	depots,
+	drivers,
+	locations,
+	maps,
+	routes
+} from '$lib/server/db/schema';
 import { and, eq } from 'drizzle-orm';
 import { ServiceError } from './errors';
 import { stopService } from './stop.service';
@@ -9,15 +22,24 @@ export class RouteService {
 	/**
 	 * Create or update a route for a driver on a map
 	 */
-	async verifyRouteOwnership(routeId: string, organizationId: string): Promise<Route> {
-		const [route] = await db.select().from(routes).where(eq(routes.id, routeId)).limit(1);
+	async verifyRouteOwnership(
+		routeId: string,
+		organizationId: string
+	): Promise<Route> {
+		const [route] = await db
+			.select()
+			.from(routes)
+			.where(eq(routes.id, routeId))
+			.limit(1);
 
 		if (!route) {
 			throw ServiceError.notFound('Route not found');
 		}
 
 		if (route.organization_id !== organizationId) {
-			throw ServiceError.forbidden('Route does not belong to your organization');
+			throw ServiceError.forbidden(
+				'Route does not belong to your organization'
+			);
 		}
 
 		return route as Route;
@@ -28,7 +50,12 @@ export class RouteService {
 			const existing = await db
 				.select()
 				.from(routes)
-				.where(and(eq(routes.map_id, input.map_id), eq(routes.driver_id, input.driver_id)))
+				.where(
+					and(
+						eq(routes.map_id, input.map_id),
+						eq(routes.driver_id, input.driver_id)
+					)
+				)
 				.limit(1);
 
 			if (existing.length > 0) {
@@ -71,7 +98,9 @@ export class RouteService {
 	 * Bulk upsert routes (more efficient for multiple routes)
 	 */
 	async upsertRoutes(inputs: CreateRoute[]) {
-		const results = await Promise.all(inputs.map((input) => this.upsertRoute(input)));
+		const results = await Promise.all(
+			inputs.map((input) => this.upsertRoute(input))
+		);
 		return results;
 	}
 
@@ -95,7 +124,10 @@ export class RouteService {
 				.select()
 				.from(routes)
 				.where(
-					and(eq(routes.map_id, mapId), eq(routes.organization_id, organizationId))
+					and(
+						eq(routes.map_id, mapId),
+						eq(routes.organization_id, organizationId)
+					)
 				)) as Route[]; // little hack becasuse drizzle can't type the LineString
 		} catch (error) {
 			console.error('Error fetching routes:', error);
@@ -110,7 +142,12 @@ export class RouteService {
 		try {
 			await db
 				.delete(routes)
-				.where(and(eq(routes.map_id, mapId), eq(routes.organization_id, organizationId)));
+				.where(
+					and(
+						eq(routes.map_id, mapId),
+						eq(routes.organization_id, organizationId)
+					)
+				);
 		} catch (error) {
 			console.error('Error deleting routes:', error);
 			throw new ServiceError('Failed to delete routes', 'INTERNAL_ERROR', 500);
@@ -124,7 +161,12 @@ export class RouteService {
 		try {
 			await db
 				.delete(routes)
-				.where(and(eq(routes.id, routeId), eq(routes.organization_id, organizationId)));
+				.where(
+					and(
+						eq(routes.id, routeId),
+						eq(routes.organization_id, organizationId)
+					)
+				);
 		} catch (error) {
 			console.error('Error deleting route:', error);
 			throw new ServiceError('Failed to delete route', 'INTERNAL_ERROR', 500);
@@ -161,7 +203,10 @@ export class RouteService {
 				.select()
 				.from(routes)
 				.where(
-					and(eq(routes.organization_id, user.organization_id), eq(routes.driver_id, driver.id))
+					and(
+						eq(routes.organization_id, user.organization_id),
+						eq(routes.driver_id, driver.id)
+					)
 				)) as Route[];
 		}
 
@@ -173,7 +218,10 @@ export class RouteService {
 	 * Get a route with role-based access check
 	 */
 	async getRouteByIdForUser(routeId: string, user: PublicUser): Promise<Route> {
-		const route = await this.verifyRouteOwnership(routeId, user.organization_id);
+		const route = await this.verifyRouteOwnership(
+			routeId,
+			user.organization_id
+		);
 
 		if (user.role === 'driver') {
 			const driver = await this.getDriverForUser(user.id, user.organization_id);
@@ -196,7 +244,12 @@ export class RouteService {
 		const [driver] = await db
 			.select()
 			.from(drivers)
-			.where(and(eq(drivers.user_id, userId), eq(drivers.organization_id, organizationId)))
+			.where(
+				and(
+					eq(drivers.user_id, userId),
+					eq(drivers.organization_id, organizationId)
+				)
+			)
 			.limit(1);
 
 		return driver ?? null;
@@ -206,7 +259,10 @@ export class RouteService {
 	 * Get route with all related details using a single join query
 	 * Returns route, map, driver, depot (with location), and routed stops
 	 */
-	async getRouteWithDetails(routeId: string, organizationId: string): Promise<RouteWithDetails> {
+	async getRouteWithDetails(
+		routeId: string,
+		organizationId: string
+	): Promise<RouteWithDetails> {
 		const [result] = await db
 			.select({
 				route: routes,
@@ -220,7 +276,9 @@ export class RouteService {
 			.innerJoin(drivers, eq(routes.driver_id, drivers.id))
 			.innerJoin(depots, eq(routes.depot_id, depots.id))
 			.innerJoin(locations, eq(depots.location_id, locations.id))
-			.where(and(eq(routes.id, routeId), eq(routes.organization_id, organizationId)))
+			.where(
+				and(eq(routes.id, routeId), eq(routes.organization_id, organizationId))
+			)
 			.limit(1);
 
 		if (!result) {

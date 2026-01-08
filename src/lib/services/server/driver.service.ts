@@ -19,8 +19,15 @@ export class DriverService {
 	/**
 	 * Get a specific driver by ID
 	 */
-	async getDriverById(driverId: string, organizationId: string): Promise<Driver> {
-		const [driver] = await db.select().from(drivers).where(eq(drivers.id, driverId)).limit(1);
+	async getDriverById(
+		driverId: string,
+		organizationId: string
+	): Promise<Driver> {
+		const [driver] = await db
+			.select()
+			.from(drivers)
+			.where(eq(drivers.id, driverId))
+			.limit(1);
 
 		if (!driver) {
 			throw ServiceError.notFound('Driver not found');
@@ -36,7 +43,11 @@ export class DriverService {
 	/**
 	 * Create a new driver
 	 */
-	async createDriver(data: DriverCreate, organizationId: string, userId: string): Promise<Driver> {
+	async createDriver(
+		data: DriverCreate,
+		organizationId: string,
+		userId: string
+	): Promise<Driver> {
 		const [newDriver] = await db
 			.insert(drivers)
 			.values({
@@ -89,14 +100,22 @@ export class DriverService {
 	/**
 	 * Delete a driver
 	 */
-	async deleteDriver(driverId: string, organizationId: string): Promise<{ success: boolean }> {
+	async deleteDriver(
+		driverId: string,
+		organizationId: string
+	): Promise<{ success: boolean }> {
 		// Verify driver ownership
 		await this.getDriverById(driverId, organizationId);
 
 		// Check if the driver is assigned to any maps
-		const assignedStops = await db.select().from(stops).where(eq(stops.driver_id, driverId));
+		const assignedStops = await db
+			.select()
+			.from(stops)
+			.where(eq(stops.driver_id, driverId));
 		if (assignedStops.length > 0) {
-			throw ServiceError.validation('Drivers cannot be deleted when assigned to stops');
+			throw ServiceError.validation(
+				'Drivers cannot be deleted when assigned to stops'
+			);
 		}
 
 		await db.delete(drivers).where(eq(drivers.id, driverId));

@@ -43,19 +43,23 @@
 			<h3 class="text-sm leading-tight font-medium">{stop.contact_name}</h3>
 		{/if}
 		<div class="space-y-0.5">
-			<p class="text-xs leading-relaxed text-muted-foreground">{location.address_line_1}</p>
+			<p class="text-xs leading-relaxed text-muted-foreground">
+				{location.address_line_1}
+			</p>
 			{#if location.city}
 				<p class="text-xs text-muted-foreground/70">
-					{location.city}{location.region ? `, ${location.region}` : ''}{location.postal_code
-						? ` ${location.postal_code}`
-						: ''}
+					{location.city}{location.region
+						? `, ${location.region}`
+						: ''}{location.postal_code ? ` ${location.postal_code}` : ''}
 				</p>
 			{/if}
 		</div>
 
 		{#if stop.notes}
 			<div class="mt-2 rounded bg-muted px-2 py-1.5">
-				<p class="text-xs leading-relaxed text-muted-foreground">{stop.notes}</p>
+				<p class="text-xs leading-relaxed text-muted-foreground">
+					{stop.notes}
+				</p>
 			</div>
 		{/if}
 	</div>

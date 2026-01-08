@@ -22,22 +22,32 @@ export const load: PageServerLoad = async ({ params }) => {
 
 	try {
 		// Fetch all data in parallel since they're independent
-		const [map, mapStops, orgDrivers, assignedDriversData, depots, routes, activeJob] =
-			await Promise.all([
-				mapService.getMapById(mapId, user.organization_id),
-				stopService.getStopsByMap(mapId, user.organization_id),
-				driverService.getDrivers(user.organization_id),
-				mapService.getDriversForMap(mapId, user.organization_id),
-				depotService.getDepots(user.organization_id),
-				routeService.getRoutesByMap(mapId, user.organization_id),
-				optimizationService.getActiveJobForMap(mapId, user.organization_id)
-			]);
+		const [
+			map,
+			mapStops,
+			orgDrivers,
+			assignedDriversData,
+			depots,
+			routes,
+			activeJob
+		] = await Promise.all([
+			mapService.getMapById(mapId, user.organization_id),
+			stopService.getStopsByMap(mapId, user.organization_id),
+			driverService.getDrivers(user.organization_id),
+			mapService.getDriversForMap(mapId, user.organization_id),
+			depotService.getDepots(user.organization_id),
+			routeService.getRoutesByMap(mapId, user.organization_id),
+			optimizationService.getActiveJobForMap(mapId, user.organization_id)
+		]);
 
 		const assignedDrivers = assignedDriversData.map((d) => d.driver);
 
 		// Determine if map is optimized (has stops with delivery_index set)
-		const optimizedStops = mapStops.filter((s) => s.stop.delivery_index !== null);
-		const isViewMode = optimizedStops.length > 0 && optimizedStops.length === mapStops.length;
+		const optimizedStops = mapStops.filter(
+			(s) => s.stop.delivery_index !== null
+		);
+		const isViewMode =
+			optimizedStops.length > 0 && optimizedStops.length === mapStops.length;
 
 		return {
 			map,

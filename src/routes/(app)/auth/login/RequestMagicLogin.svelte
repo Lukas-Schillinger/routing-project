@@ -6,7 +6,13 @@
 	import * as InputOTP from '$lib/components/ui/input-otp';
 	import { Label } from '$lib/components/ui/label';
 	import { loginTokensApi } from '$lib/services/api/auth';
-	import { ArrowLeft, ArrowRight, Loader2, Mail, Sparkles } from 'lucide-svelte';
+	import {
+		ArrowLeft,
+		ArrowRight,
+		Loader2,
+		Mail,
+		Sparkles
+	} from 'lucide-svelte';
 
 	interface Props {
 		onBack: () => void;
@@ -59,7 +65,8 @@
 			internalSuccessMessage = 'Check your inbox for a login code';
 			internalOtpSent = true;
 		} catch (err) {
-			internalErrorMessage = err instanceof Error ? err.message : 'Error sending login code';
+			internalErrorMessage =
+				err instanceof Error ? err.message : 'Error sending login code';
 		} finally {
 			isSubmitting = false;
 		}
@@ -89,7 +96,9 @@
 				Email address
 			</Label>
 			<div class="relative">
-				<Mail class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground/50" />
+				<Mail
+					class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground/50"
+				/>
 				<Input
 					id="magic-email"
 					type="email"
@@ -103,7 +112,11 @@
 		</div>
 
 		<div class="flex flex-col gap-3 pt-2">
-			<Button type="submit" class="h-11 w-full font-medium" disabled={isSubmitting}>
+			<Button
+				type="submit"
+				class="h-11 w-full font-medium"
+				disabled={isSubmitting}
+			>
 				{#if isSubmitting}
 					<Loader2 class="mr-2 h-4 w-4 animate-spin" />
 					Sending...
@@ -175,7 +188,11 @@
 		</div>
 
 		<div class="flex flex-col items-center gap-3 pt-2">
-			<Button type="submit" class="h-11 w-full" disabled={isSubmitting || code.length !== 6}>
+			<Button
+				type="submit"
+				class="h-11 w-full"
+				disabled={isSubmitting || code.length !== 6}
+			>
 				{#if isSubmitting}
 					<Loader2 class="mr-2 h-4 w-4 animate-spin" />
 					Verifying...

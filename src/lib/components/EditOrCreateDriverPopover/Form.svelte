@@ -36,7 +36,12 @@
 
 	// Use empty strings for form inputs - schema transforms to null on submit
 	const getInitialData = () => ({
-		name: mode === 'edit' && driver ? driver.name : temporaryDriver ? generateDriverName() : '',
+		name:
+			mode === 'edit' && driver
+				? driver.name
+				: temporaryDriver
+					? generateDriverName()
+					: '',
 		phone: mode === 'edit' && driver ? (driver.phone ?? '') : '',
 		notes: mode === 'edit' && driver ? (driver.notes ?? '') : '',
 		color: mode === 'edit' && driver ? driver.color : generateRandomColor(),
@@ -71,7 +76,8 @@
 				open = false;
 			} catch (err) {
 				if (err instanceof ServiceError) {
-					if (err.statusCode === 409) form.errors.name = ['A driver with this name already exists'];
+					if (err.statusCode === 409)
+						form.errors.name = ['A driver with this name already exists'];
 					else
 						form.message =
 							err.statusCode === 403
@@ -96,13 +102,19 @@
 
 <form method="POST" use:enhance class="space-y-4">
 	<Field.Set>
-		<Field.Legend>{mode === 'create' ? 'Create New Driver' : 'Edit Driver'}</Field.Legend>
+		<Field.Legend
+			>{mode === 'create' ? 'Create New Driver' : 'Edit Driver'}</Field.Legend
+		>
 		<Field.Description>
-			{mode === 'create' ? 'Add a new driver for your organization' : 'Update driver details'}
+			{mode === 'create'
+				? 'Add a new driver for your organization'
+				: 'Update driver details'}
 		</Field.Description>
 
 		{#if $message}
-			<div class="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{$message}</div>
+			<div class="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+				{$message}
+			</div>
 		{/if}
 
 		<Field.Group>
@@ -117,7 +129,9 @@
 					required
 				/>
 				{#if temporaryDriver}
-					<Field.Description>Name is auto-generated for temporary drivers</Field.Description>
+					<Field.Description
+						>Name is auto-generated for temporary drivers</Field.Description
+					>
 				{/if}
 				{#if $errors.name}<Field.Error>{$errors.name[0]}</Field.Error>{/if}
 			</Field.Field>

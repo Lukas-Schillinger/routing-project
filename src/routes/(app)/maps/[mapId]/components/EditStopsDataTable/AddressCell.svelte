@@ -8,7 +8,9 @@
 	let { location }: Props = $props();
 
 	const addressLine2 = $derived(
-		[location.city, location.region, location.postal_code].filter(Boolean).join(', ')
+		[location.city, location.region, location.postal_code]
+			.filter(Boolean)
+			.join(', ')
 	);
 </script>
 

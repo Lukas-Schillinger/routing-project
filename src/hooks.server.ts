@@ -28,7 +28,10 @@ const handleRateLimit: Handle = async ({ event, resolve }) => {
 	// Add rate limit headers to successful responses
 	const response = await resolve(event);
 	response.headers.set('X-RateLimit-Remaining', String(result.remaining));
-	response.headers.set('X-RateLimit-Reset', String(Math.ceil(result.resetMs / 1000)));
+	response.headers.set(
+		'X-RateLimit-Reset',
+		String(Math.ceil(result.resetMs / 1000))
+	);
 
 	return response;
 };

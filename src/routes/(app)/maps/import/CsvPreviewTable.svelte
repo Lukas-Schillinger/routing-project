@@ -1,5 +1,10 @@
 <script lang="ts">
-	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
+	import {
+		Card,
+		CardContent,
+		CardHeader,
+		CardTitle
+	} from '$lib/components/ui/card';
 	import * as Select from '$lib/components/ui/select';
 	import { Ban, Settings } from 'lucide-svelte';
 
@@ -100,7 +105,8 @@
 			Column Mapping
 		</CardTitle>
 		<p class="text-sm text-muted-foreground">
-			Select the field type for each column header. Name and Address are required.
+			Select the field type for each column header. Name and Address are
+			required.
 		</p>
 	</CardHeader>
 	<CardContent>
@@ -117,19 +123,24 @@
 										<Select.Root
 											type="single"
 											value={getFieldForColumn(header)}
-											onValueChange={(value) => handleFieldChange(header, value as string)}
+											onValueChange={(value) =>
+												handleFieldChange(header, value as string)}
 										>
 											<Select.Trigger class="h-8 w-full">
 												<span>
 													{#if getFieldForColumn(header)}
-														{fieldOptions.find((f) => f.key === getFieldForColumn(header))?.label}
+														{fieldOptions.find(
+															(f) => f.key === getFieldForColumn(header)
+														)?.label}
 													{:else}
 														Select field...
 													{/if}
 												</span>
 											</Select.Trigger>
 											<Select.Content>
-												<Select.Item value=""><span class=""><Ban /> Skip column</span></Select.Item
+												<Select.Item value=""
+													><span class=""><Ban /> Skip column</span
+													></Select.Item
 												>
 												<Select.Separator />
 												{#each fieldOptions as field}
@@ -140,13 +151,17 @@
 													>
 														{field.label}
 														{#if field.required}
-															<span class="ml-1 text-xs text-destructive">*</span>
+															<span class="ml-1 text-xs text-destructive"
+																>*</span
+															>
 														{/if}
 													</Select.Item>
 												{/each}
 											</Select.Content>
 										</Select.Root>
-										<div class="font-mono text-sm font-semibold text-muted-foreground">
+										<div
+											class="font-mono text-sm font-semibold text-muted-foreground"
+										>
 											{header}
 										</div>
 									</th>

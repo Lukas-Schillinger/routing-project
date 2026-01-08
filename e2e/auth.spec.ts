@@ -7,7 +7,9 @@ test.describe('Authentication Flow', () => {
 	});
 
 	test.describe('Login Page UI', () => {
-		test('should display login form with correct elements', async ({ page }) => {
+		test('should display login form with correct elements', async ({
+			page
+		}) => {
 			// Check page title/heading
 			await expect(page.locator('h1')).toContainText('Login/Register');
 
@@ -16,8 +18,14 @@ test.describe('Authentication Flow', () => {
 			await expect(page.locator('label:has-text("Password")')).toBeVisible();
 
 			// Check input types
-			await expect(page.locator('input[name="email"]')).toHaveAttribute('type', 'email');
-			await expect(page.locator('input[name="password"]')).toHaveAttribute('type', 'password');
+			await expect(page.locator('input[name="email"]')).toHaveAttribute(
+				'type',
+				'email'
+			);
+			await expect(page.locator('input[name="password"]')).toHaveAttribute(
+				'type',
+				'password'
+			);
 
 			// Check buttons exist
 			await expect(page.locator('button:has-text("Login")')).toBeVisible();
@@ -41,7 +49,9 @@ test.describe('Authentication Flow', () => {
 			await page.click('button:has-text("Login")');
 
 			// Should show validation error
-			await expect(page.locator('p')).toContainText('Please enter a valid email address');
+			await expect(page.locator('p')).toContainText(
+				'Please enter a valid email address'
+			);
 		});
 
 		test('should show error for short password', async ({ page }) => {
@@ -53,7 +63,9 @@ test.describe('Authentication Flow', () => {
 			await page.click('button:has-text("Login")');
 
 			// Should show validation error
-			await expect(page.locator('p')).toContainText('Password must be at least 6 characters');
+			await expect(page.locator('p')).toContainText(
+				'Password must be at least 6 characters'
+			);
 		});
 
 		test('should show error for empty fields', async ({ page }) => {
@@ -61,7 +73,9 @@ test.describe('Authentication Flow', () => {
 			await page.click('button:has-text("Login")');
 
 			// Should show validation error (email will be caught first)
-			await expect(page.locator('p')).toContainText('Email must be at least 3 characters');
+			await expect(page.locator('p')).toContainText(
+				'Email must be at least 3 characters'
+			);
 		});
 	});
 
@@ -75,7 +89,9 @@ test.describe('Authentication Flow', () => {
 			await page.click('button:has-text("Login")');
 
 			// Should show login error
-			await expect(page.locator('p')).toContainText('Incorrect email or password');
+			await expect(page.locator('p')).toContainText(
+				'Incorrect email or password'
+			);
 		});
 
 		test('should redirect on successful login', async ({ page }) => {
@@ -146,7 +162,9 @@ test.describe('Authentication Flow', () => {
 			await page.press('input[name="password"]', 'Enter');
 
 			// Should attempt to submit (will show error for non-existent user)
-			await expect(page.locator('p')).toContainText('Incorrect email or password');
+			await expect(page.locator('p')).toContainText(
+				'Incorrect email or password'
+			);
 		});
 	});
 
@@ -181,22 +199,30 @@ test.describe('Authentication Flow', () => {
 	});
 
 	test.describe('Error Message Display', () => {
-		test('should clear error message on new form submission', async ({ page }) => {
+		test('should clear error message on new form submission', async ({
+			page
+		}) => {
 			// First, create an error
 			await page.fill('input[name="email"]', 'notanemail');
 			await page.fill('input[name="password"]', 'password123');
 			await page.click('button:has-text("Login")');
 
 			// Verify error is shown
-			await expect(page.locator('p')).toContainText('Please enter a valid email address');
+			await expect(page.locator('p')).toContainText(
+				'Please enter a valid email address'
+			);
 
 			// Fix the email and submit again
 			await page.fill('input[name="email"]', 'valid@example.com');
 			await page.click('button:has-text("Login")');
 
 			// Should show different error (user not found) instead of email validation error
-			await expect(page.locator('p')).toContainText('Incorrect email or password');
-			await expect(page.locator('p')).not.toContainText('Please enter a valid email address');
+			await expect(page.locator('p')).toContainText(
+				'Incorrect email or password'
+			);
+			await expect(page.locator('p')).not.toContainText(
+				'Please enter a valid email address'
+			);
 		});
 	});
 });
@@ -208,22 +234,31 @@ test.describe('REgistration Flow', () => {
 	});
 
 	test.describe('Registration Page UI', () => {
-		test('should display registration form with correct elements', async ({ page }) => {
+		test('should display registration form with correct elements', async ({
+			page
+		}) => {
 			// Check page title/heading
 			await expect(page.locator('h1')).toContainText('Register');
 
 			// Check form fields exist
 			await expect(page.locator('label:has-text("Email")')).toBeVisible();
 			await expect(page.locator('label:has-text("Password")')).toBeVisible();
-			await expect(page.locator('label:has-text("Confirm Password")')).toBeVisible();
+			await expect(
+				page.locator('label:has-text("Confirm Password")')
+			).toBeVisible();
 
 			// Check input types
-			await expect(page.locator('input[name="email"]')).toHaveAttribute('type', 'email');
-			await expect(page.locator('input[name="password"]')).toHaveAttribute('type', 'password');
-			await expect(page.locator('input[name="confrim-password"]')).toHaveAttribute(
+			await expect(page.locator('input[name="email"]')).toHaveAttribute(
+				'type',
+				'email'
+			);
+			await expect(page.locator('input[name="password"]')).toHaveAttribute(
 				'type',
 				'password'
 			);
+			await expect(
+				page.locator('input[name="confrim-password"]')
+			).toHaveAttribute('type', 'password');
 
 			// Check buttons exist
 			await expect(page.locator('button:has-text("Register")')).toBeVisible();
@@ -253,7 +288,9 @@ test.describe('REgistration Flow', () => {
 			await page.click('button:has-text("Login")');
 
 			// Should show validation error
-			await expect(page.locator('p')).toContainText('Please enter a valid email address');
+			await expect(page.locator('p')).toContainText(
+				'Please enter a valid email address'
+			);
 		});
 
 		test('should show error for short password', async ({ page }) => {
@@ -266,7 +303,9 @@ test.describe('REgistration Flow', () => {
 			await page.click('button:has-text("Register")');
 
 			// Should show validation error
-			await expect(page.locator('p')).toContainText('Password must be at least 6 characters');
+			await expect(page.locator('p')).toContainText(
+				'Password must be at least 6 characters'
+			);
 		});
 
 		test('should show error for empty fields', async ({ page }) => {
@@ -274,12 +313,16 @@ test.describe('REgistration Flow', () => {
 			await page.click('button:has-text("Register")');
 
 			// Should show validation error (email will be caught first)
-			await expect(page.locator('p')).toContainText('Email must be at least 3 characters');
+			await expect(page.locator('p')).toContainText(
+				'Email must be at least 3 characters'
+			);
 		});
 	});
 
 	test.describe('Registration Flow', () => {
-		test('should show error for invalid email during registration', async ({ page }) => {
+		test('should show error for invalid email during registration', async ({
+			page
+		}) => {
 			// Fill form with invalid email
 			await page.fill('input[name="email"]', 'notanemail');
 			await page.fill('input[name="password"]', 'password123');
@@ -289,10 +332,14 @@ test.describe('REgistration Flow', () => {
 			await page.click('button:has-text("Register")');
 
 			// Should show validation error
-			await expect(page.locator('p')).toContainText('Please enter a valid email address');
+			await expect(page.locator('p')).toContainText(
+				'Please enter a valid email address'
+			);
 		});
 
-		test('should show error for weak password during registration', async ({ page }) => {
+		test('should show error for weak password during registration', async ({
+			page
+		}) => {
 			// Fill form with weak password
 			await page.fill('input[name="email"]', 'newuser@example.com');
 			await page.fill('input[name="password"]', '123');
@@ -302,10 +349,14 @@ test.describe('REgistration Flow', () => {
 			await page.click('button:has-text("Register")');
 
 			// Should show validation error
-			await expect(page.locator('p')).toContainText('Password must be at least 6 characters');
+			await expect(page.locator('p')).toContainText(
+				'Password must be at least 6 characters'
+			);
 		});
 
-		test('should successfully register new user and redirect', async ({ page }) => {
+		test('should successfully register new user and redirect', async ({
+			page
+		}) => {
 			// Generate unique email for this test
 			const uniqueEmail = `testuser${Date.now()}@example.com`;
 
@@ -321,7 +372,9 @@ test.describe('REgistration Flow', () => {
 			await expect(page).toHaveURL('/auth/account');
 		});
 
-		test('should show error when registering with existing email', async ({ page }) => {
+		test('should show error when registering with existing email', async ({
+			page
+		}) => {
 			const duplicateEmail = 'duplicate@example.com';
 
 			// Register first user
@@ -364,7 +417,9 @@ test.describe('REgistration Flow', () => {
 		});
 
 		test('should allow typing in password confirm field', async ({ page }) => {
-			const passwordConfirmInput = page.locator('input[name="confirm-password"]');
+			const passwordConfirmInput = page.locator(
+				'input[name="confirm-password"]'
+			);
 
 			await passwordConfirmInput.fill('secretpassword');
 			await expect(passwordConfirmInput).toHaveValue('secretpassword');
@@ -380,7 +435,9 @@ test.describe('REgistration Flow', () => {
 			await page.press('input[name="password"]', 'Enter');
 
 			// Should attempt to submit (will show error for non-existent user)
-			await expect(page.locator('p')).toContainText('Incorrect email or password');
+			await expect(page.locator('p')).toContainText(
+				'Incorrect email or password'
+			);
 		});
 	});
 
@@ -402,7 +459,10 @@ test.describe('REgistration Flow', () => {
 
 			await expect(emailInput).toHaveAttribute('name', 'email');
 			await expect(passwordInput).toHaveAttribute('name', 'password');
-			await expect(passwordConfirmInput).toHaveAttribute('name', 'confirm-password');
+			await expect(passwordConfirmInput).toHaveAttribute(
+				'name',
+				'confirm-password'
+			);
 		});
 
 		test('should be keyboard navigable', async ({ page }) => {
@@ -414,7 +474,9 @@ test.describe('REgistration Flow', () => {
 			await expect(page.locator('input[name="password"]')).toBeFocused();
 
 			await page.keyboard.press('Tab'); // Should focus password input
-			await expect(page.locator('input[name="confirm-password"]')).toBeFocused();
+			await expect(
+				page.locator('input[name="confirm-password"]')
+			).toBeFocused();
 
 			await page.keyboard.press('Tab'); // Should focus register button
 			await expect(page.locator('button:has-text("Register")')).toBeFocused();
@@ -422,7 +484,9 @@ test.describe('REgistration Flow', () => {
 	});
 
 	test.describe('Error Message Display', () => {
-		test('should clear error message on new form submission', async ({ page }) => {
+		test('should clear error message on new form submission', async ({
+			page
+		}) => {
 			// First, create an error
 			await page.fill('input[name="email"]', 'notanemail');
 			await page.fill('input[name="password"]', 'password123');
@@ -430,15 +494,21 @@ test.describe('REgistration Flow', () => {
 			await page.click('button:has-text("Register")');
 
 			// Verify error is shown
-			await expect(page.locator('p')).toContainText('Please enter a valid email address');
+			await expect(page.locator('p')).toContainText(
+				'Please enter a valid email address'
+			);
 
 			// Fix the email and submit again
 			await page.fill('input[name="email"]', 'valid@example.com');
 			await page.click('button:has-text("Login")');
 
 			// Should show different error (user not found) instead of email validation error
-			await expect(page.locator('p')).toContainText('Incorrect email or password');
-			await expect(page.locator('p')).not.toContainText('Please enter a valid email address');
+			await expect(page.locator('p')).toContainText(
+				'Incorrect email or password'
+			);
+			await expect(page.locator('p')).not.toContainText(
+				'Please enter a valid email address'
+			);
 		});
 	});
 });

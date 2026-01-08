@@ -15,7 +15,10 @@ export const GET: RequestHandler = async ({ params }) => {
 	const { driverId } = params;
 
 	try {
-		const driver = await driverService.getDriverById(driverId, user.organization_id);
+		const driver = await driverService.getDriverById(
+			driverId,
+			user.organization_id
+		);
 		return json(driver);
 	} catch (err) {
 		handleApiError(err, 'Failed to fetch driver');
@@ -50,7 +53,10 @@ export const DELETE: RequestHandler = async ({ params }) => {
 	const { driverId } = params;
 
 	try {
-		const result = await driverService.deleteDriver(driverId, user.organization_id);
+		const result = await driverService.deleteDriver(
+			driverId,
+			user.organization_id
+		);
 		return json(result);
 	} catch (err) {
 		handleApiError(err, 'Failed to delete driver');

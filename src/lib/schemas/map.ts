@@ -23,7 +23,10 @@ export const createMaplessStopSchema = z
  * Map creation schema
  */
 export const createMapSchema = z.object({
-	title: z.string().min(1, 'Title is required').max(200, 'Title must be 200 characters or less'),
+	title: z
+		.string()
+		.min(1, 'Title is required')
+		.max(200, 'Title must be 200 characters or less'),
 	description: z.string().max(1000).nullable().optional(),
 	stops: z.array(createMaplessStopSchema).optional().nullable() // optionally create stops in the same call as the map
 });
@@ -72,7 +75,14 @@ export const optimizationOptionsSchema = z.object({
 export const optimizationJobSchema = z.object({
 	id: z.string().uuid(),
 	organization_id: z.string().uuid(),
-	status: z.enum(['pending', 'running', 'completing', 'completed', 'failed', 'cancelled']),
+	status: z.enum([
+		'pending',
+		'running',
+		'completing',
+		'completed',
+		'failed',
+		'cancelled'
+	]),
 	matrix_id: z.string().uuid(),
 	map_id: z.string().uuid(),
 	depot_id: z.string().uuid(),

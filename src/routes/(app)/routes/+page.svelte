@@ -26,7 +26,9 @@
 				</Table.Cell>
 				<Table.Cell>{route.driver_id}</Table.Cell>
 				<Table.Cell>{route.map_id}</Table.Cell>
-				<Table.Cell class="text-right">{formatDate(route.updated_at)}</Table.Cell>
+				<Table.Cell class="text-right"
+					>{formatDate(route.updated_at)}</Table.Cell
+				>
 			</Table.Row>
 		{/each}
 	</Table.Body>

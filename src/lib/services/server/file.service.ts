@@ -7,7 +7,11 @@ import { and, eq } from 'drizzle-orm';
 import { ServiceError } from './errors';
 
 export class FileService {
-	async uploadFile(file: File, user: User, metadata?: Record<string, string>): Promise<FileSchema> {
+	async uploadFile(
+		file: File,
+		user: User,
+		metadata?: Record<string, string>
+	): Promise<FileSchema> {
 		try {
 			// Validate file
 			if (file.size > 10 * 1024 * 1024) {
@@ -16,11 +20,20 @@ export class FileService {
 			}
 
 			// Generate R2 key
-			const r2Key = r2Service.generateFileKey(user.organization_id!, user.id, file.name);
+			const r2Key = r2Service.generateFileKey(
+				user.organization_id!,
+				user.id,
+				file.name
+			);
 
 			// Upload to R2
 			const fileBuffer = await file.arrayBuffer();
-			await r2Service.uploadFile(r2Key, new Uint8Array(fileBuffer), file.type, metadata);
+			await r2Service.uploadFile(
+				r2Key,
+				new Uint8Array(fileBuffer),
+				file.type,
+				metadata
+			);
 
 			// Save to database
 			const [savedFile] = await db
@@ -47,7 +60,12 @@ export class FileService {
 		const fileRecord = await db
 			.select()
 			.from(files)
-			.where(and(eq(files.id, fileId), eq(files.organization_id, user.organization_id!)))
+			.where(
+				and(
+					eq(files.id, fileId),
+					eq(files.organization_id, user.organization_id!)
+				)
+			)
 			.limit(1);
 
 		if (!fileRecord.length) {
@@ -69,7 +87,12 @@ export class FileService {
 		const fileRecord = await db
 			.select()
 			.from(files)
-			.where(and(eq(files.id, fileId), eq(files.organization_id, user.organization_id!)))
+			.where(
+				and(
+					eq(files.id, fileId),
+					eq(files.organization_id, user.organization_id!)
+				)
+			)
 			.limit(1);
 
 		if (!fileRecord.length) {
@@ -84,7 +107,12 @@ export class FileService {
 		const [fileRecord] = await db
 			.select()
 			.from(files)
-			.where(and(eq(files.id, fileId), eq(files.organization_id, user.organization_id!)))
+			.where(
+				and(
+					eq(files.id, fileId),
+					eq(files.organization_id, user.organization_id!)
+				)
+			)
 			.limit(1);
 
 		if (!fileRecord) {

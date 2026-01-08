@@ -18,7 +18,8 @@
 		onDirectionsProviderChange: (provider: DirectionsProvider) => void;
 	}
 
-	let { route, driver, directionsProvider, onDirectionsProviderChange }: Props = $props();
+	let { route, driver, directionsProvider, onDirectionsProviderChange }: Props =
+		$props();
 
 	// Local state for radio group value
 	let radioGroupValue = $state<string>(directionsProvider);
@@ -73,10 +74,16 @@
 	<Actions.DropdownMenu.Label class="flex">Settings</Actions.DropdownMenu.Label>
 
 	<DropdownMenu.Separator />
-	<Actions.DropdownMenu.Label class="flex">Navigation Provider</Actions.DropdownMenu.Label>
+	<Actions.DropdownMenu.Label class="flex"
+		>Navigation Provider</Actions.DropdownMenu.Label
+	>
 	<Actions.DropdownMenu.RadioGroup bind:value={radioGroupValue}>
-		<Actions.DropdownMenu.RadioItem value="google">Google Maps</Actions.DropdownMenu.RadioItem>
-		<Actions.DropdownMenu.RadioItem value="apple">Apple Maps</Actions.DropdownMenu.RadioItem>
+		<Actions.DropdownMenu.RadioItem value="google"
+			>Google Maps</Actions.DropdownMenu.RadioItem
+		>
+		<Actions.DropdownMenu.RadioItem value="apple"
+			>Apple Maps</Actions.DropdownMenu.RadioItem
+		>
 	</Actions.DropdownMenu.RadioGroup>
 	<Actions.DropdownMenu.Label class="flex">Actions</Actions.DropdownMenu.Label>
 

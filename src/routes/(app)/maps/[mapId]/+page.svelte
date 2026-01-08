@@ -38,7 +38,8 @@
 	type PageState = 'viewing' | 'optimizing' | 'editing';
 	let debugPageStateOverride = $state<PageState | null>(null);
 	let pageState: PageState = $derived(
-		debugPageStateOverride ?? (isViewMode ? 'viewing' : isOptimizing ? 'optimizing' : 'editing')
+		debugPageStateOverride ??
+			(isViewMode ? 'viewing' : isOptimizing ? 'optimizing' : 'editing')
 	);
 
 	// Derive selected depot for map display
@@ -53,9 +54,14 @@
 	// Check for active optimization job on load
 	$effect(() => {
 		const activeJob = data.activeJob;
-		if (activeJob && ['pending', 'running', 'completing'].includes(activeJob.status)) {
+		if (
+			activeJob &&
+			['pending', 'running', 'completing'].includes(activeJob.status)
+		) {
 			isOptimizing = true;
-			optimizationStartTime = activeJob.created_at ? new Date(activeJob.created_at) : new Date();
+			optimizationStartTime = activeJob.created_at
+				? new Date(activeJob.created_at)
+				: new Date();
 			startPolling();
 		} else {
 			isOptimizing = false;
@@ -151,7 +157,8 @@
 			toast.success('Driver removed');
 		} catch (err) {
 			console.log(err);
-			const message = err instanceof ServiceError ? err.message : 'Failed to remove driver';
+			const message =
+				err instanceof ServiceError ? err.message : 'Failed to remove driver';
 			toast.error(message);
 		} finally {
 			isLoading = false;
@@ -183,7 +190,11 @@
 	}
 
 	async function handleDeleteMap() {
-		if (!confirm('Are you sure you want to delete this map? This action cannot be undone.')) {
+		if (
+			!confirm(
+				'Are you sure you want to delete this map? This action cannot be undone.'
+			)
+		) {
 			return;
 		}
 
@@ -313,7 +324,13 @@
 			{/if}
 		</div>
 		<div class="border-t border-border pt-2 text-xs text-muted-foreground">
-			<div>Actual: {isViewMode ? 'viewing' : isOptimizing ? 'optimizing' : 'editing'}</div>
+			<div>
+				Actual: {isViewMode
+					? 'viewing'
+					: isOptimizing
+						? 'optimizing'
+						: 'editing'}
+			</div>
 			<div>Override: {debugPageStateOverride ?? 'none'}</div>
 		</div>
 	</div>

@@ -16,7 +16,10 @@ export const GET: RequestHandler = async ({ params }) => {
 	}
 
 	try {
-		const memberships = await mapService.getDriversForMap(mapId, user.organization_id);
+		const memberships = await mapService.getDriversForMap(
+			mapId,
+			user.organization_id
+		);
 
 		return json({ memberships });
 	} catch (err) {
@@ -40,7 +43,11 @@ export const POST: RequestHandler = async ({ params, request }) => {
 			return json({ error: 'driver_id is required' }, { status: 400 });
 		}
 
-		const membership = await mapService.addDriverToMap(driverId, mapId, user.organization_id);
+		const membership = await mapService.addDriverToMap(
+			driverId,
+			mapId,
+			user.organization_id
+		);
 
 		return json({ membership }, { status: 201 });
 	} catch (err) {

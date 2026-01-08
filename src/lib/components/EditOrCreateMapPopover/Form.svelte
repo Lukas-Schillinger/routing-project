@@ -42,16 +42,21 @@
 				};
 
 				const result =
-					mode === 'create' ? await mapApi.create(payload) : await mapApi.update(map!.id, payload);
+					mode === 'create'
+						? await mapApi.create(payload)
+						: await mapApi.update(map!.id, payload);
 
 				onSuccess(result.map);
 				open = false;
 			} catch (err) {
 				if (err instanceof ServiceError) {
-					if (err.statusCode === 409) form.errors.title = ['A map with this title already exists'];
+					if (err.statusCode === 409)
+						form.errors.title = ['A map with this title already exists'];
 					else
 						form.message =
-							err.statusCode === 403 ? `You do not have permission to ${mode} maps` : err.message;
+							err.statusCode === 403
+								? `You do not have permission to ${mode} maps`
+								: err.message;
 				} else {
 					form.message = 'An unexpected error occurred';
 				}
@@ -69,13 +74,19 @@
 
 <form method="POST" use:enhance class="space-y-4">
 	<Field.Set>
-		<Field.Legend>{mode === 'create' ? 'Create New Map' : 'Edit Map'}</Field.Legend>
+		<Field.Legend
+			>{mode === 'create' ? 'Create New Map' : 'Edit Map'}</Field.Legend
+		>
 		<Field.Description>
-			{mode === 'create' ? 'Add a new map for your organization' : 'Update map details'}
+			{mode === 'create'
+				? 'Add a new map for your organization'
+				: 'Update map details'}
 		</Field.Description>
 
 		{#if $message}
-			<div class="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{$message}</div>
+			<div class="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+				{$message}
+			</div>
 		{/if}
 
 		<Field.Group>
@@ -102,7 +113,9 @@
 					rows={3}
 					class="resize-none"
 				/>
-				{#if $errors.description}<Field.Error>{$errors.description[0]}</Field.Error>{/if}
+				{#if $errors.description}<Field.Error
+						>{$errors.description[0]}</Field.Error
+					>{/if}
 			</Field.Field>
 		</Field.Group>
 	</Field.Set>

@@ -56,7 +56,10 @@ export class R2Service {
 		}
 	}
 
-	async getSignedDownloadUrl(key: string, expiresIn: number = 3600): Promise<string> {
+	async getSignedDownloadUrl(
+		key: string,
+		expiresIn: number = 3600
+	): Promise<string> {
 		try {
 			const command = new GetObjectCommand({
 				Bucket: env.CLOUDFLARE_R2_DEV_BUCKET_NAME!,
@@ -69,7 +72,11 @@ export class R2Service {
 		}
 	}
 
-	generateFileKey(organizationId: string, userId: string, originalFilename: string): string {
+	generateFileKey(
+		organizationId: string,
+		userId: string,
+		originalFilename: string
+	): string {
 		const timestamp = Date.now();
 		const sanitizedName = originalFilename.replace(/[^a-zA-Z0-9.-]/g, '_'); // Replace all characters not a letter or a number with '_'
 		return `${organizationId}/${userId}/${timestamp}_${sanitizedName}`;

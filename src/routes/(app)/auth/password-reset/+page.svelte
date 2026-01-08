@@ -37,7 +37,9 @@
 
 			isSuccess = true;
 		} catch (err) {
-			toast.error(err instanceof Error ? err.message : 'Failed to send reset link');
+			toast.error(
+				err instanceof Error ? err.message : 'Failed to send reset link'
+			);
 		} finally {
 			isSubmitting = false;
 		}
@@ -48,16 +50,23 @@
 	<title>Reset password - Wend</title>
 </svelte:head>
 
-<AuthCard title="Reset password" description="Enter your email to receive a reset link">
+<AuthCard
+	title="Reset password"
+	description="Enter your email to receive a reset link"
+>
 	{#if isSuccess}
 		<div class="flex flex-col items-center gap-4 py-4 text-center">
-			<div class="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+			<div
+				class="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10"
+			>
 				<CheckCircle class="h-6 w-6 text-primary" />
 			</div>
 			<div class="space-y-2">
 				<p class="font-medium text-foreground">Check your email</p>
 				<p class="text-sm text-muted-foreground">
-					We've sent a password reset link to <span class="font-medium">{email}</span>
+					We've sent a password reset link to <span class="font-medium"
+						>{email}</span
+					>
 				</p>
 			</div>
 			<Button
@@ -78,7 +87,9 @@
 					Email address
 				</Label>
 				<div class="relative">
-					<Mail class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground/50" />
+					<Mail
+						class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground/50"
+					/>
 					<Input
 						id="email"
 						type="email"
@@ -92,7 +103,11 @@
 			</div>
 
 			<div class="flex flex-col gap-3 pt-2">
-				<Button type="submit" class="h-11 w-full font-medium" disabled={isSubmitting}>
+				<Button
+					type="submit"
+					class="h-11 w-full font-medium"
+					disabled={isSubmitting}
+				>
 					{#if isSubmitting}
 						<Loader2 class="mr-2 h-4 w-4 animate-spin" />
 						Sending...

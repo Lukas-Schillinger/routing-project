@@ -47,7 +47,9 @@
 				New password
 			</Label>
 			<div class="relative">
-				<Lock class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground/50" />
+				<Lock
+					class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground/50"
+				/>
 				<Input
 					id="newPassword"
 					type="password"
@@ -68,7 +70,9 @@
 				Confirm password
 			</Label>
 			<div class="relative">
-				<Lock class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground/50" />
+				<Lock
+					class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground/50"
+				/>
 				<Input
 					id="confirmPassword"
 					type="password"
@@ -82,7 +86,11 @@
 		</div>
 
 		<div class="pt-2">
-			<Button type="submit" class="h-11 w-full font-medium" disabled={isSubmitting}>
+			<Button
+				type="submit"
+				class="h-11 w-full font-medium"
+				disabled={isSubmitting}
+			>
 				{#if isSubmitting}
 					<Loader2 class="mr-2 h-4 w-4 animate-spin" />
 					Resetting password...

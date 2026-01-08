@@ -8,7 +8,10 @@ export const depotSchema = z.object({
 	id: z.string().uuid(),
 	organization_id: z.string().uuid(),
 	location_id: z.string().uuid(),
-	name: z.string().min(1, 'Name is required').max(200, 'Name must be 200 characters or less'),
+	name: z
+		.string()
+		.min(1, 'Name is required')
+		.max(200, 'Name must be 200 characters or less'),
 	default_depot: z.boolean(),
 	created_at: z.date(),
 	updated_at: z.date()
@@ -25,7 +28,10 @@ export type Depot = z.infer<typeof depotSchema>;
  */
 export const depotCreateSchema = z
 	.object({
-		name: z.string().min(1, 'Name is required').max(200, 'Name must be 200 characters or less'),
+		name: z
+			.string()
+			.min(1, 'Name is required')
+			.max(200, 'Name must be 200 characters or less'),
 		default_depot: z.boolean().default(false),
 		// Either reference an existing location
 		location_id: z.string().uuid().optional(),
