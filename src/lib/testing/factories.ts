@@ -17,9 +17,10 @@ import locationsData from './data/locations.json';
 
 let counter = 0;
 let locationIndex = 0;
+const runId = Math.random().toString(36).substring(2, 8);
 
 function uniqueId(): string {
-	return `${Date.now()}-${++counter}`;
+	return `${runId}-${++counter}`;
 }
 
 // ============================================================================

@@ -430,7 +430,7 @@ describe('UserService', () => {
 
 	describe('createUser()', () => {
 		it('creates user with provided organization_id', async () => {
-			const email = `test-create-${Date.now()}@example.com`;
+			const email = `test-create-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.com`;
 
 			const result = await userService.createUser({
 				email,
@@ -444,7 +444,7 @@ describe('UserService', () => {
 		});
 
 		it('generates new organization when organization_id not provided', async () => {
-			const email = `test-no-org-${Date.now()}@example.com`;
+			const email = `test-no-org-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.com`;
 
 			const result = await userService.createUser({ email, role: 'member' });
 			createdUserIds.push(result.id);
@@ -460,7 +460,7 @@ describe('UserService', () => {
 		});
 
 		it('returns created User', async () => {
-			const email = `test-return-${Date.now()}@example.com`;
+			const email = `test-return-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.com`;
 
 			const result = await userService.createUser({
 				email,

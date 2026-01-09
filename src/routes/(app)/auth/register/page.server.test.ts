@@ -183,8 +183,9 @@ describe('Registration Server Actions', () => {
 				const { actions } = await import('./+page.server.js');
 
 				// Configure redirect to throw (as SvelteKit does)
+				// Must include status: 302 so the catch block re-throws it
 				vi.mocked(redirect).mockImplementation(() => {
-					throw new Error('redirect');
+					throw Object.assign(new Error('redirect'), { status: 302 });
 				});
 
 				// Mock loginTokenService

@@ -12,6 +12,7 @@ export default defineConfig(({ mode }) => {
 		},
 		test: {
 			expect: { requireAssertions: true },
+			includeTaskLocation: true,
 			projects: [
 				{
 					extends: './vite.config.ts',
@@ -20,7 +21,7 @@ export default defineConfig(({ mode }) => {
 						environment: 'browser',
 						browser: {
 							enabled: true,
-							headless: false,
+							headless: true,
 							provider: 'playwright',
 							instances: [{ browser: 'chromium' }]
 						},
