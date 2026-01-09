@@ -165,11 +165,17 @@ describe('Authentication Server Actions', () => {
 			it('should handle successful login flow', async () => {
 				const { actions } = await import('./+page.server.js');
 
+				// Configure redirect to throw (as SvelteKit does)
+				vi.mocked(redirect).mockImplementation(() => {
+					throw new Error('redirect');
+				});
+
 				// Mock successful database query
 				const mockUser = {
 					id: 'user-123',
 					email: 'test@example.com',
-					passwordHash: 'hashed-password'
+					passwordHash: 'hashed-password',
+					email_confirmed_at: new Date()
 				};
 
 				vi.mocked(db.select).mockReturnValue({
@@ -189,11 +195,6 @@ describe('Authentication Server Actions', () => {
 					expires_at: new Date('2025-01-01')
 				});
 				vi.mocked(auth.setSessionTokenCookie).mockImplementation(() => {});
-
-				// Mock SvelteKit functions
-				vi.mocked(redirect).mockImplementation(() => {
-					throw new Error('redirect'); // SvelteKit redirects throw
-				});
 
 				const mockEvent = createMockEvent('test@example.com', 'password123');
 

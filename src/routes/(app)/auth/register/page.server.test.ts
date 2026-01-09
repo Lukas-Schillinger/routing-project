@@ -7,6 +7,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { db } from '$lib/server/db';
 import * as auth from '$lib/services/server/auth';
 import { userService } from '$lib/services/server/user.service.js';
+import { loginTokenService } from '$lib/services/server/login-token.service.js';
+import { resendClient } from '$lib/services/external/mail/resend';
 
 // Mock dependencies
 vi.mock('$lib/server/db', () => ({
@@ -29,6 +31,12 @@ vi.mock('$lib/services/server/user.service.js', () => ({
 	}
 }));
 
+vi.mock('$lib/services/server/login-token.service.js', () => ({
+	loginTokenService: {
+		createLoginToken: vi.fn()
+	}
+}));
+
 vi.mock('@sveltejs/kit', () => ({
 	fail: vi.fn(),
 	redirect: vi.fn()
@@ -37,6 +45,12 @@ vi.mock('@sveltejs/kit', () => ({
 vi.mock('@node-rs/argon2', () => ({
 	hash: vi.fn(),
 	verify: vi.fn()
+}));
+
+vi.mock('$lib/services/external/mail/resend', () => ({
+	resendClient: {
+		sendLoginEmail: vi.fn().mockResolvedValue(undefined)
+	}
 }));
 
 describe('Registration Server Actions', () => {
@@ -168,6 +182,22 @@ describe('Registration Server Actions', () => {
 			it('should handle successful registration', async () => {
 				const { actions } = await import('./+page.server.js');
 
+				// Configure redirect to throw (as SvelteKit does)
+				vi.mocked(redirect).mockImplementation(() => {
+					throw new Error('redirect');
+				});
+
+				// Mock loginTokenService
+				vi.mocked(loginTokenService.createLoginToken).mockResolvedValue({
+					loginToken: { id: 'token-123' },
+					token: '123456'
+				} as never);
+
+				// Mock resendClient
+				vi.mocked(resendClient.sendLoginEmail).mockResolvedValue(
+					undefined as never
+				);
+
 				// Mock the createUser function
 				vi.mocked(userService.createUser).mockResolvedValue({
 					id: 'new-user-123',
@@ -192,10 +222,6 @@ describe('Registration Server Actions', () => {
 				});
 				vi.mocked(auth.setSessionTokenCookie).mockImplementation(() => {});
 
-				vi.mocked(redirect).mockImplementation(() => {
-					throw new Error('redirect');
-				});
-
 				const mockEvent = {
 					request: {
 						formData: vi.fn().mockResolvedValue(
@@ -206,13 +232,17 @@ describe('Registration Server Actions', () => {
 							])
 						)
 					},
-					locals: { user: null, session: null }
+					locals: { user: null, session: null },
+					url: { origin: 'http://localhost:5173' }
 				};
 
 				await expect(actions.register(mockEvent as never)).rejects.toThrow(
 					'redirect'
 				);
-				expect(redirect).toHaveBeenCalledWith(302, '/auth/account');
+				expect(redirect).toHaveBeenCalledWith(
+					302,
+					'/auth/login?email=newuser%40example.com&confirm=true'
+				);
 			});
 
 			it('should handle registration with invalid email', async () => {
@@ -267,7 +297,7 @@ describe('Registration Server Actions', () => {
 
 				await actions.register(mockEvent as never);
 				expect(fail).toHaveBeenCalledWith(500, {
-					message: 'An error has occurred'
+					message: 'an unknown error occurred'
 				});
 			});
 		});
