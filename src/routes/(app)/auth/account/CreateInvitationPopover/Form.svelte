@@ -4,7 +4,11 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import * as Select from '$lib/components/ui/select';
-	import { createInvitationSchema, type Invitation } from '$lib/schemas';
+	import {
+		createInvitationSchema,
+		emailSchema,
+		type Invitation
+	} from '$lib/schemas';
 	import { invitationsApi } from '$lib/services/api/auth';
 	import { roleDescriptions } from '$lib/services/server/permissions';
 	import { Check, LoaderCircle, Mail, TriangleAlert } from 'lucide-svelte';
@@ -33,25 +37,15 @@
 		error = null;
 	}
 
-	// Validate email format
-	function isValidEmail(email: string): boolean {
-		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-		return emailRegex.test(email);
-	}
-
 	// Submit handler
 	async function handleSubmit(e: Event) {
 		e.preventDefault();
 		error = null;
 
-		// Validate email
-		if (!email.trim()) {
-			error = 'Email address is required';
-			return;
-		}
-
-		if (!isValidEmail(email.trim())) {
-			error = 'Please enter a valid email address';
+		// Validate email using centralized schema
+		const emailResult = emailSchema.safeParse(email.trim());
+		if (!emailResult.success) {
+			error = emailResult.error.errors[0]?.message ?? 'Invalid email address';
 			return;
 		}
 

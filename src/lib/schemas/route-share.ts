@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { emailSchema } from './common';
 import { mailRecordSchema } from './mail-record';
 
 // Share type enum
@@ -24,7 +25,7 @@ export type RouteShare = z.infer<typeof routeShareSchema>;
 // Create route share input (for email shares)
 export const createEmailShareSchema = z.object({
 	route_id: z.string().uuid(),
-	recipient_email: z.string().email('Valid email is required')
+	recipient_email: emailSchema
 });
 export type CreateEmailShare = z.infer<typeof createEmailShareSchema>;
 

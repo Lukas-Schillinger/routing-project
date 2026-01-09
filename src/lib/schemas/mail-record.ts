@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { emailSchema } from './common';
 
 // Mail record type enum
 export const mailRecordTypeEnum = z.enum([
@@ -27,8 +28,8 @@ export const mailRecordSchema = z.object({
 	created_at: z.date(),
 	resend_id: z.string(),
 	type: mailRecordTypeEnum,
-	to_email: z.string().email(),
-	from_email: z.string().email(),
+	to_email: emailSchema,
+	from_email: emailSchema,
 	subject: z.string().nullable(),
 	status: mailRecordStatusEnum,
 	delivered_at: z.date().nullable(),
@@ -41,8 +42,8 @@ export const createMailRecordSchema = z.object({
 	organization_id: z.string().uuid(),
 	resend_id: z.string(),
 	type: mailRecordTypeEnum,
-	to_email: z.string().email(),
-	from_email: z.string().email(),
+	to_email: emailSchema,
+	from_email: emailSchema,
 	subject: z.string().optional()
 });
 export type CreateMailRecord = z.infer<typeof createMailRecordSchema>;

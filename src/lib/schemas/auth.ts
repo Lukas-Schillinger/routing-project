@@ -21,7 +21,7 @@ export const registerSchema = z
 	});
 
 export const createInvitationSchema = z.object({
-	email: z.string().email(),
+	email: emailSchema,
 	role: roleEnum
 });
 
@@ -63,7 +63,7 @@ export const invitationSchema = z.object({
 	updated_at: z.date(),
 	updated_by: z.string().nullable(),
 
-	email: z.string().email(),
+	email: emailSchema,
 	role: roleEnum,
 	token_hash: z.string(),
 	expires_at: z.date(),

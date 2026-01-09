@@ -115,6 +115,8 @@ Signs an issue needs breakdown:
 
 ## Urgency Guidelines
 
+Every issue MUST have an urgency defined.
+
 Default to lower urgency. Escalate only when:
 
 | Urgency    | Use When                                              |
