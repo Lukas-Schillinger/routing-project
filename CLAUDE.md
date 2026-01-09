@@ -142,6 +142,17 @@ For complex services (e.g., `src/lib/services/server/optimization.service.ts`):
 
 - Users log in with password or email (either OTP or magic link). Passwords are not required
 
+## Committing
+
+Before committing, ensure the following checks pass:
+
+```bash
+npm run check  # Type checking
+npm run lint   # ESLint
+```
+
+The CI action runner will reject commits that fail these checks.
+
 ## Testing
 
 `src/lib/testing`
