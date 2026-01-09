@@ -1,3 +1,4 @@
+import { TOKEN_EXPIRY } from '$lib/config';
 import type { LoginToken, PublicUser } from '$lib/schemas';
 import { createLoginTokenSchema } from '$lib/schemas';
 import type { z } from 'zod';
@@ -7,8 +8,6 @@ import { and, eq } from 'drizzle-orm';
 import { ServiceError } from './errors';
 import { TokenUtils } from './token.utils';
 import { userService } from './user.service';
-
-const LOGIN_TOKEN_DURATION_HOURS = 0.25; // 15 minutes
 
 export class LoginTokenService {
 	async getLoginTokenFromToken(
@@ -55,7 +54,7 @@ export class LoginTokenService {
 		const token = TokenUtils.generateOTP();
 		const tokenHash = TokenUtils.hash(token);
 		const duration =
-			loginTokenData.token_duration_hours ?? LOGIN_TOKEN_DURATION_HOURS;
+			loginTokenData.token_duration_hours ?? TOKEN_EXPIRY.OTP_HOURS;
 
 		const [loginToken] = await db
 			.insert(loginTokens)

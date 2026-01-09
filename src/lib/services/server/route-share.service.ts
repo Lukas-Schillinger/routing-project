@@ -1,3 +1,4 @@
+import { TOKEN_EXPIRY } from '$lib/config';
 import type {
 	RouteShare,
 	RouteShareWithMailRecord,
@@ -10,8 +11,6 @@ import { and, eq, isNull } from 'drizzle-orm';
 import { ServiceError } from './errors';
 import { routeService } from './route.service';
 import { TokenUtils } from './token.utils';
-
-const SHARE_DURATION_HOURS = 720; // 30 days
 
 export class RouteShareService {
 	/**
@@ -38,7 +37,7 @@ export class RouteShareService {
 				created_by: createdBy,
 				share_type: 'email',
 				access_token_hash: tokenHash,
-				expires_at: TokenUtils.getExpiry(SHARE_DURATION_HOURS)
+				expires_at: TokenUtils.getExpiry(TOKEN_EXPIRY.SHARE_HOURS)
 			})
 			.returning();
 

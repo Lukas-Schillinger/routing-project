@@ -1,3 +1,4 @@
+import { TOKEN_EXPIRY } from '$lib/config';
 import { ServiceError } from '$lib/errors';
 import { registerSchema } from '$lib/schemas/auth';
 import { resendClient } from '$lib/services/external/mail/resend';
@@ -54,7 +55,7 @@ export const actions: Actions = {
 			// Create login token (acts as confirmation token with longer expiration)
 			const { loginToken, token } = await loginTokenService.createLoginToken({
 				email: validEmail,
-				token_duration_hours: 24 // 24 hours for welcome emails
+				token_duration_hours: TOKEN_EXPIRY.EMAIL_CONFIRMATION_HOURS
 			});
 
 			// Send welcome email

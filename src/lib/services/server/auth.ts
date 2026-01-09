@@ -1,3 +1,4 @@
+import { SESSION } from '$lib/config';
 import type { PublicUser } from '$lib/schemas';
 import { db } from '$lib/server/db';
 import * as table from '$lib/server/db/schema';
@@ -22,7 +23,7 @@ export async function createSession(token: string, userId: string) {
 	const session = {
 		id: sessionId,
 		user_id: userId,
-		expires_at: new Date(Date.now() + DAY_IN_MS * 30)
+		expires_at: new Date(Date.now() + DAY_IN_MS * SESSION.DURATION_DAYS)
 	};
 	await db.insert(table.session).values(session);
 	return session;
@@ -55,9 +56,12 @@ export async function validateSessionToken(token: string): Promise<{
 	}
 
 	const renewSession =
-		Date.now() >= session.expires_at.getTime() - DAY_IN_MS * 15;
+		Date.now() >=
+		session.expires_at.getTime() - DAY_IN_MS * SESSION.RENEWAL_THRESHOLD_DAYS;
 	if (renewSession) {
-		session.expires_at = new Date(Date.now() + DAY_IN_MS * 30);
+		session.expires_at = new Date(
+			Date.now() + DAY_IN_MS * SESSION.DURATION_DAYS
+		);
 		await db
 			.update(table.session)
 			.set({ expires_at: session.expires_at })

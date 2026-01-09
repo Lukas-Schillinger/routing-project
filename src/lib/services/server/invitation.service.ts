@@ -1,3 +1,4 @@
+import { TOKEN_EXPIRY } from '$lib/config';
 import type {
 	CreateInvitation,
 	Invitation,
@@ -10,8 +11,6 @@ import { and, eq } from 'drizzle-orm';
 import { ServiceError } from './errors';
 import { TokenUtils } from './token.utils';
 import { userService } from './user.service';
-
-const INVITATION_DURATION_HOURS = 720; // 30 days
 
 export class InvitationService {
 	async getInvitation(
@@ -116,7 +115,7 @@ export class InvitationService {
 				created_by: userId,
 				updated_by: userId,
 				email: invitationData.email,
-				expires_at: TokenUtils.getExpiry(INVITATION_DURATION_HOURS),
+				expires_at: TokenUtils.getExpiry(TOKEN_EXPIRY.INVITATION_HOURS),
 				token_hash: tokenHash,
 				role: invitationData.role
 			})
