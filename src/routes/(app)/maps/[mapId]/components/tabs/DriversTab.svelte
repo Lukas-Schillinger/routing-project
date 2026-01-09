@@ -106,7 +106,7 @@
 					<Command.Empty>No drivers found.</Command.Empty>
 					{#if availableDrivers.length > 0}
 						<Command.Group heading="Existing Drivers">
-							{#each availableDrivers as driver}
+							{#each availableDrivers as driver (driver.id)}
 								<Command.Item
 									value={driver.name}
 									onSelect={() => addExistingDriver(driver.id)}

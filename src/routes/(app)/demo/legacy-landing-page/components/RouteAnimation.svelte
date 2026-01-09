@@ -152,7 +152,7 @@
 			class="h-full max-h-[calc(100%-5rem)] overflow-y-auto"
 			bind:this={scrollContainer}
 		>
-			{#each stops as { stop, location }, index}
+			{#each stops as { stop, location }, index (stop.id)}
 				{@const isCompleted = completedIndices.has(index)}
 				{@const isCurrent = index === currentIndex && !isCompleted}
 				<div

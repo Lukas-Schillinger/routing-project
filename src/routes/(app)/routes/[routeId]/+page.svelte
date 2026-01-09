@@ -195,7 +195,6 @@
 				<!-- Settings Dropdown -->
 				<RouteSettingsDropdown
 					{route}
-					{driver}
 					{directionsProvider}
 					onDirectionsProviderChange={handleDirectionsProviderChange}
 				/>
@@ -253,7 +252,6 @@
 						center={mapCenter}
 						zoom={12}
 						bind:focusedStopId
-						onGoToStop={handleGoToStop}
 					/>
 				</div>
 			{/if}

@@ -1,3 +1,4 @@
+import { TOKEN_EXPIRY } from '$lib/config';
 import { loginSchema, verifyOTPSchema } from '$lib/schemas/auth';
 import { db } from '$lib/server/db';
 import * as table from '$lib/server/db/schema';
@@ -91,7 +92,7 @@ export const actions: Actions = {
 			// Use login token service to create a new login token
 			const { loginToken, token } = await loginTokenService.createLoginToken({
 				email,
-				token_duration_hours: 24 // 24 hours for confirmation emails
+				token_duration_hours: TOKEN_EXPIRY.EMAIL_CONFIRMATION_HOURS
 			});
 
 			// Send welcome email

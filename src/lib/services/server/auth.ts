@@ -1,3 +1,4 @@
+import { SESSION } from '$lib/config';
 import type { PublicUser } from '$lib/schemas';
 import { db } from '$lib/server/db';
 import * as table from '$lib/server/db/schema';
@@ -5,6 +6,7 @@ import { sha256 } from '@oslojs/crypto/sha2';
 import { encodeBase64url, encodeHexLowerCase } from '@oslojs/encoding';
 import type { RequestEvent } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
+import { publicUserColumns } from './user.service';
 
 const DAY_IN_MS = 1000 * 60 * 60 * 24;
 
@@ -21,7 +23,7 @@ export async function createSession(token: string, userId: string) {
 	const session = {
 		id: sessionId,
 		user_id: userId,
-		expires_at: new Date(Date.now() + DAY_IN_MS * 30)
+		expires_at: new Date(Date.now() + DAY_IN_MS * SESSION.DURATION_DAYS)
 	};
 	await db.insert(table.session).values(session);
 	return session;
@@ -35,16 +37,7 @@ export async function validateSessionToken(token: string): Promise<{
 	const [result] = await db
 		.select({
 			// Adjust user table here to tweak returned data
-			user: {
-				id: table.users.id,
-				organization_id: table.users.organization_id,
-				name: table.users.name,
-				email: table.users.email,
-				role: table.users.role,
-				created_at: table.users.created_at,
-				updated_at: table.users.updated_at,
-				email_confirmed_at: table.users.email_confirmed_at
-			},
+			user: publicUserColumns,
 			session: table.session
 		})
 		.from(table.session)
@@ -63,9 +56,12 @@ export async function validateSessionToken(token: string): Promise<{
 	}
 
 	const renewSession =
-		Date.now() >= session.expires_at.getTime() - DAY_IN_MS * 15;
+		Date.now() >=
+		session.expires_at.getTime() - DAY_IN_MS * SESSION.RENEWAL_THRESHOLD_DAYS;
 	if (renewSession) {
-		session.expires_at = new Date(Date.now() + DAY_IN_MS * 30);
+		session.expires_at = new Date(
+			Date.now() + DAY_IN_MS * SESSION.DURATION_DAYS
+		);
 		await db
 			.update(table.session)
 			.set({ expires_at: session.expires_at })

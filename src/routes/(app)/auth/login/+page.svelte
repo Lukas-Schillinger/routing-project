@@ -60,35 +60,33 @@
 </svelte:head>
 
 <AuthCard title="Welcome back" {description}>
-	{#snippet children()}
-		{#if isRegistrationFlow}
-			<div class="pb-4">
-				<AuthAlert
-					message="Check your email for a confirmation code to complete registration."
-					variant="info"
-				/>
-			</div>
-		{/if}
+	{#if isRegistrationFlow}
+		<div class="pb-4">
+			<AuthAlert
+				message="Check your email for a confirmation code to complete registration."
+				variant="info"
+			/>
+		</div>
+	{/if}
 
-		{#if loginMethod === 'password'}
-			<LoginWithPassword
-				form={debugFormMessage ? { message: debugFormMessage } : form}
-				onRequestMagicLogin={() => (userLoginMethod = 'magic')}
-			/>
-		{:else}
-			<RequestMagicLogin
-				onBack={() => (userLoginMethod = 'password')}
-				debugOtpSent={debugState ? debugOtpSent : undefined}
-				debugError={debugState && debugShowError ? debugMagicError : undefined}
-				debugSuccess={debugState === 'magic-otp' && debugShowSuccess
-					? debugSuccess
-					: undefined}
-				debugEmail={debugState ? 'user@example.com' : emailParam || undefined}
-				initialEmail={emailParam}
-				initialOtpSent={isRegistrationFlow}
-			/>
-		{/if}
-	{/snippet}
+	{#if loginMethod === 'password'}
+		<LoginWithPassword
+			form={debugFormMessage ? { message: debugFormMessage } : form}
+			onRequestMagicLogin={() => (userLoginMethod = 'magic')}
+		/>
+	{:else}
+		<RequestMagicLogin
+			onBack={() => (userLoginMethod = 'password')}
+			debugOtpSent={debugState ? debugOtpSent : undefined}
+			debugError={debugState && debugShowError ? debugMagicError : undefined}
+			debugSuccess={debugState === 'magic-otp' && debugShowSuccess
+				? debugSuccess
+				: undefined}
+			debugEmail={debugState ? 'user@example.com' : emailParam || undefined}
+			initialEmail={emailParam}
+			initialOtpSent={isRegistrationFlow}
+		/>
+	{/if}
 
 	{#snippet footer()}
 		<p class="text-sm text-muted-foreground">

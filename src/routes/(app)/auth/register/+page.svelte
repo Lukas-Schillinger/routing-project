@@ -20,107 +20,105 @@
 	title="Create your account"
 	description="Start optimizing your routes today"
 >
-	{#snippet children()}
-		<div class="space-y-6">
-			<AuthAlert message={form?.message} />
+	<div class="space-y-6">
+		<AuthAlert message={form?.message} />
 
-			<form
-				method="post"
-				action="?/register"
-				use:enhance={() => {
-					isSubmitting = true;
-					return async ({ update }) => {
-						await update();
-						isSubmitting = false;
-					};
-				}}
-				class="space-y-5"
-				novalidate
-			>
-				<div class="space-y-1.5">
-					<Label
-						for="email"
-						class="text-xs font-medium tracking-wider text-muted-foreground uppercase"
-					>
-						Email
-					</Label>
-					<div class="relative">
-						<Mail
-							class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground/50"
-						/>
-						<Input
-							id="email"
-							type="email"
-							name="email"
-							placeholder="you@example.com"
-							class="h-11 border-border/50 bg-background/50 pl-10 transition-colors focus:border-primary/50 focus:bg-background"
-							required
-						/>
-					</div>
+		<form
+			method="post"
+			action="?/register"
+			use:enhance={() => {
+				isSubmitting = true;
+				return async ({ update }) => {
+					await update();
+					isSubmitting = false;
+				};
+			}}
+			class="space-y-5"
+			novalidate
+		>
+			<div class="space-y-1.5">
+				<Label
+					for="email"
+					class="text-xs font-medium tracking-wider text-muted-foreground uppercase"
+				>
+					Email
+				</Label>
+				<div class="relative">
+					<Mail
+						class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground/50"
+					/>
+					<Input
+						id="email"
+						type="email"
+						name="email"
+						placeholder="you@example.com"
+						class="h-11 border-border/50 bg-background/50 pl-10 transition-colors focus:border-primary/50 focus:bg-background"
+						required
+					/>
 				</div>
+			</div>
 
-				<div class="space-y-1.5">
-					<Label
-						for="password"
-						class="text-xs font-medium tracking-wider text-muted-foreground uppercase"
-					>
-						Password
-					</Label>
-					<div class="relative">
-						<Lock
-							class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground/50"
-						/>
-						<Input
-							id="password"
-							type="password"
-							name="password"
-							placeholder="Create a strong password"
-							class="h-11 border-border/50 bg-background/50 pl-10 transition-colors focus:border-primary/50 focus:bg-background"
-							required
-						/>
-					</div>
+			<div class="space-y-1.5">
+				<Label
+					for="password"
+					class="text-xs font-medium tracking-wider text-muted-foreground uppercase"
+				>
+					Password
+				</Label>
+				<div class="relative">
+					<Lock
+						class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground/50"
+					/>
+					<Input
+						id="password"
+						type="password"
+						name="password"
+						placeholder="Create a strong password"
+						class="h-11 border-border/50 bg-background/50 pl-10 transition-colors focus:border-primary/50 focus:bg-background"
+						required
+					/>
 				</div>
+			</div>
 
-				<div class="space-y-1.5">
-					<Label
-						for="confirm-password"
-						class="text-xs font-medium tracking-wider text-muted-foreground uppercase"
-					>
-						Confirm password
-					</Label>
-					<div class="relative">
-						<Lock
-							class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground/50"
-						/>
-						<Input
-							id="confirm-password"
-							type="password"
-							name="password-confirm"
-							placeholder="Confirm your password"
-							class="h-11 border-border/50 bg-background/50 pl-10 transition-colors focus:border-primary/50 focus:bg-background"
-							required
-						/>
-					</div>
+			<div class="space-y-1.5">
+				<Label
+					for="confirm-password"
+					class="text-xs font-medium tracking-wider text-muted-foreground uppercase"
+				>
+					Confirm password
+				</Label>
+				<div class="relative">
+					<Lock
+						class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground/50"
+					/>
+					<Input
+						id="confirm-password"
+						type="password"
+						name="password-confirm"
+						placeholder="Confirm your password"
+						class="h-11 border-border/50 bg-background/50 pl-10 transition-colors focus:border-primary/50 focus:bg-background"
+						required
+					/>
 				</div>
+			</div>
 
-				<div class="pt-2">
-					<Button
-						type="submit"
-						class="h-11 w-full font-medium"
-						disabled={isSubmitting}
-					>
-						{#if isSubmitting}
-							<Loader2 class="mr-2 h-4 w-4 animate-spin" />
-							Creating account...
-						{:else}
-							<UserPlus class="mr-2 h-4 w-4" />
-							Create account
-						{/if}
-					</Button>
-				</div>
-			</form>
-		</div>
-	{/snippet}
+			<div class="pt-2">
+				<Button
+					type="submit"
+					class="h-11 w-full font-medium"
+					disabled={isSubmitting}
+				>
+					{#if isSubmitting}
+						<Loader2 class="mr-2 h-4 w-4 animate-spin" />
+						Creating account...
+					{:else}
+						<UserPlus class="mr-2 h-4 w-4" />
+						Create account
+					{/if}
+				</Button>
+			</div>
+		</form>
+	</div>
 
 	{#snippet footer()}
 		<p class="text-sm text-muted-foreground">

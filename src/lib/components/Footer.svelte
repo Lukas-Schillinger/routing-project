@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { Moon, Sun } from 'lucide-svelte';
 	import { mode, toggleMode } from 'mode-watcher';
 	import Button from './ui/button/button.svelte';
@@ -39,18 +40,20 @@
 					<ul class="space-y-3 text-sm text-muted-foreground">
 						<li>
 							<a
-								href="/auth/account"
+								href={resolve('/auth/account')}
 								class="transition-colors hover:text-foreground">Account</a
 							>
 						</li>
 						<li>
-							<a href="/maps" class="transition-colors hover:text-foreground"
-								>Maps</a
+							<a
+								href={resolve('/maps')}
+								class="transition-colors hover:text-foreground">Maps</a
 							>
 						</li>
 						<li>
-							<a href="/routes" class="transition-colors hover:text-foreground"
-								>Routes</a
+							<a
+								href={resolve('/routes')}
+								class="transition-colors hover:text-foreground">Routes</a
 							>
 						</li>
 					</ul>
@@ -63,13 +66,15 @@
 				<h3 class="mb-4 font-semibold">Company</h3>
 				<ul class="space-y-3 text-sm text-muted-foreground">
 					<li>
-						<a href="/about" class="transition-colors hover:text-foreground"
-							>About</a
+						<a
+							href={resolve('/')}
+							class="transition-colors hover:text-foreground">About</a
 						>
 					</li>
 					<li>
-						<a href="/contact" class="transition-colors hover:text-foreground"
-							>Contact</a
+						<a
+							href={resolve('/')}
+							class="transition-colors hover:text-foreground">Contact</a
 						>
 					</li>
 				</ul>

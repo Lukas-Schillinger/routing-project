@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { Button } from '$lib/components/ui/button';
 	import type { PublicUser } from '$lib/schemas';
@@ -29,7 +30,7 @@
 	<div class="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
 		<div class="rounded-full border bg-background/55 shadow backdrop-blur-lg">
 			<div class="flex justify-between px-1 py-1">
-				<a href="/" class="flex items-center space-x-1">
+				<a href={resolve('/')} class="flex items-center space-x-1">
 					<div class="flex size-8 items-center justify-center rounded-lg">
 						{#if mode.current == 'light'}
 							<img

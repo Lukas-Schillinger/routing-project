@@ -1,3 +1,4 @@
+import { FILE_LIMITS } from '$lib/config';
 import type { File as FileSchema } from '$lib/schemas/file';
 import type { User } from '$lib/schemas/user';
 import { db } from '$lib/server/db';
@@ -14,8 +15,7 @@ export class FileService {
 	): Promise<FileSchema> {
 		try {
 			// Validate file
-			if (file.size > 10 * 1024 * 1024) {
-				// 10MB limit
+			if (file.size > FILE_LIMITS.MAX_SIZE_BYTES) {
 				throw ServiceError.badRequest('File size exceeds 10MB limit');
 			}
 

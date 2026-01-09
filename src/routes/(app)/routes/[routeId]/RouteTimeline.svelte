@@ -14,8 +14,6 @@
 		selectedIndex?: number;
 		onStopSelect?: (index: number) => void;
 		onStopFocus?: (stopId: string) => void;
-		title?: string;
-		showFocusButton?: boolean;
 		onScrollToIndex?: (scrollFn: (index: number) => void) => void;
 	}
 
@@ -157,7 +155,7 @@
 			{/if}
 
 			<!-- Stops -->
-			{#each stops as { stop, location }, index}
+			{#each stops as { stop, location }, index (stop.id)}
 				{@const isCompleted = completedStops.has(stop.id)}
 				<div
 					data-stop-index={index}

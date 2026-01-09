@@ -13,7 +13,7 @@
 		value = $bindable(''),
 		placeholder = 'Search for an address...',
 		country = 'US',
-		onSelect = (location: LocationCreate) => {},
+		onSelect = () => {},
 		onClear = () => {},
 		disabled = false
 	}: {

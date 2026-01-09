@@ -171,7 +171,7 @@
 		{#if importState.isProcessing}
 			<!-- Loading State -->
 			<div class="divide-y">
-				{#each Array(5) as _}
+				{#each Array(5)}
 					<div class="px-4 py-3">
 						<div class="flex items-center gap-4">
 							<Skeleton class="h-4 w-24" />

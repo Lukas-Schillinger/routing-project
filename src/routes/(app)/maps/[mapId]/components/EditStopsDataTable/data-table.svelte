@@ -9,6 +9,7 @@
 -->
 <script lang="ts">
 	import { goto, invalidateAll } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import EditOrCreateStopPopover from '$lib/components/EditOrCreateStopPopover';
 	import { Button, buttonVariants } from '$lib/components/ui/button';
 	import * as ButtonGroup from '$lib/components/ui/button-group/index.js';
@@ -49,21 +50,13 @@
 		stops: StopWithLocation[];
 		mapId: string;
 		onDelete?: () => Promise<void>;
-		onToggleInclude?: (id: string, included: boolean) => Promise<void>;
 		onUpdate?: (stop: StopWithLocation) => void;
 		onCreate?: (stop: StopWithLocation) => void;
 		onZoomToStop: (stopId: string) => void;
 	}
 
-	let {
-		stops,
-		mapId,
-		onDelete,
-		onToggleInclude,
-		onUpdate,
-		onCreate,
-		onZoomToStop
-	}: Props = $props();
+	let { stops, mapId, onDelete, onUpdate, onCreate, onZoomToStop }: Props =
+		$props();
 
 	// CSV upload state
 	let csvError = $state<string | null>(null);
@@ -88,7 +81,7 @@
 			rows: result.data.rows
 		});
 
-		await goto('/maps/import');
+		await goto(resolve('/maps/import'));
 	}
 
 	async function handleMobileFileInput(e: Event) {
@@ -177,6 +170,7 @@
 	let pagination = $state<PaginationState>({ pageIndex: 0, pageSize: 10 });
 
 	// Define columns
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Mixed column value types require any
 	const columns: ColumnDef<StopWithLocation, any>[] = [
 		// Actions column
 		columnHelper.display({
@@ -444,7 +438,7 @@
 					<DropdownMenu.Content align="end" class="w-40">
 						{#each table
 							.getAllColumns()
-							.filter((column) => column.getCanHide()) as column}
+							.filter((column) => column.getCanHide()) as column (column.id)}
 							<DropdownMenu.Item
 								onclick={() => (searchField = column.id)}
 								class="justify-between"
@@ -485,7 +479,7 @@
 						<DropdownMenu.Content align="end">
 							{#each table
 								.getAllColumns()
-								.filter((column) => column.getCanHide()) as column}
+								.filter((column) => column.getCanHide()) as column (column.id)}
 								<DropdownMenu.CheckboxItem
 									checked={column.getIsVisible()}
 									onCheckedChange={(value) => column.toggleVisibility(!!value)}
@@ -520,9 +514,9 @@
 		<div bind:this={tableContainerRef} class="min-h-0 flex-1 overflow-auto">
 			<Table.Root>
 				<Table.Header>
-					{#each table.getHeaderGroups() as headerGroup}
+					{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
 						<Table.Row>
-							{#each headerGroup.headers as header}
+							{#each headerGroup.headers as header (header.id)}
 								<Table.Head>
 									{#if !header.isPlaceholder}
 										<FlexRender
@@ -537,9 +531,9 @@
 				</Table.Header>
 				<Table.Body>
 					{#if table.getRowModel().rows?.length}
-						{#each table.getRowModel().rows as row}
+						{#each table.getRowModel().rows as row (row.id)}
 							<Table.Row data-state={row.getIsSelected() && 'selected'}>
-								{#each row.getVisibleCells() as cell}
+								{#each row.getVisibleCells() as cell (cell.id)}
 									<Table.Cell>
 										<FlexRender
 											content={cell.column.columnDef.cell}

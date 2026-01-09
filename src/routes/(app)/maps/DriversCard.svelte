@@ -5,6 +5,7 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
+	import { ServiceError } from '$lib/errors';
 	import type { Driver } from '$lib/schemas/driver';
 	import { driverApi } from '$lib/services/api/drivers';
 	import { formatPhoneNumber, getIdenticon } from '$lib/utils';
@@ -32,8 +33,12 @@
 			await driverApi.delete(driver.id);
 			drivers = drivers.filter((d) => d.id !== driver.id);
 			toast.success('Driver deleted');
-		} catch (error) {
-			toast.error('Failed to delete driver');
+		} catch (err) {
+			if (err instanceof ServiceError) {
+				toast.error(err.message);
+			} else {
+				toast.error('An unknown error occurred');
+			}
 		}
 	}
 

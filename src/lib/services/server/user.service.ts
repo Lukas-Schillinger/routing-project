@@ -12,6 +12,27 @@ import { invitations, organizations, users } from '$lib/server/db/schema';
 import { and, eq } from 'drizzle-orm';
 import { ServiceError } from './errors';
 
+/**
+ * Drizzle column selection for PublicUser queries.
+ * Use in .select() to avoid fetching passwordHash from DB.
+ */
+export const publicUserColumns = {
+	id: users.id,
+	organization_id: users.organization_id,
+	created_at: users.created_at,
+	created_by: users.created_by,
+	updated_at: users.updated_at,
+	updated_by: users.updated_by,
+	name: users.name,
+	email: users.email,
+	role: users.role,
+	email_confirmed_at: users.email_confirmed_at
+} as const;
+
+// Type check: ensures publicUserColumns stays in sync with PublicUser
+export const _columnCheck: Record<keyof PublicUser, unknown> =
+	publicUserColumns;
+
 export class UserService {
 	async getUser(userId: string, organizationId: string): Promise<User> {
 		const [user] = await db
@@ -29,35 +50,27 @@ export class UserService {
 		return user;
 	}
 
+	/**
+	 * Transforms a full User object to PublicUser by removing passwordHash.
+	 * Use for single-item returns (after .returning()).
+	 */
+	toPublicUser(user: User): PublicUser {
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+		const { passwordHash, ...publicUser } = user;
+		return publicUser;
+	}
+
 	async getPublicUser(
 		userId: string,
 		organization_id: string
 	): Promise<PublicUser> {
 		const user = await this.getUser(userId, organization_id);
-		return {
-			id: user.id,
-			created_at: user.created_at,
-			updated_at: user.updated_at,
-			organization_id: user.organization_id,
-			email: user.email,
-			role: user.role,
-			name: user.name,
-			email_confirmed_at: user.email_confirmed_at
-		};
+		return this.toPublicUser(user);
 	}
 
 	async getPublicUsers(organizationId: string): Promise<PublicUser[]> {
 		return await db
-			.select({
-				id: users.id,
-				created_at: users.created_at,
-				updated_at: users.updated_at,
-				organization_id: users.organization_id,
-				email: users.email,
-				role: users.role,
-				name: users.name,
-				email_confirmed_at: users.email_confirmed_at
-			})
+			.select(publicUserColumns)
 			.from(users)
 			.where(eq(users.organization_id, organizationId));
 	}
@@ -101,16 +114,7 @@ export class UserService {
 			)
 			.returning();
 
-		return {
-			id: updatedUser.id,
-			created_at: updatedUser.created_at,
-			updated_at: updatedUser.updated_at,
-			organization_id: updatedUser.organization_id,
-			name: updatedUser.name,
-			email: updatedUser.email,
-			role: updatedUser.role,
-			email_confirmed_at: updatedUser.email_confirmed_at
-		};
+		return this.toPublicUser(updatedUser);
 	}
 
 	async updateUserRole(
@@ -133,16 +137,7 @@ export class UserService {
 			)
 			.returning();
 
-		return {
-			id: updatedUser.id,
-			created_at: updatedUser.created_at,
-			updated_at: updatedUser.updated_at,
-			organization_id: updatedUser.organization_id,
-			name: updatedUser.name,
-			email: updatedUser.email,
-			role: updatedUser.role,
-			email_confirmed_at: updatedUser.email_confirmed_at
-		};
+		return this.toPublicUser(updatedUser);
 	}
 
 	/** Update user's password hash - used by password reset flow */

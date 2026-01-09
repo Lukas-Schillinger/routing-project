@@ -23,8 +23,9 @@
 		center = [-98.5795, 39.8283],
 		zoom = 4,
 		focusedStopId = $bindable(null),
-		hiddenDrivers = $bindable([]),
-		onGoToStop = (stopId: string) => {}
+		hiddenDrivers = $bindable([])
+
+		// onGoToStop = (stopId: string) => {}
 	}: {
 		stops?: StopWithLocation[];
 		routes?: Route[] | null;
@@ -33,7 +34,7 @@
 		center?: [number, number];
 		zoom?: number;
 		focusedStopId?: string | null;
-		onGoToStop?: (stopId: string) => void;
+		// onGoToStop?: (stopId: string) => void;
 		hiddenDrivers?: Driver[];
 	} = $props();
 
@@ -56,40 +57,27 @@
 
 	// Calculate bounds from stops and depot for initial view
 	const bounds = $derived.by(() => {
-		if (stops.length === 0 && !depot) return undefined;
+		const coordinates: { lat: number; lon: number }[] = [];
 
-		let minLng = Infinity;
-		let maxLng = -Infinity;
-		let minLat = Infinity;
-		let maxLat = -Infinity;
-
-		stops.forEach((item) => {
-			if (!item.location.lat || !item.location.lon) return;
-
-			const lat = item.location.lat;
-			const lon = item.location.lon;
-
-			if (!isNaN(lat) && !isNaN(lon)) {
-				minLng = Math.min(minLng, lon);
-				maxLng = Math.max(maxLng, lon);
-				minLat = Math.min(minLat, lat);
-				maxLat = Math.max(maxLat, lat);
+		for (const item of stops) {
+			const { lat, lon } = item.location;
+			if (lat != null && lon != null && !isNaN(lat) && !isNaN(lon)) {
+				coordinates.push({ lat, lon });
 			}
-		});
-
-		// Include depot in bounds
-		if (depot?.location.lat && depot?.location.lon) {
-			minLng = Math.min(minLng, depot.location.lon);
-			maxLng = Math.max(maxLng, depot.location.lon);
-			minLat = Math.min(minLat, depot.location.lat);
-			maxLat = Math.max(maxLat, depot.location.lat);
 		}
 
-		if (minLng === Infinity) return undefined;
+		if (depot?.location.lat != null && depot?.location.lon != null) {
+			coordinates.push({ lat: depot.location.lat, lon: depot.location.lon });
+		}
+
+		if (coordinates.length === 0) return undefined;
+
+		const lons = coordinates.map((c) => c.lon);
+		const lats = coordinates.map((c) => c.lat);
 
 		return [
-			[minLng, minLat],
-			[maxLng, maxLat]
+			[Math.min(...lons), Math.min(...lats)],
+			[Math.max(...lons), Math.max(...lats)]
 		] as [[number, number], [number, number]];
 	});
 
@@ -129,9 +117,10 @@
 	>
 		<!-- Route lines -->
 		{#if routes && routes.length > 0}
-			{#each routes as route}
+			{#each routes as route (route.id)}
 				{#if !hiddenDrivers.find((e) => e.id == route.driver_id)}
 					<!-- I don't know how this works -->
+					<!-- eslint-disable-next-line @typescript-eslint/no-explicit-any -->
 					{@const data = route.geometry as any}
 					<GeoJSON id={`route-${route.driver_id}`} {data}>
 						<LineLayer
@@ -151,7 +140,7 @@
 		{/if}
 
 		<!-- Stop markers -->
-		{#each stops as item, index}
+		{#each stops as item (item.stop.id)}
 			{@const { stop, location } = item}
 			{#if location.lat && location.lon && !hiddenDrivers.find((e) => e.id == stop.driver_id)}
 				{@const lat = location.lat}
@@ -193,9 +182,6 @@
 								{stop}
 								{location}
 								driver={drivers.find((e) => e.id == stop.driver_id)}
-								onGoToStop={(stopId) => {
-									onGoToStop(stopId);
-								}}
 							/>
 						</Popup>
 					</Marker>

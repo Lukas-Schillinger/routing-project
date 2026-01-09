@@ -16,7 +16,7 @@
 		Plus,
 		Search
 	} from 'lucide-svelte';
-	import { MediaQuery } from 'svelte/reactivity';
+	import { MediaQuery, SvelteURLSearchParams } from 'svelte/reactivity';
 	import type { PageData } from './$types';
 	import DepotsCard from './DepotsCard.svelte';
 	import DriversCard from './DriversCard.svelte';
@@ -35,7 +35,7 @@
 
 	// Sync state to URL params (without triggering navigation)
 	function updateUrlParams() {
-		const params = new URLSearchParams();
+		const params = new SvelteURLSearchParams();
 		if (searchQuery) params.set('q', searchQuery);
 		if (viewMode !== 'list') params.set('view', viewMode);
 		if (sortColumn !== 'created_at') params.set('sort', sortColumn);
@@ -115,11 +115,7 @@
 	// Sync state changes to URL
 	$effect(() => {
 		// Track all state values to trigger URL update
-		searchQuery;
-		viewMode;
-		sortColumn;
-		sortDirection;
-		currentPage;
+		void [searchQuery, viewMode, sortColumn, sortDirection, currentPage];
 		updateUrlParams();
 	});
 
@@ -336,7 +332,7 @@
 
 						<!-- Page numbers -->
 						<div class="flex items-center gap-1">
-							{#each getVisiblePageNumbers() as page}
+							{#each getVisiblePageNumbers() as page (page)}
 								<Button
 									variant={currentPage === page ? 'secondary' : 'ghost'}
 									size="icon"

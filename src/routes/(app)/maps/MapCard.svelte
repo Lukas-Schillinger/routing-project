@@ -1,10 +1,12 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import EditOrCreateMapPopover from '$lib/components/EditOrCreateMapPopover';
 	import MapBoxStaticMap from '$lib/components/MapBoxStaticMap.svelte';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
+	import { ServiceError } from '$lib/errors';
 	import type {
 		Driver,
 		Map as MapType,
@@ -78,14 +80,18 @@
 			await mapApi.delete(map.id);
 			toast.success('Map deleted');
 			await invalidateAll();
-		} catch (error) {
-			toast.error('Failed to delete map');
+		} catch (err) {
+			if (err instanceof ServiceError) {
+				toast.error(err.message);
+			} else {
+				toast.error('Failed to delete depot');
+			}
 		}
 	}
 </script>
 
 <a
-	href="/maps/{map.id}"
+	href={resolve(`/maps/${map.id}`)}
 	class="group flex flex-col overflow-hidden rounded-lg border border-border/50 bg-card transition-all hover:border-border hover:shadow-sm sm:flex-row"
 >
 	<!-- Map Thumbnail -->

@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { Cpu, FolderOpen, ListChecks, PaperPlaneTilt } from 'phosphor-svelte';
-	import { ArrowRight, Upload, Zap, Send, CheckCircle2 } from 'lucide-svelte';
+	import { ArrowRight, CheckCircle2, Send, Upload, Zap } from 'lucide-svelte';
+	import { ListChecks } from 'phosphor-svelte';
 </script>
 
 <section class="bg-forest-950 px-4 py-24 md:px-8 md:py-32">

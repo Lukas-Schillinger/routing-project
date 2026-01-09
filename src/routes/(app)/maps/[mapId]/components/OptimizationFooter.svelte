@@ -5,6 +5,7 @@
 	import * as ButtonGroup from '$lib/components/ui/button-group';
 	import * as Popover from '$lib/components/ui/popover';
 	import * as Select from '$lib/components/ui/select';
+	import { ServiceError } from '$lib/errors';
 	import type {
 		DepotWithLocationJoin,
 		Driver,
@@ -97,7 +98,11 @@
 			await mapApi.cancelOptimization(map.id);
 			onCancel();
 		} catch (err) {
-			toast.error('Failed to cancel optimization');
+			if (err instanceof ServiceError) {
+				toast.error(err.message);
+			} else {
+				toast.error('Failed to cancel optimization');
+			}
 		}
 	}
 
@@ -164,7 +169,7 @@
 							{/if}
 						</Select.Trigger>
 						<Select.Content>
-							{#each depots as depot}
+							{#each depots as depot (depot.depot.id)}
 								<Select.Item value={depot.depot.id}>
 									<div class="flex items-center gap-2">
 										<Building2 class="h-3.5 w-3.5" />

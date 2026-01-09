@@ -1,3 +1,6 @@
+// Validate environment variables at startup
+import '$lib/server/env';
+
 import { getLimiterForPath } from '$lib/server/rate-limit';
 import * as auth from '$lib/services/server/auth';
 import { rolePermissions } from '$lib/services/server/permissions';

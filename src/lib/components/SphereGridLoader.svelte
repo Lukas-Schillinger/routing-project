@@ -42,7 +42,7 @@
     "
 >
 	{#if spheres.length > 0}
-		{#each spheres as sphere}
+		{#each spheres as sphere, index (index)}
 			<div
 				class="rounded-full {color}"
 				style="
@@ -54,7 +54,7 @@
 		{/each}
 	{:else}
 		<!-- Render static placeholders to avoid layout shift before hydration/effect -->
-		{#each Array(rows * cols) as _}
+		{#each Array(rows * cols)}
 			<div
 				class="rounded-full {color} opacity-20"
 				style="

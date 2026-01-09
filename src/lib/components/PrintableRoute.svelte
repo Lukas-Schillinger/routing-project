@@ -74,7 +74,7 @@
 
 	<!-- Stops List -->
 	<ol class="m-0 list-none p-0">
-		{#each sortedStops as { stop, location }, index}
+		{#each sortedStops as { stop, location }, index (stop.id)}
 			<li
 				class="stop-item flex items-start gap-3 border-b border-gray-300 py-2.5"
 			>

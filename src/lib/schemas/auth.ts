@@ -1,3 +1,4 @@
+import { TOKEN_EXPIRY } from '$lib/config';
 import { z } from 'zod';
 import { emailSchema, passwordSchema } from './common.js';
 import { roleEnum } from './user.js';
@@ -30,7 +31,7 @@ export type LoginTokenType = z.infer<typeof loginTokenTypeEnum>;
 export const createLoginTokenSchema = z.object({
 	email: emailSchema,
 	type: loginTokenTypeEnum.optional().default('login_token'),
-	token_duration_hours: z.number().optional().default(0.25) // 15 minutes default for OTP
+	token_duration_hours: z.number().optional().default(TOKEN_EXPIRY.OTP_HOURS)
 });
 
 export const verifyOTPSchema = z.object({

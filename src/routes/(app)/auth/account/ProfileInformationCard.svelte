@@ -1,6 +1,7 @@
 <!-- @component Profile Information card for account page -->
 <script lang="ts">
 	import { goto, invalidateAll } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
@@ -60,7 +61,7 @@
 
 	async function handleLogout() {
 		await authApi.logout();
-		goto('/auth/login');
+		goto(resolve('/auth/login'));
 	}
 </script>
 

@@ -7,7 +7,7 @@
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { ServiceError } from '$lib/errors';
 	import type { LocationCreate } from '$lib/schemas/location';
-	import type { StopWithLocation } from '$lib/schemas/stop';
+	import type { StopWithLocation, UpdateStop } from '$lib/schemas/stop';
 	import { stopApi } from '$lib/services/api/stops';
 	import { Check, LoaderCircle } from 'lucide-svelte';
 
@@ -110,7 +110,7 @@
 					notes: notes.trim() || null
 				});
 			} else {
-				const updateData: any = {
+				const updateData: UpdateStop = {
 					contact_name: contactName.trim() || null,
 					contact_phone: contactPhone.trim() || null,
 					notes: notes.trim() || null
