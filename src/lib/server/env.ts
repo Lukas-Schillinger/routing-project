@@ -8,6 +8,7 @@
  *   import { env } from '$env/dynamic/private'
  */
 import { env } from '$env/dynamic/private';
+import { env as publicEnv } from '$env/dynamic/public';
 import { z } from 'zod';
 
 const requiredEnvSchema = z.object({
@@ -53,15 +54,23 @@ const optionalEnvSchema = z.object({
 	CLOUDFLARE_TOKEN_VALUE: z.string().optional()
 });
 
+const publicEnvSchema = z.object({
+	// Sentry - when empty, SDK becomes a no-op (safe for local development)
+	PUBLIC_SENTRY_DSN: z.string().optional()
+});
+
 const envSchema = requiredEnvSchema.merge(optionalEnvSchema);
 
 // Validate on module load (side effect)
 const result = envSchema.safeParse(env);
+const publicResult = publicEnvSchema.safeParse(publicEnv);
 
-if (!result.success) {
-	const missing = result.error.issues
-		.map((issue) => `    ${issue.path[0]}`)
-		.join('\n');
+if (!result.success || !publicResult.success) {
+	const privateIssues = result.success ? [] : result.error.issues;
+	const publicIssues = publicResult.success ? [] : publicResult.error.issues;
+	const allIssues = [...privateIssues, ...publicIssues];
+
+	const missing = allIssues.map((issue) => `    ${issue.path[0]}`).join('\n');
 
 	const message = `
 ┌─────────────────────────────────────────────────────────┐

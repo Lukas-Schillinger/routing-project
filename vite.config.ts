@@ -1,3 +1,4 @@
+import { sentrySvelteKit } from '@sentry/sveltekit';
 import { sveltekit } from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig, loadEnv } from 'vite';
@@ -6,7 +7,18 @@ import devtoolsJson from 'vite-plugin-devtools-json';
 export default defineConfig(({ mode }) => {
 	const env = loadEnv(mode, process.cwd(), '');
 	return {
-		plugins: [tailwindcss(), sveltekit(), devtoolsJson()],
+		plugins: [
+			sentrySvelteKit({
+				sourceMapsUploadOptions: {
+					org: env.SENTRY_ORG,
+					project: env.SENTRY_PROJECT,
+					authToken: env.SENTRY_AUTH_TOKEN
+				}
+			}),
+			tailwindcss(),
+			sveltekit(),
+			devtoolsJson()
+		],
 		server: {
 			allowedHosts: env.CF_TUNNEL_URL ? [env.CF_TUNNEL_URL] : []
 		},
