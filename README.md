@@ -1,5 +1,7 @@
 # wend
 
+![Coverage](https://img.shields.io/badge/coverage-services%2070%25-brightgreen)
+
 Effortless routing from start to finish
 
 Wend is a multistop optimization program with delivery management features.

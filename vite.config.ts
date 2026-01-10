@@ -38,7 +38,25 @@ export default defineConfig(({ mode }) => {
 						environment: 'node',
 						includeTaskLocation: true,
 						include: ['src/**/*.{test,spec}.{js,ts}'],
-						exclude: ['src/**/*.svelte.{test,spec}.{js,ts}']
+						exclude: ['src/**/*.svelte.{test,spec}.{js,ts}'],
+						coverage: {
+							provider: 'v8',
+							include: ['src/lib/services/server/**/*.ts'],
+							exclude: [
+								'**/*.test.ts',
+								'**/*.spec.ts',
+								'**/index.ts',
+								'**/errors.ts'
+							],
+							thresholds: {
+								statements: 70,
+								branches: 70,
+								functions: 70,
+								lines: 70
+							},
+							reporter: ['text', 'html', 'json-summary'],
+							reportsDirectory: './coverage'
+						}
 					}
 				}
 			]
