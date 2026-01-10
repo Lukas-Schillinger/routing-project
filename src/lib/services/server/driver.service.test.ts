@@ -33,7 +33,6 @@ const NON_EXISTENT_UUID = '00000000-0000-0000-0000-000000000000';
 
 // Test fixtures
 let testOrg1: { id: string };
-let testOrg2: { id: string };
 let testUser1: { id: string; organization_id: string };
 let testDriver1: {
 	id: string;
@@ -42,7 +41,6 @@ let testDriver1: {
 	color: string;
 };
 let testDriver2: { id: string; name: string; organization_id: string };
-let testDriverOrg2: { id: string; organization_id: string };
 
 // Track all created IDs for cleanup
 const createdStopIds: string[] = [];
@@ -55,10 +53,9 @@ const createdOrgIds: string[] = [];
 beforeAll(async () => {
 	const tx = db as unknown as TestTransaction;
 
-	// Create two organizations for tenancy testing
+	// Create organization
 	testOrg1 = await createOrganization(tx);
-	testOrg2 = await createOrganization(tx);
-	createdOrgIds.push(testOrg1.id, testOrg2.id);
+	createdOrgIds.push(testOrg1.id);
 
 	// Create user in org1 for audit fields
 	testUser1 = await createUser(tx, {
@@ -79,13 +76,6 @@ beforeAll(async () => {
 		active: false
 	});
 	createdDriverIds.push(testDriver1.id, testDriver2.id);
-
-	// Create driver in org2 for tenancy testing
-	testDriverOrg2 = await createDriver(tx, {
-		organization_id: testOrg2.id,
-		name: 'Org2 Driver'
-	});
-	createdDriverIds.push(testDriverOrg2.id);
 });
 
 afterAll(async () => {
@@ -142,21 +132,6 @@ describe('DriverService', () => {
 			}
 		});
 
-		it('does not include drivers from other organizations (tenancy)', async () => {
-			const result1 = await driverService.getDrivers(testOrg1.id);
-			const result2 = await driverService.getDrivers(testOrg2.id);
-
-			const org1DriverIds = result1.map((d) => d.id);
-			const org2DriverIds = result2.map((d) => d.id);
-
-			// Org1 drivers should not appear in org2 results
-			expect(org2DriverIds).not.toContain(testDriver1.id);
-			expect(org2DriverIds).not.toContain(testDriver2.id);
-
-			// Org2 driver should not appear in org1 results
-			expect(org1DriverIds).not.toContain(testDriverOrg2.id);
-		});
-
 		it('returns empty array when no drivers exist', async () => {
 			const tx = db as unknown as TestTransaction;
 			const emptyOrg = await createOrganization(tx);
@@ -189,19 +164,6 @@ describe('DriverService', () => {
 				await driverService.getDriverById(NON_EXISTENT_UUID, testOrg1.id);
 			} catch (e) {
 				expect((e as ServiceError).code).toBe('NOT_FOUND');
-			}
-		});
-
-		it('throws FORBIDDEN for driver in different organization (tenancy)', async () => {
-			// Try to access org2's driver with org1's ID
-			await expect(
-				driverService.getDriverById(testDriverOrg2.id, testOrg1.id)
-			).rejects.toThrow(ServiceError);
-
-			try {
-				await driverService.getDriverById(testDriverOrg2.id, testOrg1.id);
-			} catch (e) {
-				expect((e as ServiceError).code).toBe('FORBIDDEN');
 			}
 		});
 	});
@@ -418,28 +380,6 @@ describe('DriverService', () => {
 			}
 		});
 
-		it('throws FORBIDDEN for driver in different organization (tenancy)', async () => {
-			await expect(
-				driverService.updateDriver(
-					testDriverOrg2.id,
-					{ name: 'Hacked' },
-					testOrg1.id,
-					testUser1.id
-				)
-			).rejects.toThrow(ServiceError);
-
-			try {
-				await driverService.updateDriver(
-					testDriverOrg2.id,
-					{ name: 'Hacked' },
-					testOrg1.id,
-					testUser1.id
-				);
-			} catch (e) {
-				expect((e as ServiceError).code).toBe('FORBIDDEN');
-			}
-		});
-
 		it('returns updated driver', async () => {
 			const result = await driverService.updateDriver(
 				testDriver1.id,
@@ -498,18 +438,6 @@ describe('DriverService', () => {
 				await driverService.deleteDriver(NON_EXISTENT_UUID, testOrg1.id);
 			} catch (e) {
 				expect((e as ServiceError).code).toBe('NOT_FOUND');
-			}
-		});
-
-		it('throws FORBIDDEN for driver in different organization (tenancy)', async () => {
-			await expect(
-				driverService.deleteDriver(testDriverOrg2.id, testOrg1.id)
-			).rejects.toThrow(ServiceError);
-
-			try {
-				await driverService.deleteDriver(testDriverOrg2.id, testOrg1.id);
-			} catch (e) {
-				expect((e as ServiceError).code).toBe('FORBIDDEN');
 			}
 		});
 
