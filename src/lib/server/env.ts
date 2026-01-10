@@ -51,10 +51,23 @@ const optionalEnvSchema = z.object({
 	// Infrastructure
 	CF_TUNNEL_URL: z.string().optional(),
 	CLOUDFLARE_R2_PRIVATE_BUCKET_NAME: z.string().optional(),
-	CLOUDFLARE_TOKEN_VALUE: z.string().optional()
+	CLOUDFLARE_TOKEN_VALUE: z.string().optional(),
+
+	// Sentry source maps (build-time only - used by Vite plugin)
+	SENTRY_ORG: z.string().optional(),
+	SENTRY_PROJECT: z.string().optional(),
+	SENTRY_AUTH_TOKEN: z.string().optional()
 });
 
 const publicEnvSchema = z.object({
+	// Maps
+	PUBLIC_MAPTILER_KEY: z.string().min(1),
+	PUBLIC_MAPBOX_STATIC_MAP_TOKEN: z.string().min(1),
+
+	// Cloudflare R2 public bucket
+	PUBLIC_CLOUDFLARE_R2_BUCKET_NAME: z.string().min(1),
+	PUBLIC_CLOUDFLARE_R2_URL: z.string().url(),
+
 	// Sentry - when empty, SDK becomes a no-op (safe for local development)
 	PUBLIC_SENTRY_DSN: z.string().optional()
 });
