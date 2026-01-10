@@ -164,7 +164,12 @@
 				Enter your 6-digit code
 			</Label>
 			<div class=" flex justify-center py-2">
-				<InputOTP.Root maxlength={6} bind:value={code} disabled={isSubmitting}>
+				<InputOTP.Root
+					autofocus
+					maxlength={6}
+					bind:value={code}
+					disabled={isSubmitting}
+				>
 					{#snippet children({ cells })}
 						<div class="flex w-full items-center justify-around gap-2">
 							<InputOTP.Group>
