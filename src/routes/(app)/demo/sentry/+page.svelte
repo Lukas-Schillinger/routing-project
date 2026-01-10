@@ -47,15 +47,15 @@
 					Error in Load
 				</Button>
 				<form method="POST" action="?/triggerError" use:enhance>
-					<Button variant="destructive" type="submit">
-						Error in Action
-					</Button>
+					<Button variant="destructive" type="submit">Error in Action</Button>
 				</form>
 				<Button variant="destructive" onclick={triggerApiError}>
 					Error in API
 				</Button>
 				{#if apiResult}
-					<span class="self-center text-sm text-muted-foreground">{apiResult}</span>
+					<span class="self-center text-sm text-muted-foreground"
+						>{apiResult}</span
+					>
 				{/if}
 			</Card.Content>
 		</Card.Root>

@@ -11,11 +11,14 @@ export const POST: RequestHandler = async ({ request }) => {
 		}
 
 		const projectId = dsn.pathname.slice(1);
-		const response = await fetch(`https://${dsn.hostname}/api/${projectId}/envelope/`, {
-			method: 'POST',
-			body: envelope,
-			headers: { 'Content-Type': 'application/x-sentry-envelope' }
-		});
+		const response = await fetch(
+			`https://${dsn.hostname}/api/${projectId}/envelope/`,
+			{
+				method: 'POST',
+				body: envelope,
+				headers: { 'Content-Type': 'application/x-sentry-envelope' }
+			}
+		);
 
 		// Clone response - fetch responses have immutable headers
 		return new Response(response.body, { status: response.status });
