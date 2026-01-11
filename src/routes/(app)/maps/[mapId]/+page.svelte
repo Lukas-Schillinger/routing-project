@@ -156,7 +156,6 @@
 			await invalidateAll();
 			toast.success('Driver removed');
 		} catch (err) {
-			console.log(err);
 			const message =
 				err instanceof ServiceError ? err.message : 'Failed to remove driver';
 			toast.error(message);

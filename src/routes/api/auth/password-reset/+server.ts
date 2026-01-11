@@ -1,4 +1,3 @@
-import { dev } from '$app/environment';
 import { handleApiError, ServiceError } from '$lib/errors';
 import { requestPasswordResetSchema } from '$lib/schemas';
 import { mailService } from '$lib/services/external/mail';
@@ -24,14 +23,6 @@ export const POST: RequestHandler = async ({ request, url }) => {
 				token,
 				url.origin
 			);
-
-			if (dev) {
-				// In dev mode, return the token for easier testing
-				return new Response(JSON.stringify({ token }), {
-					status: 200,
-					headers: { 'Content-Type': 'application/json' }
-				});
-			}
 		} catch (err) {
 			// If user not found, still return 204 to prevent email enumeration
 			if (err instanceof ServiceError && err.statusCode === 404) {

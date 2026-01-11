@@ -1,16 +1,14 @@
 /**
  * Environment variable validation
  *
- * This module validates required environment variables at server startup.
+ * Validates all environment variables at server startup.
  * Import this module once in hooks.server.ts to trigger validation.
- *
- * All other code should continue using:
- *   import { env } from '$env/dynamic/private'
  */
 import { env } from '$env/dynamic/private';
+import { env as publicEnv } from '$env/dynamic/public';
 import { z } from 'zod';
 
-const requiredEnvSchema = z.object({
+const requiredSchema = z.object({
 	// Database
 	DATABASE_URL: z.string().min(1),
 
@@ -39,31 +37,45 @@ const requiredEnvSchema = z.object({
 
 	// Rate limiting - Upstash Redis
 	UPSTASH_REDIS_REST_URL: z.string().url(),
-	UPSTASH_REDIS_REST_TOKEN: z.string().min(1)
+	UPSTASH_REDIS_REST_TOKEN: z.string().min(1),
+
+	// Maps (public)
+	PUBLIC_MAPTILER_KEY: z.string().min(1),
+	PUBLIC_MAPBOX_STATIC_MAP_TOKEN: z.string().min(1),
+
+	// Cloudflare R2 public bucket
+	PUBLIC_CLOUDFLARE_R2_BUCKET_NAME: z.string().min(1),
+	PUBLIC_CLOUDFLARE_R2_URL: z.string().url()
 });
 
-const optionalEnvSchema = z.object({
-	// Webhook secrets (graceful degradation - webhooks return 500 if missing)
+const optionalSchema = z.object({
+	// Webhook secrets
 	RESEND_WEBHOOK_SECRET: z.string().optional(),
 	OPTIMIZATION_WEBHOOK_SECRET: z.string().optional(),
 
 	// Infrastructure
 	CF_TUNNEL_URL: z.string().optional(),
 	CLOUDFLARE_R2_PRIVATE_BUCKET_NAME: z.string().optional(),
-	CLOUDFLARE_TOKEN_VALUE: z.string().optional()
+	CLOUDFLARE_TOKEN_VALUE: z.string().optional(),
+
+	// Sentry source maps (build-time only)
+	SENTRY_ORG: z.string().optional(),
+	SENTRY_PROJECT: z.string().optional(),
+	SENTRY_AUTH_TOKEN: z.string().optional(),
+
+	// Sentry DSN - when empty, SDK becomes a no-op
+	PUBLIC_SENTRY_DSN: z.string().optional()
 });
 
-const envSchema = requiredEnvSchema.merge(optionalEnvSchema);
-
-// Validate on module load (side effect)
-const result = envSchema.safeParse(env);
+const schema = requiredSchema.merge(optionalSchema);
+const allEnv = { ...env, ...publicEnv };
+const result = schema.safeParse(allEnv);
 
 if (!result.success) {
-	const missing = result.error.issues
-		.map((issue) => `    ${issue.path[0]}`)
+	const issues = result.error.issues
+		.map((issue) => `    ${issue.path[0]}: ${issue.message}`)
 		.join('\n');
-
-	const message = `
+	throw new Error(`
 ┌─────────────────────────────────────────────────────────┐
 │                                                         │
 │   ✖ Environment validation failed                       │
@@ -72,12 +84,10 @@ if (!result.success) {
 │                                                         │
 │   Missing or invalid:                                   │
 │                                                         │
-${missing}
+${issues}
 │                                                         │
 │   Check your .env file or environment configuration.    │
 │                                                         │
 └─────────────────────────────────────────────────────────┘
-`;
-
-	throw new Error(message);
+`);
 }

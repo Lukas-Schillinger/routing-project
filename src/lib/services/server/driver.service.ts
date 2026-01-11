@@ -122,17 +122,6 @@ export class DriverService {
 
 		return { success: true };
 	}
-
-	/**
-	 * Get active drivers for an organization
-	 */
-	async getActiveDrivers(organizationId: string): Promise<Driver[]> {
-		return db
-			.select()
-			.from(drivers)
-			.where(eq(drivers.organization_id, organizationId))
-			.orderBy(drivers.name);
-	}
 }
 
 // Singleton instance

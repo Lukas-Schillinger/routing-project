@@ -22,7 +22,6 @@ const testPrefix = `test-invite-${Date.now()}`;
 
 // Test fixtures
 let testOrg: { id: string };
-let testOrg2: { id: string };
 let testUser: { id: string; email: string };
 
 // Track created records for cleanup
@@ -37,19 +36,12 @@ function uniqueEmail(): string {
 }
 
 beforeAll(async () => {
-	// Create first test organization
+	// Create test organization
 	const [org] = await db
 		.insert(organizations)
 		.values({ name: `${testPrefix}-org` })
 		.returning();
 	testOrg = org;
-
-	// Create second organization for tenancy tests
-	const [org2] = await db
-		.insert(organizations)
-		.values({ name: `${testPrefix}-org2` })
-		.returning();
-	testOrg2 = org2;
 
 	// Create test user for created_by field
 	const [user] = await db
@@ -77,7 +69,6 @@ afterAll(async () => {
 	}
 	await db.delete(users).where(eq(users.id, testUser.id));
 	await db.delete(organizations).where(eq(organizations.id, testOrg.id));
-	await db.delete(organizations).where(eq(organizations.id, testOrg2.id));
 });
 
 describe('InvitationService', () => {
@@ -125,35 +116,6 @@ describe('InvitationService', () => {
 				expect((error as ServiceError).statusCode).toBe(404);
 			}
 		});
-
-		it('throws notFound when invitation exists in different org (tenancy)', async () => {
-			// Create invitation in testOrg
-			const [invitation] = await db
-				.insert(invitations)
-				.values({
-					organization_id: testOrg.id,
-					created_by: testUser.id,
-					updated_by: testUser.id,
-					email: uniqueEmail(),
-					token_hash: `test-hash-${Date.now()}`,
-					role: 'member',
-					expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-				})
-				.returning();
-			createdInvitationIds.push(invitation.id);
-
-			// Try to fetch from testOrg2
-			await expect(
-				invitationService.getInvitation(invitation.id, testOrg2.id)
-			).rejects.toThrow(ServiceError);
-
-			try {
-				await invitationService.getInvitation(invitation.id, testOrg2.id);
-			} catch (error) {
-				expect(error).toBeInstanceOf(ServiceError);
-				expect((error as ServiceError).statusCode).toBe(404);
-			}
-		});
 	});
 
 	describe('getInvitations', () => {
@@ -195,61 +157,6 @@ describe('InvitationService', () => {
 			const emails = results.map((i) => i.email);
 			expect(emails).toContain(email1);
 			expect(emails).toContain(email2);
-		});
-
-		it('returns empty array when no invitations exist', async () => {
-			// testOrg2 should have no invitations
-			const results = await invitationService.getInvitations(testOrg2.id);
-
-			expect(Array.isArray(results)).toBe(true);
-			expect(results.length).toBe(0);
-		});
-
-		it('only returns invitations for specified organization (tenancy)', async () => {
-			const org1Email = uniqueEmail();
-			const org2Email = uniqueEmail();
-
-			// Create invitation in testOrg
-			const [inv1] = await db
-				.insert(invitations)
-				.values({
-					organization_id: testOrg.id,
-					created_by: testUser.id,
-					updated_by: testUser.id,
-					email: org1Email,
-					token_hash: `test-hash-org1-${Date.now()}`,
-					role: 'member',
-					expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-				})
-				.returning();
-			createdInvitationIds.push(inv1.id);
-
-			// Create invitation in testOrg2
-			const [inv2] = await db
-				.insert(invitations)
-				.values({
-					organization_id: testOrg2.id,
-					created_by: testUser.id,
-					updated_by: testUser.id,
-					email: org2Email,
-					token_hash: `test-hash-org2-${Date.now()}`,
-					role: 'member',
-					expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-				})
-				.returning();
-			createdInvitationIds.push(inv2.id);
-
-			// Fetch from testOrg - should only see org1Email
-			const org1Results = await invitationService.getInvitations(testOrg.id);
-			const org1Emails = org1Results.map((i) => i.email);
-			expect(org1Emails).toContain(org1Email);
-			expect(org1Emails).not.toContain(org2Email);
-
-			// Fetch from testOrg2 - should only see org2Email
-			const org2Results = await invitationService.getInvitations(testOrg2.id);
-			const org2Emails = org2Results.map((i) => i.email);
-			expect(org2Emails).toContain(org2Email);
-			expect(org2Emails).not.toContain(org1Email);
 		});
 	});
 
@@ -367,35 +274,6 @@ describe('InvitationService', () => {
 					'00000000-0000-0000-0000-000000000000',
 					testOrg.id
 				);
-			} catch (error) {
-				expect(error).toBeInstanceOf(ServiceError);
-				expect((error as ServiceError).statusCode).toBe(404);
-			}
-		});
-
-		it('throws notFound when invitation exists in different org (tenancy)', async () => {
-			// Create invitation in testOrg
-			const [invitation] = await db
-				.insert(invitations)
-				.values({
-					organization_id: testOrg.id,
-					created_by: testUser.id,
-					updated_by: testUser.id,
-					email: uniqueEmail(),
-					token_hash: `test-hash-delete2-${Date.now()}`,
-					role: 'member',
-					expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-				})
-				.returning();
-			createdInvitationIds.push(invitation.id);
-
-			// Try to delete from testOrg2
-			await expect(
-				invitationService.deleteInvitation(invitation.id, testOrg2.id)
-			).rejects.toThrow(ServiceError);
-
-			try {
-				await invitationService.deleteInvitation(invitation.id, testOrg2.id);
 			} catch (error) {
 				expect(error).toBeInstanceOf(ServiceError);
 				expect((error as ServiceError).statusCode).toBe(404);

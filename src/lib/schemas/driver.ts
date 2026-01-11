@@ -17,7 +17,9 @@ export const driverSchema = z.object({
 	temporary: z.boolean(),
 	color: z.string().regex(/^#[0-9A-F]{6}$/i),
 	created_at: z.date(),
-	updated_at: z.date()
+	created_by: z.string().uuid().nullable(),
+	updated_at: z.date(),
+	updated_by: z.string().uuid().nullable()
 });
 
 /**
@@ -33,7 +35,9 @@ export const driverCreateSchema = driverSchema
 		id: true,
 		organization_id: true,
 		created_at: true,
-		updated_at: true
+		created_by: true,
+		updated_at: true,
+		updated_by: true
 	})
 	.extend({
 		// Make phone and notes explicitly optional for creation

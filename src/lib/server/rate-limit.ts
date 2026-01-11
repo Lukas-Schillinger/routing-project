@@ -59,6 +59,10 @@ export function getLimiterForPath(pathname: string): RateLimiter | null {
 	if (pathname.startsWith('/api/auth/login-tokens')) {
 		return authLimiter;
 	}
+	// Sentry tunnel excluded - proxied responses have immutable headers
+	if (pathname === '/api/sentry-tunnel') {
+		return null;
+	}
 	if (pathname.startsWith('/api/')) {
 		return apiLimiter;
 	}

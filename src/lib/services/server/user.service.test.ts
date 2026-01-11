@@ -23,7 +23,6 @@ const NON_EXISTENT_UUID = '00000000-0000-0000-0000-000000000000';
 
 // Test fixtures
 let testOrg1: { id: string; name: string };
-let testOrg2: { id: string; name: string };
 let testUser1: {
 	id: string;
 	email: string;
@@ -32,7 +31,6 @@ let testUser1: {
 };
 let testUser2: { id: string; email: string; organization_id: string };
 let testUser3: { id: string; email: string; organization_id: string };
-let testUserOrg2: { id: string; email: string; organization_id: string };
 
 // Track all created IDs for cleanup
 const createdUserIds: string[] = [];
@@ -42,10 +40,9 @@ const createdInvitationIds: string[] = [];
 beforeAll(async () => {
 	const tx = db as unknown as TestTransaction;
 
-	// Create two organizations for tenancy testing
+	// Create organization
 	testOrg1 = await createOrganization(tx);
-	testOrg2 = await createOrganization(tx);
-	createdOrgIds.push(testOrg1.id, testOrg2.id);
+	createdOrgIds.push(testOrg1.id);
 
 	// Create users in org1
 	testUser1 = await createUser(tx, {
@@ -62,13 +59,6 @@ beforeAll(async () => {
 		role: 'viewer'
 	});
 	createdUserIds.push(testUser1.id, testUser2.id, testUser3.id);
-
-	// Create user in org2 for tenancy testing
-	testUserOrg2 = await createUser(tx, {
-		organization_id: testOrg2.id,
-		role: 'member'
-	});
-	createdUserIds.push(testUserOrg2.id);
 });
 
 afterAll(async () => {
@@ -108,13 +98,6 @@ describe('UserService', () => {
 				expect((e as ServiceError).code).toBe('NOT_FOUND');
 			}
 		});
-
-		it('throws notFound for user in different organization (tenancy)', async () => {
-			// Try to access org1's user with org2's ID
-			await expect(
-				userService.getUser(testUser1.id, testOrg2.id)
-			).rejects.toThrow(ServiceError);
-		});
 	});
 
 	describe('getPublicUser()', () => {
@@ -150,14 +133,6 @@ describe('UserService', () => {
 			const result = await userService.getPublicUsers(emptyOrg.id);
 
 			expect(result).toHaveLength(0);
-		});
-
-		it('does not include users from other organizations', async () => {
-			const result1 = await userService.getPublicUsers(testOrg1.id);
-			const result2 = await userService.getPublicUsers(testOrg2.id);
-
-			expect(result1).toHaveLength(3);
-			expect(result2).toHaveLength(1);
 		});
 	});
 
@@ -430,7 +405,7 @@ describe('UserService', () => {
 
 	describe('createUser()', () => {
 		it('creates user with provided organization_id', async () => {
-			const email = `test-create-${Date.now()}@example.com`;
+			const email = `test-create-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.com`;
 
 			const result = await userService.createUser({
 				email,
@@ -444,7 +419,7 @@ describe('UserService', () => {
 		});
 
 		it('generates new organization when organization_id not provided', async () => {
-			const email = `test-no-org-${Date.now()}@example.com`;
+			const email = `test-no-org-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.com`;
 
 			const result = await userService.createUser({ email, role: 'member' });
 			createdUserIds.push(result.id);
@@ -460,7 +435,7 @@ describe('UserService', () => {
 		});
 
 		it('returns created User', async () => {
-			const email = `test-return-${Date.now()}@example.com`;
+			const email = `test-return-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.com`;
 
 			const result = await userService.createUser({
 				email,

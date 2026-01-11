@@ -1,10 +1,11 @@
 // Validate environment variables at startup
 import '$lib/server/env';
 
+import * as Sentry from '@sentry/sveltekit';
 import { getLimiterForPath } from '$lib/server/rate-limit';
 import * as auth from '$lib/services/server/auth';
 import { rolePermissions } from '$lib/services/server/permissions';
-import type { Handle } from '@sveltejs/kit';
+import type { Handle, HandleServerError } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 
 const handleRateLimit: Handle = async ({ event, resolve }) => {
@@ -65,4 +66,14 @@ const handleAuth: Handle = async ({ event, resolve }) => {
 	return resolve(event);
 };
 
-export const handle: Handle = sequence(handleRateLimit, handleAuth);
+export const handle: Handle = sequence(
+	Sentry.sentryHandle(),
+	handleRateLimit,
+	handleAuth
+);
+
+const serverErrorHandler: HandleServerError = ({ error, event }) => {
+	console.error('Server error:', error, event);
+};
+
+export const handleError = Sentry.handleErrorWithSentry(serverErrorHandler);
