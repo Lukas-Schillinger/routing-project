@@ -16,12 +16,14 @@
 		mode = 'create',
 		stop = undefined,
 		mapId = undefined,
+		initialData = undefined,
 		open = $bindable(false),
 		onSuccess = () => {}
 	}: {
 		mode?: 'create' | 'edit';
 		stop?: StopWithLocation;
 		mapId?: string;
+		initialData?: { location: LocationCreate };
 		open: boolean;
 		onSuccess?: (stop: StopWithLocation) => void;
 	} = $props();
@@ -55,6 +57,14 @@
 			notes = stop.stop.notes || '';
 			const loc = stop.location;
 			address = loc.address_line_1;
+		}
+	});
+
+	// Initialize form with initial data in create mode
+	$effect(() => {
+		if (mode === 'create' && initialData?.location && open) {
+			selectedLocation = initialData.location;
+			address = initialData.location.address_line_1;
 		}
 	});
 

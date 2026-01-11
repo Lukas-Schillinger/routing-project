@@ -1,20 +1,23 @@
 <script lang="ts">
 	import type { LocationCreate } from '$lib/schemas';
+	import type { StopWithLocation } from '$lib/schemas/stop';
 	import { MapPinPlus } from 'phosphor-svelte';
 	import { Marker, Popup } from 'svelte-maplibre';
 	import TempPinPopup from './TempPinPopup.svelte';
 
 	let {
+		mapId,
 		lngLat,
 		location,
 		isLoading = false,
-		onCreateStop,
+		onCreateSuccess,
 		onDelete
 	}: {
+		mapId: string;
 		lngLat: [number, number];
-		location: LocationCreate;
+		location: LocationCreate | null;
 		isLoading?: boolean;
-		onCreateStop: () => void;
+		onCreateSuccess: (stop: StopWithLocation) => void;
 		onDelete: () => void;
 	} = $props();
 
@@ -34,6 +37,6 @@
 		closeButton
 		bind:open={popupOpen}
 	>
-		<TempPinPopup {location} {isLoading} {onCreateStop} {onDelete} />
+		<TempPinPopup {mapId} {location} {isLoading} {onCreateSuccess} {onDelete} />
 	</Popup>
 </Marker>

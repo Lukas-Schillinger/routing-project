@@ -2,7 +2,7 @@
 <script lang="ts">
 	// Imports
 	import { browser } from '$app/environment';
-	import MapView from '$lib/components/MapView.svelte';
+	import MapView from '$lib/components/map/MapView.svelte';
 	import * as Avatar from '$lib/components/ui/avatar';
 	import { getIdenticon } from '$lib/utils';
 	import { Map, Menu, Route, User } from 'lucide-svelte';

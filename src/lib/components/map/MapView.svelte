@@ -13,7 +13,7 @@
 	import type { Snippet } from 'svelte';
 	import { GeoJSON, LineLayer, MapLibre, Marker, Popup } from 'svelte-maplibre';
 	import DepotMapPopup from './DepotMapPopup.svelte';
-	import MapToolbar from './map/MapToolbar.svelte';
+	import MapToolbar from './MapToolbar.svelte';
 	import StopMapPopup from './StopMapPopup.svelte';
 
 	let {

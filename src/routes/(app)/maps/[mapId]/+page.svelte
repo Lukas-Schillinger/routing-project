@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
 	import DebugToolbar from '$lib/components/DebugToolbar.svelte';
-	import MapView from '$lib/components/MapView.svelte';
+	import MapView from '$lib/components/map/MapView.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { ServiceError } from '$lib/errors';
 	import type { Driver } from '$lib/schemas';

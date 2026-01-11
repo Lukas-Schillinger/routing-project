@@ -2,6 +2,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Drawer from '$lib/components/ui/drawer';
 	import * as Popover from '$lib/components/ui/popover';
+	import type { LocationCreate } from '$lib/schemas/location';
 	import type { StopWithLocation } from '$lib/schemas/stop';
 	import { Pencil, Plus } from 'lucide-svelte';
 	import type { Snippet } from 'svelte';
@@ -13,6 +14,7 @@
 		mode = 'create',
 		stop = undefined,
 		mapId = undefined,
+		initialData = undefined,
 		triggerClass = '',
 		children,
 		onSuccess = () => {}
@@ -20,6 +22,7 @@
 		mode?: 'create' | 'edit';
 		stop?: StopWithLocation;
 		mapId?: string;
+		initialData?: { location: LocationCreate };
 		triggerClass?: string;
 		children?: Snippet;
 		onSuccess?: (stop: StopWithLocation) => void;
@@ -66,6 +69,7 @@
 				bind:open
 				{stop}
 				{mapId}
+				{initialData}
 				{mode}
 				onSuccess={(stop) => {
 					open = false;
@@ -96,6 +100,7 @@
 					bind:open
 					{stop}
 					{mapId}
+					{initialData}
 					{mode}
 					onSuccess={(stop) => {
 						open = false;
