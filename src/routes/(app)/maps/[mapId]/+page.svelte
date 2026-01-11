@@ -204,6 +204,8 @@
 					bind:focusedStopId
 					showToolbar
 					toolbarLayoutControls={layoutControls}
+					mapId={data.map.id}
+					onStopCreated={() => invalidateAll()}
 				/>
 
 				{#if pageState === 'optimizing'}

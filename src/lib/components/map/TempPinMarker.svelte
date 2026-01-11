@@ -21,8 +21,15 @@
 		onDelete: () => void;
 	} = $props();
 
-	// Track popup open state for auto-open on mount
+	// Track popup open state for auto-open
 	let popupOpen = $state(true);
+
+	// Re-open popup when pin location changes
+	$effect(() => {
+		// Track lngLat changes - void to satisfy linter
+		void lngLat;
+		popupOpen = true;
+	});
 </script>
 
 <Marker {lngLat} class="cursor-pointer">

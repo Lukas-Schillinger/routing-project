@@ -44,7 +44,7 @@
 
 		<Tooltip.Provider>
 			<Tooltip.Root>
-				<Tooltip.Trigger class="rounded-lg bg-black">
+				<Tooltip.Trigger class="rounded-lg border bg-background shadow">
 					<Button
 						variant={mode === 'drop-pin' ? 'default' : 'ghost'}
 						size="icon-sm"

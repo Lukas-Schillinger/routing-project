@@ -114,11 +114,8 @@
 		tempPin = null;
 	}
 
-	// Get current map center for address search proximity bias
-	const mapCenter = $derived(map?.getCenter());
-	const proximity = $derived<[number, number] | undefined>(
-		mapCenter ? [mapCenter.lng, mapCenter.lat] : undefined
-	);
+	// Track current map center for address search proximity bias
+	let mapCenter = $state<[number, number] | undefined>(undefined);
 
 	function getDriverColorById(driverId: string, drivers: Driver[]): string {
 		const routeDriverId = driverId;
@@ -154,6 +151,34 @@
 			[Math.min(...lons), Math.min(...lats)],
 			[Math.max(...lons), Math.max(...lats)]
 		] as [[number, number], [number, number]];
+	});
+
+	// Clear temp pin when exiting drop-pin mode
+	$effect(() => {
+		if (toolbarMode !== 'drop-pin') {
+			tempPin = null;
+		}
+	});
+
+	// Update map center for proximity bias when map moves
+	$effect(() => {
+		if (!map) return;
+
+		const currentMap = map;
+		const updateCenter = () => {
+			const center = currentMap.getCenter();
+			mapCenter = [center.lng, center.lat];
+		};
+
+		// Set initial center
+		updateCenter();
+
+		// Listen for map movements
+		currentMap.on('moveend', updateCenter);
+
+		return () => {
+			currentMap.off('moveend', updateCenter);
+		};
 	});
 
 	// Bind map click handler for drop-pin mode
@@ -193,14 +218,14 @@
 
 <div
 	class="rounded-car relative h-full w-full"
-	class:cursor-crosshair={toolbarMode === 'drop-pin'}
+	class:drop-pin-mode={toolbarMode === 'drop-pin'}
 >
 	{#if showToolbar}
 		<MapToolbar
 			bind:mode={toolbarMode}
 			layoutControls={toolbarLayoutControls}
 			onAddressSelect={mapId ? handleAddressSelect : undefined}
-			{proximity}
+			proximity={mapCenter}
 		/>
 	{/if}
 
@@ -329,5 +354,10 @@
 	:global(.dark .maplibregl-popup-content) {
 		background-color: oklch(0.205 0 0);
 		border: 1px solid var(--border);
+	}
+
+	/* Override MapLibre canvas cursor in drop-pin mode */
+	.drop-pin-mode :global(.maplibregl-canvas) {
+		cursor: crosshair !important;
 	}
 </style>
