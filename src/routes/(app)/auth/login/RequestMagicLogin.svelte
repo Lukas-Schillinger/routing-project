@@ -34,11 +34,11 @@
 		initialOtpSent = false
 	}: Props = $props();
 
-	let internalEmail = $state(initialEmail);
+	let internalEmail = $derived(initialEmail);
 	let email = $derived(debugEmail ?? internalEmail);
 	let code = $state('');
 	let isSubmitting = $state(false);
-	let internalOtpSent = $state(initialOtpSent);
+	let internalOtpSent = $derived(initialOtpSent);
 
 	let internalErrorMessage = $state<string | null>(null);
 	let internalSuccessMessage = $state<string | null>(null);

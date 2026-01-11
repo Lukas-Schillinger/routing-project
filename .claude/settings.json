@@ -18,7 +18,12 @@
 
 			"mcp__plugin_linear_linear__get_issue",
 			"mcp__plugin_linear_linear__list_issues",
-			"mcp__plugin_linear_linear__update_issue"
+			"mcp__plugin_linear_linear__update_issue",
+
+			"mcp__plugin_svelte_svelte__svelte-autofixer",
+
+			"Skill(frontend-design)",
+			"Skill(linear-skills)"
 		]
 	},
 	"enabledPlugins": {

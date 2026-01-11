@@ -2,9 +2,9 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
+	import { ServiceError } from '$lib/errors';
 	import type { Organization } from '$lib/schemas/organization';
 	import { organizationApi } from '$lib/services/api/auth';
-	import { ServiceError } from '$lib/errors';
 	import { Check, LoaderCircle } from 'lucide-svelte';
 
 	// Props
@@ -23,7 +23,7 @@
 	let error = $state<string | null>(null);
 
 	// Form fields
-	let organizationName = $state(organization.name);
+	let organizationName = $derived(organization.name);
 
 	// Initialize form with existing data when opened
 	$effect(() => {

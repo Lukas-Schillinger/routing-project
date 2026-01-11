@@ -16,6 +16,7 @@
 		Plus,
 		Search
 	} from 'lucide-svelte';
+	import { untrack } from 'svelte';
 	import { MediaQuery, SvelteURLSearchParams } from 'svelte/reactivity';
 	import type { PageData } from './$types';
 	import DepotsCard from './DepotsCard.svelte';
@@ -24,13 +25,19 @@
 
 	let { data }: { data: PageData } = $props();
 
-	// Initialize state from URL params (via server)
+	// Initialize state from URL params (via server) - untrack since we only want initial values
 	type SortColumn = 'created_at' | 'title' | 'stops';
-	let searchQuery = $state(data.initialState.searchQuery);
-	let currentPage = $state(data.initialState.currentPage);
-	let viewMode = $state<'list' | 'compact'>(data.initialState.viewMode);
-	let sortColumn = $state<SortColumn>(data.initialState.sortColumn);
-	let sortDirection = $state<'asc' | 'desc'>(data.initialState.sortDirection);
+	let searchQuery = $state(untrack(() => data.initialState.searchQuery));
+	let currentPage = $state(untrack(() => data.initialState.currentPage));
+	let viewMode = $state<'list' | 'compact'>(
+		untrack(() => data.initialState.viewMode)
+	);
+	let sortColumn = $state<SortColumn>(
+		untrack(() => data.initialState.sortColumn)
+	);
+	let sortDirection = $state<'asc' | 'desc'>(
+		untrack(() => data.initialState.sortDirection)
+	);
 	const isMobile = new MediaQuery('(max-width: 640px)');
 
 	// Sync state to URL params (without triggering navigation)

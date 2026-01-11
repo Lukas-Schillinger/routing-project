@@ -15,7 +15,7 @@
 	let { data }: { data: PageData } = $props();
 
 	// Destructure data
-	const { map, stops, driver, depot, route } = data;
+	const { map, stops, driver, depot, route } = $derived(data);
 
 	// ========================================
 	// UI State Management

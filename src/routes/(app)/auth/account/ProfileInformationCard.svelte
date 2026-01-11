@@ -22,7 +22,7 @@
 	} = $props();
 
 	// Form state
-	let nameValue = $state(user.name ?? '');
+	let nameValue = $derived(user.name ?? '');
 	let isSavingName = $state(false);
 	let nameTimeout: ReturnType<typeof setTimeout> | null = null;
 

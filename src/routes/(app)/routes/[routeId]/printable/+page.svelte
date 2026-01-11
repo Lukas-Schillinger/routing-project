@@ -8,7 +8,7 @@
 
 	let { data }: { data: PageData } = $props();
 
-	const { map, stops, driver, route } = data;
+	const { map, stops, driver, route } = $derived(data);
 
 	let mapsProvider = $state<'google' | 'apple'>('google');
 

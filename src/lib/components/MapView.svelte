@@ -10,9 +10,8 @@
 	import type maplibregl from 'maplibre-gl';
 	import { mode } from 'mode-watcher';
 	import { Garage, MapPin } from 'phosphor-svelte';
-	// @ts-expect-error - svelte-maplibre GeoJSON export has type/value conflict with verbatimModuleSyntax
-	import { GeoJSON, LineLayer, MapLibre, Marker, Popup } from 'svelte-maplibre';
 	import type { Snippet } from 'svelte';
+	import { GeoJSON, LineLayer, MapLibre, Marker, Popup } from 'svelte-maplibre';
 	import DepotMapPopup from './DepotMapPopup.svelte';
 	import MapToolbar from './map/MapToolbar.svelte';
 	import StopMapPopup from './StopMapPopup.svelte';

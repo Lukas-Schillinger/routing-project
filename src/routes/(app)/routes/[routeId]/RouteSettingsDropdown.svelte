@@ -20,21 +20,6 @@
 	let { route, directionsProvider, onDirectionsProviderChange }: Props =
 		$props();
 
-	// Local state for radio group value
-	let radioGroupValue = $state<string>(directionsProvider);
-
-	// Watch for external provider changes
-	$effect(() => {
-		radioGroupValue = directionsProvider;
-	});
-
-	// Watch for radio group changes and update parent
-	$effect(() => {
-		if (radioGroupValue && radioGroupValue !== directionsProvider) {
-			onDirectionsProviderChange(radioGroupValue as DirectionsProvider);
-		}
-	});
-
 	// Reset completed stops function
 	function handleResetCompletedStops() {
 		if (!browser) return;
@@ -76,7 +61,10 @@
 	<Actions.DropdownMenu.Label class="flex"
 		>Navigation Provider</Actions.DropdownMenu.Label
 	>
-	<Actions.DropdownMenu.RadioGroup bind:value={radioGroupValue}>
+	<Actions.DropdownMenu.RadioGroup
+		value={directionsProvider}
+		onValueChange={(v) => onDirectionsProviderChange(v as DirectionsProvider)}
+	>
 		<Actions.DropdownMenu.RadioItem value="google"
 			>Google Maps</Actions.DropdownMenu.RadioItem
 		>

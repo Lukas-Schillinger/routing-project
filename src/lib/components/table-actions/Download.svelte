@@ -14,6 +14,7 @@
 </script>
 
 {#if href}
+	<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
 	<a {href} download>
 		<DropdownMenu.Item>
 			<DownloadIcon />
