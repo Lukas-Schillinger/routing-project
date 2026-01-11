@@ -498,7 +498,7 @@ describe('Route Recalculation', () => {
 			);
 
 			await expect(stopService.deleteStop(stop1.id, org.id)).rejects.toThrow(
-				'Failed to calculate route'
+				'Error fetching mapbox API to recalculate route geometry'
 			);
 
 			const routeAfter = await routeService.getRouteByMapAndDriver(
