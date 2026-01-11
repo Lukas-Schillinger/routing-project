@@ -3,7 +3,13 @@ import type { RequestHandler } from '@sveltejs/kit';
 export const POST: RequestHandler = async ({ request }) => {
 	try {
 		const envelope = await request.text();
-		const header = JSON.parse(envelope.split('\n')[0]);
+		const firstLine = envelope.split('\n')[0];
+
+		if (!firstLine) {
+			return new Response(null, { status: 200 });
+		}
+
+		const header = JSON.parse(firstLine);
 		const dsn = new URL(header.dsn);
 
 		if (!dsn.hostname.endsWith('sentry.io')) {
@@ -20,7 +26,6 @@ export const POST: RequestHandler = async ({ request }) => {
 			}
 		);
 
-		// Clone response - fetch responses have immutable headers
 		return new Response(response.body, { status: response.status });
 	} catch {
 		return new Response('Tunnel error', { status: 400 });
