@@ -10,6 +10,7 @@ import { locations, maps, stops } from '$lib/server/db/schema';
 import { and, eq, isNotNull } from 'drizzle-orm';
 import { ServiceError } from './errors';
 import { locationService } from './location.service';
+import { routeService } from './route.service';
 
 export class StopService {
 	/**
@@ -206,9 +207,6 @@ export class StopService {
 		return this.getStopById(stop.id, organizationId);
 	}
 
-	/**
-	 * Update a stop
-	 */
 	async updateStop(
 		stopId: string,
 		data: UpdateStop,
@@ -216,64 +214,94 @@ export class StopService {
 		userId: string
 	): Promise<StopWithLocation> {
 		const stop = await this.verifyStopOwnership(stopId, organizationId);
-		let locationId = stop.location_id;
 
-		// Create new location if data is provided
+		const oldDriverId = stop.driver_id;
+		const driverChanged =
+			data.driver_id !== undefined && data.driver_id !== oldDriverId;
+
+		let locationId = stop.location_id;
+		let locationChanged = false;
+
 		if (data.location) {
 			const location = await locationService.createLocation(
 				data.location,
 				organizationId
 			);
 			locationId = location.id;
-		} else if (data.location_id) {
-			// Verify ownership if location_id is provided
+			locationChanged = true;
+		} else if (data.location_id && data.location_id !== stop.location_id) {
 			await locationService.verifyLocationOwnership(
 				data.location_id,
 				organizationId
 			);
 			locationId = data.location_id;
+			locationChanged = true;
 		}
-
-		const updateData: Partial<typeof stops.$inferInsert> & {
-			updated_at: Date;
-			updated_by: string;
-		} = {
-			location_id: locationId,
-			driver_id: data.driver_id !== undefined ? data.driver_id : stop.driver_id,
-			delivery_index:
-				data.delivery_index !== undefined
-					? data.delivery_index
-					: stop.delivery_index,
-			contact_name:
-				data.contact_name !== undefined ? data.contact_name : stop.contact_name,
-			contact_phone:
-				data.contact_phone !== undefined
-					? data.contact_phone
-					: stop.contact_phone,
-			notes: data.notes !== undefined ? data.notes : stop.notes,
-			updated_at: new Date(),
-			updated_by: userId
-		};
 
 		const [updatedStop] = await db
 			.update(stops)
-			.set(updateData)
+			.set({
+				location_id: locationId,
+				driver_id: 'driver_id' in data ? data.driver_id : stop.driver_id,
+				delivery_index:
+					'delivery_index' in data ? data.delivery_index : stop.delivery_index,
+				contact_name:
+					'contact_name' in data ? data.contact_name : stop.contact_name,
+				contact_phone:
+					'contact_phone' in data ? data.contact_phone : stop.contact_phone,
+				notes: 'notes' in data ? data.notes : stop.notes,
+				updated_at: new Date(),
+				updated_by: userId
+			})
 			.where(eq(stops.id, stopId))
 			.returning();
+
+		if (locationChanged || driverChanged) {
+			const newDriverId = updatedStop.driver_id;
+
+			if (oldDriverId) {
+				await routeService.recalculateRouteForDriver(
+					stop.map_id,
+					oldDriverId,
+					organizationId
+				);
+			}
+
+			if (newDriverId && newDriverId !== oldDriverId) {
+				await routeService.recalculateRouteForDriver(
+					stop.map_id,
+					newDriverId,
+					organizationId
+				);
+			}
+		}
 
 		return this.getStopById(updatedStop.id, organizationId);
 	}
 
 	/**
 	 * Delete a stop
+	 * If the stop was assigned to a driver, triggers route recalculation
 	 */
 	async deleteStop(
 		stopId: string,
 		organizationId: string
 	): Promise<{ success: boolean }> {
-		await this.verifyStopOwnership(stopId, organizationId);
+		const stop = await this.verifyStopOwnership(stopId, organizationId);
+
+		// Capture assignment info before deletion
+		const { driver_id, map_id } = stop;
 
 		await db.delete(stops).where(eq(stops.id, stopId));
+
+		// Trigger route recalculation if stop was assigned to a driver
+		if (driver_id) {
+			await routeService.recalculateRouteForDriver(
+				map_id,
+				driver_id,
+				organizationId
+			);
+		}
 
 		return { success: true };
 	}

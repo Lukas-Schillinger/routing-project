@@ -12,7 +12,7 @@ export const routeSchema = z.object({
 	map_id: z.string().uuid(),
 	driver_id: z.string().uuid(),
 	depot_id: z.string().uuid(),
-	geometry: geoJsonLineStringSchema, // GeoJSON LineString from Mapbox Directions API
+	geometry: geoJsonLineStringSchema.nullable(), // GeoJSON LineString from Mapbox Directions API - nullable for failed recalculations
 	duration: z.string().nullable(), // Stored as numeric string in DB
 	created_at: z.date(),
 	updated_at: z.date()
@@ -23,7 +23,7 @@ export const createRouteSchema = z.object({
 	map_id: z.string().uuid(),
 	driver_id: z.string().uuid(),
 	depot_id: z.string().uuid(),
-	geometry: geoJsonLineStringSchema, // GeoJSON LineString from Mapbox Directions API
+	geometry: geoJsonLineStringSchema.nullable(), // GeoJSON LineString from Mapbox Directions API - nullable for failed recalculations
 	duration: z.number().optional() // Number in seconds before DB conversion
 });
 

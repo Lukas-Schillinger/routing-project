@@ -117,7 +117,7 @@
 	>
 		<!-- Route lines -->
 		{#if routes && routes.length > 0}
-			{#each routes as route (route.id)}
+			{#each routes.filter((r) => r.geometry) as route (route.id)}
 				{#if !hiddenDrivers.find((e) => e.id == route.driver_id)}
 					<!-- I don't know how this works -->
 					<!-- eslint-disable-next-line @typescript-eslint/no-explicit-any -->

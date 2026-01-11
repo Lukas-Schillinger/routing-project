@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import EditOrCreateDriverPopover from '$lib/components/EditOrCreateDriverPopover';
 	import {
 		Copy,
@@ -398,7 +399,10 @@
 								{#if route}
 									<DropdownMenu.Separator />
 									<View href="/routes/{route.id}" label="View route" />
-									<a href="/routes/{route.id}/printable" target="_blank">
+									<a
+										href={resolve(`/routes/${route.id}/printable`)}
+										target="_blank"
+									>
 										<DropdownMenu.Item>
 											<Printer class="h-4 w-4" />
 											Print route

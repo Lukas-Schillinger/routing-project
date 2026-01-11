@@ -1,0 +1,1 @@
+ALTER TABLE "routes" ALTER COLUMN "geometry" DROP NOT NULL;

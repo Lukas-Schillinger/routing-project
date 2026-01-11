@@ -330,7 +330,7 @@ export const routes = pgTable(
 		depot_id: uuid('depot_id')
 			.notNull()
 			.references(() => depots.id, { onDelete: 'cascade' }),
-		geometry: jsonb('geometry').notNull(), // GeoJSON LineString object { type: "LineString", coordinates: [[lon, lat], ...] }
+		geometry: jsonb('geometry'), // GeoJSON LineString object { type: "LineString", coordinates: [[lon, lat], ...] } - nullable for failed recalculations
 		duration: numeric('duration', { precision: 12, scale: 2 }), // seconds
 		created_at: ts('created_at'),
 		updated_at: ts('updated_at')

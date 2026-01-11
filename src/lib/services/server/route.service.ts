@@ -14,7 +14,10 @@ import {
 	maps,
 	routes
 } from '$lib/server/db/schema';
+import { mapboxNavigation } from '$lib/services/external/mapbox/navigation';
+import type { Coordinate } from '$lib/services/external/mapbox/types';
 import { and, eq } from 'drizzle-orm';
+import { depotService } from './depot.service';
 import { ServiceError } from './errors';
 import { stopService } from './stop.service';
 
@@ -298,6 +301,142 @@ export class RouteService {
 			depot: { depot: result.depot, location: result.location },
 			stops
 		};
+	}
+
+	/**
+	 * Get route by map and driver combination
+	 */
+	async getRouteByMapAndDriver(
+		mapId: string,
+		driverId: string,
+		organizationId: string
+	): Promise<Route | null> {
+		const [route] = await db
+			.select()
+			.from(routes)
+			.where(
+				and(
+					eq(routes.map_id, mapId),
+					eq(routes.driver_id, driverId),
+					eq(routes.organization_id, organizationId)
+				)
+			)
+			.limit(1);
+
+		return (route as Route) ?? null;
+	}
+
+	/**
+	 * Delete route by map and driver combination
+	 */
+	async deleteRouteByMapAndDriver(
+		mapId: string,
+		driverId: string,
+		organizationId: string
+	): Promise<void> {
+		await db
+			.delete(routes)
+			.where(
+				and(
+					eq(routes.map_id, mapId),
+					eq(routes.driver_id, driverId),
+					eq(routes.organization_id, organizationId)
+				)
+			);
+	}
+
+	/**
+	 * Recalculate route geometry for a driver after stop changes
+	 * - If no stops remain, deletes the route
+	 * - If Mapbox fails, sets geometry to null and throws ServiceError
+	 */
+	async recalculateRouteForDriver(
+		mapId: string,
+		driverId: string,
+		organizationId: string
+	): Promise<void> {
+		// Get existing route to find depot_id
+		const existingRoute = await this.getRouteByMapAndDriver(
+			mapId,
+			driverId,
+			organizationId
+		);
+
+		if (!existingRoute) {
+			// No route exists - nothing to recalculate
+			return;
+		}
+
+		// Get remaining stops for this driver
+		const remainingStops = await stopService.getStopsForRoute(
+			mapId,
+			driverId,
+			organizationId
+		);
+
+		// If no stops remain, delete the route
+		if (remainingStops.length === 0) {
+			await this.deleteRouteByMapAndDriver(mapId, driverId, organizationId);
+			return;
+		}
+
+		// Get depot coordinates
+		const depotWithLocation = await depotService.getDepotById(
+			existingRoute.depot_id,
+			organizationId
+		);
+
+		const depotCoord: Coordinate = [
+			depotWithLocation.location.lon,
+			depotWithLocation.location.lat
+		];
+
+		// Build coordinates array: depot -> stops (sorted by delivery_index) -> depot
+		const sortedStops = remainingStops.sort(
+			(a, b) => (a.stop.delivery_index ?? 0) - (b.stop.delivery_index ?? 0)
+		);
+
+		const stopCoords: Coordinate[] = sortedStops.map((s) => [
+			s.location.lon,
+			s.location.lat
+		]);
+
+		const coordinates: Coordinate[] = [depotCoord, ...stopCoords, depotCoord];
+
+		try {
+			// Call Mapbox Directions API
+			const directionsResponse =
+				await mapboxNavigation.getDirections(coordinates);
+
+			const route = directionsResponse.routes[0];
+			if (!route) {
+				throw new Error('No route returned from Mapbox');
+			}
+
+			// Update route with new geometry
+			await this.upsertRoute({
+				organization_id: organizationId,
+				map_id: mapId,
+				driver_id: driverId,
+				depot_id: existingRoute.depot_id,
+				geometry: route.geometry,
+				duration: route.duration
+			});
+		} catch (error) {
+			console.error('Failed to recalculate route:', error);
+
+			// Set geometry to null on failure
+			await this.upsertRoute({
+				organization_id: organizationId,
+				map_id: mapId,
+				driver_id: driverId,
+				depot_id: existingRoute.depot_id,
+				geometry: null,
+				duration: undefined
+			});
+
+			throw ServiceError.internal('Failed to calculate route');
+		}
 	}
 }
 
