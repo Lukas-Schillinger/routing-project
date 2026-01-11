@@ -9,6 +9,13 @@
 	import { MediaQuery } from 'svelte/reactivity';
 	import Form from './Form.svelte';
 
+	type InitialData = {
+		location?: LocationCreate;
+		contactName?: string;
+		contactPhone?: string;
+		notes?: string;
+	};
+
 	// Props
 	let {
 		mode = 'create',
@@ -22,7 +29,7 @@
 		mode?: 'create' | 'edit';
 		stop?: StopWithLocation;
 		mapId?: string;
-		initialData?: { location: LocationCreate };
+		initialData?: InitialData;
 		triggerClass?: string;
 		children?: Snippet;
 		onSuccess?: (stop: StopWithLocation) => void;

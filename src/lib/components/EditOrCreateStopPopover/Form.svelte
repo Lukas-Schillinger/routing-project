@@ -11,6 +11,13 @@
 	import { stopApi } from '$lib/services/api/stops';
 	import { Check, LoaderCircle } from 'lucide-svelte';
 
+	type InitialData = {
+		location?: LocationCreate;
+		contactName?: string;
+		contactPhone?: string;
+		notes?: string;
+	};
+
 	// Props
 	let {
 		mode = 'create',
@@ -23,7 +30,7 @@
 		mode?: 'create' | 'edit';
 		stop?: StopWithLocation;
 		mapId?: string;
-		initialData?: { location: LocationCreate };
+		initialData?: InitialData;
 		open: boolean;
 		onSuccess?: (stop: StopWithLocation) => void;
 	} = $props();
@@ -62,9 +69,14 @@
 
 	// Initialize form with initial data in create mode
 	$effect(() => {
-		if (mode === 'create' && initialData?.location && open) {
-			selectedLocation = initialData.location;
-			address = initialData.location.address_line_1;
+		if (mode === 'create' && initialData && open) {
+			if (initialData.location) {
+				selectedLocation = initialData.location;
+				address = initialData.location.address_line_1;
+			}
+			contactName = initialData.contactName ?? '';
+			contactPhone = initialData.contactPhone ?? '';
+			notes = initialData.notes ?? '';
 		}
 	});
 
