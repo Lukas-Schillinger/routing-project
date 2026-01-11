@@ -44,6 +44,17 @@ class GeocodingApiService {
 		>('/geocoding/batch', { addresses });
 		return response;
 	}
+
+	/**
+	 * Reverse geocoding - convert coordinates to an address
+	 */
+	async reverse(lon: number, lat: number): Promise<GeocodingFeature | null> {
+		const response = await apiClient.get<{ feature: GeocodingFeature | null }>(
+			'/geocoding/reverse',
+			{ lon: String(lon), lat: String(lat) }
+		);
+		return response.feature;
+	}
 }
 
 // Singleton instance
