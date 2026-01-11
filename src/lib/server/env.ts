@@ -73,7 +73,7 @@ const result = schema.safeParse(allEnv);
 
 if (!result.success) {
 	const issues = result.error.issues
-		.map((issue) => `    ${issue.path[0]}: ${issue.message}`)
+		.map((issue) => `    ${String(issue.path[0])}: ${issue.message}`)
 		.join('\n');
 	throw new Error(`
 ┌─────────────────────────────────────────────────────────┐

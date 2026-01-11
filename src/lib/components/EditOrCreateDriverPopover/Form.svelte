@@ -11,7 +11,7 @@
 	import { generateRandomColor } from '$lib/utils';
 	import { Check, Loader2, RefreshCw } from 'lucide-svelte';
 	import { defaults, superForm } from 'sveltekit-superforms';
-	import { zod } from 'sveltekit-superforms/adapters';
+	import { zod4 } from 'sveltekit-superforms/adapters';
 
 	let {
 		mode = 'create',
@@ -49,9 +49,9 @@
 		temporary: mode === 'edit' && driver ? driver.temporary : temporaryDriver
 	});
 
-	const form = superForm(defaults(getInitialData(), zod(driverCreateSchema)), {
+	const form = superForm(defaults(getInitialData(), zod4(driverCreateSchema)), {
 		SPA: true,
-		validators: zod(driverCreateSchema),
+		validators: zod4(driverCreateSchema),
 		onUpdate: async ({ form }) => {
 			if (!form.valid) return;
 

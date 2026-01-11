@@ -71,7 +71,7 @@ export const POST: RequestHandler = async ({ request }) => {
 				{
 					success: false,
 					error: 'Invalid payload',
-					details: error.errors
+					details: error.issues
 				},
 				{ status: 400 }
 			);

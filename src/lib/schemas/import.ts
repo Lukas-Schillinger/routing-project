@@ -35,7 +35,7 @@ export const importStateSchema = z.object({
 		})
 		.nullable(),
 	records: z.array(importRecordSchema),
-	rawRows: z.array(z.record(z.string())).optional(),
+	rawRows: z.array(z.record(z.string(), z.string())).optional(),
 	step: z.union([z.literal(1), z.literal(2), z.literal(3)]),
 	isProcessing: z.boolean()
 });

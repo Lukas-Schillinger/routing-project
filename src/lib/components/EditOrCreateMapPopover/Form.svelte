@@ -8,7 +8,7 @@
 	import { mapApi } from '$lib/services/api/maps';
 	import { Check, Loader2 } from 'lucide-svelte';
 	import { defaults, superForm } from 'sveltekit-superforms';
-	import { zod } from 'sveltekit-superforms/adapters';
+	import { zod4 } from 'sveltekit-superforms/adapters';
 
 	let {
 		mode = 'create',
@@ -28,9 +28,9 @@
 		description: ''
 	});
 
-	const form = superForm(defaults(getInitialData(), zod(createMapSchema)), {
+	const form = superForm(defaults(getInitialData(), zod4(createMapSchema)), {
 		SPA: true,
-		validators: zod(createMapSchema),
+		validators: zod4(createMapSchema),
 		onUpdate: async ({ form }) => {
 			if (!form.valid) return;
 

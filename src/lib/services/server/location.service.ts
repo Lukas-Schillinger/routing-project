@@ -63,7 +63,6 @@ export class LocationService {
 			.insert(locations)
 			.values({
 				organization_id: organizationId,
-				geocode_raw: locationData.geocode_raw, // ????
 				...locationData
 			})
 			.returning();

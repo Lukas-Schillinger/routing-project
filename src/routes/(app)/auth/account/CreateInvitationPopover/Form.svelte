@@ -45,7 +45,7 @@
 		// Validate email using centralized schema
 		const emailResult = emailSchema.safeParse(email.trim());
 		if (!emailResult.success) {
-			error = emailResult.error.errors[0]?.message ?? 'Invalid email address';
+			error = emailResult.error.issues[0]?.message ?? 'Invalid email address';
 			return;
 		}
 

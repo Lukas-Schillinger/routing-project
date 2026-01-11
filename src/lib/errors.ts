@@ -106,7 +106,7 @@ export function handleApiError(err: unknown, fallbackMessage: string): never {
 	}
 
 	if (err instanceof ZodError) {
-		const messages = err.errors
+		const messages = err.issues
 			.map((e) => `${e.path.join('.')}: ${e.message}`)
 			.join(', ');
 		error(400, { code: 'VALIDATION', message: messages });
