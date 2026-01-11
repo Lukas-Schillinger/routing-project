@@ -50,13 +50,7 @@
 				open = false;
 			} catch (err) {
 				if (err instanceof ServiceError) {
-					if (err.statusCode === 409)
-						form.errors.title = ['A map with this title already exists'];
-					else
-						form.message =
-							err.statusCode === 403
-								? `You do not have permission to ${mode} maps`
-								: err.message;
+					form.message = err.message;
 				} else {
 					form.message = 'An unexpected error occurred';
 				}
