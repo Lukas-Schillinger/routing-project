@@ -8,6 +8,35 @@ const RUN_METERED = env.RUN_METERED === '1';
 describe.skipIf(!RUN_METERED)(
 	'MapboxGeocodingService Integration Tests',
 	() => {
+		describe('reverse geocoding', () => {
+			it('should return an address for San Francisco coordinates', async () => {
+				// Coordinates near downtown San Francisco
+				const lon = -122.4194;
+				const lat = 37.7749;
+
+				const result = await mapboxGeocoding.reverse(lon, lat);
+
+				expect(result).not.toBeNull();
+				expect(result?.geometry.coordinates).toHaveLength(2);
+				expect(result?.properties.full_address).toBeDefined();
+
+				// Verify the returned coordinates are close to input
+				const [resultLon, resultLat] = result!.geometry.coordinates;
+				expect(resultLon).toBeCloseTo(lon, 1);
+				expect(resultLat).toBeCloseTo(lat, 1);
+			});
+
+			it('should return null for coordinates in the ocean', async () => {
+				// Middle of the Pacific Ocean
+				const lon = -160.0;
+				const lat = 20.0;
+
+				const result = await mapboxGeocoding.reverse(lon, lat);
+
+				expect(result).toBeNull();
+			});
+		});
+
 		describe('batch geocoding', () => {
 			it('should batch geocode multiple well-known addresses', async () => {
 				const addresses = [

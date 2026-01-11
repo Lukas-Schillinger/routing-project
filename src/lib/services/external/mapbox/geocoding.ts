@@ -115,6 +115,26 @@ export class MapboxGeocodingService {
 
 		return filtered;
 	}
+
+	/**
+	 * Reverse geocoding - convert coordinates to an address
+	 * @see https://docs.mapbox.com/api/search/geocoding/#reverse-geocoding
+	 */
+	async reverse(lon: number, lat: number): Promise<GeocodingFeature | null> {
+		const params: Record<string, string> = {
+			longitude: lon.toString(),
+			latitude: lat.toString(),
+			types: types,
+			limit: '1'
+		};
+
+		const response = await mapboxClient.get<unknown>(
+			'/search/geocode/v6/reverse',
+			params
+		);
+		const validated = geocodingResponseSchema.parse(response);
+		return validated.features[0] ?? null;
+	}
 }
 
 // Singleton instance
