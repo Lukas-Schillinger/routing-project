@@ -1,17 +1,26 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
 	import * as Tooltip from '$lib/components/ui/tooltip';
+	import type { LocationCreate } from '$lib/schemas';
 	import { MapPinPlus } from 'phosphor-svelte';
 	import type { Snippet } from 'svelte';
+	import AddressSearchInput from './AddressSearchInput.svelte';
 
 	let {
 		mode = $bindable<'default' | 'drop-pin'>('default'),
 		disabled = false,
-		layoutControls
+		layoutControls,
+		onAddressSelect,
+		proximity
 	}: {
 		mode?: 'default' | 'drop-pin';
 		disabled?: boolean;
 		layoutControls?: Snippet;
+		onAddressSelect?: (
+			location: LocationCreate,
+			lngLat: [number, number]
+		) => void;
+		proximity?: [number, number];
 	} = $props();
 
 	function togglePinMode() {
@@ -22,9 +31,16 @@
 <div
 	class="absolute z-10 flex w-full items-center justify-between gap-2 px-3 pt-3"
 >
-	<!-- Left side: Drop pin button -->
-	<div class="">
-		<!-- Placeholder for future AddressSearchInput -->
+	<!-- Left side: Address search and drop pin button -->
+	<div class="flex items-center gap-2">
+		{#if onAddressSelect}
+			<AddressSearchInput
+				{proximity}
+				{disabled}
+				onSelect={onAddressSelect}
+				class="w-64"
+			/>
+		{/if}
 
 		<Tooltip.Provider>
 			<Tooltip.Root>

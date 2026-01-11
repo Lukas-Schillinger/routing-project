@@ -3,10 +3,12 @@
 	import type {
 		DepotWithLocationJoin,
 		Driver,
+		LocationCreate,
 		Route,
 		StopWithLocation
 	} from '$lib/schemas';
-	import { getTextColor } from '$lib/utils';
+	import { geocodingApi } from '$lib/services/api';
+	import { geocodingFeatureToLocation, getTextColor } from '$lib/utils';
 	import type maplibregl from 'maplibre-gl';
 	import { mode } from 'mode-watcher';
 	import { Garage, MapPin } from 'phosphor-svelte';
@@ -15,6 +17,7 @@
 	import DepotMapPopup from './DepotMapPopup.svelte';
 	import MapToolbar from './MapToolbar.svelte';
 	import StopMapPopup from './StopMapPopup.svelte';
+	import TempPinMarker from './TempPinMarker.svelte';
 
 	let {
 		stops = [],
@@ -27,7 +30,9 @@
 		hiddenDrivers = $bindable([]),
 		showToolbar = false,
 		toolbarMode = $bindable<'default' | 'drop-pin'>('default'),
-		toolbarLayoutControls
+		toolbarLayoutControls,
+		mapId,
+		onStopCreated
 	}: {
 		stops?: StopWithLocation[];
 		routes?: Route[] | null;
@@ -40,6 +45,8 @@
 		showToolbar?: boolean;
 		toolbarMode?: 'default' | 'drop-pin';
 		toolbarLayoutControls?: Snippet;
+		mapId?: string;
+		onStopCreated?: (stop: StopWithLocation) => void;
 	} = $props();
 
 	let map: maplibregl.Map | undefined = $state();
@@ -48,6 +55,70 @@
 			? `https://api.maptiler.com/maps/streets-v4/style.json?key=${env.PUBLIC_MAPTILER_KEY}`
 			: `https://api.maptiler.com/maps/streets-v2-dark/style.json?key=${env.PUBLIC_MAPTILER_KEY}`;
 	});
+
+	// Temporary pin state for drop-pin mode
+	let tempPin = $state<{
+		lngLat: [number, number];
+		location: LocationCreate | null;
+		isLoading: boolean;
+	} | null>(null);
+
+	// Handle address selection from toolbar search
+	function handleAddressSelect(
+		location: LocationCreate,
+		lngLat: [number, number]
+	) {
+		tempPin = { lngLat, location, isLoading: false };
+
+		// Fly to the selected location
+		map?.flyTo({
+			center: lngLat,
+			zoom: 15,
+			duration: 1000
+		});
+	}
+
+	// Handle map click in drop-pin mode
+	async function handleMapClick(e: maplibregl.MapMouseEvent) {
+		if (toolbarMode !== 'drop-pin') return;
+
+		const lngLat: [number, number] = [e.lngLat.lng, e.lngLat.lat];
+
+		// Set temp pin with loading state
+		tempPin = { lngLat, location: null, isLoading: true };
+
+		// Reverse geocode to get address
+		try {
+			const feature = await geocodingApi.reverse(lngLat[0], lngLat[1]);
+			if (feature) {
+				const location = geocodingFeatureToLocation(feature);
+				tempPin = { lngLat, location, isLoading: false };
+			} else {
+				tempPin = { lngLat, location: null, isLoading: false };
+			}
+		} catch (error) {
+			console.error('Reverse geocoding failed:', error);
+			tempPin = { lngLat, location: null, isLoading: false };
+		}
+	}
+
+	// Handle stop creation success
+	function handleStopCreated(stop: StopWithLocation) {
+		tempPin = null;
+		toolbarMode = 'default';
+		onStopCreated?.(stop);
+	}
+
+	// Handle temp pin deletion
+	function handleTempPinDelete() {
+		tempPin = null;
+	}
+
+	// Get current map center for address search proximity bias
+	const mapCenter = $derived(map?.getCenter());
+	const proximity = $derived<[number, number] | undefined>(
+		mapCenter ? [mapCenter.lng, mapCenter.lat] : undefined
+	);
 
 	function getDriverColorById(driverId: string, drivers: Driver[]): string {
 		const routeDriverId = driverId;
@@ -85,6 +156,18 @@
 		] as [[number, number], [number, number]];
 	});
 
+	// Bind map click handler for drop-pin mode
+	$effect(() => {
+		if (!map) return;
+
+		const currentMap = map;
+		currentMap.on('click', handleMapClick);
+
+		return () => {
+			currentMap.off('click', handleMapClick);
+		};
+	});
+
 	// Watch for focusedStopId changes and fly to the stop
 	$effect(() => {
 		if (focusedStopId && map) {
@@ -108,11 +191,16 @@
 	});
 </script>
 
-<div class="rounded-car relative h-full w-full">
+<div
+	class="rounded-car relative h-full w-full"
+	class:cursor-crosshair={toolbarMode === 'drop-pin'}
+>
 	{#if showToolbar}
 		<MapToolbar
 			bind:mode={toolbarMode}
 			layoutControls={toolbarLayoutControls}
+			onAddressSelect={mapId ? handleAddressSelect : undefined}
+			{proximity}
 		/>
 	{/if}
 
@@ -215,6 +303,18 @@
 					<DepotMapPopup {depot} />
 				</Popup>
 			</Marker>
+		{/if}
+
+		<!-- Temporary pin for creating new stops -->
+		{#if tempPin && mapId}
+			<TempPinMarker
+				{mapId}
+				lngLat={tempPin.lngLat}
+				location={tempPin.location}
+				isLoading={tempPin.isLoading}
+				onCreateSuccess={handleStopCreated}
+				onDelete={handleTempPinDelete}
+			/>
 		{/if}
 	</MapLibre>
 </div>
