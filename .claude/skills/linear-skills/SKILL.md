@@ -1,5 +1,5 @@
 ---
-name: linear-skills
+name: linear-issues
 description: Create well-structured Linear issues with proper organization. Use when creating, planning, or breaking down work into Linear issues. Triggers on requests to create issues, plan work in Linear, break down tasks, or organize development work.
 ---
 
@@ -47,25 +47,30 @@ Linear has TWO text fields — using the wrong one causes blank displays:
 
 ## Required Fields
 
-Every issue MUST have:
+Every issue MUST have ALL of these:
 
-| Field           | Guidance                                                          |
-| --------------- | ----------------------------------------------------------------- |
-| **Title**       | Action-oriented, scannable. Start with verb.                      |
-| **Description** | WHAT is being done + context (see template below)                 |
-| **Urgency**     | Default to lower urgency. Only escalate with clear justification. |
-| **Label(s)**    | At least one. Use for area, type, or scope.                       |
-| **Estimate**    | Time estimate in hours or points. Always include.                 |
+| Field           | Guidance                                               |
+| --------------- | ------------------------------------------------------ |
+| **Title**       | Action-oriented, scannable. Start with verb.           |
+| **Description** | Short summary + exclusions (255 char max)              |
+| **Content**     | Full context: Goal, Context, Relevant Files, Estimate  |
+| **Urgency**     | **MANDATORY.** Default to lower. See guidelines below. |
+| **Label(s)**    | At least one. Use for area, type, or scope.            |
+| **Estimate**    | Time estimate in hours. Always include.                |
 
 Project assignment is recommended but not enforced.
+
+**Urgency is non-negotiable.** Every issue must have an urgency level set. When in doubt, choose lower urgency.
 
 ## Issue Description Template
 
 **`description` field** (255 char max — for list views):
 
 ```
-[Verb] [what] to [outcome]. Est: Xh
+[Verb] [what] to [outcome]. NOT: [excluded items]. Est: Xh
 ```
+
+Use the description for a scannable summary. Include explicit exclusions here to prevent scope creep.
 
 **`content` field** (full detail):
 
@@ -83,15 +88,6 @@ Project assignment is recommended but not enforced.
 - `path/to/file.ts` — [brief note on relevance]
 - `path/to/another.ts` — [brief note]
 
-## Scope
-
-[Explicit boundaries: what's included, what's explicitly NOT included]
-
-## Acceptance Criteria
-
-- [ ] Criterion 1
-- [ ] Criterion 2
-
 ## Estimate
 
 X hours
@@ -108,14 +104,12 @@ When an issue is too large or has multiple distinct parts:
 
 Signs an issue needs breakdown:
 
-- Estimate exceeds 3 hours
+- Estimate exceeds 8 hours
 - Multiple unrelated files/systems involved
 - Natural pause points exist
 - Different expertise areas required
 
 ## Urgency Guidelines
-
-Every issue MUST have an urgency defined.
 
 Default to lower urgency. Escalate only when:
 
@@ -129,11 +123,10 @@ Default to lower urgency. Escalate only when:
 
 ## Checkboxes
 
-Use checkboxes for:
+Use checkboxes sparingly for:
 
-- Acceptance criteria
 - Subtasks within a single issue (when sub-issues would be overkill)
-- Verification steps
+- Multi-step verification or deployment checklists
 
 Do NOT use checkboxes as a substitute for proper sub-issues when work is truly separable.
 
@@ -147,7 +140,7 @@ Do NOT use checkboxes as a substitute for proper sub-issues when work is truly s
 **Urgency:** Medium  
 **Estimate:** 4 hours
 
-**`description`:** Add rate limiting to login/reset endpoints to prevent brute-force. Est: 4h
+**`description`:** Add rate limiting to login/reset endpoints to prevent brute-force. NOT: signup, magic links. Est: 4h
 
 **`content`:**
 
@@ -158,26 +151,13 @@ Prevent brute-force attacks on login and password reset endpoints.
 
 ## Context
 
-Security audit flagged this. See discussion in #security-review.
+Security audit flagged this. See discussion in #security-review. Login should allow 5 attempts per 15 min per IP. Reset should allow 3 attempts per hour per email.
 
 ## Relevant Files
 
 - `src/routes/auth/login.ts` — login endpoint
 - `src/routes/auth/reset.ts` — password reset endpoint
 - `src/lib/server/redis.ts` — existing Redis connection
-
-## Scope
-
-- Login endpoint: 5 attempts per 15 min per IP
-- Reset endpoint: 3 attempts per hour per email
-- NOT included: signup, magic links (separate issue)
-
-## Acceptance Criteria
-
-- [ ] Rate limiting applied to POST /auth/login
-- [ ] Rate limiting applied to POST /auth/reset
-- [ ] Returns 429 with Retry-After header when exceeded
-- [ ] Logs rate limit events
 
 ## Estimate
 
@@ -189,4 +169,4 @@ Security audit flagged this. See discussion in #security-review.
 **Title:** Fix auth  
 **Description:** Auth is broken, please fix.
 
-Problems: No context, no files, no scope, no acceptance criteria, no estimate.
+Problems: No context, no files, no estimate.
