@@ -435,7 +435,9 @@ export class RouteService {
 				duration: undefined
 			});
 
-			throw ServiceError.internal('Failed to calculate route');
+			throw ServiceError.internal(
+				'Error fetching mapbox API to recalculate route geometry'
+			);
 		}
 	}
 }

@@ -49,6 +49,7 @@ Wend is a multistop optimization program with delivery management features.
 ### Setup
 
 1. Install dependencies:
+
    ```sh
    npm install
    ```
@@ -57,11 +58,13 @@ Wend is a multistop optimization program with delivery management features.
    See [`src/lib/server/env.ts`](src/lib/server/env.ts) for all required and optional variables.
 
 3. Start the database:
+
    ```sh
    npm run db:start
    ```
 
 4. Push the schema:
+
    ```sh
    npm run db:push
    ```
@@ -73,17 +76,17 @@ Wend is a multistop optimization program with delivery management features.
 
 ## Scripts
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start development server |
-| `npm run build` | Build for production |
-| `npm run check` | Type check |
-| `npm run lint` | Lint and format check |
-| `npm run test` | Run all tests |
-| `npm run test:unit` | Run unit tests |
-| `npm run test:e2e` | Run E2E tests |
-| `npm run test:coverage` | Run tests with coverage |
-| `npm run db:studio` | Open Drizzle Studio |
+| Command                 | Description              |
+| ----------------------- | ------------------------ |
+| `npm run dev`           | Start development server |
+| `npm run build`         | Build for production     |
+| `npm run check`         | Type check               |
+| `npm run lint`          | Lint and format check    |
+| `npm run test`          | Run all tests            |
+| `npm run test:unit`     | Run unit tests           |
+| `npm run test:e2e`      | Run E2E tests            |
+| `npm run test:coverage` | Run tests with coverage  |
+| `npm run db:studio`     | Open Drizzle Studio      |
 
 ## License
 
