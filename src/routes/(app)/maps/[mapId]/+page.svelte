@@ -15,7 +15,6 @@
 	import OptimizationOverlay from './components/OptimizationOverlay.svelte';
 	import SidebarPanel from './components/SidebarPanel.svelte';
 	import DriversTab from './components/tabs/DriversTab.svelte';
-	import RoutesTab from './components/tabs/RoutesTab.svelte';
 	import StopsTab from './components/tabs/StopsTab.svelte';
 
 	let { data }: { data: PageData } = $props();
@@ -23,7 +22,6 @@
 	// Page state
 	let isLoading = $state(false);
 	let isOptimizing = $state(false);
-	let isViewMode = $state(data.isViewMode ?? false);
 	let focusedStopId = $state<string | null>(null);
 	let hiddenDrivers = $state<Driver[]>([]);
 	let selectedDepotId = $state<string | undefined>(undefined);
@@ -35,16 +33,15 @@
 	let optimizationStartTime = $state<Date>(new Date());
 
 	// Derive page state
-	type PageState = 'viewing' | 'optimizing' | 'editing';
+	type PageState = 'normal' | 'optimizing';
 	let debugPageStateOverride = $state<PageState | null>(null);
 	let pageState: PageState = $derived(
-		debugPageStateOverride ??
-			(isViewMode ? 'viewing' : isOptimizing ? 'optimizing' : 'editing')
+		debugPageStateOverride ?? (isOptimizing ? 'optimizing' : 'normal')
 	);
 
 	// Derive selected depot for map display
 	let selectedDepot = $derived.by(() => {
-		if (isViewMode && data.routes && data.routes.length > 0) {
+		if (data.routes && data.routes.length > 0) {
 			const depotId = data.routes[0].depot_id;
 			return data.depots.find((d) => d.depot.id === depotId) ?? null;
 		}
@@ -67,11 +64,6 @@
 			isOptimizing = false;
 			stopPolling();
 		}
-	});
-
-	// Update view mode when data changes
-	$effect(() => {
-		isViewMode = data.isViewMode ?? false;
 	});
 
 	function startPolling() {
@@ -164,34 +156,6 @@
 		}
 	}
 
-	async function switchToEditMode() {
-		if (isLoading) return;
-
-		if (
-			!confirm(
-				'Switching to edit mode will remove all optimized route data. Are you sure you want to continue?'
-			)
-		) {
-			return;
-		}
-
-		isLoading = true;
-
-		try {
-			await mapApi.resetOptimization(data.map.id);
-			isViewMode = false;
-			await invalidateAll();
-		} catch (err) {
-			if (err instanceof ServiceError) {
-				toast.error(err.message);
-			} else {
-				toast.error('An unknonwn error occurred');
-			}
-		} finally {
-			isLoading = false;
-		}
-	}
-
 	async function handleDeleteMap() {
 		if (
 			!confirm(
@@ -249,13 +213,11 @@
 				{pageState}
 				stopsCount={data.stops.length}
 				driversCount={data.assignedDrivers.length}
-				routesCount={data.routes.length}
 			>
 				{#snippet stopsTab()}
 					<StopsTab
 						stops={data.stops}
 						mapId={data.map.id}
-						readonly={pageState === 'viewing'}
 						onUpdate={() => invalidateAll()}
 						onCreate={() => invalidateAll()}
 						onDelete={() => invalidateAll()}
@@ -265,19 +227,13 @@
 
 				{#snippet driversTab()}
 					<DriversTab
-						assignedDrivers={data.assignedDrivers}
-						allDrivers={data.allDrivers}
-						mapId={data.map.id}
-						onRemoveDriver={removeDriver}
-					/>
-				{/snippet}
-
-				{#snippet routesTab()}
-					<RoutesTab
 						stops={data.stops}
 						assignedDrivers={data.assignedDrivers}
+						allDrivers={data.allDrivers}
 						routes={data.routes}
+						mapId={data.map.id}
 						bind:hiddenDrivers
+						onRemoveDriver={removeDriver}
 						onZoomToStop={(stopId) => (focusedStopId = stopId)}
 					/>
 				{/snippet}
@@ -294,7 +250,6 @@
 				bind:selectedDepotId
 				onOptimize={handleOptimizationStarted}
 				onCancel={handleOptimizationCancelled}
-				onSwitchToEdit={switchToEditMode}
 			/>
 		{/snippet}
 	</MapDetailLayout>
@@ -305,7 +260,7 @@
 		<div class="flex flex-col gap-1.5">
 			<span class="text-xs font-medium text-muted-foreground">Page State</span>
 			<div class="flex gap-1">
-				{#each ['editing', 'viewing', 'optimizing'] as state (state)}
+				{#each ['normal', 'optimizing'] as state (state)}
 					{@const isActive = debugPageStateOverride === state}
 					<Button
 						variant={isActive ? 'default' : 'outline'}
@@ -329,13 +284,7 @@
 			{/if}
 		</div>
 		<div class="border-t border-border pt-2 text-xs text-muted-foreground">
-			<div>
-				Actual: {isViewMode
-					? 'viewing'
-					: isOptimizing
-						? 'optimizing'
-						: 'editing'}
-			</div>
+			<div>Actual: {isOptimizing ? 'optimizing' : 'normal'}</div>
 			<div>Override: {debugPageStateOverride ?? 'none'}</div>
 		</div>
 	</div>

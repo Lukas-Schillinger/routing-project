@@ -42,13 +42,6 @@ export const load: PageServerLoad = async ({ params }) => {
 
 		const assignedDrivers = assignedDriversData.map((d) => d.driver);
 
-		// Determine if map is optimized (has stops with delivery_index set)
-		const optimizedStops = mapStops.filter(
-			(s) => s.stop.delivery_index !== null
-		);
-		const isViewMode =
-			optimizedStops.length > 0 && optimizedStops.length === mapStops.length;
-
 		return {
 			map,
 			stops: mapStops,
@@ -56,7 +49,6 @@ export const load: PageServerLoad = async ({ params }) => {
 			assignedDrivers,
 			depots,
 			routes,
-			isViewMode,
 			activeJob
 		};
 	} catch (err) {

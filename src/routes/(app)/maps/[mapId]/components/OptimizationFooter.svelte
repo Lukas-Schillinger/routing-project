@@ -24,7 +24,7 @@
 	} from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
-	type PageState = 'viewing' | 'optimizing' | 'editing';
+	type PageState = 'normal' | 'optimizing';
 
 	let {
 		map,
@@ -34,8 +34,7 @@
 		pageState,
 		selectedDepotId = $bindable(),
 		onOptimize,
-		onCancel,
-		onSwitchToEdit
+		onCancel
 	}: {
 		map: Map;
 		stops: StopWithLocation[];
@@ -45,7 +44,6 @@
 		selectedDepotId: string | undefined;
 		onOptimize: () => void;
 		onCancel: () => void;
-		onSwitchToEdit: () => void;
 	} = $props();
 
 	let fairness = $state<'high' | 'medium' | 'low'>('medium');
@@ -60,6 +58,11 @@
 		}
 	});
 
+	// Count unassigned stops
+	const unassignedStopsCount = $derived(
+		stops.filter((s) => s.stop.driver_id === null).length
+	);
+
 	const canOptimize = $derived(
 		selectedDepotId &&
 			assignedDrivers.length > 0 &&
@@ -71,6 +74,8 @@
 		if (!selectedDepotId) return 'Select a depot to optimize routes';
 		if (assignedDrivers.length === 0) return 'Add at least one driver';
 		if (stops.length === 0) return 'Add at least one stop';
+		if (unassignedStopsCount > 0)
+			return `${unassignedStopsCount} unassigned stop${unassignedStopsCount !== 1 ? 's' : ''}`;
 		return null;
 	});
 
@@ -113,12 +118,7 @@
 </script>
 
 <div class="@container pb-2">
-	{#if pageState === 'viewing'}
-		<!-- Viewing Mode -->
-		<Button variant="outline" class="w-full" onclick={onSwitchToEdit}
-			>Switch to Edit Mode</Button
-		>
-	{:else if pageState === 'optimizing'}
+	{#if pageState === 'optimizing'}
 		<!-- Optimizing Mode -->
 		<div
 			class="flex items-center justify-between rounded-lg border border-border/50 bg-muted/30 px-3 py-2"
@@ -133,7 +133,7 @@
 			</Button>
 		</div>
 	{:else}
-		<!-- Editing Mode -->
+		<!-- Normal Mode - Optimization Controls -->
 		{#if error}
 			<div
 				class="mb-2 flex items-center gap-2 rounded-md bg-destructive/10 px-2.5 py-1.5 text-xs text-destructive"

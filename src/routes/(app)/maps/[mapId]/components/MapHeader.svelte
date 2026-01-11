@@ -7,7 +7,7 @@
 	import { Copy, MoreHorizontal, Pencil, Trash2 } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
-	type PageState = 'viewing' | 'optimizing' | 'editing';
+	type PageState = 'normal' | 'optimizing';
 
 	let {
 		title,
@@ -24,17 +24,13 @@
 	} = $props();
 
 	const statusConfig = {
-		editing: {
-			label: 'Editing',
-			class: 'bg-muted text-muted-foreground'
+		normal: {
+			label: 'Ready',
+			class: 'bg-primary/10 text-primary'
 		},
 		optimizing: {
 			label: 'Optimizing...',
 			class: 'bg-warning/10 text-warning-foreground'
-		},
-		viewing: {
-			label: 'Ready',
-			class: 'bg-primary/10 text-primary'
 		}
 	};
 
