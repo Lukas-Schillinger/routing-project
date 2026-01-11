@@ -193,20 +193,24 @@
 	/>
 
 	<MapDetailLayout>
-		<div class="relative h-full">
-			<MapView
-				stops={data.stops}
-				routes={data.routes}
-				drivers={data.allDrivers}
-				depot={selectedDepot}
-				bind:hiddenDrivers
-				bind:focusedStopId
-			/>
+		{#snippet children(layoutControls)}
+			<div class="relative h-full">
+				<MapView
+					stops={data.stops}
+					routes={data.routes}
+					drivers={data.allDrivers}
+					depot={selectedDepot}
+					bind:hiddenDrivers
+					bind:focusedStopId
+					showToolbar
+					toolbarLayoutControls={layoutControls}
+				/>
 
-			{#if pageState === 'optimizing'}
-				<OptimizationOverlay startTime={optimizationStartTime} />
-			{/if}
-		</div>
+				{#if pageState === 'optimizing'}
+					<OptimizationOverlay startTime={optimizationStartTime} />
+				{/if}
+			</div>
+		{/snippet}
 
 		{#snippet sidebar()}
 			<SidebarPanel

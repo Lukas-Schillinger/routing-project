@@ -1,8 +1,10 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
+	import * as Menubar from '$lib/components/ui/menubar';
 	import * as Resizable from '$lib/components/ui/resizable';
+	import { IsMobile } from '$lib/hooks/is-mobile.svelte';
 	import { type Pane } from 'paneforge';
-	import { MediaQuery } from 'svelte/reactivity';
+	import type { Snippet } from 'svelte';
 
 	const LAYOUT_STORAGE_KEY = 'map-detail-pane-layout';
 	const SIDEBAR_MIN_PX = 360;
@@ -19,12 +21,12 @@
 		sidebar,
 		footer
 	}: {
-		children: import('svelte').Snippet;
-		sidebar: import('svelte').Snippet;
-		footer?: import('svelte').Snippet;
+		children: Snippet<[Snippet?]>;
+		sidebar: Snippet;
+		footer?: Snippet;
 	} = $props();
 
-	const isMobile = new MediaQuery('(max-width: 1024px)');
+	const isMobile = new IsMobile(1024);
 
 	// Track container width for pixel-based min sizes
 	let containerRef = $state<HTMLDivElement | null>(null);
@@ -117,11 +119,111 @@
 
 <svelte:window onresize={updateContainerWidth} />
 
+{#snippet layoutControlsSnippet()}
+	<Menubar.Root
+		class=" gap-0 border-border/50 bg-background/80 p-0.5 backdrop-blur-sm"
+	>
+		<Menubar.Menu>
+			<Menubar.Trigger
+				class="gap-1.5 {currentLayout === 'collapsed'
+					? 'bg-accent text-accent-foreground'
+					: ''}"
+				onclick={() => setLayout('collapsed')}
+				title="Focus on map"
+			>
+				<svg class="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none">
+					<rect
+						x="1"
+						y="2"
+						width="10"
+						height="12"
+						rx="1"
+						stroke="currentColor"
+						stroke-width="1.5"
+					/>
+					<rect
+						x="12"
+						y="2"
+						width="3"
+						height="12"
+						rx="0.5"
+						fill="currentColor"
+						opacity="0.3"
+					/>
+				</svg>
+				<span class="hidden @md:inline">Map</span>
+			</Menubar.Trigger>
+		</Menubar.Menu>
+		<Menubar.Menu>
+			<Menubar.Trigger
+				class="gap-1.5 {currentLayout === 'default'
+					? 'bg-accent text-accent-foreground'
+					: ''}"
+				onclick={() => setLayout('default')}
+				title="Balanced view"
+			>
+				<svg class="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none">
+					<rect
+						x="1"
+						y="2"
+						width="8"
+						height="12"
+						rx="1"
+						stroke="currentColor"
+						stroke-width="1.5"
+					/>
+					<rect
+						x="10"
+						y="2"
+						width="5"
+						height="12"
+						rx="1"
+						stroke="currentColor"
+						stroke-width="1.5"
+					/>
+				</svg>
+				<span class="hidden @md:inline">Split</span>
+			</Menubar.Trigger>
+		</Menubar.Menu>
+		<Menubar.Menu>
+			<Menubar.Trigger
+				class="gap-1.5 {currentLayout === 'expanded'
+					? 'bg-accent text-accent-foreground'
+					: ''}"
+				onclick={() => setLayout('expanded')}
+				title="Focus on sidebar"
+			>
+				<svg class="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none">
+					<rect
+						x="1"
+						y="2"
+						width="3"
+						height="12"
+						rx="0.5"
+						fill="currentColor"
+						opacity="0.3"
+					/>
+					<rect
+						x="5"
+						y="2"
+						width="10"
+						height="12"
+						rx="1"
+						stroke="currentColor"
+						stroke-width="1.5"
+					/>
+				</svg>
+				<span class="hidden @md:inline">List</span>
+			</Menubar.Trigger>
+		</Menubar.Menu>
+	</Menubar.Root>
+{/snippet}
+
 {#if isMobile.current}
-	<!-- Mobile Layout: Stacked -->
+	<!-- Mobile Layout: Stacked (no layout controls on mobile) -->
 	<div class="flex flex-col">
 		<div class="h-[45vh] min-h-[300px] flex-shrink-0">
-			{@render children()}
+			{@render children(undefined)}
 		</div>
 		<div class="flex min-h-0 flex-1 flex-col overflow-hidden">
 			{#if footer}
@@ -151,106 +253,7 @@
 				minSize={mapMinSize}
 			>
 				<div class="@container relative h-full">
-					{@render children()}
-
-					<!-- Layout preset buttons -->
-					<div
-						class="absolute top-2 right-2 flex rounded-md border border-border/50 bg-background/80 p-0.5 shadow-sm backdrop-blur-sm"
-					>
-						<button
-							type="button"
-							class="flex h-7 items-center gap-1.5 rounded-sm px-2 text-xs transition-colors {currentLayout ===
-							'collapsed'
-								? 'bg-accent text-accent-foreground'
-								: 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'}"
-							onclick={() => setLayout('collapsed')}
-							title="Focus on map"
-						>
-							<svg class="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none">
-								<rect
-									x="1"
-									y="2"
-									width="10"
-									height="12"
-									rx="1"
-									stroke="currentColor"
-									stroke-width="1.5"
-								/>
-								<rect
-									x="12"
-									y="2"
-									width="3"
-									height="12"
-									rx="0.5"
-									fill="currentColor"
-									opacity="0.3"
-								/>
-							</svg>
-							<span class="hidden @md:inline">Map</span>
-						</button>
-						<button
-							type="button"
-							class="flex h-7 items-center gap-1.5 rounded-sm px-2 text-xs transition-colors {currentLayout ===
-							'default'
-								? 'bg-accent text-accent-foreground'
-								: 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'}"
-							onclick={() => setLayout('default')}
-							title="Balanced view"
-						>
-							<svg class="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none">
-								<rect
-									x="1"
-									y="2"
-									width="8"
-									height="12"
-									rx="1"
-									stroke="currentColor"
-									stroke-width="1.5"
-								/>
-								<rect
-									x="10"
-									y="2"
-									width="5"
-									height="12"
-									rx="1"
-									stroke="currentColor"
-									stroke-width="1.5"
-								/>
-							</svg>
-							<span class="hidden @md:inline">Split</span>
-						</button>
-						<button
-							type="button"
-							class="flex h-7 items-center gap-1.5 rounded-sm px-2 text-xs transition-colors {currentLayout ===
-							'expanded'
-								? 'bg-accent text-accent-foreground'
-								: 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'}"
-							onclick={() => setLayout('expanded')}
-							title="Focus on sidebar"
-						>
-							<svg class="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none">
-								<rect
-									x="1"
-									y="2"
-									width="3"
-									height="12"
-									rx="0.5"
-									fill="currentColor"
-									opacity="0.3"
-								/>
-								<rect
-									x="5"
-									y="2"
-									width="10"
-									height="12"
-									rx="1"
-									stroke="currentColor"
-									stroke-width="1.5"
-								/>
-							</svg>
-							<span class="hidden @md:inline">List</span>
-						</button>
-					</div>
+					{@render children(layoutControlsSnippet)}
 				</div>
 			</Resizable.Pane>
 

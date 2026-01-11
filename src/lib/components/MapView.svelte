@@ -12,7 +12,9 @@
 	import { Garage, MapPin } from 'phosphor-svelte';
 	// @ts-expect-error - svelte-maplibre GeoJSON export has type/value conflict with verbatimModuleSyntax
 	import { GeoJSON, LineLayer, MapLibre, Marker, Popup } from 'svelte-maplibre';
+	import type { Snippet } from 'svelte';
 	import DepotMapPopup from './DepotMapPopup.svelte';
+	import MapToolbar from './map/MapToolbar.svelte';
 	import StopMapPopup from './StopMapPopup.svelte';
 
 	let {
@@ -23,9 +25,10 @@
 		center = [-98.5795, 39.8283],
 		zoom = 4,
 		focusedStopId = $bindable(null),
-		hiddenDrivers = $bindable([])
-
-		// onGoToStop = (stopId: string) => {}
+		hiddenDrivers = $bindable([]),
+		showToolbar = false,
+		toolbarMode = $bindable<'default' | 'drop-pin'>('default'),
+		toolbarLayoutControls
 	}: {
 		stops?: StopWithLocation[];
 		routes?: Route[] | null;
@@ -34,8 +37,10 @@
 		center?: [number, number];
 		zoom?: number;
 		focusedStopId?: string | null;
-		// onGoToStop?: (stopId: string) => void;
 		hiddenDrivers?: Driver[];
+		showToolbar?: boolean;
+		toolbarMode?: 'default' | 'drop-pin';
+		toolbarLayoutControls?: Snippet;
 	} = $props();
 
 	let map: maplibregl.Map | undefined = $state();
@@ -104,8 +109,14 @@
 	});
 </script>
 
-<div class="rounded-car h-full w-full">
-	<!-- style="https://api.maptiler.com/maps/streets-v2/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL" -->
+<div class="rounded-car relative h-full w-full">
+	{#if showToolbar}
+		<MapToolbar
+			bind:mode={toolbarMode}
+			layoutControls={toolbarLayoutControls}
+		/>
+	{/if}
+
 	<MapLibre
 		{center}
 		{style}
