@@ -1,18 +1,42 @@
 <!-- src/lib/components/StopMapPopup.svelte -->
 <script lang="ts">
+	import { ConfirmDeleteDialog } from '$lib/components/ConfirmDeleteDialog';
 	import * as Avatar from '$lib/components/ui/avatar';
+	import { Button } from '$lib/components/ui/button';
+	import { ServiceError } from '$lib/errors';
 	import type { Driver, StopWithLocation } from '$lib/schemas';
+	import { stopApi } from '$lib/services/api/stops';
 	import { getIdenticon } from '$lib/utils';
+	import { LoaderCircle, Trash2 } from 'lucide-svelte';
+	import { toast } from 'svelte-sonner';
 
 	let {
 		stop,
 		location,
-		driver
+		driver,
+		onDelete
 	}: {
 		stop: StopWithLocation['stop'];
 		location: StopWithLocation['location'];
 		driver?: Driver;
+		onDelete?: () => void;
 	} = $props();
+
+	let isDeleting = $state(false);
+
+	async function handleDelete() {
+		isDeleting = true;
+		try {
+			await stopApi.delete(stop.id);
+			onDelete?.();
+		} catch (error) {
+			const message =
+				error instanceof ServiceError ? error.message : 'Failed to delete stop';
+			toast.error(message);
+		} finally {
+			isDeleting = false;
+		}
+	}
 </script>
 
 <div class="min-w-52 space-y-3 rounded-lg p-1">
@@ -61,4 +85,24 @@
 			</div>
 		{/if}
 	</div>
+
+	{#if onDelete}
+		<div class="flex justify-end border-t pt-2">
+			<ConfirmDeleteDialog
+				title="Delete Stop"
+				description="Are you sure you want to delete this stop? This action cannot be undone."
+				onConfirm={handleDelete}
+			>
+				{#snippet trigger({ props })}
+					<Button {...props} variant="ghost" size="sm" disabled={isDeleting}>
+						{#if isDeleting}
+							<LoaderCircle class="h-3.5 w-3.5 animate-spin" />
+						{:else}
+							<Trash2 class="h-3.5 w-3.5" />
+						{/if}
+					</Button>
+				{/snippet}
+			</ConfirmDeleteDialog>
+		</div>
+	{/if}
 </div>

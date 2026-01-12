@@ -206,6 +206,7 @@
 					toolbarLayoutControls={layoutControls}
 					mapId={data.map.id}
 					onStopCreated={() => invalidateAll()}
+					onStopDeleted={() => invalidateAll()}
 				/>
 
 				{#if pageState === 'optimizing'}

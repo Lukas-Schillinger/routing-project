@@ -32,7 +32,8 @@
 		toolbarMode = $bindable<'default' | 'drop-pin'>('default'),
 		toolbarLayoutControls,
 		mapId,
-		onStopCreated
+		onStopCreated,
+		onStopDeleted
 	}: {
 		stops?: StopWithLocation[];
 		routes?: Route[] | null;
@@ -47,6 +48,7 @@
 		toolbarLayoutControls?: Snippet;
 		mapId?: string;
 		onStopCreated?: (stop: StopWithLocation) => void;
+		onStopDeleted?: () => void;
 	} = $props();
 
 	let map: maplibregl.Map | undefined = $state();
@@ -305,6 +307,7 @@
 								{stop}
 								{location}
 								driver={drivers.find((e) => e.id == stop.driver_id)}
+								onDelete={onStopDeleted}
 							/>
 						</Popup>
 					</Marker>
