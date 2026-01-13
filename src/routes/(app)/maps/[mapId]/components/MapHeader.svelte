@@ -4,20 +4,18 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import type { Map } from '$lib/schemas/map';
-	import { Copy, MoreHorizontal, Pencil, Trash2 } from 'lucide-svelte';
+	import { Copy, Ellipsis, Pencil, Trash2 } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
 	type PageState = 'normal' | 'optimizing';
 
 	let {
-		title,
-		mapId,
+		map,
 		pageState,
 		onDelete,
 		onUpdate
 	}: {
-		title: string;
-		mapId: string;
+		map: Map;
 		pageState: PageState;
 		onDelete?: () => void;
 		onUpdate?: (map: Map) => void;
@@ -37,14 +35,14 @@
 	const status = $derived(statusConfig[pageState]);
 
 	function handleCopyId() {
-		navigator.clipboard.writeText(mapId);
+		navigator.clipboard.writeText(map.id);
 		toast.success('Map ID copied');
 	}
 </script>
 
 <div class="flex items-center justify-between pb-3">
 	<div class="flex items-center gap-3">
-		<h1 class="text-xl font-semibold tracking-tight">{title}</h1>
+		<h1 class="text-xl font-semibold tracking-tight">{map.title}</h1>
 		<Badge variant="secondary" class={status.class}>
 			{status.label}
 		</Badge>
@@ -53,20 +51,14 @@
 	<DropdownMenu.Root>
 		<DropdownMenu.Trigger>
 			<Button variant="ghost" size="icon" class="h-8 w-8">
-				<MoreHorizontal class="h-4 w-4" />
+				<Ellipsis class="h-4 w-4" />
 			</Button>
 		</DropdownMenu.Trigger>
 		<DropdownMenu.Content align="end">
 			<EditOrCreateMapPopover
 				mode="edit"
-				map={{
-					id: mapId,
-					title,
-					organization_id: '',
-					created_at: new Date(),
-					updated_at: new Date()
-				}}
-				onSuccess={(map) => onUpdate?.(map)}
+				{map}
+				onSuccess={(updatedMap) => onUpdate?.(updatedMap)}
 				triggerClass="w-full"
 			>
 				{#snippet children({ props })}

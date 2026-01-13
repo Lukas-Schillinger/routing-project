@@ -57,32 +57,39 @@ export class MapService {
 	/**
 	 * Create a new map. Can optionally include Stops (without a map_id) which will be
 	 * created as well.
+	 *
+	 * TODO: For full atomicity, stopService.bulkCreateStops should accept a transaction
+	 * parameter. Currently, if stop creation fails after map creation, the map is rolled
+	 * back but any partial stop/location data may remain.
 	 */
 	async createMap(
 		data: CreateMap,
 		organizationId: string,
 		userId: string
 	): Promise<{ map: Map; stops: StopWithLocation[] | null }> {
-		const [map] = await db
-			.insert(maps)
-			.values({
-				organization_id: organizationId,
-				created_by: userId,
-				updated_by: userId,
-				title: data.title
-			})
-			.returning();
+		// Wrap in transaction so map is rolled back if stop creation fails
+		return await db.transaction(async (tx) => {
+			const [map] = await tx
+				.insert(maps)
+				.values({
+					organization_id: organizationId,
+					created_by: userId,
+					updated_by: userId,
+					title: data.title
+				})
+				.returning();
 
-		const stops = data.stops
-			? await stopService.bulkCreateStops(
-					data.stops.map((stop) => ({ ...stop, map_id: map.id })),
-					map.id,
-					organizationId,
-					userId
-				)
-			: null;
+			const createdStops = data.stops
+				? await stopService.bulkCreateStops(
+						data.stops.map((stop) => ({ ...stop, map_id: map.id })),
+						map.id,
+						organizationId,
+						userId
+					)
+				: null;
 
-		return { map, stops };
+			return { map, stops: createdStops };
+		});
 	}
 
 	/**
@@ -94,8 +101,7 @@ export class MapService {
 		organizationId: string,
 		userId: string
 	) {
-		await this.verifyMapOwnership(mapId, organizationId);
-
+		// Atomic update with tenancy check in WHERE clause
 		const [updatedMap] = await db
 			.update(maps)
 			.set({
@@ -103,8 +109,12 @@ export class MapService {
 				updated_at: new Date(),
 				updated_by: userId
 			})
-			.where(eq(maps.id, mapId))
+			.where(and(eq(maps.id, mapId), eq(maps.organization_id, organizationId)))
 			.returning();
+
+		if (!updatedMap) {
+			throw ServiceError.notFound('Map not found');
+		}
 
 		return updatedMap;
 	}
@@ -113,9 +123,15 @@ export class MapService {
 	 * Delete a map (cascades to stops and driver memberships)
 	 */
 	async deleteMap(mapId: string, organizationId: string) {
-		await this.verifyMapOwnership(mapId, organizationId);
+		// Atomic delete with tenancy check in WHERE clause
+		const deleted = await db
+			.delete(maps)
+			.where(and(eq(maps.id, mapId), eq(maps.organization_id, organizationId)))
+			.returning();
 
-		await db.delete(maps).where(eq(maps.id, mapId));
+		if (deleted.length === 0) {
+			throw ServiceError.notFound('Map not found');
+		}
 
 		return { success: true };
 	}
@@ -130,17 +146,20 @@ export class MapService {
 	) {
 		await this.verifyMapOwnership(mapId, organizationId);
 
-		await db
-			.update(stops)
-			.set({
-				driver_id: null,
-				delivery_index: null,
-				updated_at: new Date(),
-				updated_by: userId
-			})
-			.where(eq(stops.map_id, mapId));
+		// Use transaction to ensure both operations succeed or both fail
+		await db.transaction(async (tx) => {
+			await tx
+				.update(stops)
+				.set({
+					driver_id: null,
+					delivery_index: null,
+					updated_at: new Date(),
+					updated_by: userId
+				})
+				.where(eq(stops.map_id, mapId));
 
-		await db.delete(routes).where(eq(routes.map_id, mapId));
+			await tx.delete(routes).where(eq(routes.map_id, mapId));
+		});
 
 		return { success: true };
 	}
@@ -185,7 +204,12 @@ export class MapService {
 			})
 			.from(driverMapMemberships)
 			.innerJoin(drivers, eq(driverMapMemberships.driver_id, drivers.id))
-			.where(eq(driverMapMemberships.map_id, mapId));
+			.where(
+				and(
+					eq(driverMapMemberships.map_id, mapId),
+					eq(drivers.organization_id, organizationId)
+				)
+			);
 
 		return results;
 	}
@@ -203,7 +227,12 @@ export class MapService {
 			})
 			.from(driverMapMemberships)
 			.innerJoin(maps, eq(driverMapMemberships.map_id, maps.id))
-			.where(eq(driverMapMemberships.driver_id, driverId));
+			.where(
+				and(
+					eq(driverMapMemberships.driver_id, driverId),
+					eq(maps.organization_id, organizationId)
+				)
+			);
 
 		return results;
 	}
@@ -258,26 +287,80 @@ export class MapService {
 		const driver = await this.verifyDriverOwnership(driverId, organizationId);
 		await this.verifyMapOwnership(mapId, organizationId);
 
-		const [deleted] = await db
-			.delete(driverMapMemberships)
-			.where(
-				and(
-					eq(driverMapMemberships.driver_id, driverId),
-					eq(driverMapMemberships.map_id, mapId)
+		// Use transaction to ensure membership deletion and optional driver deletion are atomic
+		await db.transaction(async (tx) => {
+			const [deleted] = await tx
+				.delete(driverMapMemberships)
+				.where(
+					and(
+						eq(driverMapMemberships.driver_id, driverId),
+						eq(driverMapMemberships.map_id, mapId)
+					)
 				)
-			)
-			.returning();
+				.returning();
 
-		if (!deleted) {
-			throw ServiceError.notFound('Driver is not assigned to this map');
-		}
+			if (!deleted) {
+				throw ServiceError.notFound('Driver is not assigned to this map');
+			}
 
-		// Temporary drivers are deleted when removed from the map they were created for
-		if (driver.temporary) {
-			await driverService.deleteDriver(driverId, organizationId);
-		}
+			// Temporary drivers are deleted when removed from the map they were created for
+			if (driver.temporary) {
+				await driverService.deleteDriver(driverId, organizationId);
+			}
+		});
 
 		return { success: true };
+	}
+
+	/**
+	 * Duplicate a map including all its stops (without driver assignments)
+	 */
+	async duplicateMap(
+		mapId: string,
+		organizationId: string,
+		userId: string,
+		newTitle?: string
+	): Promise<Map> {
+		const sourceMap = await this.getMapById(mapId, organizationId);
+
+		return await db.transaction(async (tx) => {
+			// Create new map with copied data
+			const [newMap] = await tx
+				.insert(maps)
+				.values({
+					organization_id: organizationId,
+					title: newTitle || `${sourceMap.title} (Copy)`,
+					created_by: userId,
+					updated_by: userId
+				})
+				.returning();
+
+			// Get all stops from source map
+			const sourceStops = await stopService.getStopsByMap(
+				mapId,
+				organizationId
+			);
+
+			// Clone stops without driver assignments
+			if (sourceStops.length > 0) {
+				await tx.insert(stops).values(
+					sourceStops.map(({ stop }) => ({
+						organization_id: organizationId,
+						map_id: newMap.id,
+						location_id: stop.location_id,
+						driver_id: null,
+						delivery_index: null,
+						contact_name: stop.contact_name,
+						contact_phone: stop.contact_phone,
+						notes: stop.notes,
+						created_by: userId,
+						updated_by: userId
+					}))
+				);
+			}
+
+			return newMap;
+		});
 	}
 }
 

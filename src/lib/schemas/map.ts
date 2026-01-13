@@ -47,7 +47,9 @@ export const mapSchema = z.object({
 	organization_id: z.uuid(),
 	title: z.string(),
 	created_at: z.date(),
-	updated_at: z.date()
+	created_by: z.uuid().nullable(),
+	updated_at: z.date(),
+	updated_by: z.uuid().nullable()
 });
 
 /**

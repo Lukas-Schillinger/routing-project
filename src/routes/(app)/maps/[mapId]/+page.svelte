@@ -185,8 +185,7 @@
 
 <div class="flex h-full flex-col">
 	<MapHeader
-		title={data.map.title}
-		mapId={data.map.id}
+		map={data.map}
 		{pageState}
 		onDelete={handleDeleteMap}
 		onUpdate={() => invalidateAll()}

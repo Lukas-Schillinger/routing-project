@@ -14,7 +14,9 @@ export const depotSchema = z.object({
 		.max(200, 'Name must be 200 characters or less'),
 	default_depot: z.boolean(),
 	created_at: z.date(),
-	updated_at: z.date()
+	created_by: z.uuid().nullable(),
+	updated_at: z.date(),
+	updated_by: z.uuid().nullable()
 });
 
 /**
