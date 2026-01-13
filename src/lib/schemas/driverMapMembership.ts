@@ -1,24 +1,24 @@
 import { z } from 'zod';
 
 export const driverMapMembershipSchema = z.object({
-	id: z.string().uuid(),
-	organization_id: z.string().uuid(),
-	driver_id: z.string().uuid(),
-	map_id: z.string().uuid(),
+	id: z.uuid(),
+	organization_id: z.uuid(),
+	driver_id: z.uuid(),
+	map_id: z.uuid(),
 	created_at: z.date(),
 	updated_at: z.date()
 });
 
 export const createDriverMapMembershipSchema = z.object({
-	driver_id: z.string().uuid(),
-	map_id: z.string().uuid()
+	driver_id: z.uuid(),
+	map_id: z.uuid()
 });
 
 export const driverMapMembershipWithRelationsSchema =
 	driverMapMembershipSchema.extend({
 		driver: z
 			.object({
-				id: z.string().uuid(),
+				id: z.uuid(),
 				name: z.string(),
 				phone: z.string().nullable(),
 				notes: z.string().nullable(),
@@ -28,7 +28,7 @@ export const driverMapMembershipWithRelationsSchema =
 			.optional(),
 		map: z
 			.object({
-				id: z.string().uuid(),
+				id: z.uuid(),
 				title: z.string()
 			})
 			.optional()

@@ -6,9 +6,9 @@ import { locationCreateSchema } from './location';
  */
 export const createMaplessStopSchema = z
 	.object({
-		location_id: z.string().uuid().optional(),
+		location_id: z.uuid().optional(),
 		location: locationCreateSchema.optional(),
-		driver_id: z.string().uuid().nullable().optional(),
+		driver_id: z.uuid().nullable().optional(),
 		delivery_index: z.number().int().nullable().optional(),
 		contact_name: z.string().max(200).nullable().optional(),
 		contact_phone: z.string().max(32).nullable().optional(),
@@ -43,8 +43,8 @@ export const updateMapSchema = z.object({
  * Complete map schema
  */
 export const mapSchema = z.object({
-	id: z.string().uuid(),
-	organization_id: z.string().uuid(),
+	id: z.uuid(),
+	organization_id: z.uuid(),
 	title: z.string(),
 	created_at: z.date(),
 	updated_at: z.date()
@@ -65,7 +65,7 @@ export const mapWithStatsSchema = mapSchema.extend({
  * Optimization options schema - used by client API, server route, and optimization service
  */
 export const optimizationOptionsSchema = z.object({
-	depotId: z.string().uuid(),
+	depotId: z.uuid(),
 	fairness: z.enum(['high', 'medium', 'low']).default('medium')
 });
 
@@ -73,8 +73,8 @@ export const optimizationOptionsSchema = z.object({
  * Optimization job schema - represents a queued/running optimization job
  */
 export const optimizationJobSchema = z.object({
-	id: z.string().uuid(),
-	organization_id: z.string().uuid(),
+	id: z.uuid(),
+	organization_id: z.uuid(),
 	status: z.enum([
 		'pending',
 		'running',
@@ -83,14 +83,14 @@ export const optimizationJobSchema = z.object({
 		'failed',
 		'cancelled'
 	]),
-	matrix_id: z.string().uuid(),
-	map_id: z.string().uuid(),
-	depot_id: z.string().uuid(),
+	matrix_id: z.uuid(),
+	map_id: z.uuid(),
+	depot_id: z.uuid(),
 	error_message: z.string().nullable(),
 	created_at: z.coerce.date(),
-	created_by: z.string().uuid().nullable(),
+	created_by: z.uuid().nullable(),
 	updated_at: z.coerce.date(),
-	updated_by: z.string().uuid().nullable()
+	updated_by: z.uuid().nullable()
 });
 
 // Type exports

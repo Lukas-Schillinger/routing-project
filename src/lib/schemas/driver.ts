@@ -5,8 +5,8 @@ import { phoneSchema } from './common';
  * Driver schema - represents a driver in the system
  */
 export const driverSchema = z.object({
-	id: z.string().uuid(),
-	organization_id: z.string().uuid(),
+	id: z.uuid(),
+	organization_id: z.uuid(),
 	name: z
 		.string()
 		.min(1, 'Name is required')
@@ -17,9 +17,9 @@ export const driverSchema = z.object({
 	temporary: z.boolean(),
 	color: z.string().regex(/^#[0-9A-F]{6}$/i),
 	created_at: z.date(),
-	created_by: z.string().uuid().nullable(),
+	created_by: z.uuid().nullable(),
 	updated_at: z.date(),
-	updated_by: z.string().uuid().nullable()
+	updated_by: z.uuid().nullable()
 });
 
 /**
@@ -75,7 +75,7 @@ export type DriverUpdate = z.infer<typeof driverUpdateSchema>;
  * Minimal driver for display (name and contact info)
  */
 export const driverDisplaySchema = z.object({
-	id: z.string().uuid(),
+	id: z.uuid(),
 	name: z.string(),
 	phone: z.string().nullable(),
 	active: z.boolean(),

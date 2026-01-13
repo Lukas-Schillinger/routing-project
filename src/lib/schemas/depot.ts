@@ -5,9 +5,9 @@ import { locationCreateSchema, locationSchema } from './location';
  * Depot schema - represents a depot/warehouse location in the system
  */
 export const depotSchema = z.object({
-	id: z.string().uuid(),
-	organization_id: z.string().uuid(),
-	location_id: z.string().uuid(),
+	id: z.uuid(),
+	organization_id: z.uuid(),
+	location_id: z.uuid(),
 	name: z
 		.string()
 		.min(1, 'Name is required')
@@ -34,7 +34,7 @@ export const depotCreateSchema = z
 			.max(200, 'Name must be 200 characters or less'),
 		default_depot: z.boolean().default(false),
 		// Either reference an existing location
-		location_id: z.string().uuid().optional(),
+		location_id: z.uuid().optional(),
 		// Or provide data to create a new location
 		location: locationCreateSchema.optional()
 	})
@@ -49,7 +49,7 @@ export type DepotCreate = z.infer<typeof depotCreateSchema>;
  */
 export const depotUpdateSchema = z
 	.object({
-		location_id: z.string().uuid().optional(),
+		location_id: z.uuid().optional(),
 		location: locationCreateSchema.optional(),
 		name: z.string().min(1, 'Name cannot be empty').max(200).optional(),
 		default_depot: z.boolean().optional()

@@ -11,12 +11,12 @@ export const geocodeConfidenceSchema = z
  * Location schema - represents a geocoded physical address
  */
 export const locationSchema = z.object({
-	id: z.string().uuid(),
-	organization_id: z.string().uuid(),
+	id: z.uuid(),
+	organization_id: z.uuid(),
 	created_at: z.date(),
-	created_by: z.string().uuid().nullable(),
+	created_by: z.uuid().nullable(),
 	updated_at: z.date(),
-	updated_by: z.string().uuid().nullable(),
+	updated_by: z.uuid().nullable(),
 
 	address_line_1: z.string().max(240),
 	address_line_2: z.string().max(240).nullable(),

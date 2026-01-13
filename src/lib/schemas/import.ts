@@ -5,7 +5,7 @@ import { locationCreateSchema } from './location';
  * Import record - represents a single row from CSV import
  */
 export const importRecordSchema = z.object({
-	id: z.string().uuid(),
+	id: z.uuid(),
 	raw: z.object({
 		name: z.string().nullable(),
 		address: z.string(),

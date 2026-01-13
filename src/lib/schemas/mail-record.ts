@@ -23,8 +23,8 @@ export type MailRecordStatus = z.infer<typeof mailRecordStatusEnum>;
 
 // Mail record schema
 export const mailRecordSchema = z.object({
-	id: z.string().uuid(),
-	organization_id: z.string().uuid(),
+	id: z.uuid(),
+	organization_id: z.uuid(),
 	created_at: z.date(),
 	resend_id: z.string(),
 	type: mailRecordTypeEnum,
@@ -39,7 +39,7 @@ export type MailRecord = z.infer<typeof mailRecordSchema>;
 
 // Create mail record input
 export const createMailRecordSchema = z.object({
-	organization_id: z.string().uuid(),
+	organization_id: z.uuid(),
 	resend_id: z.string(),
 	type: mailRecordTypeEnum,
 	to_email: emailSchema,

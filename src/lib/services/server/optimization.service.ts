@@ -108,14 +108,14 @@ export const optimizationResultSchema = z.object({
 // Discriminated union for optimization response - TypeScript narrows automatically
 const successfulResponseSchema = z.object({
 	success: z.literal(true),
-	job_id: z.string().uuid(),
+	job_id: z.uuid(),
 	error_message: z.null().optional(),
 	result: optimizationResultSchema
 });
 
 const failedResponseSchema = z.object({
 	success: z.literal(false),
-	job_id: z.string().uuid(),
+	job_id: z.uuid(),
 	error_message: z.string(),
 	result: z.null().optional()
 });
@@ -237,7 +237,7 @@ export class OptimizationService {
 
 		// Validate payload matches expected schema BEFORE sending to SQS
 		const sqsPayloadSchema = matrixPayloadSchema.extend({
-			job_id: z.string().uuid()
+			job_id: z.uuid()
 		});
 		const validatedPayload = sqsPayloadSchema.parse(payload);
 
