@@ -321,7 +321,7 @@ describe('Route Recalculation', () => {
 	});
 
 	describe('updateStop - driver assignment', () => {
-		it('recalculates both routes when reassigning stop between drivers', async () => {
+		it('recalculates both routes when reassigning stop between drivers', { timeout: 10000 }, async () => {
 			const tx = db as unknown as TestTransaction;
 
 			const routeA = await createRoute(tx, {

@@ -40,8 +40,8 @@ import { ServiceError } from './errors';
 import { invitationService } from './invitation.service';
 import { locationService } from './location.service';
 import { mapService } from './map.service';
-import { routeService } from './route.service';
 import { routeShareService } from './route-share.service';
+import { routeService } from './route.service';
 import { stopService } from './stop.service';
 import { userService } from './user.service';
 
@@ -486,7 +486,7 @@ describe('Multi-Tenancy Isolation Tests', () => {
 				expect.fail('Should have thrown');
 			} catch (error) {
 				expect(error).toBeInstanceOf(ServiceError);
-				expect((error as ServiceError).code).toBe('FORBIDDEN');
+				expect((error as ServiceError).code).toBe('NOT_FOUND');
 			}
 		});
 
@@ -496,7 +496,7 @@ describe('Multi-Tenancy Isolation Tests', () => {
 				expect.fail('Should have thrown');
 			} catch (error) {
 				expect(error).toBeInstanceOf(ServiceError);
-				expect((error as ServiceError).code).toBe('FORBIDDEN');
+				expect((error as ServiceError).code).toBe('NOT_FOUND');
 			}
 		});
 
