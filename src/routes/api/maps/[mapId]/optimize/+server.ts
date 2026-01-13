@@ -38,6 +38,7 @@ export const POST: RequestHandler = async ({ params, request }) => {
 		const result = await optimizationService.queueOptimization(
 			mapId,
 			user.organization_id,
+			user.id,
 			parsed.data
 		);
 		return json(result);

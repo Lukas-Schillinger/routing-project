@@ -46,7 +46,9 @@ export const stopSchema = z.object({
 	contact_phone: phoneSchema,
 	notes: z.string().nullable(),
 	created_at: z.date(),
-	updated_at: z.date()
+	created_by: z.string().uuid().nullable(),
+	updated_at: z.date(),
+	updated_by: z.string().uuid().nullable()
 });
 
 export type CreateStop = z.infer<typeof createStopSchema>;

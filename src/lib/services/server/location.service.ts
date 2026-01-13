@@ -57,13 +57,16 @@ export class LocationService {
 	 */
 	async createLocation(
 		locationData: LocationCreate,
-		organizationId: string
+		organizationId: string,
+		userId: string
 	): Promise<Location> {
 		const [newLocation] = await db
 			.insert(locations)
 			.values({
+				...locationData,
 				organization_id: organizationId,
-				...locationData
+				created_by: userId,
+				updated_by: userId
 			})
 			.returning();
 
@@ -79,13 +82,21 @@ export class LocationService {
 	async createOrVerifyLocation(
 		locationId: string | undefined,
 		locationData: LocationCreate | undefined,
-		organizationId: string
+		organizationId: string,
+		userId: string
 	): Promise<string> {
-		if (locationData && !locationId) {
+		if (locationData && locationId) {
+			throw ServiceError.validation(
+				'Provide either location_id OR location data, not both'
+			);
+		}
+
+		if (locationData) {
 			// Create new location
 			const newLocation = await this.createLocation(
 				locationData,
-				organizationId
+				organizationId,
+				userId
 			);
 			return newLocation.id;
 		} else if (locationId) {
@@ -98,10 +109,6 @@ export class LocationService {
 			);
 		}
 	}
-
-	/**
-	 * Update a location
-	 */
 
 	/**
 	 * Get a location by address hash
@@ -135,7 +142,14 @@ export class LocationService {
 		// Verify location ownership
 		await this.verifyLocationOwnership(locationId, organizationId);
 
-		await db.delete(locations).where(eq(locations.id, locationId));
+		await db
+			.delete(locations)
+			.where(
+				and(
+					eq(locations.id, locationId),
+					eq(locations.organization_id, organizationId)
+				)
+			);
 
 		return { success: true };
 	}

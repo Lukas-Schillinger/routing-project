@@ -33,7 +33,8 @@ export class DepotService {
 		const locationId = await locationService.createOrVerifyLocation(
 			data.location_id,
 			data.location,
-			organizationId
+			organizationId,
+			userId
 		);
 
 		// Handle default depot logic
@@ -128,7 +129,8 @@ export class DepotService {
 			locationId = await locationService.createOrVerifyLocation(
 				data.location_id,
 				data.location,
-				organizationId
+				organizationId,
+				userId
 			);
 		}
 

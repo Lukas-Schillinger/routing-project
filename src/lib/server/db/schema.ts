@@ -192,7 +192,13 @@ export const locations = pgTable(
 			onDelete: 'cascade'
 		}),
 		created_at: ts('created_at'),
+		created_by: uuid('created_by').references(() => users.id, {
+			onDelete: 'set null'
+		}),
 		updated_at: ts('updated_at'),
+		updated_by: uuid('updated_by').references(() => users.id, {
+			onDelete: 'set null'
+		}),
 
 		address_line_1: varchar('address_line_1', { length: 240 }).notNull(), // Mapbox v6 address_name field
 		address_line_2: varchar('address_line_2', { length: 240 }), // Mapbox v6 secondary_address.name field
@@ -333,7 +339,13 @@ export const routes = pgTable(
 		geometry: jsonb('geometry'), // GeoJSON LineString object { type: "LineString", coordinates: [[lon, lat], ...] } - nullable for failed recalculations
 		duration: numeric('duration', { precision: 12, scale: 2 }), // seconds
 		created_at: ts('created_at'),
-		updated_at: ts('updated_at')
+		created_by: uuid('created_by').references(() => users.id, {
+			onDelete: 'set null'
+		}),
+		updated_at: ts('updated_at'),
+		updated_by: uuid('updated_by').references(() => users.id, {
+			onDelete: 'set null'
+		})
 	},
 	(t) => [
 		index('routes_map_idx').on(t.map_id),
@@ -444,7 +456,13 @@ export const optimizationJobs = pgTable('optimization_jobs', {
 		.notNull(),
 	error_message: text('error_message'),
 	created_at: ts('created_at'),
-	updated_at: ts('updated_at')
+	created_by: uuid('created_by').references(() => users.id, {
+		onDelete: 'set null'
+	}),
+	updated_at: ts('updated_at'),
+	updated_by: uuid('updated_by').references(() => users.id, {
+		onDelete: 'set null'
+	})
 });
 
 export const mailRecords = pgTable(

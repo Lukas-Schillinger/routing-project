@@ -43,7 +43,7 @@ export class StopService {
 	}
 
 	async getStopsWithLocation(
-		organization_id: string
+		organizationId: string
 	): Promise<StopWithLocation[]> {
 		const results = await db
 			.select({
@@ -52,7 +52,7 @@ export class StopService {
 			})
 			.from(stops)
 			.innerJoin(locations, eq(stops.location_id, locations.id))
-			.where(eq(stops.organization_id, organization_id));
+			.where(eq(stops.organization_id, organizationId));
 
 		return results;
 	}
@@ -77,8 +77,12 @@ export class StopService {
 		}
 
 		const conditions = filter?.driver_id
-			? and(eq(stops.map_id, mapId), eq(stops.driver_id, filter.driver_id))
-			: eq(stops.map_id, mapId);
+			? and(
+					eq(stops.map_id, mapId),
+					eq(stops.driver_id, filter.driver_id),
+					eq(stops.organization_id, organizationId)
+				)
+			: and(eq(stops.map_id, mapId), eq(stops.organization_id, organizationId));
 
 		const results = await db
 			.select({
@@ -161,7 +165,8 @@ export class StopService {
 		if (data.location && !locationId) {
 			const location = await locationService.createLocation(
 				data.location,
-				organizationId
+				organizationId,
+				userId
 			);
 			locationId = location.id;
 		}
@@ -216,8 +221,7 @@ export class StopService {
 		const stop = await this.verifyStopOwnership(stopId, organizationId);
 
 		const oldDriverId = stop.driver_id;
-		const driverChanged =
-			data.driver_id !== undefined && data.driver_id !== oldDriverId;
+		const driverChanged = 'driver_id' in data && data.driver_id !== oldDriverId;
 
 		let locationId = stop.location_id;
 		let locationChanged = false;
@@ -225,7 +229,8 @@ export class StopService {
 		if (data.location) {
 			const location = await locationService.createLocation(
 				data.location,
-				organizationId
+				organizationId,
+				userId
 			);
 			locationId = location.id;
 			locationChanged = true;
@@ -310,7 +315,7 @@ export class StopService {
 	 * Unfortunately the createStops endpoint does a lot of db calls which makes this method inefficient.
 	 */
 	async bulkCreateStops(
-		stopsData: Array<CreateStop>,
+		stopsData: Array<Omit<CreateStop, 'map_id'>>,
 		mapId: string,
 		organizationId: string,
 		userId: string

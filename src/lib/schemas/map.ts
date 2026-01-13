@@ -88,7 +88,9 @@ export const optimizationJobSchema = z.object({
 	depot_id: z.string().uuid(),
 	error_message: z.string().nullable(),
 	created_at: z.coerce.date(),
-	updated_at: z.coerce.date()
+	created_by: z.string().uuid().nullable(),
+	updated_at: z.coerce.date(),
+	updated_by: z.string().uuid().nullable()
 });
 
 // Type exports

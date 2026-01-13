@@ -14,7 +14,9 @@ export const locationSchema = z.object({
 	id: z.string().uuid(),
 	organization_id: z.string().uuid(),
 	created_at: z.date(),
+	created_by: z.string().uuid().nullable(),
 	updated_at: z.date(),
+	updated_by: z.string().uuid().nullable(),
 
 	address_line_1: z.string().max(240),
 	address_line_2: z.string().max(240).nullable(),
@@ -48,7 +50,9 @@ export const locationCreateSchema = locationSchema.omit({
 	id: true,
 	organization_id: true,
 	created_at: true,
-	updated_at: true
+	created_by: true,
+	updated_at: true,
+	updated_by: true
 });
 
 export type LocationCreate = z.infer<typeof locationCreateSchema>;

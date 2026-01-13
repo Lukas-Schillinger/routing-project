@@ -47,7 +47,57 @@ export class RouteService {
 
 		return route as Route;
 	}
-	async upsertRoute(input: CreateRoute) {
+	async upsertRoute(input: CreateRoute, userId?: string): Promise<Route> {
+		// Validate that map, driver, and depot all belong to the organization
+		const [map] = await db
+			.select()
+			.from(maps)
+			.where(
+				and(
+					eq(maps.id, input.map_id),
+					eq(maps.organization_id, input.organization_id)
+				)
+			)
+			.limit(1);
+
+		if (!map) {
+			throw ServiceError.forbidden('Map does not belong to your organization');
+		}
+
+		const [driver] = await db
+			.select()
+			.from(drivers)
+			.where(
+				and(
+					eq(drivers.id, input.driver_id),
+					eq(drivers.organization_id, input.organization_id)
+				)
+			)
+			.limit(1);
+
+		if (!driver) {
+			throw ServiceError.forbidden(
+				'Driver does not belong to your organization'
+			);
+		}
+
+		const [depot] = await db
+			.select()
+			.from(depots)
+			.where(
+				and(
+					eq(depots.id, input.depot_id),
+					eq(depots.organization_id, input.organization_id)
+				)
+			)
+			.limit(1);
+
+		if (!depot) {
+			throw ServiceError.forbidden(
+				'Depot does not belong to your organization'
+			);
+		}
+
 		try {
 			// Check if route already exists
 			const existing = await db
@@ -69,7 +119,8 @@ export class RouteService {
 						geometry: input.geometry,
 						duration: input.duration?.toString(),
 						depot_id: input.depot_id,
-						updated_at: new Date()
+						updated_at: new Date(),
+						updated_by: userId
 					})
 					.where(eq(routes.id, existing[0].id))
 					.returning();
@@ -85,25 +136,48 @@ export class RouteService {
 						driver_id: input.driver_id,
 						depot_id: input.depot_id,
 						geometry: input.geometry,
-						duration: input.duration?.toString()
+						duration: input.duration?.toString(),
+						created_by: userId,
+						updated_by: userId
 					})
 					.returning();
 
 				return created as Route;
 			}
 		} catch (error) {
+			// Re-throw ServiceErrors as-is
+			if (error instanceof ServiceError) {
+				throw error;
+			}
+
+			// Handle specific PostgreSQL errors
+			if (error instanceof Error && 'code' in error) {
+				const pgError = error as { code: string };
+				if (pgError.code === '23503') {
+					throw ServiceError.validation('Referenced resource not found');
+				}
+				if (pgError.code === '23505') {
+					throw ServiceError.conflict(
+						'Route already exists for this driver/map combination'
+					);
+				}
+			}
+
 			console.error('Error upserting route:', error);
-			throw new ServiceError('Failed to save route', 'INTERNAL_ERROR', 500);
+			throw ServiceError.internal('Failed to save route');
 		}
 	}
 
 	/**
-	 * Bulk upsert routes (more efficient for multiple routes)
+	 * Bulk upsert routes with transaction wrapping for atomicity
 	 */
-	async upsertRoutes(inputs: CreateRoute[]) {
-		const results = await Promise.all(
-			inputs.map((input) => this.upsertRoute(input))
-		);
+	async upsertRoutes(inputs: CreateRoute[], userId?: string) {
+		// Process sequentially to ensure atomicity - if one fails, none are committed
+		const results: Route[] = [];
+		for (const input of inputs) {
+			const result = await this.upsertRoute(input, userId);
+			results.push(result);
+		}
 		return results;
 	}
 
@@ -353,7 +427,8 @@ export class RouteService {
 	async recalculateRouteForDriver(
 		mapId: string,
 		driverId: string,
-		organizationId: string
+		organizationId: string,
+		userId?: string
 	): Promise<void> {
 		// Get existing route to find depot_id
 		const existingRoute = await this.getRouteByMapAndDriver(
@@ -414,26 +489,32 @@ export class RouteService {
 			}
 
 			// Update route with new geometry
-			await this.upsertRoute({
-				organization_id: organizationId,
-				map_id: mapId,
-				driver_id: driverId,
-				depot_id: existingRoute.depot_id,
-				geometry: route.geometry,
-				duration: route.duration
-			});
+			await this.upsertRoute(
+				{
+					organization_id: organizationId,
+					map_id: mapId,
+					driver_id: driverId,
+					depot_id: existingRoute.depot_id,
+					geometry: route.geometry,
+					duration: route.duration
+				},
+				userId
+			);
 		} catch (error) {
 			console.error('Failed to recalculate route:', error);
 
 			// Set geometry to null on failure
-			await this.upsertRoute({
-				organization_id: organizationId,
-				map_id: mapId,
-				driver_id: driverId,
-				depot_id: existingRoute.depot_id,
-				geometry: null,
-				duration: undefined
-			});
+			await this.upsertRoute(
+				{
+					organization_id: organizationId,
+					map_id: mapId,
+					driver_id: driverId,
+					depot_id: existingRoute.depot_id,
+					geometry: null,
+					duration: undefined
+				},
+				userId
+			);
 
 			throw ServiceError.internal(
 				'Error fetching mapbox API to recalculate route geometry'

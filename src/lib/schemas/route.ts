@@ -7,28 +7,30 @@ const geoJsonLineStringSchema = z.object({
 });
 
 export const routeSchema = z.object({
-	id: z.string().uuid(),
-	organization_id: z.string().uuid(),
-	map_id: z.string().uuid(),
-	driver_id: z.string().uuid(),
-	depot_id: z.string().uuid(),
+	id: z.uuid(),
+	organization_id: z.uuid(),
+	map_id: z.uuid(),
+	driver_id: z.uuid(),
+	depot_id: z.uuid(),
 	geometry: geoJsonLineStringSchema.nullable(), // GeoJSON LineString from Mapbox Directions API - nullable for failed recalculations
 	duration: z.string().nullable(), // Stored as numeric string in DB
 	created_at: z.date(),
-	updated_at: z.date()
+	created_by: z.uuid().nullable(),
+	updated_at: z.date(),
+	updated_by: z.uuid().nullable()
 });
 
 export const createRouteSchema = z.object({
-	organization_id: z.string().uuid(),
-	map_id: z.string().uuid(),
-	driver_id: z.string().uuid(),
-	depot_id: z.string().uuid(),
+	organization_id: z.uuid(),
+	map_id: z.uuid(),
+	driver_id: z.uuid(),
+	depot_id: z.uuid(),
 	geometry: geoJsonLineStringSchema.nullable(), // GeoJSON LineString from Mapbox Directions API - nullable for failed recalculations
 	duration: z.number().optional() // Number in seconds before DB conversion
 });
 
 export const updateRouteSchema = z.object({
-	depot_id: z.string().uuid().optional(),
+	depot_id: z.uuid().optional(),
 	geometry: geoJsonLineStringSchema.optional(),
 	duration: z.number().optional()
 });

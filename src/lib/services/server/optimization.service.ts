@@ -183,6 +183,7 @@ export class OptimizationService {
 	async queueOptimization(
 		mapId: string,
 		organizationId: string,
+		userId: string,
 		options: OptimizationOptions
 	) {
 		const assignedDrivers = await this.fetchAssignedDrivers(
@@ -217,7 +218,9 @@ export class OptimizationService {
 				status: 'pending',
 				matrix_id: matrixResult.id,
 				map_id: mapId,
-				depot_id: options.depotId
+				depot_id: options.depotId,
+				created_by: userId,
+				updated_by: userId
 			})
 			.returning();
 
@@ -245,6 +248,9 @@ export class OptimizationService {
 					MessageBody: JSON.stringify(validatedPayload)
 				})
 			);
+
+			// Update to running after successful queue
+			await this.updateJobStatus(job.id, 'running');
 		} catch (error) {
 			console.error('Failed to send message to SQS:', error);
 			await this.updateJobStatus(
@@ -272,9 +278,12 @@ export class OptimizationService {
 				);
 			}
 
-			if (job.status === 'cancelled') {
+			// Only process jobs in valid states (pending or running)
+			// This handles cancelled jobs and prevents double-processing
+			const validStatesForCompletion = ['pending', 'running'];
+			if (!validStatesForCompletion.includes(job.status)) {
 				console.log(
-					`Optimization job ${response.job_id} was cancelled, skipping completion`
+					`Optimization job ${response.job_id} in state ${job.status}, skipping completion`
 				);
 				return;
 			}
@@ -294,7 +303,9 @@ export class OptimizationService {
 					'failed',
 					response.error_message // Type-safe: guaranteed to exist when success=false
 				);
-				throw ServiceError.internal('Optimization failed');
+				throw ServiceError.internal(
+					`Optimization failed to complete: ${response.error_message}`
+				);
 			}
 
 			// TypeScript now knows: response.success === true, so response.result exists
@@ -456,7 +467,13 @@ export class OptimizationService {
 		const results = await Promise.all(routePromises);
 		const failures = results.filter((r) => r && !r.success);
 		if (failures.length > 0) {
-			console.warn(`Failed to compute ${failures.length} route(s)`);
+			const failedDriverIds = failures
+				.filter((f) => f)
+				.map((f) => f!.driver_id)
+				.join(', ');
+			throw ServiceError.internal(
+				`Failed to compute routes for ${failures.length} driver(s): ${failedDriverIds}`
+			);
 		}
 	}
 
@@ -473,11 +490,51 @@ export class OptimizationService {
 		return { success: true };
 	}
 
+	// Valid state transitions for optimization jobs
+	private readonly VALID_TRANSITIONS: Record<string, string[]> = {
+		pending: ['running', 'cancelled', 'failed'],
+		running: ['completing', 'cancelled', 'failed'],
+		completing: ['completed', 'failed'],
+		completed: [],
+		failed: [],
+		cancelled: []
+	};
+
+	private canTransition(from: string, to: string): boolean {
+		return this.VALID_TRANSITIONS[from]?.includes(to) ?? false;
+	}
+
 	private async updateJobStatus(
 		jobId: string,
-		status: 'pending' | 'completing' | 'completed' | 'failed' | 'cancelled',
+		status:
+			| 'pending'
+			| 'running'
+			| 'completing'
+			| 'completed'
+			| 'failed'
+			| 'cancelled',
 		errorMessage?: string
 	): Promise<void> {
+		// Get current status to validate transition
+		const [job] = await db
+			.select({ status: optimizationJobs.status })
+			.from(optimizationJobs)
+			.where(eq(optimizationJobs.id, jobId))
+			.limit(1);
+
+		if (!job) {
+			throw ServiceError.notFound('Optimization job not found');
+		}
+
+		// Validate state transition
+		if (!this.canTransition(job.status, status)) {
+			console.warn(
+				`Invalid state transition: ${job.status} -> ${status} for job ${jobId}`
+			);
+			// Don't throw - just skip invalid transitions to handle race conditions gracefully
+			return;
+		}
+
 		await db
 			.update(optimizationJobs)
 			.set({
