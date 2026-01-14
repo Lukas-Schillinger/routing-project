@@ -29,12 +29,6 @@ export const updateStopSchema = z.object({
 	notes: z.string().nullable().optional()
 });
 
-export const stopFilterSchema = z.object({
-	map_id: z.uuid().optional(),
-	driver_id: z.uuid().optional(),
-	organization_id: z.uuid().optional()
-});
-
 export const stopSchema = z.object({
 	id: z.uuid(),
 	organization_id: z.uuid(),
@@ -53,7 +47,6 @@ export const stopSchema = z.object({
 
 export type CreateStop = z.infer<typeof createStopSchema>;
 export type UpdateStop = z.infer<typeof updateStopSchema>;
-export type StopFilter = z.infer<typeof stopFilterSchema>;
 export type Stop = z.infer<typeof stopSchema>;
 
 export type StopWithLocation = {

@@ -211,10 +211,12 @@ describe('StopService', () => {
 			expect(stopIds).toContain(testStop2.id);
 		});
 
-		it('filters by driver_id when provided', async () => {
-			const result = await stopService.getStopsByMap(testMap1.id, testOrg1.id, {
-				driver_id: testDriver1.id
-			});
+		it('filters by driverId when provided', async () => {
+			const result = await stopService.getStopsByMap(
+				testMap1.id,
+				testOrg1.id,
+				testDriver1.id
+			);
 
 			const stopIds = result.map((r) => r.stop.id);
 			expect(stopIds).toContain(testStopWithDriver.id);

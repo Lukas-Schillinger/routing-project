@@ -1,7 +1,6 @@
 import type {
 	CreateStop,
 	Stop,
-	StopFilter,
 	StopWithLocation,
 	UpdateStop
 } from '$lib/schemas/stop';
@@ -63,7 +62,7 @@ export class StopService {
 	async getStopsByMap(
 		mapId: string,
 		organizationId: string,
-		filter?: StopFilter
+		driverId?: string
 	): Promise<StopWithLocation[]> {
 		// Verify map ownership first
 		const [map] = await db
@@ -76,10 +75,10 @@ export class StopService {
 			throw ServiceError.notFound('Map not found');
 		}
 
-		const conditions = filter?.driver_id
+		const conditions = driverId
 			? and(
 					eq(stops.map_id, mapId),
-					eq(stops.driver_id, filter.driver_id),
+					eq(stops.driver_id, driverId),
 					eq(stops.organization_id, organizationId)
 				)
 			: and(eq(stops.map_id, mapId), eq(stops.organization_id, organizationId));

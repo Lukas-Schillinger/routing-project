@@ -321,68 +321,74 @@ describe('Route Recalculation', () => {
 	});
 
 	describe('updateStop - driver assignment', () => {
-		it('recalculates both routes when reassigning stop between drivers', { timeout: 10000 }, async () => {
-			const tx = db as unknown as TestTransaction;
+		it(
+			'recalculates both routes when reassigning stop between drivers',
+			{ timeout: 10000 },
+			async () => {
+				const tx = db as unknown as TestTransaction;
 
-			const routeA = await createRoute(tx, {
-				organization_id: org.id,
-				map_id: map.id,
-				driver_id: driverA.id,
-				depot_id: depot.id
-			});
-			createdRouteIds.push(routeA.id);
+				const routeA = await createRoute(tx, {
+					organization_id: org.id,
+					map_id: map.id,
+					driver_id: driverA.id,
+					depot_id: depot.id
+				});
+				createdRouteIds.push(routeA.id);
 
-			const routeB = await createRoute(tx, {
-				organization_id: org.id,
-				map_id: map.id,
-				driver_id: driverB.id,
-				depot_id: depot.id
-			});
-			createdRouteIds.push(routeB.id);
+				const routeB = await createRoute(tx, {
+					organization_id: org.id,
+					map_id: map.id,
+					driver_id: driverB.id,
+					depot_id: depot.id
+				});
+				createdRouteIds.push(routeB.id);
 
-			// Driver A needs 2 stops so route persists after reassignment
-			const stopA1 = await createStop(tx, {
-				organization_id: org.id,
-				map_id: map.id,
-				location_id: stopLocation1.id,
-				driver_id: driverA.id,
-				delivery_index: 0
-			});
-			createdStopIds.push(stopA1.id);
+				// Driver A needs 2 stops so route persists after reassignment
+				const stopA1 = await createStop(tx, {
+					organization_id: org.id,
+					map_id: map.id,
+					location_id: stopLocation1.id,
+					driver_id: driverA.id,
+					delivery_index: 0
+				});
+				createdStopIds.push(stopA1.id);
 
-			const stopA2 = await createStop(tx, {
-				organization_id: org.id,
-				map_id: map.id,
-				location_id: stopLocation2.id,
-				driver_id: driverA.id,
-				delivery_index: 1
-			});
-			createdStopIds.push(stopA2.id);
+				const stopA2 = await createStop(tx, {
+					organization_id: org.id,
+					map_id: map.id,
+					location_id: stopLocation2.id,
+					driver_id: driverA.id,
+					delivery_index: 1
+				});
+				createdStopIds.push(stopA2.id);
 
-			// Driver B needs at least 1 stop so route persists
-			const newLocation = await createLocation(tx, { organization_id: org.id });
-			createdLocationIds.push(newLocation.id);
+				// Driver B needs at least 1 stop so route persists
+				const newLocation = await createLocation(tx, {
+					organization_id: org.id
+				});
+				createdLocationIds.push(newLocation.id);
 
-			const stopB = await createStop(tx, {
-				organization_id: org.id,
-				map_id: map.id,
-				location_id: newLocation.id,
-				driver_id: driverB.id,
-				delivery_index: 0
-			});
-			createdStopIds.push(stopB.id);
+				const stopB = await createStop(tx, {
+					organization_id: org.id,
+					map_id: map.id,
+					location_id: newLocation.id,
+					driver_id: driverB.id,
+					delivery_index: 0
+				});
+				createdStopIds.push(stopB.id);
 
-			// Reassign one of Driver A's stops to Driver B
-			await stopService.updateStop(
-				stopA1.id,
-				{ driver_id: driverB.id },
-				org.id,
-				user.id
-			);
+				// Reassign one of Driver A's stops to Driver B
+				await stopService.updateStop(
+					stopA1.id,
+					{ driver_id: driverB.id },
+					org.id,
+					user.id
+				);
 
-			// Both drivers still have stops, so both routes should be recalculated
-			expect(mapboxNavigation.getDirections).toHaveBeenCalledTimes(2);
-		});
+				// Both drivers still have stops, so both routes should be recalculated
+				expect(mapboxNavigation.getDirections).toHaveBeenCalledTimes(2);
+			}
+		);
 
 		it('recalculates route when assigning unassigned stop to driver', async () => {
 			const tx = db as unknown as TestTransaction;
