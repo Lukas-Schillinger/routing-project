@@ -1,9 +1,9 @@
 import { env } from '$env/dynamic/private';
+import { handleWebhookError, ServiceError } from '$lib/errors';
 import { resendWebhookPayloadSchema } from '$lib/schemas/mail-record.js';
 import { mailRecordService } from '$lib/services/server/mail-record.service.js';
 import { json } from '@sveltejs/kit';
 import { Resend } from 'resend';
-import { z } from 'zod';
 import type { RequestHandler } from './$types';
 
 const resend = new Resend(env.RESEND_API_KEY);
@@ -19,21 +19,13 @@ export const POST: RequestHandler = async ({ request }) => {
 		const signature = request.headers.get('svix-signature');
 
 		if (!id || !timeStamp || !signature) {
-			console.warn('Missing Svix headers in webhook request');
-			return json(
-				{ success: false, error: 'Missing webhook headers' },
-				{ status: 400 }
-			);
+			throw ServiceError.badRequest('Missing webhook headers');
 		}
 
 		// Verify webhook signature
 		const webhookSecret = env.RESEND_WEBHOOK_SECRET;
 		if (!webhookSecret) {
-			console.error('RESEND_WEBHOOK_SECRET not configured');
-			return json(
-				{ success: false, error: 'Server configuration error' },
-				{ status: 500 }
-			);
+			throw ServiceError.internal('RESEND_WEBHOOK_SECRET not configured');
 		}
 
 		let verifiedPayload: unknown;
@@ -49,11 +41,9 @@ export const POST: RequestHandler = async ({ request }) => {
 				webhookSecret
 			});
 		} catch (err) {
-			console.warn('Webhook signature verification failed:', err);
-			return json(
-				{ success: false, error: 'Invalid signature' },
-				{ status: 401 }
-			);
+			throw ServiceError.unauthorized('Invalid webhook signature', {
+				cause: err
+			});
 		}
 
 		// Parse and validate payload
@@ -64,25 +54,7 @@ export const POST: RequestHandler = async ({ request }) => {
 
 		return json({ success: true });
 	} catch (error) {
-		console.error('Mail webhook error:', error);
-
-		if (error instanceof z.ZodError) {
-			return json(
-				{
-					success: false,
-					error: 'Invalid payload',
-					details: error.issues
-				},
-				{ status: 400 }
-			);
-		}
-
-		return json(
-			{
-				success: false,
-				error: error instanceof Error ? error.message : 'Unknown error'
-			},
-			{ status: 500 }
-		);
+		const { body, status } = handleWebhookError(error, 'mail');
+		return json(body, { status });
 	}
 };

@@ -173,7 +173,7 @@ export class DepotService {
 				)
 			);
 
-		if (usedInRoutes.length != 0) {
+		if (usedInRoutes.length !== 0) {
 			throw ServiceError.validation(
 				"Can't delete depots while assigned to a route. "
 			);

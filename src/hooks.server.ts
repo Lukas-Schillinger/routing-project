@@ -8,6 +8,16 @@ import { rolePermissions } from '$lib/services/server/permissions';
 import type { Handle, HandleServerError } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 
+const handleRequestId: Handle = async ({ event, resolve }) => {
+	const requestId = crypto.randomUUID();
+	event.locals.requestId = requestId;
+	Sentry.setTag('requestId', requestId);
+
+	const response = await resolve(event);
+	response.headers.set('X-Request-Id', requestId);
+	return response;
+};
+
 const handleRateLimit: Handle = async ({ event, resolve }) => {
 	const limiter = getLimiterForPath(event.url.pathname);
 
@@ -68,6 +78,7 @@ const handleAuth: Handle = async ({ event, resolve }) => {
 
 export const handle: Handle = sequence(
 	Sentry.sentryHandle(),
+	handleRequestId,
 	handleRateLimit,
 	handleAuth
 );

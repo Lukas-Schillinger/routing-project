@@ -252,13 +252,14 @@ export class OptimizationService {
 			// Update to running after successful queue
 			await this.updateJobStatus(job.id, 'running');
 		} catch (error) {
-			console.error('Failed to send message to SQS:', error);
 			await this.updateJobStatus(
 				job.id,
 				'failed',
 				'Failed to queue optimization job'
 			);
-			throw ServiceError.internal('Failed to queue optimization job');
+			throw ServiceError.internal('Failed to queue optimization job', {
+				cause: error
+			});
 		}
 
 		return job;
@@ -282,9 +283,6 @@ export class OptimizationService {
 			// This handles cancelled jobs and prevents double-processing
 			const validStatesForCompletion = ['pending', 'running'];
 			if (!validStatesForCompletion.includes(job.status)) {
-				console.log(
-					`Optimization job ${response.job_id} in state ${job.status}, skipping completion`
-				);
 				return;
 			}
 
@@ -330,7 +328,7 @@ export class OptimizationService {
 
 			await this.updateJobStatus(response.job_id, 'completed');
 		} catch (error) {
-			console.error('Error completing optimization:', error);
+			// Recovery: mark job as failed before re-throwing
 			const errorMessage =
 				error instanceof Error ? error.message : 'Unknown error';
 			await this.updateJobStatus(response.job_id, 'failed', errorMessage);
@@ -408,7 +406,6 @@ export class OptimizationService {
 		const routePromises = result.routes.map(async (route) => {
 			try {
 				if (route.legs.length === 0) {
-					console.warn(`No stops found for driver ${route.driver_id}`);
 					return null;
 				}
 
@@ -417,13 +414,10 @@ export class OptimizationService {
 				const missingIds = legStopIds.filter((id) => !locationCoordMap.has(id));
 
 				if (missingIds.length > 0) {
-					console.error(
-						`Missing coordinates for stops in driver ${route.driver_id}: ${missingIds.join(', ')}`
-					);
 					return {
 						driver_id: route.driver_id,
 						success: false,
-						error: 'Missing coordinates for stops'
+						error: `Missing coordinates for stops: ${missingIds.join(', ')}`
 					};
 				}
 
@@ -439,7 +433,6 @@ export class OptimizationService {
 				]);
 
 				if (directions.routes.length === 0) {
-					console.warn(`No route found for driver ${route.driver_id}`);
 					return null;
 				}
 
@@ -456,10 +449,6 @@ export class OptimizationService {
 
 				return { driver_id: route.driver_id, success: true };
 			} catch (error) {
-				console.error(
-					`Error computing route for driver ${route.driver_id}:`,
-					error
-				);
 				return { driver_id: route.driver_id, success: false, error };
 			}
 		});
@@ -526,12 +515,8 @@ export class OptimizationService {
 			throw ServiceError.notFound('Optimization job not found');
 		}
 
-		// Validate state transition
+		// Validate state transition - skip invalid transitions to handle race conditions gracefully
 		if (!this.canTransition(job.status, status)) {
-			console.warn(
-				`Invalid state transition: ${job.status} -> ${status} for job ${jobId}`
-			);
-			// Don't throw - just skip invalid transitions to handle race conditions gracefully
 			return;
 		}
 

@@ -1,61 +1,45 @@
 import { env } from '$env/dynamic/private';
+import { handleWebhookError, ServiceError } from '$lib/errors';
 import {
 	optimizationResponseSchema,
 	optimizationService
 } from '$lib/services/server/optimization.service';
 import { json } from '@sveltejs/kit';
-import { z } from 'zod';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ request }) => {
+	let jobId: string | undefined;
+
 	try {
 		// Verify webhook authentication
 		const authHeader = request.headers.get('authorization');
 		const expectedToken = env.OPTIMIZATION_WEBHOOK_SECRET;
 
 		if (!expectedToken) {
-			console.error('OPTIMIZATION_WEBHOOK_SECRET not configured');
-			return json(
-				{ success: false, error: 'Server configuration error' },
-				{ status: 500 }
-			);
+			throw ServiceError.internal('OPTIMIZATION_WEBHOOK_SECRET not configured');
 		}
 
 		if (authHeader !== `Bearer ${expectedToken}`) {
-			console.warn('Unauthorized webhook attempt');
-			return json({ success: false, error: 'Unauthorized' }, { status: 401 });
+			throw ServiceError.unauthorized('Invalid webhook authentication');
 		}
 
 		// Parse and validate request body
 		const body = await request.json();
 		const validatedData = optimizationResponseSchema.parse(body);
+		jobId = validatedData.job_id;
 
 		// Process the optimization result
 		await optimizationService.completeOptimization(validatedData);
 
 		return json({ success: true });
 	} catch (error) {
-		console.error('Webhook error:', error);
-
-		// Handle validation errors specifically
-		if (error instanceof z.ZodError) {
-			return json(
-				{
-					success: false,
-					error: 'Invalid payload',
-					details: error.issues
-				},
-				{ status: 400 }
-			);
-		}
-
-		// Generic error response
-		return json(
+		const { body, status } = handleWebhookError(
+			error,
+			'complete-optimization',
 			{
-				success: false,
-				error: error instanceof Error ? error.message : 'Unknown error'
-			},
-			{ status: 500 }
+				jobId
+			}
 		);
+		return json(body, { status });
 	}
 };

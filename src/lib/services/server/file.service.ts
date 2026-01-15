@@ -52,7 +52,7 @@ export class FileService {
 			return savedFile;
 		} catch (error) {
 			if (error instanceof ServiceError) throw error;
-			throw ServiceError.internal(`Failed to upload file: ${error}`);
+			throw ServiceError.internal('Failed to upload file', { cause: error });
 		}
 	}
 
@@ -79,7 +79,7 @@ export class FileService {
 			// Delete from database
 			await db.delete(files).where(eq(files.id, fileId));
 		} catch (error) {
-			throw ServiceError.internal(`Failed to delete file: ${error}`);
+			throw ServiceError.internal('Failed to delete file', { cause: error });
 		}
 	}
 

@@ -154,17 +154,20 @@ export class RouteService {
 			if (error instanceof Error && 'code' in error) {
 				const pgError = error as { code: string };
 				if (pgError.code === '23503') {
-					throw ServiceError.validation('Referenced resource not found');
+					throw ServiceError.validation('Referenced resource not found', {
+						cause: error
+					});
 				}
 				if (pgError.code === '23505') {
 					throw ServiceError.conflict(
-						'Route already exists for this driver/map combination'
+						'Route already exists for this driver/map combination',
+						{ cause: error }
 					);
 				}
 			}
 
-			console.error('Error upserting route:', error);
-			throw ServiceError.internal('Failed to save route');
+			// Unknown error - let it bubble up (will be caught by handleApiError)
+			throw error;
 		}
 	}
 
@@ -196,58 +199,40 @@ export class RouteService {
 	 * Get all routes for a map
 	 */
 	async getRoutesByMap(mapId: string, organizationId: string) {
-		try {
-			return (await db
-				.select()
-				.from(routes)
-				.where(
-					and(
-						eq(routes.map_id, mapId),
-						eq(routes.organization_id, organizationId)
-					)
-				)) as Route[]; // little hack becasuse drizzle can't type the LineString
-		} catch (error) {
-			console.error('Error fetching routes:', error);
-			throw new ServiceError('Failed to fetch routes', 'INTERNAL_ERROR', 500);
-		}
+		return (await db
+			.select()
+			.from(routes)
+			.where(
+				and(
+					eq(routes.map_id, mapId),
+					eq(routes.organization_id, organizationId)
+				)
+			)) as Route[]; // little hack because drizzle can't type the LineString
 	}
 
 	/**
 	 * Delete all routes for a map
 	 */
 	async deleteRoutesByMap(mapId: string, organizationId: string) {
-		try {
-			await db
-				.delete(routes)
-				.where(
-					and(
-						eq(routes.map_id, mapId),
-						eq(routes.organization_id, organizationId)
-					)
-				);
-		} catch (error) {
-			console.error('Error deleting routes:', error);
-			throw new ServiceError('Failed to delete routes', 'INTERNAL_ERROR', 500);
-		}
+		await db
+			.delete(routes)
+			.where(
+				and(
+					eq(routes.map_id, mapId),
+					eq(routes.organization_id, organizationId)
+				)
+			);
 	}
 
 	/**
 	 * Delete a specific route
 	 */
 	async deleteRoute(routeId: string, organizationId: string) {
-		try {
-			await db
-				.delete(routes)
-				.where(
-					and(
-						eq(routes.id, routeId),
-						eq(routes.organization_id, organizationId)
-					)
-				);
-		} catch (error) {
-			console.error('Error deleting route:', error);
-			throw new ServiceError('Failed to delete route', 'INTERNAL_ERROR', 500);
-		}
+		await db
+			.delete(routes)
+			.where(
+				and(eq(routes.id, routeId), eq(routes.organization_id, organizationId))
+			);
 	}
 
 	/**
@@ -501,9 +486,7 @@ export class RouteService {
 				userId
 			);
 		} catch (error) {
-			console.error('Failed to recalculate route:', error);
-
-			// Set geometry to null on failure
+			// Set geometry to null on failure (recovery logic)
 			await this.upsertRoute(
 				{
 					organization_id: organizationId,
@@ -517,7 +500,8 @@ export class RouteService {
 			);
 
 			throw ServiceError.internal(
-				'Error fetching mapbox API to recalculate route geometry'
+				'Error fetching mapbox API to recalculate route geometry',
+				{ cause: error }
 			);
 		}
 	}

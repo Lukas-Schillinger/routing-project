@@ -55,7 +55,7 @@ export class MailRecordService {
 
 		if (!mailRecord) {
 			// Email not in our system - could be from before tracking was implemented
-			console.warn(`Webhook received for unknown email: ${data.email_id}`);
+			// Silently ignore - this is expected for emails sent before tracking
 			return;
 		}
 
