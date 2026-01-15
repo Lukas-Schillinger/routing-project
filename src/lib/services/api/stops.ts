@@ -1,4 +1,5 @@
 import type {
+	BulkCreateStops,
 	CreateStop,
 	StopWithLocation,
 	UpdateStop
@@ -32,6 +33,19 @@ class StopApiService {
 	 */
 	async delete(stopId: string): Promise<{ success: boolean }> {
 		return apiClient.delete<{ success: boolean }>(`/stops/${stopId}`);
+	}
+
+	/**
+	 * Bulk create stops for a map
+	 */
+	async bulkCreate(
+		mapId: string,
+		data: BulkCreateStops
+	): Promise<{ stops: StopWithLocation[] }> {
+		return apiClient.post<{ stops: StopWithLocation[] }>(
+			`/maps/${mapId}/stops`,
+			data
+		);
 	}
 }
 

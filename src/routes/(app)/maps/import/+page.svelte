@@ -3,19 +3,23 @@
 	import { resolve } from '$app/paths';
 	import { Button } from '$lib/components/ui/button';
 	import { createImportState, type ImportState } from '$lib/schemas/import';
-	import { mapApi } from '$lib/services/api';
+	import { mapApi, stopApi } from '$lib/services/api';
 	import { pendingImport } from '$lib/stores/pending-import';
 	import { ArrowLeft, ArrowRight, Check, Loader2 } from 'lucide-svelte';
 	import { onMount } from 'svelte';
+	import type { PageData } from './$types';
 
 	import ColumnMappingStep from './ColumnMappingStep.svelte';
 	import FileUploadStep from './FileUploadStep.svelte';
 	import GeocodeReviewStep from './GeocodeReviewStep.svelte';
 
-	// let { data }: { data: PageData } = $props();
+	let { data }: { data: PageData } = $props();
 
 	let importState = $state<ImportState>(createImportState());
 	let isCreating = $state(false);
+
+	// When importing to existing map, skip file upload step (it comes from pending import)
+	const isImportingToExistingMap = $derived(!!data.existingMap);
 
 	// Check for pending import data from map detail page
 	onMount(() => {
@@ -69,15 +73,21 @@
 			notes: record.raw.notes
 		}));
 
-		const title =
-			importState.file?.name.replace('.csv', '') ??
-			`Map ${new Date().toLocaleDateString()}`;
-		const res = await mapApi.create({
-			title,
-			stops
-		});
-
-		goto(resolve(`/maps/${res.map.id}`));
+		if (data.existingMap) {
+			// Add stops to existing map
+			await stopApi.bulkCreate(data.existingMap.id, stops);
+			goto(resolve(`/maps/${data.existingMap.id}`));
+		} else {
+			// Create new map with stops
+			const title =
+				importState.file?.name.replace('.csv', '') ??
+				`Map ${new Date().toLocaleDateString()}`;
+			const res = await mapApi.create({
+				title,
+				stops
+			});
+			goto(resolve(`/maps/${res.map.id}`));
+		}
 	}
 
 	function handleBack() {
@@ -137,6 +147,18 @@
 </script>
 
 <div class="space-y-6">
+	<!-- Page Header -->
+	<div class="flex items-center justify-between">
+		<h1 class="text-xl font-semibold tracking-tight">
+			Importing stops for
+			{#if isImportingToExistingMap}
+				{data.existingMap?.title}
+			{:else}
+				New Map
+			{/if}
+		</h1>
+	</div>
+
 	<!-- Step Header with Progress -->
 	<div class="rounded-lg border border-border bg-card p-4">
 		<div class="flex items-center justify-between">
@@ -183,8 +205,8 @@
 					>
 						<div
 							class="flex h-8 w-8 items-center justify-center rounded-full border-2 text-sm font-medium transition-all duration-300
-								{isCompleted ? 'border-primary bg-primary text-primary-foreground' : ''}
-								{isCurrent ? 'border-primary bg-primary/10 text-primary' : ''}
+								{isCompleted ? 'border-primary bg-primary/10 text-primary' : ''}
+								{isCurrent ? 'border-primary bg-primary text-primary-foreground' : ''}
 								{!isCompleted && !isCurrent
 								? 'border-muted bg-muted/50 text-muted-foreground'
 								: ''}
@@ -233,14 +255,16 @@
 	<!-- Step Content -->
 	{#if importState.step === 1}
 		<div class="space-y-6">
-			<Button
-				class="w-full"
-				onclick={createEmptyMap}
-				variant="outline"
-				disabled={isCreating}
-			>
-				{isCreating ? 'Creating...' : 'Create empty map'}
-			</Button>
+			{#if !isImportingToExistingMap}
+				<Button
+					class="w-full"
+					onclick={createEmptyMap}
+					variant="outline"
+					disabled={isCreating}
+				>
+					{isCreating ? 'Creating...' : 'Create empty map'}
+				</Button>
+			{/if}
 			<FileUploadStep bind:importState />
 		</div>
 	{:else if importState.step === 2}

@@ -11,6 +11,7 @@ import {
 import { and, eq, sql } from 'drizzle-orm';
 import { driverService } from './driver.service';
 import { ServiceError } from './errors';
+import { locationService } from './location.service';
 import { stopService } from './stop.service';
 
 export class MapService {
@@ -58,18 +59,40 @@ export class MapService {
 	 * Create a new map. Can optionally include Stops (without a map_id) which will be
 	 * created as well.
 	 *
-	 * TODO: For full atomicity, stopService.bulkCreateStops should accept a transaction
-	 * parameter. Currently, if stop creation fails after map creation, the map is rolled
-	 * back but any partial stop/location data may remain.
+	 * Note: Location creation uses `db` directly (not the transaction), so locations
+	 * may persist if the transaction fails. This is acceptable as orphaned locations
+	 * don't cause issues and can be cleaned up later if needed.
 	 */
 	async createMap(
 		data: CreateMap,
 		organizationId: string,
 		userId: string
 	): Promise<{ map: Map; stops: StopWithLocation[] | null }> {
-		// Wrap in transaction so map is rolled back if stop creation fails
-		return await db.transaction(async (tx) => {
-			const [map] = await tx
+		// If stops are provided, create locations first (outside transaction)
+		// This is needed because locationService uses `db` directly
+		let locationIds: string[] = [];
+		if (data.stops && data.stops.length > 0) {
+			locationIds = await Promise.all(
+				data.stops.map(async (stop) => {
+					if (stop.location_id) {
+						return stop.location_id;
+					}
+					if (stop.location) {
+						const location = await locationService.createLocation(
+							stop.location,
+							organizationId,
+							userId
+						);
+						return location.id;
+					}
+					throw new Error('Stop must have either location_id or location');
+				})
+			);
+		}
+
+		// Create map and stops in transaction
+		const map = await db.transaction(async (tx) => {
+			const [newMap] = await tx
 				.insert(maps)
 				.values({
 					organization_id: organizationId,
@@ -79,17 +102,34 @@ export class MapService {
 				})
 				.returning();
 
-			const createdStops = data.stops
-				? await stopService.bulkCreateStops(
-						data.stops.map((stop) => ({ ...stop, map_id: map.id })),
-						map.id,
-						organizationId,
-						userId
-					)
+			if (data.stops && data.stops.length > 0) {
+				// Insert stops directly using transaction (no map verification needed)
+				await tx.insert(stops).values(
+					data.stops.map((stop, index) => ({
+						organization_id: organizationId,
+						created_by: userId,
+						updated_by: userId,
+						map_id: newMap.id,
+						location_id: locationIds[index],
+						contact_name: stop.contact_name || null,
+						contact_phone: stop.contact_phone || null,
+						notes: stop.notes || null,
+						driver_id: null,
+						delivery_index: null
+					}))
+				);
+			}
+
+			return newMap;
+		});
+
+		// Fetch stops with locations after transaction commits
+		const createdStops =
+			data.stops && data.stops.length > 0
+				? await stopService.getStopsByMap(map.id, organizationId)
 				: null;
 
-			return { map, stops: createdStops };
-		});
+		return { map, stops: createdStops };
 	}
 
 	/**

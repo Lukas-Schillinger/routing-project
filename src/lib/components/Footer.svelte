@@ -89,7 +89,7 @@
 					aria-label="Toggle theme"
 				>
 					{mode.current}
-					{#if mode.current === 'dark'}
+					{#if mode.current === 'light'}
 						<Sun class="h-4 w-4" />
 					{:else}
 						<Moon class="h-4 w-4" />

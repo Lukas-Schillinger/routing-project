@@ -74,14 +74,14 @@
 			return;
 		}
 
-		// Store parsed data and navigate to import page
+		// Store parsed data and navigate to import page with mapId
 		pendingImport.set({
 			fileName: result.data.fileName,
 			headers: result.data.headers,
 			rows: result.data.rows
 		});
 
-		await goto(resolve('/maps/import'));
+		await goto(resolve(`/maps/import?mapId=${mapId}`));
 	}
 
 	async function handleMobileFileInput(e: Event) {

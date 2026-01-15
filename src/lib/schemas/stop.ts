@@ -19,6 +19,24 @@ export const createStopSchema = z
 		path: ['location_id']
 	});
 
+// Schema for bulk creating stops (map_id comes from URL param)
+export const bulkCreateStopsSchema = z.array(
+	z
+		.object({
+			location_id: z.uuid().optional(),
+			location: locationCreateSchema.optional(),
+			driver_id: z.uuid().nullable().optional(),
+			delivery_index: z.number().int().nullable().optional(),
+			contact_name: z.string().max(200).nullable().optional(),
+			contact_phone: phoneSchema.optional(),
+			notes: z.string().nullable().optional()
+		})
+		.refine((data) => data.location_id || data.location, {
+			message: 'Either location_id or location data must be provided',
+			path: ['location_id']
+		})
+);
+
 export const updateStopSchema = z.object({
 	location_id: z.uuid().optional(),
 	location: locationCreateSchema.optional(),
@@ -46,6 +64,7 @@ export const stopSchema = z.object({
 });
 
 export type CreateStop = z.infer<typeof createStopSchema>;
+export type BulkCreateStops = z.infer<typeof bulkCreateStopsSchema>;
 export type UpdateStop = z.infer<typeof updateStopSchema>;
 export type Stop = z.infer<typeof stopSchema>;
 

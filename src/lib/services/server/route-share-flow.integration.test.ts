@@ -30,7 +30,15 @@ import {
 	type TestTransaction
 } from '$lib/testing';
 import { eq, inArray } from 'drizzle-orm';
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterAll,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vitest';
 import { ServiceError } from './errors';
 import { routeShareService } from './route-share.service';
 import { TokenUtils } from './token.utils';
@@ -217,7 +225,9 @@ describe('Route Share Flow Tests', () => {
 				org.id,
 				user.id
 			);
-			shareIds.push((await routeShareService.getSharesForRoute(route.id, org.id))[0].id);
+			shareIds.push(
+				(await routeShareService.getSharesForRoute(route.id, org.id))[0].id
+			);
 
 			// 32 bytes = 64 hex characters
 			expect(token.length).toBe(64);
@@ -238,7 +248,10 @@ describe('Route Share Flow Tests', () => {
 				user.id
 			);
 
-			const shares = await routeShareService.getSharesForRoute(route.id, org.id);
+			const shares = await routeShareService.getSharesForRoute(
+				route.id,
+				org.id
+			);
 			shareIds.push(...shares.map((s) => s.id));
 
 			expect(token1).not.toBe(token2);
@@ -256,7 +269,10 @@ describe('Route Share Flow Tests', () => {
 				org.id,
 				user.id
 			);
-			const shares = await routeShareService.getSharesForRoute(route.id, org.id);
+			const shares = await routeShareService.getSharesForRoute(
+				route.id,
+				org.id
+			);
 			shareIds.push(...shares.map((s) => s.id));
 
 			const result = await routeShareService.validateTokenAndGetRoute(token);
@@ -405,7 +421,10 @@ describe('Route Share Flow Tests', () => {
 			}
 
 			// Verify the share is linked to a mail record
-			const shares = await routeShareService.getSharesForRoute(route.id, org.id);
+			const shares = await routeShareService.getSharesForRoute(
+				route.id,
+				org.id
+			);
 			const shareWithRecord = shares.find((s) => s.id === result.id);
 
 			expect(shareWithRecord?.mailRecord).toBeDefined();
@@ -444,7 +463,10 @@ describe('Route Share Flow Tests', () => {
 			}
 
 			// Old share should be revoked
-			const oldShare = await routeShareService.getShare(initialShare.id, org.id);
+			const oldShare = await routeShareService.getShare(
+				initialShare.id,
+				org.id
+			);
 			expect(oldShare.revoked_at).not.toBeNull();
 
 			// New share should be active
@@ -452,7 +474,9 @@ describe('Route Share Flow Tests', () => {
 			expect(newShare.revoked_at).toBeNull();
 
 			// Tokens should be different
-			expect(newShare.access_token_hash).not.toBe(initialShare.access_token_hash);
+			expect(newShare.access_token_hash).not.toBe(
+				initialShare.access_token_hash
+			);
 		});
 
 		it('old token invalid after resend', async () => {
@@ -486,7 +510,8 @@ describe('Route Share Flow Tests', () => {
 				.where(eq(routeShares.id, initialShare.id));
 
 			// Verify old token works before resend
-			const beforeResend = await routeShareService.validateTokenAndGetRoute(oldToken);
+			const beforeResend =
+				await routeShareService.validateTokenAndGetRoute(oldToken);
 			expect(beforeResend).not.toBeNull();
 
 			// Resend the share
@@ -502,7 +527,8 @@ describe('Route Share Flow Tests', () => {
 			}
 
 			// Old token should no longer work
-			const afterResend = await routeShareService.validateTokenAndGetRoute(oldToken);
+			const afterResend =
+				await routeShareService.validateTokenAndGetRoute(oldToken);
 			expect(afterResend).toBeNull();
 		});
 
@@ -543,7 +569,10 @@ describe('Route Share Flow Tests', () => {
 				org.id,
 				user.id
 			);
-			const shares = await routeShareService.getSharesForRoute(route.id, org.id);
+			const shares = await routeShareService.getSharesForRoute(
+				route.id,
+				org.id
+			);
 			shareIds.push(...shares.map((s) => s.id));
 
 			const result = await routeShareService.validateTokenAndGetRoute(token);

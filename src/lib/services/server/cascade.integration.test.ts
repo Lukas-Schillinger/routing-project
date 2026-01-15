@@ -274,7 +274,9 @@ describe('Cascading Operations Tests', () => {
 			} catch (error) {
 				expect(error).toBeInstanceOf(ServiceError);
 				expect((error as ServiceError).code).toBe('VALIDATION');
-				expect((error as ServiceError).message).toContain('assigned to a route');
+				expect((error as ServiceError).message).toContain(
+					'assigned to a route'
+				);
 			}
 		});
 
@@ -403,7 +405,9 @@ describe('Cascading Operations Tests', () => {
 			const testDriver = await createDriver(tx, { organization_id: org.id });
 			driverIds.push(testDriver.id);
 
-			const testLocation = await createLocation(tx, { organization_id: org.id });
+			const testLocation = await createLocation(tx, {
+				organization_id: org.id
+			});
 			locationIds.push(testLocation.id);
 
 			const testDepot = await createDepot(tx, {
@@ -476,7 +480,9 @@ describe('Cascading Operations Tests', () => {
 			// Create complete test data for cascade test
 			const testMap = await createMap(tx, { organization_id: org.id });
 			const testDriver = await createDriver(tx, { organization_id: org.id });
-			const testLocation = await createLocation(tx, { organization_id: org.id });
+			const testLocation = await createLocation(tx, {
+				organization_id: org.id
+			});
 			const testDepot = await createDepot(tx, {
 				organization_id: org.id,
 				location_id: testLocation.id
@@ -595,7 +601,9 @@ describe('Cascading Operations Tests', () => {
 			const testMap = await createMap(tx, { organization_id: org.id });
 			mapIds.push(testMap.id);
 
-			const testLocation = await createLocation(tx, { organization_id: org.id });
+			const testLocation = await createLocation(tx, {
+				organization_id: org.id
+			});
 
 			const testStop = await createStop(tx, {
 				organization_id: org.id,

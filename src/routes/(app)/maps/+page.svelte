@@ -1,9 +1,14 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { Button } from '$lib/components/ui/button';
 	import * as ButtonGroup from '$lib/components/ui/button-group/';
 	import { Input } from '$lib/components/ui/input';
 	import { SortButton, type SortOption } from '$lib/components/ui/sort-button';
 	import * as Tabs from '$lib/components/ui/tabs';
+	import { mapApi } from '$lib/services/api';
+	import { pendingImport } from '$lib/stores/pending-import';
+	import { parseCsvFile } from '$lib/utils';
 	import {
 		ChevronLeft,
 		ChevronRight,
@@ -12,6 +17,7 @@
 		CloudUpload,
 		Grid3x3,
 		List,
+		Loader2,
 		MapPin,
 		Plus,
 		Search
@@ -24,6 +30,52 @@
 	import MapCard from './MapCard.svelte';
 
 	let { data }: { data: PageData } = $props();
+
+	// New map creation state
+	let isCreatingMap = $state(false);
+	let fileInputRef = $state<HTMLInputElement | null>(null);
+
+	async function handleCreateNewMap() {
+		try {
+			isCreatingMap = true;
+			const { map } = await mapApi.create({
+				title: `Map ${new Date().toLocaleDateString()}`
+			});
+			await goto(resolve(`/maps/${map.id}`));
+		} catch (error) {
+			console.error('Failed to create map:', error);
+			alert('Failed to create map. Please try again.');
+		} finally {
+			isCreatingMap = false;
+		}
+	}
+
+	function handleSelectFileClick() {
+		fileInputRef?.click();
+	}
+
+	async function handleFileSelect(e: Event) {
+		const input = e.currentTarget as HTMLInputElement;
+		if (!input.files || input.files.length === 0) return;
+
+		const result = await parseCsvFile(input.files[0]);
+
+		if (!result.success) {
+			alert(result.error.message);
+			input.value = '';
+			return;
+		}
+
+		// Store parsed data and navigate to import page
+		pendingImport.set({
+			fileName: result.data.fileName,
+			headers: result.data.headers,
+			rows: result.data.rows
+		});
+
+		input.value = '';
+		await goto(resolve('/maps/import'));
+	}
 
 	// Initialize state from URL params (via server) - untrack since we only want initial values
 	type SortColumn = 'created_at' | 'title' | 'stops';
@@ -176,6 +228,15 @@
 </svelte:head>
 
 <div class="min-h-screen">
+	<!-- Hidden file input for CSV upload -->
+	<input
+		bind:this={fileInputRef}
+		type="file"
+		accept=".csv"
+		class="hidden"
+		onchange={handleFileSelect}
+	/>
+
 	<!-- Header Section -->
 	<div class="mb-3">
 		<div
@@ -185,13 +246,20 @@
 				<h1 class="text-xl font-semibold tracking-tight">Maps</h1>
 			</div>
 			<ButtonGroup.Root>
-				<Button href="/maps/import" class="gap-2 px-8">
-					<div class="flex items-center gap-2">
+				<Button
+					onclick={handleCreateNewMap}
+					disabled={isCreatingMap}
+					class="gap-2 px-8"
+				>
+					{#if isCreatingMap}
+						<Loader2 class="h-4 w-4 animate-spin" />
+						Creating...
+					{:else}
 						<Plus class="h-4 w-4" />
 						New Map
-					</div>
+					{/if}
 				</Button>
-				<Button variant="outline">
+				<Button variant="outline" onclick={handleSelectFileClick}>
 					<CloudUpload /> Select File
 				</Button>
 			</ButtonGroup.Root>
@@ -281,9 +349,19 @@
 						<p class="mt-1 text-sm text-muted-foreground">
 							Get started by creating your first map
 						</p>
-						<Button href="/maps/import" class="mt-4 gap-2" variant="outline">
-							<Plus class="h-4 w-4" />
-							Create Map
+						<Button
+							onclick={handleCreateNewMap}
+							disabled={isCreatingMap}
+							class="mt-4 gap-2"
+							variant="outline"
+						>
+							{#if isCreatingMap}
+								<Loader2 class="h-4 w-4 animate-spin" />
+								Creating...
+							{:else}
+								<Plus class="h-4 w-4" />
+								Create Map
+							{/if}
 						</Button>
 					{/if}
 				</div>
