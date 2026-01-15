@@ -2,11 +2,13 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { Button } from '$lib/components/ui/button';
+	import { ServiceError } from '$lib/errors';
 	import { createImportState, type ImportState } from '$lib/schemas/import';
 	import { mapApi, stopApi } from '$lib/services/api';
 	import { pendingImport } from '$lib/stores/pending-import';
 	import { ArrowLeft, ArrowRight, Check, Loader2 } from 'lucide-svelte';
 	import { onMount } from 'svelte';
+	import { toast } from 'svelte-sonner';
 	import type { PageData } from './$types';
 
 	import ColumnMappingStep from './ColumnMappingStep.svelte';
@@ -55,7 +57,11 @@
 			await goto(resolve(`/maps/${map.id}`));
 		} catch (error) {
 			console.error('Failed to create map:', error);
-			alert('Failed to create map. Please try again.');
+			const message =
+				error instanceof ServiceError
+					? error.message
+					: 'Failed to create map. Please try again.';
+			toast.error(message);
 		} finally {
 			isCreating = false;
 		}

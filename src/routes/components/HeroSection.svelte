@@ -34,7 +34,7 @@
 			class="mt-12 flex flex-col items-center justify-center gap-4 sm:flex-row"
 		>
 			<Button
-				href="/signup"
+				href="/auth/register"
 				size="lg"
 				class="h-12 gap-2 bg-landing-primary px-8 hover:bg-landing-primary-hover"
 			>

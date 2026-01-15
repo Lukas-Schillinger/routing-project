@@ -6,9 +6,11 @@
 	import { Input } from '$lib/components/ui/input';
 	import { SortButton, type SortOption } from '$lib/components/ui/sort-button';
 	import * as Tabs from '$lib/components/ui/tabs';
+	import { ServiceError } from '$lib/errors';
 	import { mapApi } from '$lib/services/api';
 	import { pendingImport } from '$lib/stores/pending-import';
 	import { parseCsvFile } from '$lib/utils';
+	import { toast } from 'svelte-sonner';
 	import {
 		ChevronLeft,
 		ChevronRight,
@@ -44,7 +46,11 @@
 			await goto(resolve(`/maps/${map.id}`));
 		} catch (error) {
 			console.error('Failed to create map:', error);
-			alert('Failed to create map. Please try again.');
+			const message =
+				error instanceof ServiceError
+					? error.message
+					: 'Failed to create map. Please try again.';
+			toast.error(message);
 		} finally {
 			isCreatingMap = false;
 		}
@@ -61,7 +67,7 @@
 		const result = await parseCsvFile(input.files[0]);
 
 		if (!result.success) {
-			alert(result.error.message);
+			toast.error(result.error.message);
 			input.value = '';
 			return;
 		}
