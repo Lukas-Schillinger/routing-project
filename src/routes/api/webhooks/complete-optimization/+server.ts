@@ -7,7 +7,8 @@ import {
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, locals }) => {
+	const log = locals.log;
 	let jobId: string | undefined;
 
 	try {
@@ -28,17 +29,21 @@ export const POST: RequestHandler = async ({ request }) => {
 		const validatedData = optimizationResponseSchema.parse(body);
 		jobId = validatedData.job_id;
 
+		log.info(
+			{ jobId, success: validatedData.success },
+			'Optimization webhook received'
+		);
+
 		// Process the optimization result
 		await optimizationService.completeOptimization(validatedData);
 
+		log.info({ jobId }, 'Optimization webhook processed');
 		return json({ success: true });
 	} catch (error) {
 		const { body, status } = handleWebhookError(
 			error,
 			'complete-optimization',
-			{
-				jobId
-			}
+			{ jobId }
 		);
 		return json(body, { status });
 	}

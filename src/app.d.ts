@@ -11,6 +11,7 @@ declare global {
 			session: import('$lib/services/server/auth').SessionValidationResult['session'];
 			permissions: import('$lib/services/server/permissions').Permission[];
 			requestId: string;
+			log: import('pino').Logger;
 		}
 	}
 }

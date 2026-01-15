@@ -16,6 +16,7 @@ import { z } from 'zod';
 import { mapboxDistanceMatrix, mapboxNavigation } from '../external/mapbox';
 import type { CoordinatesData } from '../external/mapbox/distance-matrix';
 import type { Coordinate } from '../external/mapbox/types';
+import { logger } from '$lib/server/logger';
 import { depotService } from './depot.service';
 import { ServiceError } from './errors';
 import { routeService } from './route.service';
@@ -184,7 +185,8 @@ export class OptimizationService {
 		mapId: string,
 		organizationId: string,
 		userId: string,
-		options: OptimizationOptions
+		options: OptimizationOptions,
+		requestId?: string
 	) {
 		const assignedDrivers = await this.fetchAssignedDrivers(
 			mapId,
@@ -241,16 +243,34 @@ export class OptimizationService {
 		});
 		const validatedPayload = sqsPayloadSchema.parse(payload);
 
+		logger.info(
+			{
+				jobId: job.id,
+				mapId,
+				requestId,
+				driverCount: vehicleIds.length,
+				stopCount: coordinatesData.locationIds.length
+			},
+			'Optimization job created'
+		);
+
 		try {
 			await this.sqsClient.send(
 				new SendMessageCommand({
 					QueueUrl: this.queueUrl,
-					MessageBody: JSON.stringify(validatedPayload)
+					MessageBody: JSON.stringify(validatedPayload),
+					MessageAttributes: {
+						request_id: {
+							DataType: 'String',
+							StringValue: requestId || ''
+						}
+					}
 				})
 			);
 
 			// Update to running after successful queue
 			await this.updateJobStatus(job.id, 'running');
+			logger.info({ jobId: job.id }, 'Job queued to SQS');
 		} catch (error) {
 			await this.updateJobStatus(
 				job.id,
@@ -266,6 +286,12 @@ export class OptimizationService {
 	}
 
 	async completeOptimization(response: OptimizationResponse) {
+		const log = logger.child({ jobId: response.job_id });
+		log.info(
+			{ success: response.success },
+			'Processing optimization completion'
+		);
+
 		try {
 			const [job] = await db
 				.select()
@@ -283,6 +309,7 @@ export class OptimizationService {
 			// This handles cancelled jobs and prevents double-processing
 			const validStatesForCompletion = ['pending', 'running'];
 			if (!validStatesForCompletion.includes(job.status)) {
+				log.info({ status: job.status }, 'Job not in valid state, skipping');
 				return;
 			}
 
@@ -296,6 +323,10 @@ export class OptimizationService {
 
 			// Discriminated union: TypeScript narrows type based on success field
 			if (!response.success) {
+				log.warn(
+					{ errorMessage: response.error_message },
+					'Optimization failed'
+				);
 				await this.updateJobStatus(
 					response.job_id,
 					'failed',
@@ -327,6 +358,10 @@ export class OptimizationService {
 			);
 
 			await this.updateJobStatus(response.job_id, 'completed');
+			log.info(
+				{ routeCount: result.routes.length, totalCost: result.total_cost },
+				'Optimization completed successfully'
+			);
 		} catch (error) {
 			// Recovery: mark job as failed before re-throwing
 			const errorMessage =

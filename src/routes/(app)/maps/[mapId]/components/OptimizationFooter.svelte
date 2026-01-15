@@ -94,6 +94,7 @@
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to optimize routes';
 			toast.error('Optimization failed', { description: error });
+		} finally {
 			isSubmitting = false;
 		}
 	}

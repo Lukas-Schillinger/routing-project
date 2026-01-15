@@ -4,6 +4,7 @@ import type { MailRecordType } from '$lib/schemas/mail-record.js';
 import type { Organization } from '$lib/schemas/organization.js';
 import type { RouteShare } from '$lib/schemas/route-share.js';
 import type { PublicUser } from '$lib/schemas/user.js';
+import { logger } from '$lib/server/logger';
 import { ServiceError } from '$lib/services/server/errors.js';
 import { invitationService } from '$lib/services/server/invitation.service.js';
 import { loginTokenService } from '$lib/services/server/login-token.service.js';
@@ -11,6 +12,8 @@ import { mailRecordService } from '$lib/services/server/mail-record.service.js';
 import { routeShareService } from '$lib/services/server/route-share.service.js';
 import { Resend } from 'resend';
 import { renderClient } from './render.js';
+
+const log = logger.child({ service: 'resend' });
 
 interface SendEmailParams {
 	organizationId: string;
@@ -41,6 +44,8 @@ export class ResendClient {
 	private async sendEmail(params: SendEmailParams): Promise<string> {
 		const { organizationId, type, to, subject, html, text } = params;
 
+		log.info({ type, to, organizationId }, 'Sending email');
+
 		const res = await this.resend.emails.send({
 			from: env.EMAIL_FROM,
 			to,
@@ -50,10 +55,12 @@ export class ResendClient {
 		});
 
 		if (res.error) {
+			log.error({ type, to, error: res.error.message }, 'Email send failed');
 			throw ServiceError.internal(res.error.message);
 		}
 
 		if (!res.data?.id) {
+			log.error({ type, to }, 'Resend did not return an email ID');
 			throw ServiceError.internal('Resend did not return an email ID');
 		}
 
@@ -66,6 +73,11 @@ export class ResendClient {
 			from_email: env.EMAIL_FROM,
 			subject
 		});
+
+		log.info(
+			{ type, to, resendId: res.data.id, mailRecordId: mailRecord.id },
+			'Email sent'
+		);
 
 		return mailRecord.id;
 	}

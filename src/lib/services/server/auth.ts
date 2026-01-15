@@ -2,11 +2,14 @@ import { SESSION } from '$lib/config';
 import type { PublicUser } from '$lib/schemas';
 import { db } from '$lib/server/db';
 import * as table from '$lib/server/db/schema';
+import { logger } from '$lib/server/logger';
 import { sha256 } from '@oslojs/crypto/sha2';
 import { encodeBase64url, encodeHexLowerCase } from '@oslojs/encoding';
 import type { RequestEvent } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
 import { publicUserColumns } from './user.service';
+
+const log = logger.child({ service: 'auth' });
 
 const DAY_IN_MS = 1000 * 60 * 60 * 24;
 
@@ -26,6 +29,7 @@ export async function createSession(token: string, userId: string) {
 		expires_at: new Date(Date.now() + DAY_IN_MS * SESSION.DURATION_DAYS)
 	};
 	await db.insert(table.session).values(session);
+	log.info({ userId, sessionId }, 'Session created');
 	return session;
 }
 
@@ -52,6 +56,7 @@ export async function validateSessionToken(token: string): Promise<{
 	const sessionExpired = Date.now() >= session.expires_at.getTime();
 	if (sessionExpired) {
 		await db.delete(table.session).where(eq(table.session.id, session.id));
+		log.info({ userId: user.id, sessionId }, 'Session expired');
 		return { session: null, user: null };
 	}
 
@@ -66,6 +71,7 @@ export async function validateSessionToken(token: string): Promise<{
 			.update(table.session)
 			.set({ expires_at: session.expires_at })
 			.where(eq(table.session.id, session.id));
+		log.debug({ userId: user.id, sessionId }, 'Session renewed');
 	}
 
 	return { session, user };
@@ -77,6 +83,7 @@ export type SessionValidationResult = Awaited<
 
 export async function invalidateSession(sessionId: string) {
 	await db.delete(table.session).where(eq(table.session.id, sessionId));
+	log.info({ sessionId }, 'Session invalidated');
 }
 
 export function setSessionTokenCookie(

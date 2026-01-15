@@ -23,9 +23,10 @@ export const GET: RequestHandler = async ({ params }) => {
 	}
 };
 
-export const POST: RequestHandler = async ({ params, request }) => {
+export const POST: RequestHandler = async ({ params, request, locals }) => {
 	const user = requirePermissionApi('resources:create');
 	const { mapId } = params;
+	const log = locals.log;
 
 	try {
 		const body = await request.json();
@@ -35,12 +36,17 @@ export const POST: RequestHandler = async ({ params, request }) => {
 			throw parsed.error;
 		}
 
+		log.info({ mapId }, 'Starting optimization request');
+
 		const result = await optimizationService.queueOptimization(
 			mapId,
 			user.organization_id,
 			user.id,
-			parsed.data
+			parsed.data,
+			locals.requestId
 		);
+
+		log.info({ mapId, jobId: result.id }, 'Optimization job queued');
 		return json(result);
 	} catch (err) {
 		handleApiError(err, 'Failed to optimize routes');

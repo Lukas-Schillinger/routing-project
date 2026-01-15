@@ -3,6 +3,7 @@ import '$lib/server/env';
 
 import * as Sentry from '@sentry/sveltekit';
 import { getLimiterForPath } from '$lib/server/rate-limit';
+import { createRequestLogger, logger } from '$lib/server/logger';
 import * as auth from '$lib/services/server/auth';
 import { rolePermissions } from '$lib/services/server/permissions';
 import type { Handle, HandleServerError } from '@sveltejs/kit';
@@ -11,9 +12,30 @@ import { sequence } from '@sveltejs/kit/hooks';
 const handleRequestId: Handle = async ({ event, resolve }) => {
 	const requestId = crypto.randomUUID();
 	event.locals.requestId = requestId;
+
+	// Create base logger (userId not available yet - auth hasn't run)
+	event.locals.log = createRequestLogger({
+		requestId,
+		path: event.url.pathname,
+		method: event.request.method
+	});
+
 	Sentry.setTag('requestId', requestId);
 
-	const response = await resolve(event);
+	const start = Date.now();
+	const response = await resolve(event); // Auth runs during this
+	const duration = Date.now() - start;
+
+	// Log completion (userId now available via enriched logger)
+	const log = event.locals.log;
+	if (response.status >= 500) {
+		log.error({ status: response.status, duration }, 'Request failed');
+	} else if (response.status >= 400) {
+		log.warn({ status: response.status, duration }, 'Client error');
+	} else {
+		log.info({ status: response.status, duration }, 'Request completed');
+	}
+
 	response.headers.set('X-Request-Id', requestId);
 	return response;
 };
@@ -76,15 +98,30 @@ const handleAuth: Handle = async ({ event, resolve }) => {
 	return resolve(event);
 };
 
+// Runs AFTER handleAuth - enriches logger with user context
+const handleEnrichLogger: Handle = async ({ event, resolve }) => {
+	if (event.locals.user) {
+		// Create child logger with user context bound
+		event.locals.log = event.locals.log.child({
+			userId: event.locals.user.id,
+			organizationId: event.locals.user.organization_id
+		});
+		Sentry.setUser({ id: event.locals.user.id });
+	}
+	return resolve(event);
+};
+
 export const handle: Handle = sequence(
 	Sentry.sentryHandle(),
 	handleRequestId,
 	handleRateLimit,
-	handleAuth
+	handleAuth,
+	handleEnrichLogger
 );
 
 const serverErrorHandler: HandleServerError = ({ error, event }) => {
-	console.error('Server error:', error, event);
+	const log = event.locals?.log ?? logger;
+	log.error({ err: error }, 'Unhandled server error');
 };
 
 export const handleError = Sentry.handleErrorWithSentry(serverErrorHandler);

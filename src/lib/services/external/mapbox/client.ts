@@ -1,4 +1,7 @@
 import { env } from '$env/dynamic/private';
+import { logger } from '$lib/server/logger';
+
+const log = logger.child({ service: 'mapbox' });
 
 /**
  * Mapbox API error class
@@ -42,15 +45,21 @@ class MapboxClient {
 			});
 		}
 
+		const start = Date.now();
 		const response = await fetch(url.toString(), {
 			method: 'GET',
 			headers: {
 				'Content-Type': 'application/json'
 			}
 		});
+		const duration = Date.now() - start;
 
 		if (!response.ok) {
 			const error = await response.json().catch(() => ({}));
+			log.warn(
+				{ endpoint, status: response.status, duration },
+				'Mapbox API error'
+			);
 			throw new MapboxApiError(
 				error.message || `Mapbox API error: ${response.statusText}`,
 				response.status,
@@ -58,6 +67,7 @@ class MapboxClient {
 			);
 		}
 
+		log.debug({ endpoint, status: response.status, duration }, 'Mapbox GET');
 		return response.json();
 	}
 
@@ -78,6 +88,7 @@ class MapboxClient {
 			});
 		}
 
+		const start = Date.now();
 		const response = await fetch(url.toString(), {
 			method: 'POST',
 			headers: {
@@ -85,9 +96,14 @@ class MapboxClient {
 			},
 			body: JSON.stringify(body)
 		});
+		const duration = Date.now() - start;
 
 		if (!response.ok) {
 			const error = await response.json().catch(() => ({}));
+			log.warn(
+				{ endpoint, status: response.status, duration },
+				'Mapbox API error'
+			);
 			throw new MapboxApiError(
 				error.message || `Mapbox API error: ${response.statusText}`,
 				response.status,
@@ -95,6 +111,7 @@ class MapboxClient {
 			);
 		}
 
+		log.debug({ endpoint, status: response.status, duration }, 'Mapbox POST');
 		return response.json();
 	}
 }

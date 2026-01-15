@@ -1,4 +1,5 @@
 import { env } from '$env/dynamic/private';
+import { logger } from '$lib/server/logger';
 import { ServiceError } from '$lib/services/server/errors';
 import {
 	DeleteObjectCommand,
@@ -7,6 +8,8 @@ import {
 	S3Client
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+
+const log = logger.child({ service: 'r2' });
 
 export class R2Service {
 	private client: S3Client;
@@ -28,6 +31,9 @@ export class R2Service {
 		contentType: string,
 		metadata?: Record<string, string>
 	): Promise<void> {
+		const size = file.length;
+		log.info({ key, contentType, size }, 'Uploading file');
+
 		try {
 			const command = new PutObjectCommand({
 				Bucket: env.CLOUDFLARE_R2_DEV_BUCKET_NAME!,
@@ -38,12 +44,16 @@ export class R2Service {
 			});
 
 			await this.client.send(command);
+			log.info({ key, size }, 'File uploaded');
 		} catch (error) {
+			log.error({ key, error: String(error) }, 'File upload failed');
 			throw ServiceError.internal(`Failed to upload file: ${error}`);
 		}
 	}
 
 	async deleteFile(key: string): Promise<void> {
+		log.info({ key }, 'Deleting file');
+
 		try {
 			const command = new DeleteObjectCommand({
 				Bucket: env.CLOUDFLARE_R2_DEV_BUCKET_NAME!,
@@ -51,7 +61,9 @@ export class R2Service {
 			});
 
 			await this.client.send(command);
+			log.info({ key }, 'File deleted');
 		} catch (error) {
+			log.error({ key, error: String(error) }, 'File deletion failed');
 			throw ServiceError.internal(`Failed to delete file: ${error}`);
 		}
 	}
@@ -60,14 +72,19 @@ export class R2Service {
 		key: string,
 		expiresIn: number = 3600
 	): Promise<string> {
+		log.debug({ key, expiresIn }, 'Generating signed URL');
+
 		try {
 			const command = new GetObjectCommand({
 				Bucket: env.CLOUDFLARE_R2_DEV_BUCKET_NAME!,
 				Key: key
 			});
 
-			return await getSignedUrl(this.client, command, { expiresIn });
+			const url = await getSignedUrl(this.client, command, { expiresIn });
+			log.debug({ key }, 'Signed URL generated');
+			return url;
 		} catch (error) {
+			log.error({ key, error: String(error) }, 'Signed URL generation failed');
 			throw ServiceError.internal(`Failed to generate signed URL: ${error}`);
 		}
 	}
