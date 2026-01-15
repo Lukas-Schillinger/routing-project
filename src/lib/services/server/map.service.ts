@@ -287,27 +287,27 @@ export class MapService {
 		const driver = await this.verifyDriverOwnership(driverId, organizationId);
 		await this.verifyMapOwnership(mapId, organizationId);
 
-		// Use transaction to ensure membership deletion and optional driver deletion are atomic
-		await db.transaction(async (tx) => {
-			const [deleted] = await tx
-				.delete(driverMapMemberships)
-				.where(
-					and(
-						eq(driverMapMemberships.driver_id, driverId),
-						eq(driverMapMemberships.map_id, mapId)
-					)
+		// Delete membership first
+		// Note: Not using transaction because driverService.deleteDriver uses its own db connection,
+		// which causes deadlock when called inside a transaction. Risk of orphaned temp driver is acceptable.
+		const [deleted] = await db
+			.delete(driverMapMemberships)
+			.where(
+				and(
+					eq(driverMapMemberships.driver_id, driverId),
+					eq(driverMapMemberships.map_id, mapId)
 				)
-				.returning();
+			)
+			.returning();
 
-			if (!deleted) {
-				throw ServiceError.notFound('Driver is not assigned to this map');
-			}
+		if (!deleted) {
+			throw ServiceError.notFound('Driver is not assigned to this map');
+		}
 
-			// Temporary drivers are deleted when removed from the map they were created for
-			if (driver.temporary) {
-				await driverService.deleteDriver(driverId, organizationId);
-			}
-		});
+		// Temporary drivers are deleted when removed from the map they were created for
+		if (driver.temporary) {
+			await driverService.deleteDriver(driverId, organizationId);
+		}
 
 		return { success: true };
 	}

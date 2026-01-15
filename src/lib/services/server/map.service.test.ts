@@ -613,6 +613,45 @@ describe('MapService', () => {
 				expect((error as ServiceError).code).toBe('NOT_FOUND');
 			}
 		});
+
+		it('deletes temporary driver when removed from map', async () => {
+			const tx = db as unknown as TestTransaction;
+
+			// Create a temporary driver
+			const tempDriver = await createDriver(tx, {
+				organization_id: testOrg1.id,
+				temporary: true
+			});
+			createdIds.drivers.push(tempDriver.id);
+
+			// Add to map
+			const membership = await mapService.addDriverToMap(
+				tempDriver.id,
+				testMap1.id,
+				testOrg1.id
+			);
+			createdIds.memberships.push(membership.id);
+
+			// Remove from map - should also delete the temp driver
+			await mapService.removeDriverFromMap(
+				tempDriver.id,
+				testMap1.id,
+				testOrg1.id
+			);
+
+			// Verify driver is deleted
+			const remainingDrivers = await db
+				.select()
+				.from(drivers)
+				.where(inArray(drivers.id, [tempDriver.id]));
+			expect(remainingDrivers.length).toBe(0);
+
+			// Remove from cleanup arrays since already deleted
+			const driverIdx = createdIds.drivers.indexOf(tempDriver.id);
+			if (driverIdx > -1) createdIds.drivers.splice(driverIdx, 1);
+			const membershipIdx = createdIds.memberships.indexOf(membership.id);
+			if (membershipIdx > -1) createdIds.memberships.splice(membershipIdx, 1);
+		});
 	});
 
 	describe('Reset Optimization', () => {
