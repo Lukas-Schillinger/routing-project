@@ -67,13 +67,7 @@
 				<ul class="space-y-3 text-sm text-muted-foreground">
 					<li>
 						<a
-							href={resolve('/')}
-							class="transition-colors hover:text-foreground">About</a
-						>
-					</li>
-					<li>
-						<a
-							href={resolve('/')}
+							href="mailto:hello@wend-routing.com"
 							class="transition-colors hover:text-foreground">Contact</a
 						>
 					</li>

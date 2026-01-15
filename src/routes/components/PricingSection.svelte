@@ -143,7 +143,9 @@
 					</div>
 
 					<Button
-						href={plan.cta === 'Contact sales' ? '/contact' : '/signup'}
+						href={plan.cta === 'Contact sales'
+							? 'mailto:hello@wend-routing.com'
+							: '/auth/register'}
 						class="mb-8 w-full {plan.highlighted
 							? 'bg-landing-primary text-landing-primary-foreground hover:bg-landing-primary-hover'
 							: 'bg-foreground/5 text-foreground hover:bg-foreground/10'}"

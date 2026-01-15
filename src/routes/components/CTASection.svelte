@@ -48,7 +48,7 @@
 					class="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row"
 				>
 					<Button
-						href="/signup"
+						href="/auth/register"
 						size="lg"
 						class="h-12 gap-2 bg-landing-secondary px-8 text-landing-secondary-foreground hover:bg-forest-600 hover:text-amber-400 dark:hover:bg-amber-400 dark:hover:text-forest-600"
 					>
@@ -56,7 +56,7 @@
 						<ArrowRight class="h-4 w-4" />
 					</Button>
 					<Button
-						href="/contact"
+						href="mailto:hello@wend-routing.com"
 						size="lg"
 						class="h-12 border-white/20 bg-white/10 px-8 text-amber-400 backdrop-blur-sm hover:bg-white/20"
 					>
