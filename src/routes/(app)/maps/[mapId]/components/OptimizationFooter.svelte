@@ -71,10 +71,15 @@
 		stops.filter((s) => s.stop.driver_id === null).length
 	);
 
+	const allStopsAssigned = $derived(
+		stops.length > 0 && unassignedStopsCount === 0
+	);
+
 	const canOptimize = $derived(
 		selectedDepotId &&
 			assignedDrivers.length > 0 &&
 			stops.length > 0 &&
+			!allStopsAssigned &&
 			!isSubmitting
 	);
 
@@ -82,8 +87,7 @@
 		if (!selectedDepotId) return 'Select a depot to optimize routes';
 		if (assignedDrivers.length === 0) return 'Add at least one driver';
 		if (stops.length === 0) return 'Add at least one stop';
-		if (unassignedStopsCount > 0)
-			return `${unassignedStopsCount} unassigned stop${unassignedStopsCount !== 1 ? 's' : ''}`;
+		if (allStopsAssigned) return 'All stops are already assigned';
 		return null;
 	});
 
