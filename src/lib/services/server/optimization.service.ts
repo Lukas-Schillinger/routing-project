@@ -9,6 +9,7 @@ import {
 	optimizationJobs,
 	stops
 } from '$lib/server/db/schema';
+import { logger } from '$lib/server/logger';
 import { SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs';
 import { createHash } from 'crypto';
 import { and, eq, inArray } from 'drizzle-orm';
@@ -16,7 +17,6 @@ import { z } from 'zod';
 import { mapboxDistanceMatrix, mapboxNavigation } from '../external/mapbox';
 import type { CoordinatesData } from '../external/mapbox/distance-matrix';
 import type { Coordinate } from '../external/mapbox/types';
-import { logger } from '$lib/server/logger';
 import { depotService } from './depot.service';
 import { ServiceError } from './errors';
 import { routeService } from './route.service';
@@ -78,7 +78,6 @@ function parseCoordinateOrThrow(
 
 export const optimizationConfigSchema = z.object({
 	fairness: z.enum(['high', 'medium', 'low']).default('medium'),
-	time_limit_sec: z.number().int().positive().default(10),
 	start_at_depot: z.boolean().default(true),
 	end_at_depot: z.boolean().default(false)
 });
@@ -146,7 +145,6 @@ export class OptimizationService {
 	private sqsClient: SQSClient;
 	private queueUrl: string;
 	private readonly DEFAULT_CONFIG = {
-		time_limit_sec: 30,
 		start_at_depot: true,
 		end_at_depot: true
 	} as const;
