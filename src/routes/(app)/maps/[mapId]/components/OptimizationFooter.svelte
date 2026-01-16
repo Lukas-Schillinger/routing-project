@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
+	import { ConfirmDeleteDialog } from '$lib/components/ConfirmDeleteDialog';
 	import EditOrCreateDepotPopover from '$lib/components/EditOrCreateDepotPopover';
 	import { Button, buttonVariants } from '$lib/components/ui/button';
 	import * as ButtonGroup from '$lib/components/ui/button-group';
@@ -10,6 +11,7 @@
 		DepotWithLocationJoin,
 		Driver,
 		Map,
+		Route,
 		StopWithLocation
 	} from '$lib/schemas';
 	import { mapApi } from '$lib/services/api';
@@ -18,6 +20,7 @@
 		Building2,
 		Loader2,
 		Plus,
+		RotateCcw,
 		Sparkles,
 		TriangleAlert,
 		X
@@ -31,6 +34,7 @@
 		stops,
 		depots,
 		assignedDrivers,
+		routes,
 		pageState,
 		selectedDepotId = $bindable(),
 		onOptimize,
@@ -40,6 +44,7 @@
 		stops: StopWithLocation[];
 		depots: DepotWithLocationJoin[];
 		assignedDrivers: Driver[];
+		routes: Route[];
 		pageState: PageState;
 		selectedDepotId: string | undefined;
 		onOptimize: () => void;
@@ -48,7 +53,10 @@
 
 	let fairness = $state<'high' | 'medium' | 'low'>('medium');
 	let isSubmitting = $state(false);
+	let isResetting = $state(false);
 	let error = $state('');
+
+	const hasRoutes = $derived(routes.length > 0);
 
 	// Set default depot if available
 	$effect(() => {
@@ -115,6 +123,21 @@
 	function handleDepotCreated(depot: DepotWithLocationJoin) {
 		selectedDepotId = depot.depot.id;
 		invalidateAll();
+	}
+
+	async function handleResetRoutes() {
+		isResetting = true;
+		try {
+			await mapApi.resetOptimization(map.id);
+			await invalidateAll();
+			toast.success('Routes reset successfully');
+		} catch (err) {
+			toast.error('Failed to reset routes', {
+				description: err instanceof Error ? err.message : 'Unknown error'
+			});
+		} finally {
+			isResetting = false;
+		}
 	}
 </script>
 
@@ -235,8 +258,31 @@
 				</div>
 			</div>
 
-			<!-- Optimize Button with validation info -->
-			<div class="flex grow gap-2 @lg:max-w-40">
+			<!-- Reset and Optimize Buttons with validation info -->
+			<div class="flex grow gap-2 @lg:max-w-52">
+				<ConfirmDeleteDialog
+					title="Reset Routes"
+					description="Are you sure you want to reset all routes? This will clear all driver assignments and route geometries."
+					confirmText="Reset"
+					onConfirm={handleResetRoutes}
+				>
+					{#snippet trigger({ props })}
+						<Button
+							{...props}
+							variant="outline"
+							size="sm"
+							class="h-8 gap-1.5"
+							disabled={!hasRoutes || isResetting}
+						>
+							{#if isResetting}
+								<Loader2 class="h-3.5 w-3.5 animate-spin" />
+							{:else}
+								<RotateCcw class="h-3.5 w-3.5" />
+							{/if}
+							Reset
+						</Button>
+					{/snippet}
+				</ConfirmDeleteDialog>
 				<Button
 					class="h-8 grow gap-1.5"
 					size="sm"

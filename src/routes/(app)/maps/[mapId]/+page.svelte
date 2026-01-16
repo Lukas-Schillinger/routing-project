@@ -252,6 +252,7 @@
 				stops={data.stops}
 				depots={data.depots}
 				assignedDrivers={data.assignedDrivers}
+				routes={data.routes}
 				{pageState}
 				bind:selectedDepotId
 				onOptimize={handleOptimizationStarted}
