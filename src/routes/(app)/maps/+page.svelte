@@ -10,7 +10,6 @@
 	import { mapApi } from '$lib/services/api';
 	import { pendingImport } from '$lib/stores/pending-import';
 	import { parseCsvFile } from '$lib/utils';
-	import { toast } from 'svelte-sonner';
 	import {
 		ChevronLeft,
 		ChevronRight,
@@ -25,6 +24,7 @@
 		Search
 	} from 'lucide-svelte';
 	import { untrack } from 'svelte';
+	import { toast } from 'svelte-sonner';
 	import { MediaQuery, SvelteURLSearchParams } from 'svelte/reactivity';
 	import type { PageData } from './$types';
 	import DepotsCard from './DepotsCard.svelte';
@@ -230,7 +230,7 @@
 </script>
 
 <svelte:head>
-	<title>Maps - Routing Project</title>
+	<title>Wend | Maps</title>
 </svelte:head>
 
 <div class="min-h-screen">

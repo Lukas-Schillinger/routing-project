@@ -153,8 +153,7 @@
 </script>
 
 <svelte:head>
-	<title>{driver?.name || 'Driver'} Route - {map.title} | Routing Project</title
-	>
+	<title>Wend | {driver?.name || 'Driver'} Route - {map.title}</title>
 	<meta
 		name="description"
 		content="View route for {driver?.name || 'driver'} in {map.title}"

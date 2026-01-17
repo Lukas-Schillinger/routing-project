@@ -4,7 +4,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
-	import { Loader2, Mail, CheckCircle } from 'lucide-svelte';
+	import { CheckCircle, Loader2, Mail } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
 	let email = $state($page.url.searchParams.get('email') ?? '');
@@ -47,7 +47,7 @@
 </script>
 
 <svelte:head>
-	<title>Reset password - Wend</title>
+	<title>Wend | Reset password</title>
 </svelte:head>
 
 <AuthCard

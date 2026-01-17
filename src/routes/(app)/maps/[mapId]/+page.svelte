@@ -180,7 +180,7 @@
 </script>
 
 <svelte:head>
-	<title>{data.map.title} - Routing Project</title>
+	<title>Wend | {data.map.title}</title>
 </svelte:head>
 
 <div class="flex h-full flex-col">

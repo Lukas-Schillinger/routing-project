@@ -152,6 +152,10 @@
 	const isProcessing = $derived(importState.isProcessing || step3IsImporting);
 </script>
 
+<svelte:head>
+	<title>Wend | Import Stops</title>
+</svelte:head>
+
 <div class="space-y-6">
 	<!-- Page Header -->
 	<div class="flex items-center justify-between">

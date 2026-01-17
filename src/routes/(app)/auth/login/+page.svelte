@@ -56,7 +56,7 @@
 </script>
 
 <svelte:head>
-	<title>Sign in - Wend</title>
+	<title>Wend | Sign in</title>
 </svelte:head>
 
 <AuthCard title="Welcome back" {description}>

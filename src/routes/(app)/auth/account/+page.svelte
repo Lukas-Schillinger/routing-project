@@ -31,7 +31,7 @@
 </script>
 
 <svelte:head>
-	<title>Account Settings | Routing Project</title>
+	<title>Wend | Account</title>
 	<meta
 		name="description"
 		content="Manage your account settings and organization preferences"

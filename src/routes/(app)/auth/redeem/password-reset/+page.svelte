@@ -13,7 +13,7 @@
 </script>
 
 <svelte:head>
-	<title>Reset password - Wend</title>
+	<title>Wend | Reset password</title>
 </svelte:head>
 
 <AuthCard title="Set new password" description="Enter your new password">

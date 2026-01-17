@@ -18,7 +18,7 @@
 </script>
 
 <svelte:head>
-	<title>Print Route - {driver?.name || 'Driver'} | {map.title}</title>
+	<title>Wend | Print route - {driver?.name || 'Driver'} | {map.title}</title>
 </svelte:head>
 
 <!-- Print Controls (hidden when printing) -->

@@ -13,7 +13,7 @@
 </script>
 
 <svelte:head>
-	<title>Create account - Wend</title>
+	<title>Wend | Create account</title>
 </svelte:head>
 
 <AuthCard

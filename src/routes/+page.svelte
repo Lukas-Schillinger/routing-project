@@ -11,6 +11,10 @@
 	let { data }: { data: PageData } = $props();
 </script>
 
+<svelte:head>
+	<title>Wend | Route Planning Made Simple</title>
+</svelte:head>
+
 <div class="min-h-screen bg-background">
 	<Header user={data.user} />
 	<main>

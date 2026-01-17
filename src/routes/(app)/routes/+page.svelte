@@ -7,6 +7,10 @@
 	let { data }: { data: PageData } = $props();
 </script>
 
+<svelte:head>
+	<title>Wend | Routes</title>
+</svelte:head>
+
 <Table.Root>
 	<Table.Caption>A list of your recent invoices.</Table.Caption>
 	<Table.Header>
