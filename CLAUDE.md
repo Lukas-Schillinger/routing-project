@@ -159,7 +159,6 @@ The CI action runner will reject commits that fail these checks.
 
 Reference: `src/lib/testing/index.ts`
 
-- `withTestTransaction(fn)` - Wraps tests in a transaction that auto-rolls back
 - `createMock<Model>(overrides?)` - Returns plain object with fake data (no DB)
 - `create<Model>(tx, overrides)` - Inserts into DB via transaction
 - `createTestEnvironment(tx)` - Creates org + admin user

@@ -366,16 +366,13 @@ describe('OptimizationService', () => {
 			});
 			createdIds.jobs.push(job.id);
 
-			try {
-				await optimizationService.completeOptimization({
+			await expect(
+				optimizationService.completeOptimization({
 					success: false,
 					job_id: job.id,
 					error_message: 'Solver timeout'
-				});
-				expect.fail('Should have thrown');
-			} catch {
-				// Expected to throw
-			}
+				})
+			).rejects.toThrow();
 
 			// Verify job marked as failed
 			const [updatedJob] = await db
@@ -494,6 +491,367 @@ describe('OptimizationService', () => {
 				.limit(1);
 
 			expect(updatedJob.status).toBe('cancelled');
+		});
+	});
+
+	describe('Complete Optimization Success Path', () => {
+		it('clears existing stop assignments on completion', async () => {
+			const tx = db as unknown as TestTransaction;
+
+			// Create a new map
+			const newMap = await createMap(tx, { organization_id: testOrg1.id });
+			createdIds.maps.push(newMap.id);
+
+			// Create driver
+			const driver = await createDriver(tx, {
+				organization_id: testOrg1.id,
+				active: true
+			});
+			createdIds.drivers.push(driver.id);
+
+			// Create stops WITH existing assignments
+			const stop1 = await createStop(tx, {
+				organization_id: testOrg1.id,
+				map_id: newMap.id,
+				location_id: testStopLocation1.id,
+				driver_id: driver.id,
+				delivery_index: 0
+			});
+			const stop2 = await createStop(tx, {
+				organization_id: testOrg1.id,
+				map_id: newMap.id,
+				location_id: testStopLocation2.id,
+				driver_id: driver.id,
+				delivery_index: 1
+			});
+			createdIds.stops.push(stop1.id, stop2.id);
+
+			// Create job in running state
+			const matrix = await createMatrix(tx, {
+				organization_id: testOrg1.id,
+				map_id: newMap.id
+			});
+			createdIds.matrices.push(matrix.id);
+
+			const job = await createOptimizationJob(tx, {
+				organization_id: testOrg1.id,
+				map_id: newMap.id,
+				matrix_id: matrix.id,
+				depot_id: testDepot1.id,
+				status: 'running'
+			});
+			createdIds.jobs.push(job.id);
+
+			// Complete with empty routes (to test clearStopAssignments without applyOptimizedRoutes)
+			await optimizationService.completeOptimization({
+				success: true,
+				job_id: job.id,
+				result: {
+					routes: [],
+					total_cost: 0
+				}
+			});
+
+			// Verify stops had assignments cleared
+			const [updatedStop1] = await db
+				.select()
+				.from(stops)
+				.where(eq(stops.id, stop1.id))
+				.limit(1);
+
+			const [updatedStop2] = await db
+				.select()
+				.from(stops)
+				.where(eq(stops.id, stop2.id))
+				.limit(1);
+
+			expect(updatedStop1.driver_id).toBeNull();
+			expect(updatedStop1.delivery_index).toBeNull();
+			expect(updatedStop2.driver_id).toBeNull();
+			expect(updatedStop2.delivery_index).toBeNull();
+		});
+
+		it(
+			'applies optimized routes and creates route geometry',
+			async () => {
+				const tx = db as unknown as TestTransaction;
+
+				// Create a new map
+				const newMap = await createMap(tx, { organization_id: testOrg1.id });
+				createdIds.maps.push(newMap.id);
+
+				// Create driver
+				const driver = await createDriver(tx, {
+					organization_id: testOrg1.id,
+					active: true
+				});
+				createdIds.drivers.push(driver.id);
+
+				// Create stops (unassigned)
+				const stop1 = await createStop(tx, {
+					organization_id: testOrg1.id,
+					map_id: newMap.id,
+					location_id: testStopLocation1.id
+				});
+				const stop2 = await createStop(tx, {
+					organization_id: testOrg1.id,
+					map_id: newMap.id,
+					location_id: testStopLocation2.id
+				});
+				createdIds.stops.push(stop1.id, stop2.id);
+
+				// Create job in running state
+				const matrix = await createMatrix(tx, {
+					organization_id: testOrg1.id,
+					map_id: newMap.id
+				});
+				createdIds.matrices.push(matrix.id);
+
+				const job = await createOptimizationJob(tx, {
+					organization_id: testOrg1.id,
+					map_id: newMap.id,
+					matrix_id: matrix.id,
+					depot_id: testDepot1.id,
+					status: 'running'
+				});
+				createdIds.jobs.push(job.id);
+
+				// Complete with routes that assign stops to driver
+				await optimizationService.completeOptimization({
+					success: true,
+					job_id: job.id,
+					result: {
+						routes: [
+							{
+								driver_id: driver.id,
+								legs: [
+									{ stop_id: testStopLocation1.id, arrival_time: 0 },
+									{ stop_id: testStopLocation2.id, arrival_time: 300 }
+								],
+								total_travel_time: 600,
+								total_service_time: 300
+							}
+						],
+						total_cost: 900
+					}
+				});
+
+				// Verify stops have correct assignments
+				const [updatedStop1] = await db
+					.select()
+					.from(stops)
+					.where(eq(stops.id, stop1.id))
+					.limit(1);
+
+				const [updatedStop2] = await db
+					.select()
+					.from(stops)
+					.where(eq(stops.id, stop2.id))
+					.limit(1);
+
+				expect(updatedStop1.driver_id).toBe(driver.id);
+				expect(updatedStop1.delivery_index).toBe(0);
+				expect(updatedStop2.driver_id).toBe(driver.id);
+				expect(updatedStop2.delivery_index).toBe(1);
+
+				// Verify route was created
+				const [createdRoute] = await db
+					.select()
+					.from(routes)
+					.where(eq(routes.map_id, newMap.id))
+					.limit(1);
+
+				expect(createdRoute).toBeDefined();
+				expect(createdRoute.driver_id).toBe(driver.id);
+				expect(createdRoute.depot_id).toBe(testDepot1.id);
+				expect(createdRoute.geometry).toBeDefined();
+				createdIds.routes.push(createdRoute.id);
+			},
+			{ timeout: 15000 }
+		);
+
+		it(
+			'handles multiple drivers with multiple routes',
+			async () => {
+				const tx = db as unknown as TestTransaction;
+
+				// Create a new map
+				const newMap = await createMap(tx, { organization_id: testOrg1.id });
+				createdIds.maps.push(newMap.id);
+
+				// Create two drivers
+				const driver1 = await createDriver(tx, {
+					organization_id: testOrg1.id,
+					active: true
+				});
+				const driver2 = await createDriver(tx, {
+					organization_id: testOrg1.id,
+					active: true
+				});
+				createdIds.drivers.push(driver1.id, driver2.id);
+
+				// Create additional locations
+				const loc3 = await createLocation(tx, { organization_id: testOrg1.id });
+				const loc4 = await createLocation(tx, { organization_id: testOrg1.id });
+				createdIds.locations.push(loc3.id, loc4.id);
+
+				// Create stops
+				const stop1 = await createStop(tx, {
+					organization_id: testOrg1.id,
+					map_id: newMap.id,
+					location_id: testStopLocation1.id
+				});
+				const stop2 = await createStop(tx, {
+					organization_id: testOrg1.id,
+					map_id: newMap.id,
+					location_id: testStopLocation2.id
+				});
+				const stop3 = await createStop(tx, {
+					organization_id: testOrg1.id,
+					map_id: newMap.id,
+					location_id: loc3.id
+				});
+				const stop4 = await createStop(tx, {
+					organization_id: testOrg1.id,
+					map_id: newMap.id,
+					location_id: loc4.id
+				});
+				createdIds.stops.push(stop1.id, stop2.id, stop3.id, stop4.id);
+
+				// Create job
+				const matrix = await createMatrix(tx, {
+					organization_id: testOrg1.id,
+					map_id: newMap.id
+				});
+				createdIds.matrices.push(matrix.id);
+
+				const job = await createOptimizationJob(tx, {
+					organization_id: testOrg1.id,
+					map_id: newMap.id,
+					matrix_id: matrix.id,
+					depot_id: testDepot1.id,
+					status: 'running'
+				});
+				createdIds.jobs.push(job.id);
+
+				// Complete with routes for both drivers
+				await optimizationService.completeOptimization({
+					success: true,
+					job_id: job.id,
+					result: {
+						routes: [
+							{
+								driver_id: driver1.id,
+								legs: [
+									{ stop_id: testStopLocation1.id, arrival_time: 0 },
+									{ stop_id: testStopLocation2.id, arrival_time: 300 }
+								],
+								total_travel_time: 600,
+								total_service_time: 300
+							},
+							{
+								driver_id: driver2.id,
+								legs: [
+									{ stop_id: loc3.id, arrival_time: 0 },
+									{ stop_id: loc4.id, arrival_time: 300 }
+								],
+								total_travel_time: 600,
+								total_service_time: 300
+							}
+						],
+						total_cost: 1800
+					}
+				});
+
+				// Verify driver1's stops
+				const [s1] = await db
+					.select()
+					.from(stops)
+					.where(eq(stops.id, stop1.id))
+					.limit(1);
+				const [s2] = await db
+					.select()
+					.from(stops)
+					.where(eq(stops.id, stop2.id))
+					.limit(1);
+
+				expect(s1.driver_id).toBe(driver1.id);
+				expect(s2.driver_id).toBe(driver1.id);
+
+				// Verify driver2's stops
+				const [s3] = await db
+					.select()
+					.from(stops)
+					.where(eq(stops.id, stop3.id))
+					.limit(1);
+				const [s4] = await db
+					.select()
+					.from(stops)
+					.where(eq(stops.id, stop4.id))
+					.limit(1);
+
+				expect(s3.driver_id).toBe(driver2.id);
+				expect(s4.driver_id).toBe(driver2.id);
+
+				// Verify two routes were created
+				const createdRoutes = await db
+					.select()
+					.from(routes)
+					.where(eq(routes.map_id, newMap.id));
+
+				expect(createdRoutes).toHaveLength(2);
+				createdRoutes.forEach((r) => createdIds.routes.push(r.id));
+			},
+			{ timeout: 15000 }
+		);
+
+		it('marks job as completed after successful processing', async () => {
+			const tx = db as unknown as TestTransaction;
+
+			// Create a new map
+			const newMap = await createMap(tx, { organization_id: testOrg1.id });
+			createdIds.maps.push(newMap.id);
+
+			// Create at least one stop (required by completeOptimization)
+			const stop = await createStop(tx, {
+				organization_id: testOrg1.id,
+				map_id: newMap.id,
+				location_id: testStopLocation1.id
+			});
+			createdIds.stops.push(stop.id);
+
+			// Create job in running state
+			const matrix = await createMatrix(tx, {
+				organization_id: testOrg1.id,
+				map_id: newMap.id
+			});
+			createdIds.matrices.push(matrix.id);
+
+			const job = await createOptimizationJob(tx, {
+				organization_id: testOrg1.id,
+				map_id: newMap.id,
+				matrix_id: matrix.id,
+				depot_id: testDepot1.id,
+				status: 'running'
+			});
+			createdIds.jobs.push(job.id);
+
+			await optimizationService.completeOptimization({
+				success: true,
+				job_id: job.id,
+				result: {
+					routes: [],
+					total_cost: 0
+				}
+			});
+
+			const [updatedJob] = await db
+				.select()
+				.from(optimizationJobs)
+				.where(eq(optimizationJobs.id, job.id))
+				.limit(1);
+
+			expect(updatedJob.status).toBe('completed');
 		});
 	});
 
