@@ -39,7 +39,7 @@ const NON_EXISTENT_UUID = '00000000-0000-0000-0000-000000000000';
 
 // Test fixtures - org1
 let testOrg1: { id: string };
-let testUser1: { id: string };
+let testUser1: typeof users.$inferSelect;
 let testMap1: { id: string };
 let testDriver1: { id: string };
 let testDepot1: { id: string };
@@ -886,13 +886,7 @@ describe('RouteService', () => {
 			});
 			createdUserIds.push(adminUser.id);
 
-			const results = await routeService.getRoutesForUser({
-				id: adminUser.id,
-				organization_id: testOrg1.id,
-				role: 'admin',
-				email: 'admin@test.com',
-				name: 'Admin'
-			});
+			const results = await routeService.getRoutesForUser(adminUser);
 
 			expect(results.length).toBeGreaterThanOrEqual(1);
 			expect(results.some((r) => r.id === route.id)).toBe(true);
@@ -945,13 +939,7 @@ describe('RouteService', () => {
 			});
 			createdRouteIds.push(otherRoute.id);
 
-			const results = await routeService.getRoutesForUser({
-				id: driverUser.id,
-				organization_id: testOrg1.id,
-				role: 'driver',
-				email: 'driver@test.com',
-				name: 'Driver'
-			});
+			const results = await routeService.getRoutesForUser(driverUser);
 
 			// Should only contain the linked driver's route
 			expect(results.some((r) => r.id === linkedRoute.id)).toBe(true);
@@ -968,13 +956,7 @@ describe('RouteService', () => {
 			});
 			createdUserIds.push(driverUser.id);
 
-			const results = await routeService.getRoutesForUser({
-				id: driverUser.id,
-				organization_id: testOrg1.id,
-				role: 'driver',
-				email: 'driver@test.com',
-				name: 'Driver'
-			});
+			const results = await routeService.getRoutesForUser(driverUser);
 
 			expect(results).toHaveLength(0);
 		});
@@ -998,13 +980,10 @@ describe('RouteService', () => {
 			});
 			createdRouteIds.push(route.id);
 
-			const result = await routeService.getRouteByIdForUser(route.id, {
-				id: testUser1.id,
-				organization_id: testOrg1.id,
-				role: 'admin',
-				email: 'admin@test.com',
-				name: 'Admin'
-			});
+			const result = await routeService.getRouteByIdForUser(
+				route.id,
+				testUser1
+			);
 
 			expect(result.id).toBe(route.id);
 		});
@@ -1035,13 +1014,10 @@ describe('RouteService', () => {
 			});
 			createdRouteIds.push(route.id);
 
-			const result = await routeService.getRouteByIdForUser(route.id, {
-				id: driverUser.id,
-				organization_id: testOrg1.id,
-				role: 'driver',
-				email: 'driver@test.com',
-				name: 'Driver'
-			});
+			const result = await routeService.getRouteByIdForUser(
+				route.id,
+				driverUser
+			);
 
 			expect(result.id).toBe(route.id);
 		});
@@ -1080,13 +1056,7 @@ describe('RouteService', () => {
 			createdRouteIds.push(otherRoute.id);
 
 			try {
-				await routeService.getRouteByIdForUser(otherRoute.id, {
-					id: driverUser.id,
-					organization_id: testOrg1.id,
-					role: 'driver',
-					email: 'driver@test.com',
-					name: 'Driver'
-				});
+				await routeService.getRouteByIdForUser(otherRoute.id, driverUser);
 				expect.fail('Should have thrown');
 			} catch (error) {
 				expect(error).toBeInstanceOf(ServiceError);
@@ -1120,13 +1090,7 @@ describe('RouteService', () => {
 			createdRouteIds.push(route.id);
 
 			try {
-				await routeService.getRouteByIdForUser(route.id, {
-					id: driverUser.id,
-					organization_id: testOrg1.id,
-					role: 'driver',
-					email: 'driver@test.com',
-					name: 'Driver'
-				});
+				await routeService.getRouteByIdForUser(route.id, driverUser);
 				expect.fail('Should have thrown');
 			} catch (error) {
 				expect(error).toBeInstanceOf(ServiceError);

@@ -625,11 +625,10 @@ describe('OptimizationService', () => {
 							{
 								driver_id: driver.id,
 								legs: [
-									{ stop_id: testStopLocation1.id, arrival_time: 0 },
-									{ stop_id: testStopLocation2.id, arrival_time: 300 }
+									{ stop_id: testStopLocation1.id, stop_index: 0 },
+									{ stop_id: testStopLocation2.id, stop_index: 1 }
 								],
-								total_travel_time: 600,
-								total_service_time: 300
+								cost: 900
 							}
 						],
 						total_cost: 900
@@ -743,20 +742,18 @@ describe('OptimizationService', () => {
 							{
 								driver_id: driver1.id,
 								legs: [
-									{ stop_id: testStopLocation1.id, arrival_time: 0 },
-									{ stop_id: testStopLocation2.id, arrival_time: 300 }
+									{ stop_id: testStopLocation1.id, stop_index: 0 },
+									{ stop_id: testStopLocation2.id, stop_index: 1 }
 								],
-								total_travel_time: 600,
-								total_service_time: 300
+								cost: 900
 							},
 							{
 								driver_id: driver2.id,
 								legs: [
-									{ stop_id: loc3.id, arrival_time: 0 },
-									{ stop_id: loc4.id, arrival_time: 300 }
+									{ stop_id: loc3.id, stop_index: 0 },
+									{ stop_id: loc4.id, stop_index: 1 }
 								],
-								total_travel_time: 600,
-								total_service_time: 300
+								cost: 900
 							}
 						],
 						total_cost: 1800
