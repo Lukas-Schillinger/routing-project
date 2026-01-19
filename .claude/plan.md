@@ -426,6 +426,7 @@ Make Wend a production-ready, open-source exemplary SaaS codebase. Organized int
 ### Business Model
 
 **Hybrid subscription + credits:**
+
 - Monthly subscription provides included credits (reset each period)
 - Users can purchase additional credits at flat rate (roll over indefinitely)
 - No surprise overage billing—users must explicitly purchase more credits
@@ -433,10 +434,10 @@ Make Wend a production-ready, open-source exemplary SaaS codebase. Organized int
 
 ### Plans
 
-| Plan | Price | Monthly Credits | Features |
-|------|-------|-----------------|----------|
-| Free | $0/mo | 200 | Route planning, optimization |
-| Pro | $49/mo | 2,000 | All Free + fleet_management |
+| Plan | Price  | Monthly Credits | Features                     |
+| ---- | ------ | --------------- | ---------------------------- |
+| Free | $0/mo  | 200             | Route planning, optimization |
+| Pro  | $49/mo | 2,000           | All Free + fleet_management  |
 
 **Credit purchases:** $0.01/credit, $1 minimum (100 credits)
 
@@ -445,11 +446,13 @@ Make Wend a production-ready, open-source exemplary SaaS codebase. Organized int
 **Billable unit:** Stops optimized (counted after successful optimization)
 
 **Balance calculation:** Transaction-based with expiration
+
 ```
 available = SUM(amount) WHERE expires_at IS NULL OR expires_at > NOW()
 ```
 
 **Transaction types:**
+
 - `subscription_grant` — Monthly credits, expires at period end
 - `purchase` — Bought credits, never expires
 - `usage` — Deducted after successful optimization
@@ -462,11 +465,12 @@ available = SUM(amount) WHERE expires_at IS NULL OR expires_at > NOW()
 
 ```typescript
 type PlanFeatures = {
-  fleet_management: boolean;
+	fleet_management: boolean;
 };
 ```
 
 **`fleet_management` unlocks:**
+
 - Driver route sharing (v0 gate point)
 - Driver tracking (future)
 - Delivery verification (future)
@@ -688,6 +692,7 @@ type PlanFeatures = {
 ### Implementation Phases Summary
 
 **v0 (MVP):** 5.1, 5.2, 5.3, 5.4, 5.5 — ~29h
+
 - Schema + migrations
 - Credit system core
 - Stripe Checkout integration
@@ -695,11 +700,13 @@ type PlanFeatures = {
 - Feature gating for fleet_management
 
 **v1 (Polish):** 5.6 — ~4h
+
 - Dunning and payment failure handling
 - Cancellation flow
 - Tests
 
 **v2 (Scale):** Future
+
 - Additional plans (Team, Enterprise custom)
 - Stripe Elements for embedded checkout
 - Admin credit adjustment interface
