@@ -415,192 +415,295 @@ Make Wend a production-ready, open-source exemplary SaaS codebase. Organized int
 
 ---
 
-## Phase 5: Billing & Subscriptions `P4`
+## Phase 5: Billing & Subscriptions
 
-**Priority**: Week 5-6 (DEFERRED)
-**Effort**: ~16-20 hours
-
-> **Recommendation**: Stripe for flexibility and ecosystem. LemonSqueezy if tax/compliance simplicity is priority.
+**Priority**: Active
+**Effort**: ~24-32 hours
+**Linear Project**: [Phase 5: Billing & Subscriptions](https://linear.app/schillinger-tools/project/phase-5-billing-and-subscriptions-3974e20e9f0a)
 
 ---
 
-### 5.1 Database Schema `P4` `2h`
+### Business Model
 
-#### 5.1.1 Subscriptions Table `P4` `1h`
+**Hybrid subscription + credits:**
+- Monthly subscription provides included credits (reset each period)
+- Users can purchase additional credits at flat rate (roll over indefinitely)
+- No surprise overage billing—users must explicitly purchase more credits
+- Negative balance allowed on single optimization, then blocked until credits added
+
+### Plans
+
+| Plan | Price | Monthly Credits | Features |
+|------|-------|-----------------|----------|
+| Free | $0/mo | 200 | Route planning, optimization |
+| Pro | $49/mo | 2,000 | All Free + fleet_management |
+
+**Credit purchases:** $0.01/credit, $1 minimum (100 credits)
+
+### Credit System
+
+**Billable unit:** Stops optimized (counted after successful optimization)
+
+**Balance calculation:** Transaction-based with expiration
+```
+available = SUM(amount) WHERE expires_at IS NULL OR expires_at > NOW()
+```
+
+**Transaction types:**
+- `subscription_grant` — Monthly credits, expires at period end
+- `purchase` — Bought credits, never expires
+- `usage` — Deducted after successful optimization
+- `expiration` — System-generated when subscription credits lapse
+- `adjustment` — Future: manual admin corrections
+
+**Consumption order:** Subscription credits first (they expire), then purchased credits
+
+### Feature Gating
+
+```typescript
+type PlanFeatures = {
+  fleet_management: boolean;
+};
+```
+
+**`fleet_management` unlocks:**
+- Driver route sharing (v0 gate point)
+- Driver tracking (future)
+- Delivery verification (future)
+- Driver app access (future)
+
+**Gate point:** When user attempts to share/send route to driver
+**Downgrade behavior:** Keep existing shares, prevent new ones
+
+---
+
+### 5.1 Database Schema `P2` `4h`
+
+#### 5.1.1 Create Plans Table `P2` `1h`
+
+- **Migration**: `drizzle/XXXX_plans.sql`
+- **File**: `src/lib/server/db/schema.ts`
+- Fields: id (text pk), name, stripe_price_id (nullable for free), monthly_credits, features (jsonb)
+- Seed Free and Pro plans
+- Type the features JSONB: `{ fleet_management: boolean }`
+
+#### 5.1.2 Create Subscriptions Table `P2` `1h`
 
 - **Migration**: `drizzle/XXXX_subscriptions.sql`
-- Fields: id, organization_id, stripe_customer_id, stripe_subscription_id, plan_id, status, current_period_start, current_period_end, cancel_at_period_end, created_at, updated_at
-- Status enum: trialing, active, past_due, canceled, unpaid
+- Fields: id, organization_id (unique fk), plan_id (fk), stripe_subscription_id (nullable), stripe_customer_id, status, current_period_start, current_period_end, created_at, updated_at
+- Status: active, canceled, past_due, etc.
+- Every org gets a subscription record (Free plan for new orgs)
 
-#### 5.1.2 Usage Records Table `P4` `30m`
+#### 5.1.3 Create Credit Transactions Table `P2` `2h`
 
-- **Migration**: `drizzle/XXXX_usage_records.sql`
-- Fields: id, organization_id, metric (optimizations, stops_imported, api_calls), quantity, period_start, period_end, created_at
-- Index on (organization_id, metric, period_start)
-
-#### 5.1.3 Update Schema Types `P4` `30m`
-
-- **File**: `src/lib/server/db/schema.ts`
-- Add Drizzle table definitions
-- Export types for Subscription, UsageRecord
+- **Migration**: `drizzle/XXXX_credit_transactions.sql`
+- Fields: id, organization_id, type (enum), amount (int), expires_at (nullable timestamp), stripe_payment_intent_id (nullable), optimization_job_id (nullable), description, created_at
+- Type enum: subscription_grant, purchase, usage, expiration, adjustment
+- Indexes: organization_id, (organization_id + created_at), optimization_job_id for idempotency
 
 ---
 
-### 5.2 Plan Configuration `P4` `1h`
+### 5.2 Credit System Core `P2` `6h`
 
-#### 5.2.1 Define Plan Tiers `P4` `30m`
-
-- **File**: `src/lib/config/plans.ts`
-- Free tier:
-  - 25 stops per map
-  - 5 maps per month
-  - 2 drivers
-  - Basic optimization
-- Pro tier ($X/mo):
-  - 500 stops per map
-  - Unlimited maps
-  - 50 drivers
-  - Advanced routing, route sharing
-- Enterprise (custom):
-  - Unlimited everything
-  - API access, SSO, audit logs
-
-#### 5.2.2 Feature Flags `P4` `30m`
-
-- **File**: `src/lib/config/features.ts`
-- Map plan tiers to feature access
-- `canUseFeature(planId, feature)` helper
-
----
-
-### 5.3 Stripe Integration `P4` `3h`
-
-#### 5.3.1 Install & Configure Stripe `P4` `1h`
-
-- Add `stripe` package
-- Environment variables: STRIPE_SECRET_KEY, STRIPE_PUBLISHABLE_KEY, STRIPE_WEBHOOK_SECRET
-- **File**: `src/lib/services/external/stripe/client.ts`
-
-#### 5.3.2 Create Stripe Products `P4` `1h`
-
-- Create products/prices in Stripe Dashboard (or via API)
-- Store price IDs in plan config
-- Map Stripe price_id → internal plan_id
-
-#### 5.3.3 Customer Management `P4` `1h`
+#### 5.2.1 Create Billing Service `P2` `2h`
 
 - **File**: `src/lib/services/server/billing.service.ts`
-- `createCustomer(organizationId, email)` - Create Stripe customer
-- `getCustomer(organizationId)` - Retrieve customer
-- Link Stripe customer_id to organization
+- `getAvailableCredits(orgId)` — Calculate balance from transactions with expiration check
+- `hasCredits(orgId, requiredAmount)` — Check if sufficient credits
+- `grantSubscriptionCredits(orgId, amount, expiresAt)` — Called on subscription renewal
+- `grantPurchasedCredits(orgId, amount, stripePaymentIntentId)` — Called on credit purchase
+- `recordUsage(orgId, amount, optimizationJobId)` — Called after successful optimization
+- Idempotency: Check optimization_job_id doesn't already exist before recording
+
+#### 5.2.2 Record Usage in Optimization Webhook `P2` `2h`
+
+- **File**: `src/lib/services/server/optimization.service.ts`
+- After successful optimization in `completeOptimization`:
+  - Count stops: `result.routes.flatMap(r => r.legs).length`
+  - Call `billingService.recordUsage(organizationId, stopCount, jobId)`
+- Ensure idempotency via job status check + optimization_job_id unique constraint
+
+#### 5.2.3 Implement Pre-Optimization Credit Check `P2` `2h`
+
+- **File**: `src/lib/services/server/optimization.service.ts`
+- Before queueing optimization in `queueOptimization`:
+  - Check `billingService.hasCredits(orgId, estimatedStops)`
+  - Allow negative balance on single optimization (soft limit)
+  - Block if already negative: throw `ServiceError.forbidden('Insufficient credits')`
+- **File**: `src/routes/api/maps/[mapId]/optimize/+server.ts`
+  - Handle forbidden error, return appropriate status for UI
 
 ---
 
-### 5.4 Subscription Service `P4` `3h`
+### 5.3 Stripe Integration `P2` `8h`
 
-#### 5.4.1 Subscription CRUD `P4` `1h`
+#### 5.3.1 Configure Stripe Environment `P2` `2h`
 
+- Install `stripe` package
+- **File**: `src/lib/services/external/stripe/client.ts`
+- Environment variables: STRIPE_SECRET_KEY, STRIPE_PUBLISHABLE_KEY, STRIPE_WEBHOOK_SECRET
+- Create Stripe products/prices in Dashboard:
+  - Pro subscription: $49/month recurring
+  - Credit unit: for one-time purchases with dynamic quantity
+- **File**: `src/lib/config/billing.ts` — Store price IDs, per-credit rate ($0.01), minimum purchase (100)
+
+#### 5.3.2 Implement Subscription Upgrade Flow `P2` `2h`
+
+- **Route**: `POST /api/billing/checkout/subscription`
+- Create Stripe Checkout Session (mode: 'subscription')
+- Create Stripe Customer if not exists, link to org
+- Redirect URLs: success → `/app/auth/billing?upgrade=success`, cancel → `/app/auth/billing`
 - **File**: `src/lib/services/server/subscription.service.ts`
-- `createSubscription(orgId, priceId)` - Start subscription
-- `getSubscription(orgId)` - Get current subscription
-- `cancelSubscription(orgId)` - Cancel at period end
-- `reactivateSubscription(orgId)` - Undo cancellation
+  - `createCheckoutSession(orgId, planId)` — Returns Stripe Checkout URL
+  - `getOrCreateStripeCustomer(orgId)` — Get or create Stripe customer
 
-#### 5.4.2 Checkout Flow `P4` `1h`
+#### 5.3.3 Implement Credit Purchase Flow `P2` `2h`
 
-- **Route**: `POST /api/billing/checkout`
-- Create Stripe Checkout Session
-- Redirect to Stripe-hosted checkout
-- Return URL: `/billing/success`
+- **Route**: `POST /api/billing/checkout/credits`
+- Request body: `{ amount: number }` (credit count, min 100)
+- Calculate price: `amount * 0.01` (in dollars)
+- Create Stripe Checkout Session (mode: 'payment') with line item
+- Redirect URLs: success → `/app/auth/billing?purchase=success`, cancel → `/app/auth/billing`
+- **File**: `src/lib/services/server/billing.service.ts`
+  - `createCreditPurchaseSession(orgId, creditAmount)` — Returns Stripe Checkout URL
 
-#### 5.4.3 Customer Portal `P4` `1h`
-
-- **Route**: `POST /api/billing/portal`
-- Create Stripe Customer Portal session
-- Allow users to manage payment methods, view invoices
-
----
-
-### 5.5 Webhook Handling `P4` `2h`
-
-#### 5.5.1 Webhook Endpoint `P4` `1h`
+#### 5.3.4 Create Stripe Webhook Handler `P2` `2h`
 
 - **Route**: `POST /api/webhooks/stripe`
-- Verify Stripe signature
-- Parse event type
-
-#### 5.5.2 Event Handlers `P4` `1h`
-
-- `checkout.session.completed` → Create subscription record
-- `customer.subscription.updated` → Sync status, period dates
-- `customer.subscription.deleted` → Mark as canceled
-- `invoice.payment_failed` → Update status to past_due
-- `invoice.paid` → Update status to active
-
----
-
-### 5.6 Usage Tracking `P4` `2h`
-
-#### 5.6.1 Usage Service `P4` `1h`
-
-- **File**: `src/lib/services/server/usage.service.ts`
-- `trackUsage(orgId, metric, quantity)` - Record usage
-- `getUsage(orgId, metric, periodStart)` - Get current period usage
-- `resetUsage(orgId)` - Called on billing period start
-
-#### 5.6.2 Integration Points `P4` `1h`
-
-- Track in `optimization.service.ts` → increment 'optimizations'
-- Track in stop import → increment 'stops_imported'
-- Track in API routes (optional) → increment 'api_calls'
+- Verify Stripe signature using STRIPE_WEBHOOK_SECRET
+- Handle events:
+  - `checkout.session.completed` — Check metadata for type (subscription vs credits)
+    - Subscription: Update subscription record, grant initial credits
+    - Credits: Grant purchased credits via `grantPurchasedCredits`
+  - `invoice.paid` — Subscription renewed, grant monthly credits with expires_at
+  - `invoice.payment_failed` — Update subscription status to past_due, start grace period
+  - `customer.subscription.updated` — Sync plan changes, period dates
+  - `customer.subscription.deleted` — Mark subscription as canceled
+- Idempotency: Use stripe_payment_intent_id for credit purchases, check event processed
 
 ---
 
-### 5.7 Limit Enforcement `P4` `2h`
+### 5.4 Billing UI `P2` `8h`
 
-#### 5.7.1 Limit Checking `P4` `1h`
+#### 5.4.1 Create Billing Page `P2` `3h`
 
-- **File**: `src/lib/services/server/limits.service.ts`
-- `checkLimit(orgId, metric)` → { allowed: boolean, current: number, limit: number }
-- `requireLimit(orgId, metric)` → throws ServiceError.forbidden if exceeded
+- **Route**: `/app/auth/billing/+page.svelte`
+- **Server**: `/app/auth/billing/+page.server.ts` — Load subscription, plan, credit balance, usage history
+- Display sections:
+  - Current plan card (name, price, renewal date)
+  - Credit balance (used / included this period + purchased balance)
+  - Usage history table (current period + last 3 months toggle)
+    - Per-optimization detail: date, map name, stops, credits used
+    - Basic sorting by date, stops
+  - Payment method (from Stripe, link to Customer Portal)
+  - Actions: Upgrade plan, Buy credits, Manage subscription (Stripe Portal)
 
-#### 5.7.2 Apply to Services `P4` `30m`
+#### 5.4.2 Implement Header Credit Badge `P2` `2h`
 
-- Map creation: check maps limit
-- Stop import: check stops per map limit
-- Driver creation: check drivers limit
-- Optimization: check optimizations limit
+- **Component**: `src/lib/components/billing/CreditBadge.svelte`
+- Circular progress indicator showing credit usage percentage
+- Color transitions: green (<80%) → yellow (80-99%) → red (100%+)
+- Click opens popover with:
+  - Current plan name
+  - Credits: X / Y remaining
+  - "Buy Credits" button
+  - "View Billing" link
+- **Integration**: Add to app header/navbar, visible to non-driver users
+- **Data**: Load credit info in root `+layout.server.ts`, pass via page data
 
-#### 5.7.3 Graceful Degradation `P4` `30m`
+#### 5.4.3 Create Out-of-Credits Modal `P2` `2h`
 
-- Free tier soft limits (warn at 80%, block at 100%)
-- Past-due subscriptions: read-only mode
+- **Component**: `src/lib/components/billing/OutOfCreditsModal.svelte`
+- Triggered when optimization blocked due to insufficient credits
+- Content:
+  - Message: "You've used all your credits this month"
+  - Current balance display
+  - Two CTAs: "Buy Credits" | "Upgrade Plan"
+- "Buy Credits" → Opens credit purchase modal
+- "Upgrade Plan" → Redirects to plan comparison / Stripe Checkout
+- **Integration**: Trigger from optimize button error handling
+
+#### 5.4.4 Create Credit Purchase Modal `P2` `1h`
+
+- **Component**: `src/lib/components/billing/CreditPurchaseModal.svelte`
+- Input: Credit amount (number input, min 100)
+- Display: Calculated price ($X.XX)
+- Submit: Calls `/api/billing/checkout/credits`, redirects to Stripe Checkout
+- Error handling: Show validation errors, retry option
 
 ---
 
-### 5.8 Billing UI `P4` `3h`
+### 5.5 Feature Gating `P2` `3h`
 
-#### 5.8.1 Billing Settings Page `P4` `1h`
+#### 5.5.1 Add Features to Locals `P2` `2h`
 
-- **Route**: `/settings/billing`
-- Current plan display
-- Usage meters (stops, maps, drivers)
-- Upgrade/downgrade buttons
-- Manage payment method link (Stripe Portal)
+- **File**: `src/lib/types/features.ts`
+  - Define `PlanFeatures` type: `{ fleet_management: boolean }`
+  - Define `hasFeature(features: PlanFeatures, feature: keyof PlanFeatures)` utility
+- **File**: `src/hooks.server.ts`
+  - After loading user, load their org's subscription and plan
+  - Add `features: PlanFeatures` to `locals` alongside permissions
+- **File**: `src/routes/+layout.server.ts`
+  - Pass features to client via page data (like permissions)
+- **File**: `src/lib/utils.ts`
+  - Add `checkFeature(feature: keyof PlanFeatures)` client-side utility
 
-#### 5.8.2 Upgrade Prompts `P4` `1h`
+#### 5.5.2 Gate Driver Route Sharing `P2` `1h`
 
-- **Component**: `src/lib/components/UpgradePrompt.svelte`
-- Show when approaching limits
-- Contextual messaging based on which limit hit
-- CTA to billing page
+- Identify route sharing UI touchpoints
+- Add feature check before showing share UI/buttons
+- When feature blocked:
+  - Show upgrade prompt instead of share functionality
+  - "Upgrade to Pro to share routes with drivers"
+- **Files**: Relevant route sharing components and API routes
 
-#### 5.8.3 Plan Comparison `P4` `1h`
+---
 
-- **Component**: `src/lib/components/PlanComparison.svelte`
-- Feature comparison table
-- Pricing display
-- Highlight current plan
+### 5.6 Polish & Testing (v1) `P3` `4h`
+
+#### 5.6.1 Stripe Dunning & Payment Failure Handling `P3` `2h`
+
+- Grace period logic: 7 days after payment failure
+- During grace: Show warning banner, allow continued use
+- After grace: Block new optimizations, keep data accessible
+- Email notifications via Resend: Payment failed, grace period ending
+
+#### 5.6.2 Subscription Cancellation Flow `P3` `1h`
+
+- Cancel at period end (not immediate)
+- Show "Subscription will end on X" message
+- Keep features until period ends
+- Reactivation option before period ends
+
+#### 5.6.3 Billing Service Tests `P3` `1h`
+
+- **File**: `src/lib/services/server/billing.service.test.ts`
+- Test credit calculation with mixed transaction types
+- Test expiration logic
+- Test idempotency (duplicate optimization_job_id)
+- Test negative balance blocking
+
+---
+
+### Implementation Phases Summary
+
+**v0 (MVP):** 5.1, 5.2, 5.3, 5.4, 5.5 — ~29h
+- Schema + migrations
+- Credit system core
+- Stripe Checkout integration
+- Billing UI (page, badge, modals)
+- Feature gating for fleet_management
+
+**v1 (Polish):** 5.6 — ~4h
+- Dunning and payment failure handling
+- Cancellation flow
+- Tests
+
+**v2 (Scale):** Future
+- Additional plans (Team, Enterprise custom)
+- Stripe Elements for embedded checkout
+- Admin credit adjustment interface
+- Usage analytics dashboard
 
 ---
 
