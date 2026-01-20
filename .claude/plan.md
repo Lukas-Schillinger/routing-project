@@ -481,29 +481,63 @@ type PlanFeatures = {
 
 ---
 
-### 5.1 Database Schema `P2` `4h`
+### 5.1 Database Schema `P2` `5h`
 
 #### 5.1.1 Create Plans Table `P2` `1h`
 
 - **Migration**: `drizzle/XXXX_plans.sql`
 - **File**: `src/lib/server/db/schema.ts`
-- Fields: id (text pk), name, stripe_price_id (nullable for free), monthly_credits, features (jsonb)
-- Seed Free and Pro plans
+- Fields: id (text pk), name, stripe_price_id (NOT NULL - all plans have Stripe prices), monthly_credits, features (jsonb)
+- Seed Free ($0/mo) and Pro ($49/mo) plans
 - Type the features JSONB: `{ fleet_management: boolean }`
 
 #### 5.1.2 Create Subscriptions Table `P2` `1h`
 
 - **Migration**: `drizzle/XXXX_subscriptions.sql`
-- Fields: id, organization_id (unique fk), plan_id (fk), stripe_subscription_id (nullable), stripe_customer_id, status, current_period_start, current_period_end, created_at, updated_at
+- Fields: id, organization_id (unique fk), plan_id (fk), stripe_subscription_id (NOT NULL), stripe_customer_id (NOT NULL), status, current_period_start, current_period_end, created_at, updated_at
 - Status: active, canceled, past_due, etc.
-- Every org gets a subscription record (Free plan for new orgs)
+- Every org has a real Stripe subscription (Free tier is $0/month subscription)
 
 #### 5.1.3 Create Credit Transactions Table `P2` `2h`
 
 - **Migration**: `drizzle/XXXX_credit_transactions.sql`
 - Fields: id, organization_id, type (enum), amount (int), expires_at (nullable timestamp), stripe_payment_intent_id (nullable), optimization_job_id (nullable), description, created_at
-- Type enum: subscription_grant, purchase, usage, expiration, adjustment
+- Type enum: subscription_grant, purchase, usage, expiration, adjustment, refund
 - Indexes: organization_id, (organization_id + created_at), optimization_job_id for idempotency
+
+#### 5.1.4 Create Stripe Customer + Subscription on Org Creation `P2` `1h`
+
+- **File**: `src/lib/services/server/user.service.ts` (in org creation flow)
+- After creating organization record:
+  1. Create Stripe customer with org metadata
+  2. Create $0/month Free plan subscription
+  3. Create local subscription record with Stripe IDs
+- **Error handling**: If Stripe fails, roll back org creation (fail signup)
+- This ensures unified billing flow — all orgs have real Stripe subscriptions
+
+```typescript
+// Pseudocode for org creation
+const stripeCustomer = await stripe.customers.create({
+  email: user.email,
+  name: organization.name,
+  metadata: { organization_id: organization.id }
+});
+
+const stripeSubscription = await stripe.subscriptions.create({
+  customer: stripeCustomer.id,
+  items: [{ price: FREE_PLAN_PRICE_ID }],
+});
+
+await db.insert(subscriptions).values({
+  organization_id: organization.id,
+  plan_id: 'free',
+  stripe_customer_id: stripeCustomer.id,
+  stripe_subscription_id: stripeSubscription.id,
+  status: 'active',
+  current_period_start: new Date(stripeSubscription.current_period_start * 1000),
+  current_period_end: new Date(stripeSubscription.current_period_end * 1000),
+});
+```
 
 ---
 
@@ -547,19 +581,20 @@ type PlanFeatures = {
 - **File**: `src/lib/services/external/stripe/client.ts`
 - Environment variables: STRIPE_SECRET_KEY, STRIPE_PUBLISHABLE_KEY, STRIPE_WEBHOOK_SECRET
 - Create Stripe products/prices in Dashboard:
+  - **Free subscription: $0/month recurring** (required for unified billing)
   - Pro subscription: $49/month recurring
   - Credit unit: for one-time purchases with dynamic quantity
-- **File**: `src/lib/config/billing.ts` — Store price IDs, per-credit rate ($0.01), minimum purchase (100)
+- **File**: `src/lib/config/billing.ts` — Store price IDs (FREE_PLAN_PRICE_ID, PRO_PLAN_PRICE_ID), per-credit rate ($0.01), minimum purchase (100)
 
 #### 5.3.2 Implement Subscription Upgrade Flow `P2` `2h`
 
 - **Route**: `POST /api/billing/checkout/subscription`
-- Create Stripe Checkout Session (mode: 'subscription')
-- Create Stripe Customer if not exists, link to org
+- **Key insight**: Customer already exists (created at signup), this is a plan change
+- Use Stripe Checkout to collect payment method and upgrade existing subscription
 - Redirect URLs: success → `/app/auth/billing?upgrade=success`, cancel → `/app/auth/billing`
 - **File**: `src/lib/services/server/subscription.service.ts`
-  - `createCheckoutSession(orgId, planId)` — Returns Stripe Checkout URL
-  - `getOrCreateStripeCustomer(orgId)` — Get or create Stripe customer
+  - `createUpgradeCheckoutSession(orgId)` — Returns Stripe Checkout URL for upgrading to Pro
+  - Checkout session uses existing customer ID from subscription record
 
 #### 5.3.3 Implement Credit Purchase Flow `P2` `2h`
 
@@ -575,14 +610,16 @@ type PlanFeatures = {
 
 - **Route**: `POST /api/webhooks/stripe`
 - Verify Stripe signature using STRIPE_WEBHOOK_SECRET
+- **Unified handling**: Same logic for Free ($0) and Paid tiers — no special casing
 - Handle events:
-  - `checkout.session.completed` — Check metadata for type (subscription vs credits)
-    - Subscription: Update subscription record, grant initial credits
+  - `checkout.session.completed` — Check metadata for type (upgrade vs credits)
+    - Upgrade: Subscription already updated by Stripe, sync local record
     - Credits: Grant purchased credits via `grantPurchasedCredits`
-  - `invoice.paid` — Subscription renewed, grant monthly credits with expires_at
+  - `invoice.paid` — Grant monthly credits (works for $0 and $49 invoices identically)
+    - Look up plan by subscription, grant plan's `monthly_credits` with `expires_at = period_end`
   - `invoice.payment_failed` — Update subscription status to past_due, start grace period
-  - `customer.subscription.updated` — Sync plan changes, period dates
-  - `customer.subscription.deleted` — Mark subscription as canceled
+  - `customer.subscription.updated` — Sync plan changes (upgrade/downgrade), period dates
+  - `customer.subscription.deleted` — Only fires on account deletion (not downgrades)
 - Idempotency: Use stripe_payment_intent_id for credit purchases, check event processed
 
 ---
@@ -672,12 +709,22 @@ type PlanFeatures = {
 - After grace: Block new optimizations, keep data accessible
 - Email notifications via Resend: Payment failed, grace period ending
 
-#### 5.6.2 Subscription Cancellation Flow `P3` `1h`
+#### 5.6.2 Subscription Downgrade Flow `P3` `1h`
 
-- Cancel at period end (not immediate)
-- Show "Subscription will end on X" message
-- Keep features until period ends
-- Reactivation option before period ends
+- **Key insight**: "Cancellation" = downgrade to Free plan (not delete subscription)
+- Schedule plan change to Free at period end via `stripe.subscriptions.update`
+- Show "Pro features active until X, then switching to Free" message
+- Keep Pro features until period ends
+- Reactivation option: upgrade back to Pro before period ends
+- User keeps Stripe customer + subscription (just changes plan)
+
+```typescript
+// Downgrade implementation
+await stripe.subscriptions.update(subscriptionId, {
+  items: [{ id: subscriptionItemId, price: FREE_PLAN_PRICE_ID }],
+  proration_behavior: 'none', // No refund, change at period end
+});
+```
 
 #### 5.6.3 Billing Service Tests `P3` `1h`
 
@@ -691,11 +738,12 @@ type PlanFeatures = {
 
 ### Implementation Phases Summary
 
-**v0 (MVP):** 5.1, 5.2, 5.3, 5.4, 5.5 — ~29h
+**v0 (MVP):** 5.1, 5.2, 5.3, 5.4, 5.5 — ~30h
 
 - Schema + migrations
+- Stripe customer/subscription creation on signup (unified billing)
 - Credit system core
-- Stripe Checkout integration
+- Stripe Checkout integration (upgrade + credit purchases)
 - Billing UI (page, badge, modals)
 - Feature gating for fleet_management
 
