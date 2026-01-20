@@ -518,24 +518,26 @@ type PlanFeatures = {
 ```typescript
 // Pseudocode for org creation
 const stripeCustomer = await stripe.customers.create({
-  email: user.email,
-  name: organization.name,
-  metadata: { organization_id: organization.id }
+	email: user.email,
+	name: organization.name,
+	metadata: { organization_id: organization.id }
 });
 
 const stripeSubscription = await stripe.subscriptions.create({
-  customer: stripeCustomer.id,
-  items: [{ price: FREE_PLAN_PRICE_ID }],
+	customer: stripeCustomer.id,
+	items: [{ price: FREE_PLAN_PRICE_ID }]
 });
 
 await db.insert(subscriptions).values({
-  organization_id: organization.id,
-  plan_id: 'free',
-  stripe_customer_id: stripeCustomer.id,
-  stripe_subscription_id: stripeSubscription.id,
-  status: 'active',
-  current_period_start: new Date(stripeSubscription.current_period_start * 1000),
-  current_period_end: new Date(stripeSubscription.current_period_end * 1000),
+	organization_id: organization.id,
+	plan_id: 'free',
+	stripe_customer_id: stripeCustomer.id,
+	stripe_subscription_id: stripeSubscription.id,
+	status: 'active',
+	current_period_start: new Date(
+		stripeSubscription.current_period_start * 1000
+	),
+	current_period_end: new Date(stripeSubscription.current_period_end * 1000)
 });
 ```
 
@@ -721,8 +723,8 @@ await db.insert(subscriptions).values({
 ```typescript
 // Downgrade implementation
 await stripe.subscriptions.update(subscriptionId, {
-  items: [{ id: subscriptionItemId, price: FREE_PLAN_PRICE_ID }],
-  proration_behavior: 'none', // No refund, change at period end
+	items: [{ id: subscriptionItemId, price: FREE_PLAN_PRICE_ID }],
+	proration_behavior: 'none' // No refund, change at period end
 });
 ```
 

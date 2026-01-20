@@ -1,0 +1,119 @@
+import { env } from '$env/dynamic/private';
+import { logger } from '$lib/server/logger';
+import Stripe from 'stripe';
+
+const log = logger.child({ service: 'stripe' });
+
+class StripeClient {
+	private _stripe: Stripe | null = null;
+
+	private get stripe(): Stripe {
+		if (!this._stripe) {
+			const secretKey = env.STRIPE_SECRET_KEY;
+			if (!secretKey) {
+				throw new Error(
+					'Stripe secret key is required. Set STRIPE_SECRET_KEY environment variable.'
+				);
+			}
+			this._stripe = new Stripe(secretKey);
+		}
+		return this._stripe;
+	}
+
+	/**
+	 * Create a Stripe customer for an organization.
+	 * Email is omitted - Stripe doesn't require it and it avoids drift issues
+	 * if the user changes their email later.
+	 */
+	async createCustomer(organizationId: string): Promise<Stripe.Customer> {
+		log.info({ organizationId }, 'Creating Stripe customer');
+		return this.stripe.customers.create({
+			metadata: { organization_id: organizationId }
+		});
+	}
+
+	/**
+	 * Create a subscription for a customer
+	 */
+	async createSubscription(params: {
+		customerId: string;
+		priceId: string;
+		organizationId: string;
+	}): Promise<Stripe.Subscription> {
+		log.info(
+			{ customerId: params.customerId, organizationId: params.organizationId },
+			'Creating Stripe subscription'
+		);
+		return this.stripe.subscriptions.create({
+			customer: params.customerId,
+			items: [{ price: params.priceId }],
+			metadata: { organization_id: params.organizationId }
+		});
+	}
+
+	/**
+	 * Update a subscription (e.g., for plan changes)
+	 */
+	async updateSubscription(
+		subscriptionId: string,
+		params: Stripe.SubscriptionUpdateParams
+	): Promise<Stripe.Subscription> {
+		log.info({ subscriptionId }, 'Updating Stripe subscription');
+		return this.stripe.subscriptions.update(subscriptionId, params);
+	}
+
+	/**
+	 * Retrieve a subscription
+	 */
+	async getSubscription(subscriptionId: string): Promise<Stripe.Subscription> {
+		return this.stripe.subscriptions.retrieve(subscriptionId);
+	}
+
+	/**
+	 * Create a Checkout Session for subscription upgrade
+	 */
+	async createCheckoutSession(
+		params: Stripe.Checkout.SessionCreateParams
+	): Promise<Stripe.Checkout.Session> {
+		log.info({ mode: params.mode }, 'Creating Stripe Checkout session');
+		return this.stripe.checkout.sessions.create(params);
+	}
+
+	/**
+	 * Construct and verify a webhook event from the raw body and signature
+	 */
+	constructWebhookEvent(
+		payload: string | Buffer,
+		signature: string,
+		webhookSecret: string
+	): Stripe.Event {
+		return this.stripe.webhooks.constructEvent(
+			payload,
+			signature,
+			webhookSecret
+		);
+	}
+
+	/**
+	 * Retrieve a customer
+	 */
+	async getCustomer(
+		customerId: string
+	): Promise<Stripe.Customer | Stripe.DeletedCustomer> {
+		return this.stripe.customers.retrieve(customerId);
+	}
+
+	/**
+	 * Create a billing portal session for self-service management
+	 */
+	async createBillingPortalSession(params: {
+		customer: string;
+		return_url: string;
+	}): Promise<Stripe.BillingPortal.Session> {
+		log.info({ customer: params.customer }, 'Creating billing portal session');
+		return this.stripe.billingPortal.sessions.create(params);
+	}
+}
+
+// Export singleton instance
+export const stripeClient = new StripeClient();

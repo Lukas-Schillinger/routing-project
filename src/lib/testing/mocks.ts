@@ -751,6 +751,108 @@ export function createMockR2Service() {
 }
 
 // ============================================================================
+// Stripe Client Mock
+// ============================================================================
+
+type CreateCustomerCall = {
+	organizationId: string;
+};
+
+type CreateSubscriptionCall = {
+	customerId: string;
+	priceId: string;
+	organizationId: string;
+};
+
+/**
+ * Shared mock state for Stripe client.
+ * This is a module-level singleton so it can be referenced by vi.mock (which is hoisted).
+ *
+ * @example
+ * ```ts
+ * import { mockStripeState, mockStripeClient } from '$lib/testing/mocks';
+ *
+ * vi.mock('$lib/services/external/stripe/client', () => ({
+ *   stripeClient: mockStripeClient
+ * }));
+ *
+ * beforeEach(() => {
+ *   mockStripeState.clear();
+ * });
+ *
+ * // After org creation:
+ * expect(mockStripeState.calls.createCustomer).toHaveLength(1);
+ * ```
+ */
+export const mockStripeState = {
+	customers: [] as Array<{ id: string; metadata: Record<string, string> }>,
+	subscriptions: [] as Array<{
+		id: string;
+		customer: string;
+		items: {
+			data: Array<{
+				current_period_start: number;
+				current_period_end: number;
+			}>;
+		};
+		metadata: Record<string, string>;
+	}>,
+	calls: {
+		createCustomer: [] as CreateCustomerCall[],
+		createSubscription: [] as CreateSubscriptionCall[]
+	},
+	customerIdCounter: 0,
+	subscriptionIdCounter: 0,
+
+	/** Reset all state (call in beforeEach) */
+	clear() {
+		this.customers = [];
+		this.subscriptions = [];
+		this.calls.createCustomer = [];
+		this.calls.createSubscription = [];
+		this.customerIdCounter = 0;
+		this.subscriptionIdCounter = 0;
+	}
+};
+
+/**
+ * Mock Stripe client that uses mockStripeState.
+ * Use with vi.mock for hoisting compatibility.
+ */
+export const mockStripeClient = {
+	createCustomer: async (organizationId: string) => {
+		mockStripeState.calls.createCustomer.push({ organizationId });
+		const customer = {
+			id: `cus_mock_${++mockStripeState.customerIdCounter}`,
+			metadata: { organization_id: organizationId }
+		};
+		mockStripeState.customers.push(customer);
+		return customer;
+	},
+
+	createSubscription: async (params: CreateSubscriptionCall) => {
+		mockStripeState.calls.createSubscription.push(params);
+		const now = Math.floor(Date.now() / 1000);
+		const oneMonthFromNow = now + 30 * 24 * 60 * 60;
+		const subscription = {
+			id: `sub_mock_${++mockStripeState.subscriptionIdCounter}`,
+			customer: params.customerId,
+			items: {
+				data: [
+					{
+						current_period_start: now,
+						current_period_end: oneMonthFromNow
+					}
+				]
+			},
+			metadata: { organization_id: params.organizationId }
+		};
+		mockStripeState.subscriptions.push(subscription);
+		return subscription;
+	}
+};
+
+// ============================================================================
 // SQS Service Mock
 // ============================================================================
 

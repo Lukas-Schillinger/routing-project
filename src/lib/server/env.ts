@@ -39,6 +39,12 @@ const requiredSchema = z.object({
 	UPSTASH_REDIS_REST_URL: z.string().url(),
 	UPSTASH_REDIS_REST_TOKEN: z.string().min(1),
 
+	// Stripe
+	STRIPE_SECRET_KEY: z.string().min(1),
+	STRIPE_FREE_PLAN_PRICE_ID: z.string().min(1),
+	STRIPE_PRO_PLAN_PRICE_ID: z.string().min(1),
+	STRIPE_CREDIT_PRICE_ID: z.string().min(1),
+
 	// Maps (public)
 	PUBLIC_MAPTILER_KEY: z.string().min(1),
 	PUBLIC_MAPBOX_STATIC_MAP_TOKEN: z.string().min(1),
@@ -52,6 +58,7 @@ const optionalSchema = z.object({
 	// Webhook secrets
 	RESEND_WEBHOOK_SECRET: z.string().optional(),
 	OPTIMIZATION_WEBHOOK_SECRET: z.string().optional(),
+	STRIPE_WEBHOOK_SECRET: z.string().optional(),
 
 	// Infrastructure
 	CF_TUNNEL_URL: z.string().optional(),

@@ -6,9 +6,24 @@ import {
 	createUser,
 	type TestTransaction
 } from '$lib/testing';
+import { mockStripeClient, mockStripeState } from '$lib/testing/mocks';
 import { inArray } from 'drizzle-orm';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import {
+	afterAll,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vitest';
 import { ServiceError } from './errors';
+
+// Mock Stripe client for unit tests
+vi.mock('$lib/services/external/stripe/client', () => ({
+	stripeClient: mockStripeClient
+}));
+
 import { organizationService, userService } from './user.service';
 
 /**
@@ -36,6 +51,10 @@ let testUser3: { id: string; email: string; organization_id: string };
 const createdUserIds: string[] = [];
 const createdOrgIds: string[] = [];
 const createdInvitationIds: string[] = [];
+
+beforeEach(() => {
+	mockStripeState.clear();
+});
 
 beforeAll(async () => {
 	const tx = db as unknown as TestTransaction;
@@ -432,6 +451,16 @@ describe('UserService', () => {
 				result.organization_id
 			);
 			expect(org.id).toBe(result.organization_id);
+
+			// Verify Stripe was called (mocked)
+			expect(mockStripeState.calls.createCustomer).toHaveLength(1);
+			expect(mockStripeState.calls.createCustomer[0].organizationId).toBe(
+				result.organization_id
+			);
+			expect(mockStripeState.calls.createSubscription).toHaveLength(1);
+			expect(mockStripeState.calls.createSubscription[0].organizationId).toBe(
+				result.organization_id
+			);
 		});
 
 		it('returns created User', async () => {
