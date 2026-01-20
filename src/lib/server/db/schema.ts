@@ -20,6 +20,115 @@ const orgId = uuid('organization_id').defaultRandom().notNull();
 const ts = (c: string) =>
 	timestamp(c, { withTimezone: true }).defaultNow().notNull();
 
+// Billing types
+export type PlanFeatures = {
+	fleet_management: boolean;
+};
+
+export type SubscriptionStatus =
+	| 'active'
+	| 'canceled'
+	| 'past_due'
+	| 'unpaid'
+	| 'trialing';
+
+export type CreditTransactionType =
+	| 'subscription_grant'
+	| 'purchase'
+	| 'usage'
+	| 'expiration'
+	| 'adjustment'
+	| 'refund';
+
+export const plans = pgTable(
+	'plans',
+	{
+		id,
+		created_at: ts('created_at'),
+		updated_at: ts('updated_at'),
+
+		name: varchar('name', { length: 50 })
+			.notNull()
+			.$type<'free' | 'pro'>()
+			.unique(),
+		display_name: varchar('display_name', { length: 100 }).notNull(),
+		stripe_price_id: text('stripe_price_id').notNull(),
+		monthly_credits: integer('monthly_credits').notNull(),
+		features: jsonb('features').$type<PlanFeatures>().notNull()
+	},
+	(t) => [uniqueIndex('plans_name_uidx').on(t.name)]
+);
+
+export const subscriptions = pgTable(
+	'subscriptions',
+	{
+		id,
+		organization_id: uuid('organization_id')
+			.notNull()
+			.unique()
+			.references(() => organizations.id, { onDelete: 'cascade' }),
+		plan_id: uuid('plan_id')
+			.notNull()
+			.references(() => plans.id),
+		created_at: ts('created_at'),
+		updated_at: ts('updated_at'),
+
+		stripe_customer_id: text('stripe_customer_id').notNull(),
+		stripe_subscription_id: text('stripe_subscription_id').notNull(),
+		status: varchar('status', { length: 20 })
+			.notNull()
+			.$type<SubscriptionStatus>()
+			.default('active'),
+		period_starts_at: timestamp('current_period_start', {
+			withTimezone: true
+		}).notNull(),
+		period_ends_at: timestamp('current_period_end', {
+			withTimezone: true
+		}).notNull()
+	},
+	(t) => [
+		uniqueIndex('subscriptions_org_uidx').on(t.organization_id),
+		index('subscriptions_plan_idx').on(t.plan_id),
+		index('subscriptions_stripe_customer_idx').on(t.stripe_customer_id),
+		index('subscriptions_stripe_subscription_idx').on(t.stripe_subscription_id)
+	]
+);
+
+export const creditTransactions = pgTable(
+	'credit_transactions',
+	{
+		id,
+		organization_id: orgId.references(() => organizations.id, {
+			onDelete: 'cascade'
+		}),
+		created_at: ts('created_at'),
+
+		type: varchar('type', { length: 32 })
+			.$type<CreditTransactionType>()
+			.notNull(),
+		amount: integer('amount').notNull(), // positive = credit, negative = debit
+		expires_at: timestamp('expires_at', { withTimezone: true }), // null = never expires
+		description: text('description'),
+
+		// Idempotency/reference fields
+		stripe_payment_intent_id: text('stripe_payment_intent_id'), // for purchases
+		optimization_job_id: uuid('optimization_job_id').references(
+			() => optimizationJobs.id,
+			{
+				onDelete: 'set null'
+			}
+		) // for usage tracking
+	},
+	(t) => [
+		index('credit_transactions_org_idx').on(t.organization_id),
+		index('credit_transactions_org_created_idx').on(
+			t.organization_id,
+			t.created_at
+		),
+		index('credit_transactions_optimization_job_idx').on(t.optimization_job_id)
+	]
+);
+
 export const organizations = pgTable('organizations', {
 	id,
 	created_at: ts('created_at'),
@@ -510,21 +619,58 @@ export const mailRecords = pgTable(
  *
  **************************************************************************************/
 
-export const organizationsRelations = relations(organizations, ({ many }) => ({
-	users: many(users),
-	drivers: many(drivers),
-	maps: many(maps),
-	locations: many(locations),
-	stops: many(stops),
-	driverMapMemberships: many(driverMapMemberships),
-	depots: many(depots),
-	routes: many(routes),
-	routeShares: many(routeShares),
-	matrices: many(matrices),
-	files: many(files),
-	optimizationJobs: many(optimizationJobs),
-	mailRecords: many(mailRecords)
+export const organizationsRelations = relations(
+	organizations,
+	({ one, many }) => ({
+		users: many(users),
+		drivers: many(drivers),
+		maps: many(maps),
+		locations: many(locations),
+		stops: many(stops),
+		driverMapMemberships: many(driverMapMemberships),
+		depots: many(depots),
+		routes: many(routes),
+		routeShares: many(routeShares),
+		matrices: many(matrices),
+		files: many(files),
+		optimizationJobs: many(optimizationJobs),
+		mailRecords: many(mailRecords),
+		subscription: one(subscriptions, {
+			fields: [organizations.id],
+			references: [subscriptions.organization_id]
+		}),
+		creditTransactions: many(creditTransactions)
+	})
+);
+
+export const plansRelations = relations(plans, ({ many }) => ({
+	subscriptions: many(subscriptions)
 }));
+
+export const subscriptionsRelations = relations(subscriptions, ({ one }) => ({
+	organization: one(organizations, {
+		fields: [subscriptions.organization_id],
+		references: [organizations.id]
+	}),
+	plan: one(plans, {
+		fields: [subscriptions.plan_id],
+		references: [plans.id]
+	})
+}));
+
+export const creditTransactionsRelations = relations(
+	creditTransactions,
+	({ one }) => ({
+		organization: one(organizations, {
+			fields: [creditTransactions.organization_id],
+			references: [organizations.id]
+		}),
+		optimizationJob: one(optimizationJobs, {
+			fields: [creditTransactions.optimization_job_id],
+			references: [optimizationJobs.id]
+		})
+	})
+);
 
 export const usersRelations = relations(users, ({ one, many }) => ({
 	organization: one(organizations, {

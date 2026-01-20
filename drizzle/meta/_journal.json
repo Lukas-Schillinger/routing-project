@@ -127,6 +127,27 @@
       "when": 1768324254403,
       "tag": "0017_add_audit_fields_to_locations",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1768924436505,
+      "tag": "0018_famous_silver_surfer",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1768926988140,
+      "tag": "0019_nostalgic_ozymandias",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1768928116679,
+      "tag": "0020_huge_praxagora",
+      "breakpoints": true
     }
   ]
 }
