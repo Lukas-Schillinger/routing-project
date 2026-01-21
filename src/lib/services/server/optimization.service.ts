@@ -17,6 +17,7 @@ import { z } from 'zod';
 import { mapboxDistanceMatrix, mapboxNavigation } from '../external/mapbox';
 import type { CoordinatesData } from '../external/mapbox/distance-matrix';
 import type { Coordinate } from '../external/mapbox/types';
+import { billingService } from './billing.service';
 import { depotService } from './depot.service';
 import { ServiceError } from './errors';
 import { routeService } from './route.service';
@@ -356,8 +357,25 @@ export class OptimizationService {
 			);
 
 			await this.updateJobStatus(response.job_id, 'completed');
+
+			// Record credit usage based on number of stops optimized
+			const totalStops = result.routes.reduce(
+				(sum, route) => sum + route.legs.length,
+				0
+			);
+			await billingService.recordUsage(
+				organizationId,
+				totalStops,
+				response.job_id,
+				`Route optimization: ${totalStops} stops`
+			);
+
 			log.info(
-				{ routeCount: result.routes.length, totalCost: result.total_cost },
+				{
+					routeCount: result.routes.length,
+					totalCost: result.total_cost,
+					creditsUsed: totalStops
+				},
 				'Optimization completed successfully'
 			);
 		} catch (error) {
