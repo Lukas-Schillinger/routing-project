@@ -351,6 +351,94 @@ describe('OptimizationService', () => {
 			expect(job.created_by).toBe(testUser1.id);
 			expect(job.updated_by).toBe(testUser1.id);
 		});
+
+		it('blocks optimization when credit balance is negative', async () => {
+			const tx = db as unknown as TestTransaction;
+
+			// Create negative credit balance
+			await db.insert(creditTransactions).values({
+				organization_id: testOrg1.id,
+				type: 'usage',
+				amount: -100,
+				expires_at: null
+			});
+
+			// Create map with driver and stops
+			const newMap = await createMap(tx, { organization_id: testOrg1.id });
+			createdIds.maps.push(newMap.id);
+
+			const membership = await createDriverMapMembership(tx, {
+				organization_id: testOrg1.id,
+				driver_id: testDriver1.id,
+				map_id: newMap.id
+			});
+			createdIds.memberships.push(membership.id);
+
+			const stop = await createStop(tx, {
+				organization_id: testOrg1.id,
+				map_id: newMap.id,
+				location_id: testStopLocation1.id
+			});
+			createdIds.stops.push(stop.id);
+
+			try {
+				await optimizationService.queueOptimization(
+					newMap.id,
+					testOrg1.id,
+					testUser1.id,
+					{ depotId: testDepot1.id, fairness: 'medium' }
+				);
+				expect.fail('Should have thrown');
+			} catch (error) {
+				expect(error).toBeInstanceOf(ServiceError);
+				expect((error as ServiceError).code).toBe('FORBIDDEN');
+				expect((error as ServiceError).message).toContain('Insufficient credits');
+			}
+
+			// Clean up credit transaction
+			await db
+				.delete(creditTransactions)
+				.where(eq(creditTransactions.organization_id, testOrg1.id));
+		});
+
+		it('allows optimization when credit balance is zero (single op can go negative)', async () => {
+			const tx = db as unknown as TestTransaction;
+
+			// Ensure zero balance (no transactions)
+			await db
+				.delete(creditTransactions)
+				.where(eq(creditTransactions.organization_id, testOrg1.id));
+
+			// Create map with driver and stops
+			const newMap = await createMap(tx, { organization_id: testOrg1.id });
+			createdIds.maps.push(newMap.id);
+
+			const membership = await createDriverMapMembership(tx, {
+				organization_id: testOrg1.id,
+				driver_id: testDriver1.id,
+				map_id: newMap.id
+			});
+			createdIds.memberships.push(membership.id);
+
+			const stop = await createStop(tx, {
+				organization_id: testOrg1.id,
+				map_id: newMap.id,
+				location_id: testStopLocation1.id
+			});
+			createdIds.stops.push(stop.id);
+
+			// Should succeed with zero balance
+			const job = await optimizationService.queueOptimization(
+				newMap.id,
+				testOrg1.id,
+				testUser1.id,
+				{ depotId: testDepot1.id, fairness: 'medium' }
+			);
+			createdIds.jobs.push(job.id);
+
+			expect(job.id).toBeDefined();
+			expect(job.status).toBe('pending');
+		});
 	});
 
 	describe('Handle Webhook Response', () => {

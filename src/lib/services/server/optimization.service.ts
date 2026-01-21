@@ -187,6 +187,15 @@ export class OptimizationService {
 		options: OptimizationOptions,
 		requestId?: string
 	) {
+		// Check credit balance - block if already negative, allow single op to go negative
+		const availableCredits =
+			await billingService.getAvailableCredits(organizationId);
+		if (availableCredits < 0) {
+			throw ServiceError.forbidden(
+				'Insufficient credits. Please purchase more credits to continue optimizing routes.'
+			);
+		}
+
 		const assignedDrivers = await this.fetchAssignedDrivers(
 			mapId,
 			organizationId
