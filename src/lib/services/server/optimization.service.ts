@@ -276,7 +276,7 @@ export class OptimizationService {
 	private async validateCreditBalance(organizationId: string): Promise<void> {
 		const availableCredits =
 			await billingService.getAvailableCredits(organizationId);
-		if (availableCredits < 0) {
+		if (availableCredits <= 0) {
 			throw ServiceError.forbidden(
 				'Insufficient credits. Please purchase more credits to continue optimizing routes.'
 			);
