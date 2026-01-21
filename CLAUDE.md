@@ -1,8 +1,14 @@
-## General
+## Workflow
+
+- Always use the code-simplifier agent after modifying service files to ensure clarity and consistency.
+- Before committing, ensure checks pass: `npm run check` (types) and `npm run lint` (ESLint). CI will reject commits that fail.
+- Always prefer using test factories over manually creating test data.
+
+## Conventions
 
 - This is a Svelte 5 application! Make sure not to use any Svelte 4 conventions like `$store()` or `export let...`
 - Use shadcn-svelte components with Tailwind CSS for styling.
-- Code should functional and avoid functions with side effects where possible.
+- Code should be functional and avoid functions with side effects where possible.
 - Ensure all pages are mobile compatible.
 - Prefer type over interface. Use string literals instead of enums.
 
@@ -142,17 +148,6 @@ For complex services (e.g., `src/lib/services/server/optimization.service.ts`):
 
 - Users log in with password or email (either OTP or magic link). Passwords are not required
 
-## Committing
-
-Before committing, ensure the following checks pass:
-
-```bash
-npm run check  # Type checking
-npm run lint   # ESLint
-```
-
-The CI action runner will reject commits that fail these checks.
-
 ## Testing
 
 `src/lib/testing`
@@ -164,5 +159,3 @@ Reference: `src/lib/testing/index.ts`
 - `createTestEnvironment(tx)` - Creates org + admin user
 - `createTestRouteSetup(tx)` - Creates full route setup for optimization tests
 - Service mocks for external APIs (R2, Mapbox, Resend) in `src/lib/testing/mocks.ts`
-
-Always prefer using factories over manually creating test data.
