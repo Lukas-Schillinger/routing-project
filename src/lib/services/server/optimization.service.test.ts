@@ -392,7 +392,9 @@ describe('OptimizationService', () => {
 			} catch (error) {
 				expect(error).toBeInstanceOf(ServiceError);
 				expect((error as ServiceError).code).toBe('FORBIDDEN');
-				expect((error as ServiceError).message).toContain('Insufficient credits');
+				expect((error as ServiceError).message).toContain(
+					'Insufficient credits'
+				);
 			}
 
 			// Clean up credit transaction
@@ -946,77 +948,73 @@ describe('OptimizationService', () => {
 			expect(updatedJob.status).toBe('completed');
 		});
 
-		it(
-			'records credit usage after successful optimization',
-			async () => {
-				const tx = db as unknown as TestTransaction;
+		it('records credit usage after successful optimization', async () => {
+			const tx = db as unknown as TestTransaction;
 
-				// Create new map for this test
-				const newMap = await createMap(tx, { organization_id: testOrg1.id });
-				createdIds.maps.push(newMap.id);
+			// Create new map for this test
+			const newMap = await createMap(tx, { organization_id: testOrg1.id });
+			createdIds.maps.push(newMap.id);
 
-				// Create stops
-				const stop1 = await createStop(tx, {
-					organization_id: testOrg1.id,
-					map_id: newMap.id,
-					location_id: testStopLocation1.id
-				});
-				const stop2 = await createStop(tx, {
-					organization_id: testOrg1.id,
-					map_id: newMap.id,
-					location_id: testStopLocation2.id
-				});
-				createdIds.stops.push(stop1.id, stop2.id);
+			// Create stops
+			const stop1 = await createStop(tx, {
+				organization_id: testOrg1.id,
+				map_id: newMap.id,
+				location_id: testStopLocation1.id
+			});
+			const stop2 = await createStop(tx, {
+				organization_id: testOrg1.id,
+				map_id: newMap.id,
+				location_id: testStopLocation2.id
+			});
+			createdIds.stops.push(stop1.id, stop2.id);
 
-				// Create matrix and job
-				const matrix = await createMatrix(tx, {
-					organization_id: testOrg1.id,
-					map_id: newMap.id
-				});
-				createdIds.matrices.push(matrix.id);
+			// Create matrix and job
+			const matrix = await createMatrix(tx, {
+				organization_id: testOrg1.id,
+				map_id: newMap.id
+			});
+			createdIds.matrices.push(matrix.id);
 
-				const job = await createOptimizationJob(tx, {
-					organization_id: testOrg1.id,
-					map_id: newMap.id,
-					matrix_id: matrix.id,
-					depot_id: testDepot1.id,
-					status: 'running'
-				});
-				createdIds.jobs.push(job.id);
+			const job = await createOptimizationJob(tx, {
+				organization_id: testOrg1.id,
+				map_id: newMap.id,
+				matrix_id: matrix.id,
+				depot_id: testDepot1.id,
+				status: 'running'
+			});
+			createdIds.jobs.push(job.id);
 
-				// Complete with 2 stops in route
-				await optimizationService.completeOptimization({
-					success: true,
-					job_id: job.id,
-					result: {
-						routes: [
-							{
-								driver_id: testDriver1.id,
-								legs: [
-									{ stop_id: testStopLocation1.id, stop_index: 0 },
-									{ stop_id: testStopLocation2.id, stop_index: 1 }
-								],
-								cost: 500
-							}
-						],
-						total_cost: 500
-					}
-				});
+			// Complete with 2 stops in route
+			await optimizationService.completeOptimization({
+				success: true,
+				job_id: job.id,
+				result: {
+					routes: [
+						{
+							driver_id: testDriver1.id,
+							legs: [
+								{ stop_id: testStopLocation1.id, stop_index: 0 },
+								{ stop_id: testStopLocation2.id, stop_index: 1 }
+							],
+							cost: 500
+						}
+					],
+					total_cost: 500
+				}
+			});
 
-				// Verify credit transaction was recorded
-				const [transaction] = await db
-					.select()
-					.from(creditTransactions)
-					.where(eq(creditTransactions.optimization_job_id, job.id))
-					.limit(1);
+			// Verify credit transaction was recorded
+			const [transaction] = await db
+				.select()
+				.from(creditTransactions)
+				.where(eq(creditTransactions.optimization_job_id, job.id))
+				.limit(1);
 
-				expect(transaction).toBeDefined();
-				expect(transaction.type).toBe('usage');
-				expect(transaction.amount).toBe(-2); // 2 stops = -2 credits
-				expect(transaction.organization_id).toBe(testOrg1.id);
-			},
-			15000
-		);
+			expect(transaction).toBeDefined();
+			expect(transaction.type).toBe('usage');
+			expect(transaction.amount).toBe(-2); // 2 stops = -2 credits
+			expect(transaction.organization_id).toBe(testOrg1.id);
+		}, 15000);
 	});
 
 	describe('getActiveJobForMap()', () => {
