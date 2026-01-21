@@ -6,15 +6,16 @@ import {
 	maps,
 	matrices,
 	optimizationJobs,
-	organizations
+	organizations,
+	subscriptions
 } from '$lib/server/db/schema';
 import {
+	createBillingTestEnvironment,
 	createDepot,
 	createLocation,
 	createMap,
 	createMatrix,
 	createOptimizationJob,
-	createOrganization,
 	createUser,
 	type TestTransaction
 } from '$lib/testing';
@@ -26,6 +27,7 @@ import { billingService } from './billing.service';
  * Billing Service Tests
  *
  * Tests credit balance calculation, granting, usage recording, and idempotency.
+ * Uses createBillingTestEnvironment for consistent setup with plans and subscriptions.
  */
 
 let testOrg: { id: string; name: string };
@@ -38,7 +40,10 @@ const createdJobIds: string[] = [];
 
 beforeAll(async () => {
 	const tx = db as unknown as TestTransaction;
-	testOrg = await createOrganization(tx);
+
+	// Use the standard billing test environment
+	const env = await createBillingTestEnvironment(tx);
+	testOrg = env.organization;
 	createdOrgIds.push(testOrg.id);
 
 	testUser = await createUser(tx, {
@@ -77,6 +82,11 @@ afterAll(async () => {
 			.where(eq(creditTransactions.organization_id, orgId));
 	}
 	for (const orgId of createdOrgIds) {
+		await db
+			.delete(subscriptions)
+			.where(eq(subscriptions.organization_id, orgId));
+	}
+	for (const orgId of createdOrgIds) {
 		await db.delete(matrices).where(eq(matrices.organization_id, orgId));
 	}
 	for (const orgId of createdOrgIds) {
@@ -88,6 +98,7 @@ afterAll(async () => {
 	for (const orgId of createdOrgIds) {
 		await db.delete(maps).where(eq(maps.organization_id, orgId));
 	}
+	// Note: Plans are NOT deleted - they're shared across tests
 	for (const orgId of createdOrgIds) {
 		await db.delete(organizations).where(eq(organizations.id, orgId));
 	}
@@ -239,6 +250,7 @@ describe('BillingService', () => {
 				testOrg.id,
 				200,
 				expiresAt,
+				'in_test_123',
 				'Test grant'
 			);
 
@@ -252,6 +264,32 @@ describe('BillingService', () => {
 			expect(transactions[0].amount).toBe(200);
 			expect(transactions[0].description).toBe('Test grant');
 			expect(transactions[0].expires_at?.getTime()).toBe(expiresAt.getTime());
+			expect(transactions[0].stripe_invoice_id).toBe('in_test_123');
+		});
+
+		it('is idempotent - does not double-grant for same invoice', async () => {
+			const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+			await billingService.grantSubscriptionCredits(
+				testOrg.id,
+				200,
+				expiresAt,
+				'in_test_456'
+			);
+			await billingService.grantSubscriptionCredits(
+				testOrg.id,
+				200,
+				expiresAt,
+				'in_test_456'
+			);
+
+			const transactions = await db
+				.select()
+				.from(creditTransactions)
+				.where(eq(creditTransactions.organization_id, testOrg.id));
+
+			expect(transactions).toHaveLength(1);
+			expect(transactions[0].amount).toBe(200);
 		});
 	});
 
@@ -431,6 +469,64 @@ describe('BillingService', () => {
 
 			expect(transactions).toHaveLength(1);
 			expect(transactions[0].type).toBe('refund');
+		});
+	});
+
+	describe('getCreditBalance()', () => {
+		it('returns detailed balance with expiring credits', async () => {
+			const futureDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+			await db.insert(creditTransactions).values([
+				{
+					organization_id: testOrg.id,
+					type: 'subscription_grant',
+					amount: 200,
+					expires_at: futureDate
+				},
+				{
+					organization_id: testOrg.id,
+					type: 'purchase',
+					amount: 100,
+					expires_at: null
+				}
+			]);
+
+			const balance = await billingService.getCreditBalance(testOrg.id);
+
+			expect(balance.available).toBe(300);
+			expect(balance.expiring).toBe(200);
+			expect(balance.expiresAt).not.toBeNull();
+		});
+
+		it('returns null expiresAt when no expiring credits', async () => {
+			await db.insert(creditTransactions).values({
+				organization_id: testOrg.id,
+				type: 'purchase',
+				amount: 100,
+				expires_at: null
+			});
+
+			const balance = await billingService.getCreditBalance(testOrg.id);
+
+			expect(balance.available).toBe(100);
+			expect(balance.expiring).toBe(0);
+			expect(balance.expiresAt).toBeNull();
+		});
+	});
+
+	describe('getSubscription()', () => {
+		it('returns subscription with plan details', async () => {
+			const result = await billingService.getSubscription(testOrg.id);
+
+			expect(result.subscription).toBeDefined();
+			expect(result.plan).toBeDefined();
+			expect(result.subscription.organization_id).toBe(testOrg.id);
+		});
+
+		it('throws not found for non-existent subscription', async () => {
+			await expect(
+				billingService.getSubscription('00000000-0000-0000-0000-000000000000')
+			).rejects.toThrow('Subscription not found');
 		});
 	});
 });

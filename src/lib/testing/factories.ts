@@ -8,6 +8,7 @@
  */
 import * as schema from '$lib/server/db/schema';
 import { generateRandomColor } from '$lib/utils';
+import { eq } from 'drizzle-orm';
 import type { TestTransaction } from './db';
 import locationsData from './data/locations.json';
 
@@ -546,4 +547,164 @@ export async function createTestRouteSetup(tx: TestTransaction) {
 	});
 
 	return { organization, user, driver, map, location, depot, route };
+}
+
+// ============================================================================
+// Plan (Billing)
+// ============================================================================
+
+export type MockPlan = typeof schema.plans.$inferInsert;
+
+export function createMockPlan(overrides?: Partial<MockPlan>): MockPlan {
+	const id = uniqueId();
+	return {
+		name: 'free',
+		display_name: `Test Plan ${id}`,
+		stripe_price_id: `price_mock_${id}`,
+		monthly_credits: 200,
+		features: { fleet_management: false },
+		...overrides
+	};
+}
+
+export async function createPlan(
+	tx: TestTransaction,
+	overrides?: Partial<MockPlan>
+): Promise<typeof schema.plans.$inferSelect> {
+	const data = createMockPlan(overrides);
+	const [result] = await tx.insert(schema.plans).values(data).returning();
+	return result;
+}
+
+// ============================================================================
+// Subscription (Billing)
+// ============================================================================
+
+export type MockSubscription = typeof schema.subscriptions.$inferInsert;
+
+export function createMockSubscription(
+	overrides?: Partial<MockSubscription>
+): MockSubscription {
+	const id = uniqueId();
+	const now = new Date();
+	const periodEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+	return {
+		organization_id: '', // Must be provided
+		plan_id: '', // Must be provided
+		stripe_customer_id: `cus_mock_${id}`,
+		stripe_subscription_id: `sub_mock_${id}`,
+		status: 'active',
+		period_starts_at: now,
+		period_ends_at: periodEnd,
+		...overrides
+	};
+}
+
+export async function createSubscription(
+	tx: TestTransaction,
+	overrides: Partial<MockSubscription> & {
+		organization_id: string;
+		plan_id: string;
+	}
+): Promise<typeof schema.subscriptions.$inferSelect> {
+	const data = createMockSubscription(overrides);
+	const [result] = await tx
+		.insert(schema.subscriptions)
+		.values(data)
+		.returning();
+	return result;
+}
+
+// ============================================================================
+// CreditTransaction (Billing)
+// ============================================================================
+
+export type MockCreditTransaction =
+	typeof schema.creditTransactions.$inferInsert;
+
+export function createMockCreditTransaction(
+	overrides?: Partial<MockCreditTransaction>
+): MockCreditTransaction {
+	return {
+		organization_id: '', // Must be provided
+		type: 'subscription_grant',
+		amount: 200,
+		expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+		description: 'Test credit grant',
+		...overrides
+	};
+}
+
+export async function createCreditTransaction(
+	tx: TestTransaction,
+	overrides: Partial<MockCreditTransaction> & { organization_id: string }
+): Promise<typeof schema.creditTransactions.$inferSelect> {
+	const data = createMockCreditTransaction(overrides);
+	const [result] = await tx
+		.insert(schema.creditTransactions)
+		.values(data)
+		.returning();
+	return result;
+}
+
+// ============================================================================
+// Convenience: Billing Test Environment
+// ============================================================================
+
+/**
+ * Creates a complete billing test environment with:
+ * - Organization and admin user
+ * - Free and Pro plans (reused if they already exist)
+ * - Subscription on Free plan
+ *
+ * Note: Plans are shared across tests since the schema enforces exactly
+ * 'free' and 'pro' plan names. Tests should NOT delete plans in cleanup.
+ */
+export async function createBillingTestEnvironment(tx: TestTransaction) {
+	const { organization, user } = await createTestEnvironment(tx);
+	const id = uniqueId();
+
+	// Find or create plans (they're shared across tests due to unique name constraint)
+	let [freePlan] = await tx
+		.select()
+		.from(schema.plans)
+		.where(eq(schema.plans.name, 'free'));
+
+	if (!freePlan) {
+		[freePlan] = await tx
+			.insert(schema.plans)
+			.values({
+				name: 'free',
+				display_name: 'Free',
+				stripe_price_id: `price_free_test_${id}`,
+				monthly_credits: 200,
+				features: { fleet_management: false }
+			})
+			.returning();
+	}
+
+	let [proPlan] = await tx
+		.select()
+		.from(schema.plans)
+		.where(eq(schema.plans.name, 'pro'));
+
+	if (!proPlan) {
+		[proPlan] = await tx
+			.insert(schema.plans)
+			.values({
+				name: 'pro',
+				display_name: 'Pro',
+				stripe_price_id: `price_pro_test_${id}`,
+				monthly_credits: 2000,
+				features: { fleet_management: true }
+			})
+			.returning();
+	}
+
+	const subscription = await createSubscription(tx, {
+		organization_id: organization.id,
+		plan_id: freePlan.id
+	});
+
+	return { organization, user, freePlan, proPlan, subscription };
 }

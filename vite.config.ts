@@ -25,6 +25,14 @@ export default defineConfig(({ mode }) => {
 		test: {
 			expect: { requireAssertions: true },
 			includeTaskLocation: true,
+			pool: 'forks',
+			poolOptions: {
+				// Included because tests we're filling up all available RAM
+				forks: {
+					maxForks: 4,
+					minForks: 1
+				}
+			},
 			projects: [
 				{
 					extends: './vite.config.ts',
@@ -37,6 +45,7 @@ export default defineConfig(({ mode }) => {
 							provider: 'playwright',
 							instances: [{ browser: 'chromium' }]
 						},
+						fileParallelism: false, // Limit to one chrome instance at a time
 						includeTaskLocation: true,
 						include: ['src/**/*.svelte.{test,spec}.{js,ts}'],
 						exclude: ['src/lib/server/**'],

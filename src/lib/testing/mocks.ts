@@ -4,6 +4,7 @@
  * Mock implementations of external services for testing.
  */
 import { vi } from 'vitest';
+import type Stripe from 'stripe';
 import type {
 	AutocompleteOptions,
 	BatchGeocodingOptions
@@ -764,6 +765,63 @@ type CreateSubscriptionCall = {
 	organizationId: string;
 };
 
+type CreateCheckoutSessionCall = Stripe.Checkout.SessionCreateParams;
+
+type CreateBillingPortalSessionCall = {
+	customer: string;
+	return_url: string;
+};
+
+type GetSubscriptionCall = {
+	subscriptionId: string;
+};
+
+type CreateScheduleCall = {
+	subscriptionId: string;
+};
+
+type UpdateScheduleCall = {
+	scheduleId: string;
+	params: Stripe.SubscriptionScheduleUpdateParams;
+};
+
+type CancelScheduleCall = {
+	scheduleId: string;
+};
+
+type ConstructWebhookEventCall = {
+	payload: string;
+	signature: string;
+	secret: string;
+};
+
+type MockCheckoutSession = {
+	id: string;
+	url: string;
+	mode: string;
+	customer: unknown;
+	metadata: Record<string, string> | undefined;
+	payment_intent: string | null;
+};
+
+type MockBillingPortalSession = {
+	id: string;
+	url: string;
+	customer: string;
+	return_url: string;
+};
+
+type MockSubscriptionSchedule = {
+	id: string;
+	subscription: string;
+	phases: Array<{
+		items: Array<{ price: string; quantity?: number }>;
+		start_date: number;
+		end_date: number;
+	}>;
+	status?: string;
+};
+
 /**
  * Shared mock state for Stripe client.
  * This is a module-level singleton so it can be referenced by vi.mock (which is hoisted).
@@ -789,29 +847,57 @@ export const mockStripeState = {
 	subscriptions: [] as Array<{
 		id: string;
 		customer: string;
+		status: string;
+		schedule: string | null;
 		items: {
 			data: Array<{
+				id: string;
+				price: { id: string };
 				current_period_start: number;
 				current_period_end: number;
 			}>;
 		};
 		metadata: Record<string, string>;
 	}>,
+	checkoutSessions: [] as MockCheckoutSession[],
+	billingPortalSessions: [] as MockBillingPortalSession[],
+	schedules: [] as MockSubscriptionSchedule[],
 	calls: {
 		createCustomer: [] as CreateCustomerCall[],
-		createSubscription: [] as CreateSubscriptionCall[]
+		createSubscription: [] as CreateSubscriptionCall[],
+		createCheckoutSession: [] as CreateCheckoutSessionCall[],
+		createBillingPortalSession: [] as CreateBillingPortalSessionCall[],
+		getSubscription: [] as GetSubscriptionCall[],
+		createSubscriptionSchedule: [] as CreateScheduleCall[],
+		updateSubscriptionSchedule: [] as UpdateScheduleCall[],
+		cancelSubscriptionSchedule: [] as CancelScheduleCall[],
+		constructWebhookEvent: [] as ConstructWebhookEventCall[]
 	},
 	customerIdCounter: 0,
 	subscriptionIdCounter: 0,
+	checkoutSessionIdCounter: 0,
+	scheduleIdCounter: 0,
 
 	/** Reset all state (call in beforeEach) */
 	clear() {
 		this.customers = [];
 		this.subscriptions = [];
+		this.checkoutSessions = [];
+		this.billingPortalSessions = [];
+		this.schedules = [];
 		this.calls.createCustomer = [];
 		this.calls.createSubscription = [];
+		this.calls.createCheckoutSession = [];
+		this.calls.createBillingPortalSession = [];
+		this.calls.getSubscription = [];
+		this.calls.createSubscriptionSchedule = [];
+		this.calls.updateSubscriptionSchedule = [];
+		this.calls.cancelSubscriptionSchedule = [];
+		this.calls.constructWebhookEvent = [];
 		this.customerIdCounter = 0;
 		this.subscriptionIdCounter = 0;
+		this.checkoutSessionIdCounter = 0;
+		this.scheduleIdCounter = 0;
 	}
 };
 
@@ -837,9 +923,13 @@ export const mockStripeClient = {
 		const subscription = {
 			id: `sub_mock_${++mockStripeState.subscriptionIdCounter}`,
 			customer: params.customerId,
+			status: 'active',
+			schedule: null,
 			items: {
 				data: [
 					{
+						id: `si_mock_${mockStripeState.subscriptionIdCounter}`,
+						price: { id: params.priceId },
 						current_period_start: now,
 						current_period_end: oneMonthFromNow
 					}
@@ -849,6 +939,179 @@ export const mockStripeClient = {
 		};
 		mockStripeState.subscriptions.push(subscription);
 		return subscription;
+	},
+
+	createCheckoutSession: async (
+		params: Stripe.Checkout.SessionCreateParams
+	) => {
+		mockStripeState.calls.createCheckoutSession.push(params);
+		const session: MockCheckoutSession = {
+			id: `cs_mock_${++mockStripeState.checkoutSessionIdCounter}`,
+			url: `https://checkout.stripe.com/mock/${mockStripeState.checkoutSessionIdCounter}`,
+			mode: params.mode ?? 'payment',
+			customer: params.customer,
+			metadata: params.metadata as Record<string, string> | undefined,
+			payment_intent: params.mode === 'payment' ? `pi_mock_${Date.now()}` : null
+		};
+		mockStripeState.checkoutSessions.push(session);
+		return session;
+	},
+
+	createBillingPortalSession: async (
+		params: CreateBillingPortalSessionCall
+	) => {
+		mockStripeState.calls.createBillingPortalSession.push(params);
+		const session: MockBillingPortalSession = {
+			id: `bps_mock_${Date.now()}`,
+			url: `https://billing.stripe.com/mock/${params.customer}`,
+			customer: params.customer,
+			return_url: params.return_url
+		};
+		mockStripeState.billingPortalSessions.push(session);
+		return session;
+	},
+
+	getSubscription: async (subscriptionId: string) => {
+		mockStripeState.calls.getSubscription.push({ subscriptionId });
+		const sub = mockStripeState.subscriptions.find(
+			(s) => s.id === subscriptionId
+		);
+		if (!sub) {
+			throw new Error(`Mock: Subscription ${subscriptionId} not found`);
+		}
+		return sub;
+	},
+
+	getCustomer: async (customerId: string) => {
+		const customer = mockStripeState.customers.find((c) => c.id === customerId);
+		if (!customer) {
+			throw new Error(`Mock: Customer ${customerId} not found`);
+		}
+		return customer;
+	},
+
+	updateSubscription: async (
+		subscriptionId: string,
+		params: Stripe.SubscriptionUpdateParams
+	) => {
+		const sub = mockStripeState.subscriptions.find(
+			(s) => s.id === subscriptionId
+		);
+		if (!sub) {
+			throw new Error(`Mock: Subscription ${subscriptionId} not found`);
+		}
+		if (params.metadata) {
+			// Filter out null values from metadata (Stripe metadata type allows null)
+			const filteredMetadata = Object.fromEntries(
+				Object.entries(params.metadata).filter(
+					(entry): entry is [string, string] => entry[1] !== null
+				)
+			);
+			sub.metadata = { ...sub.metadata, ...filteredMetadata };
+		}
+		return sub;
+	},
+
+	createSubscriptionSchedule: async (subscriptionId: string) => {
+		mockStripeState.calls.createSubscriptionSchedule.push({ subscriptionId });
+		const sub = mockStripeState.subscriptions.find(
+			(s) => s.id === subscriptionId
+		);
+		if (!sub) {
+			throw new Error(`Mock: Subscription ${subscriptionId} not found`);
+		}
+
+		const schedule: MockSubscriptionSchedule = {
+			id: `sub_sched_mock_${++mockStripeState.scheduleIdCounter}`,
+			subscription: subscriptionId,
+			phases: [
+				{
+					items: [{ price: sub.items.data[0].price.id, quantity: 1 }],
+					start_date: sub.items.data[0].current_period_start,
+					end_date: sub.items.data[0].current_period_end
+				}
+			]
+		};
+		mockStripeState.schedules.push(schedule);
+		sub.schedule = schedule.id;
+		return schedule;
+	},
+
+	updateSubscriptionSchedule: async (
+		scheduleId: string,
+		params: Stripe.SubscriptionScheduleUpdateParams
+	) => {
+		mockStripeState.calls.updateSubscriptionSchedule.push({
+			scheduleId,
+			params
+		});
+		const schedule = mockStripeState.schedules.find((s) => s.id === scheduleId);
+		if (!schedule) {
+			throw new Error(`Mock: Schedule ${scheduleId} not found`);
+		}
+		if (params.phases) {
+			schedule.phases = params.phases.map((p) => ({
+				items:
+					p.items?.map((i) => ({
+						price: typeof i.price === 'string' ? i.price : '',
+						quantity: i.quantity
+					})) ?? [],
+				start_date:
+					typeof p.start_date === 'number' ? p.start_date : Date.now() / 1000,
+				end_date:
+					typeof p.end_date === 'number'
+						? p.end_date
+						: Date.now() / 1000 + 30 * 24 * 60 * 60
+			}));
+		}
+		return schedule;
+	},
+
+	cancelSubscriptionSchedule: async (scheduleId: string) => {
+		mockStripeState.calls.cancelSubscriptionSchedule.push({ scheduleId });
+		const index = mockStripeState.schedules.findIndex(
+			(s) => s.id === scheduleId
+		);
+		if (index === -1) {
+			throw new Error(`Mock: Schedule ${scheduleId} not found`);
+		}
+		const [schedule] = mockStripeState.schedules.splice(index, 1);
+		// Clear schedule reference from subscription
+		const sub = mockStripeState.subscriptions.find(
+			(s) => s.schedule === scheduleId
+		);
+		if (sub) {
+			sub.schedule = null;
+		}
+		return { ...schedule, status: 'released' };
+	},
+
+	getSubscriptionSchedule: async (scheduleId: string) => {
+		const schedule = mockStripeState.schedules.find((s) => s.id === scheduleId);
+		if (!schedule) {
+			throw new Error(`Mock: Schedule ${scheduleId} not found`);
+		}
+		return schedule;
+	},
+
+	constructWebhookEvent: (
+		payload: string,
+		signature: string,
+		secret: string
+	): Stripe.Event => {
+		mockStripeState.calls.constructWebhookEvent.push({
+			payload,
+			signature,
+			secret
+		});
+		// Parse payload and return as event
+		const data = JSON.parse(payload);
+		return {
+			id: `evt_mock_${Date.now()}`,
+			object: 'event',
+			type: data.type,
+			data: { object: data.object }
+		} as Stripe.Event;
 	}
 };
 

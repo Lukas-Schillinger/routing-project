@@ -27,14 +27,14 @@ export class SubscriptionService {
 		organizationId: string,
 		origin: string
 	): Promise<string> {
-		// Get current subscription to find the Stripe customer
-		const subscription = await this.getSubscriptionByOrgId(organizationId);
+		// Get current subscription with plan details for proper plan type checking
+		const subscription = await this.getSubscriptionWithPlan(organizationId);
 
 		if (!subscription) {
 			throw ServiceError.notFound('Subscription not found');
 		}
 
-		if (subscription.plan_id === PlanSlug.PRO) {
+		if (subscription.planName === PlanSlug.PRO) {
 			throw ServiceError.conflict('Organization is already on Pro plan');
 		}
 
@@ -194,6 +194,33 @@ export class SubscriptionService {
 	}
 
 	/**
+	 * Get subscription with plan details by organization ID.
+	 * Returns both subscription and plan name for proper plan type checking.
+	 */
+	private async getSubscriptionWithPlan(organizationId: string) {
+		const result = await db
+			.select({
+				id: subscriptions.id,
+				organization_id: subscriptions.organization_id,
+				plan_id: subscriptions.plan_id,
+				stripe_customer_id: subscriptions.stripe_customer_id,
+				stripe_subscription_id: subscriptions.stripe_subscription_id,
+				stripe_schedule_id: subscriptions.stripe_schedule_id,
+				scheduled_plan_id: subscriptions.scheduled_plan_id,
+				status: subscriptions.status,
+				period_starts_at: subscriptions.period_starts_at,
+				period_ends_at: subscriptions.period_ends_at,
+				planName: plans.name
+			})
+			.from(subscriptions)
+			.innerJoin(plans, eq(subscriptions.plan_id, plans.id))
+			.where(eq(subscriptions.organization_id, organizationId))
+			.limit(1);
+
+		return result[0] ?? null;
+	}
+
+	/**
 	 * Get plan by Stripe price ID.
 	 */
 	async getPlanByPriceId(priceId: string) {
@@ -237,13 +264,14 @@ export class SubscriptionService {
 	 * @returns The date when the downgrade will take effect
 	 */
 	async scheduleDowngrade(organizationId: string): Promise<Date> {
-		const subscription = await this.getSubscriptionByOrgId(organizationId);
+		// Get subscription with plan details for proper plan type checking
+		const subscription = await this.getSubscriptionWithPlan(organizationId);
 
 		if (!subscription) {
 			throw ServiceError.notFound('Subscription not found');
 		}
 
-		if (subscription.plan_id === PlanSlug.FREE) {
+		if (subscription.planName === PlanSlug.FREE) {
 			throw ServiceError.conflict('Organization is already on Free plan');
 		}
 
@@ -368,11 +396,11 @@ export class SubscriptionService {
 	/**
 	 * Get plan by slug (name).
 	 */
-	private async getPlanBySlug(slug: string) {
+	private async getPlanBySlug(slug: PlanSlug) {
 		const result = await db
 			.select()
 			.from(plans)
-			.where(eq(plans.id, slug))
+			.where(eq(plans.name, slug))
 			.limit(1);
 
 		return result[0] ?? null;

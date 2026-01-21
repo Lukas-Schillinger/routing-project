@@ -40,7 +40,11 @@ export {
 	createMockRouteShare,
 	createMockDriverMapMembership,
 	createMockMatrix,
-	createMockOptimizationJob
+	createMockOptimizationJob,
+	// Billing
+	createMockPlan,
+	createMockSubscription,
+	createMockCreditTransaction
 } from './factories';
 
 // Mock factories - DB insertion
@@ -59,11 +63,19 @@ export {
 	createRouteShare,
 	createDriverMapMembership,
 	createMatrix,
-	createOptimizationJob
+	createOptimizationJob,
+	// Billing
+	createPlan,
+	createSubscription,
+	createCreditTransaction
 } from './factories';
 
 // Mock factories - convenience helpers
-export { createTestEnvironment, createTestRouteSetup } from './factories';
+export {
+	createTestEnvironment,
+	createTestRouteSetup,
+	createBillingTestEnvironment
+} from './factories';
 
 // Mock factories - types
 export type {
@@ -81,7 +93,11 @@ export type {
 	MockRouteShare,
 	MockDriverMapMembership,
 	MockMatrix,
-	MockOptimizationJob
+	MockOptimizationJob,
+	// Billing
+	MockPlan,
+	MockSubscription,
+	MockCreditTransaction
 } from './factories';
 
 // Service mocks
@@ -92,8 +108,32 @@ export {
 	createMockDistanceMatrixService,
 	createMockNavigationService,
 	createMockR2Service,
-	createMockSqsService
+	createMockSqsService,
+	// Stripe
+	mockStripeClient,
+	mockStripeState
 } from './mocks';
+
+// Stripe fixtures - mock Stripe objects for testing
+export {
+	createMockStripeSubscription,
+	createMockStripeInvoice,
+	createMockStripeCheckoutSession,
+	createCheckoutCompletedEvent,
+	createInvoicePaidEvent,
+	createInvoicePaymentFailedEvent,
+	createSubscriptionCreatedEvent,
+	createSubscriptionUpdatedEvent,
+	createSubscriptionDeletedEvent
+} from './stripe/fixtures';
+
+// Stripe test clocks - for integration tests with real Stripe API
+export {
+	createStripeTestClock,
+	requireStripeTestKey,
+	hasStripeTestKey,
+	type StripeTestClockHelper
+} from './stripe/test-clocks';
 
 // Test data - raw input data for geocoding tests
 import inputDataJson from './data/input_data.json';
