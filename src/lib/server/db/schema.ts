@@ -25,12 +25,16 @@ export type PlanFeatures = {
 	fleet_management: boolean;
 };
 
+// Matches Stripe subscription statuses
 export type SubscriptionStatus =
 	| 'active'
 	| 'canceled'
+	| 'incomplete'
+	| 'incomplete_expired'
 	| 'past_due'
-	| 'unpaid'
-	| 'trialing';
+	| 'paused'
+	| 'trialing'
+	| 'unpaid';
 
 export type CreditTransactionType =
 	| 'subscription_grant'
@@ -84,7 +88,11 @@ export const subscriptions = pgTable(
 		}).notNull(),
 		period_ends_at: timestamp('current_period_end', {
 			withTimezone: true
-		}).notNull()
+		}).notNull(),
+
+		// Tracks scheduled plan changes (e.g., downgrade at period end)
+		stripe_schedule_id: text('stripe_schedule_id'),
+		scheduled_plan_id: uuid('scheduled_plan_id').references(() => plans.id)
 	},
 	(t) => [
 		uniqueIndex('subscriptions_org_uidx').on(t.organization_id),
@@ -112,6 +120,7 @@ export const creditTransactions = pgTable(
 
 		// Idempotency/reference fields
 		stripe_payment_intent_id: text('stripe_payment_intent_id'), // for purchases
+		stripe_invoice_id: text('stripe_invoice_id'), // for subscription grants
 		optimization_job_id: uuid('optimization_job_id').references(
 			() => optimizationJobs.id,
 			{
@@ -125,7 +134,8 @@ export const creditTransactions = pgTable(
 			t.organization_id,
 			t.created_at
 		),
-		index('credit_transactions_optimization_job_idx').on(t.optimization_job_id)
+		index('credit_transactions_optimization_job_idx').on(t.optimization_job_id),
+		index('credit_transactions_invoice_idx').on(t.stripe_invoice_id)
 	]
 );
 

@@ -83,18 +83,32 @@ export class BillingService {
 	/**
 	 * Grant subscription credits (called on subscription renewal via webhook).
 	 * Credits expire at the end of the billing period.
+	 * Uses stripe_invoice_id for idempotency.
 	 */
 	async grantSubscriptionCredits(
 		organizationId: string,
 		amount: number,
 		expiresAt: Date,
+		stripeInvoiceId: string,
 		description?: string
 	): Promise<void> {
+		// Check idempotency - don't double-grant for same invoice
+		const existing = await db
+			.select({ id: creditTransactions.id })
+			.from(creditTransactions)
+			.where(eq(creditTransactions.stripe_invoice_id, stripeInvoiceId))
+			.limit(1);
+
+		if (existing.length > 0) {
+			return; // Already processed this invoice
+		}
+
 		await db.insert(creditTransactions).values({
 			organization_id: organizationId,
 			type: 'subscription_grant',
 			amount,
 			expires_at: expiresAt,
+			stripe_invoice_id: stripeInvoiceId,
 			description: description ?? 'Monthly subscription credits'
 		});
 	}

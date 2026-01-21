@@ -11,7 +11,9 @@ export type Permission =
 	| 'resources:create'
 	| 'resources:update'
 	| 'resources:delete'
-	| 'routes:read';
+	| 'routes:read'
+	| 'billing:read'
+	| 'billing:update';
 
 export const rolePermissions: Record<Role, Permission[]> = {
 	admin: [
@@ -23,13 +25,16 @@ export const rolePermissions: Record<Role, Permission[]> = {
 		'resources:create',
 		'resources:update',
 		'resources:delete',
-		'routes:read'
+		'routes:read',
+		'billing:read',
+		'billing:update'
 	],
 	member: [
 		'resources:read',
 		'resources:create',
 		'resources:update',
-		'routes:read'
+		'routes:read',
+		'billing:read'
 	],
 	viewer: ['resources:read', 'routes:read'],
 	driver: ['routes:read']

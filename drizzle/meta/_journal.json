@@ -148,6 +148,13 @@
       "when": 1768928116679,
       "tag": "0020_huge_praxagora",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1769011005764,
+      "tag": "0021_perfect_fallen_one",
+      "breakpoints": true
     }
   ]
 }
