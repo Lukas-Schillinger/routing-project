@@ -1,5 +1,9 @@
 import { env } from '$env/dynamic/private';
-import type { OptimizationOptions } from '$lib/schemas/map';
+import type {
+	JobStatus,
+	OptimizationJob,
+	OptimizationOptions
+} from '$lib/schemas/map';
 import { db } from '$lib/server/db';
 import {
 	driverMapMemberships,
@@ -26,10 +30,10 @@ import { routeService } from './route.service';
 // Validated Types (Parse, Don't Validate)
 // ============================================================================
 
-/** Branded type utility - carries proof of validation in the type */
+/** Branded type - carries proof of validation in the type */
 type Brand<T, B extends string> = T & { readonly __brand: B };
 
-/** A coordinate that has been validated (not NaN, within valid ranges) */
+/** A coordinate validated for range and numeric values */
 type ValidatedCoordinate = Brand<Coordinate, 'ValidatedCoordinate'>;
 
 /** An array guaranteed to have at least one element */
@@ -41,7 +45,7 @@ function isNonEmpty<T>(arr: T[]): arr is NonEmptyArray<T> {
 }
 
 /** Parse array into NonEmptyArray or throw with context */
-function parseNonEmptyOrThrow<T>(arr: T[], context: string): NonEmptyArray<T> {
+function requireNonEmpty<T>(arr: T[], context: string): NonEmptyArray<T> {
 	if (!isNonEmpty(arr)) {
 		throw ServiceError.validation(`Expected non-empty array for ${context}`);
 	}
@@ -49,7 +53,7 @@ function parseNonEmptyOrThrow<T>(arr: T[], context: string): NonEmptyArray<T> {
 }
 
 /** Parse and validate a coordinate, throwing with context if invalid */
-function parseCoordinateOrThrow(
+function parseCoordinate(
 	lon: string | number | null,
 	lat: string | number | null,
 	context: string
@@ -67,8 +71,10 @@ function parseCoordinateOrThrow(
 		);
 	}
 
-	// Valid longitude: -180 to 180, latitude: -90 to 90
-	if (lonNum < -180 || lonNum > 180 || latNum < -90 || latNum > 90) {
+	const isValidLon = lonNum >= -180 && lonNum <= 180;
+	const isValidLat = latNum >= -90 && latNum <= 90;
+
+	if (!isValidLon || !isValidLat) {
 		throw ServiceError.validation(
 			`Coordinates out of range for ${context}: lon=${lonNum}, lat=${latNum}`
 		);
@@ -137,33 +143,58 @@ export type SuccessfulOptimizationResponse = z.infer<
 >;
 export type FailedOptimizationResponse = z.infer<typeof failedResponseSchema>;
 
+// ============================================================================
+// State Machine
+// ============================================================================
+
+/** Valid state transitions for optimization jobs */
+const VALID_TRANSITIONS: Record<JobStatus, JobStatus[]> = {
+	pending: ['running', 'cancelled', 'failed'],
+	running: ['completing', 'cancelled', 'failed'],
+	completing: ['completed', 'failed'],
+	completed: [],
+	failed: [],
+	cancelled: []
+};
+
+function canTransition(from: JobStatus, to: JobStatus): boolean {
+	return VALID_TRANSITIONS[from]?.includes(to) ?? false;
+}
+
 /**
  * Optimization Service
- * Handles route optimization using TSP Solver via SQS queue
- * Manages database operations and external API integration
+ * Handles route optimization via TSP Solver and SQS queue.
  */
 export class OptimizationService {
 	private sqsClient: SQSClient;
 	private queueUrl: string;
+
 	private readonly DEFAULT_CONFIG = {
 		start_at_depot: true,
 		end_at_depot: true
 	} as const;
 
 	constructor(sqsClient?: SQSClient) {
-		this.sqsClient =
-			sqsClient ??
-			new SQSClient({
-				region: env.AWS_REGION || '',
-				credentials: {
-					accessKeyId: env.AWS_ACCESS_KEY_ID || '',
-					secretAccessKey: env.AWS_SECRET_ACCESS_KEY || ''
-				}
-			});
+		this.sqsClient = sqsClient ?? this.createDefaultSQSClient();
 		this.queueUrl = env.OPTIMIZATION_QUEUE_URL;
 	}
 
-	async getActiveJobForMap(mapId: string, organizationId: string) {
+	private createDefaultSQSClient(): SQSClient {
+		return new SQSClient({
+			region: env.AWS_REGION || '',
+			credentials: {
+				accessKeyId: env.AWS_ACCESS_KEY_ID || '',
+				secretAccessKey: env.AWS_SECRET_ACCESS_KEY || ''
+			}
+		});
+	}
+
+	async getActiveJobForMap(
+		mapId: string,
+		organizationId: string
+	): Promise<OptimizationJob | null> {
+		const activeStatuses: JobStatus[] = ['pending', 'running', 'completing'];
+
 		const [job] = await db
 			.select()
 			.from(optimizationJobs)
@@ -171,7 +202,7 @@ export class OptimizationService {
 				and(
 					eq(optimizationJobs.map_id, mapId),
 					eq(optimizationJobs.organization_id, organizationId),
-					inArray(optimizationJobs.status, ['pending', 'running', 'completing'])
+					inArray(optimizationJobs.status, activeStatuses)
 				)
 			)
 			.orderBy(optimizationJobs.created_at)
@@ -186,23 +217,14 @@ export class OptimizationService {
 		userId: string,
 		options: OptimizationOptions,
 		requestId?: string
-	) {
-		// Check credit balance - block if already negative, allow single op to go negative
-		const availableCredits =
-			await billingService.getAvailableCredits(organizationId);
-		if (availableCredits < 0) {
-			throw ServiceError.forbidden(
-				'Insufficient credits. Please purchase more credits to continue optimizing routes.'
-			);
-		}
+	): Promise<OptimizationJob> {
+		await this.validateCreditBalance(organizationId);
 
 		const assignedDrivers = await this.fetchAssignedDrivers(
 			mapId,
 			organizationId
 		);
-
-		// Parse to non-empty - throws with clear message if no drivers
-		const nonEmptyDrivers = parseNonEmptyOrThrow(
+		const nonEmptyDrivers = requireNonEmpty(
 			assignedDrivers,
 			'active drivers assigned to this map. Assign at least one driver before optimizing'
 		);
@@ -220,36 +242,21 @@ export class OptimizationService {
 		);
 
 		const vehicleIds = nonEmptyDrivers.map((d) => d.driver.id);
+		const job = await this.createJob(
+			mapId,
+			organizationId,
+			userId,
+			options.depotId,
+			matrixResult.id
+		);
 
-		const [job] = await db
-			.insert(optimizationJobs)
-			.values({
-				organization_id: organizationId,
-				status: 'pending',
-				matrix_id: matrixResult.id,
-				map_id: mapId,
-				depot_id: options.depotId,
-				created_by: userId,
-				updated_by: userId
-			})
-			.returning();
-
-		const payload = {
-			job_id: job.id,
-			matrix: matrixResult.matrix,
-			stop_ids: coordinatesData.locationIds,
-			vehicle_ids: vehicleIds,
-			config: {
-				...this.DEFAULT_CONFIG,
-				fairness: options.fairness
-			}
-		};
-
-		// Validate payload matches expected schema BEFORE sending to SQS
-		const sqsPayloadSchema = matrixPayloadSchema.extend({
-			job_id: z.uuid()
-		});
-		const validatedPayload = sqsPayloadSchema.parse(payload);
+		const payload = this.buildSQSPayload(
+			job.id,
+			matrixResult.matrix,
+			coordinatesData.locationIds,
+			vehicleIds,
+			options.fairness
+		);
 
 		logger.info(
 			{
@@ -262,11 +269,75 @@ export class OptimizationService {
 			'Optimization job created'
 		);
 
+		await this.sendToSQS(job.id, payload, requestId);
+		return job;
+	}
+
+	private async validateCreditBalance(organizationId: string): Promise<void> {
+		const availableCredits =
+			await billingService.getAvailableCredits(organizationId);
+		if (availableCredits < 0) {
+			throw ServiceError.forbidden(
+				'Insufficient credits. Please purchase more credits to continue optimizing routes.'
+			);
+		}
+	}
+
+	private async createJob(
+		mapId: string,
+		organizationId: string,
+		userId: string,
+		depotId: string,
+		matrixId: string
+	): Promise<OptimizationJob> {
+		const [job] = await db
+			.insert(optimizationJobs)
+			.values({
+				organization_id: organizationId,
+				status: 'pending',
+				matrix_id: matrixId,
+				map_id: mapId,
+				depot_id: depotId,
+				created_by: userId,
+				updated_by: userId
+			})
+			.returning();
+
+		return job;
+	}
+
+	private buildSQSPayload(
+		jobId: string,
+		matrix: number[][],
+		stopIds: string[],
+		vehicleIds: string[],
+		fairness: OptimizationOptions['fairness']
+	): z.infer<typeof matrixPayloadSchema> & { job_id: string } {
+		const payload = {
+			job_id: jobId,
+			matrix,
+			stop_ids: stopIds,
+			vehicle_ids: vehicleIds,
+			config: {
+				...this.DEFAULT_CONFIG,
+				fairness
+			}
+		};
+
+		const sqsPayloadSchema = matrixPayloadSchema.extend({ job_id: z.uuid() });
+		return sqsPayloadSchema.parse(payload);
+	}
+
+	private async sendToSQS(
+		jobId: string,
+		payload: z.infer<typeof matrixPayloadSchema> & { job_id: string },
+		requestId?: string
+	): Promise<void> {
 		try {
 			await this.sqsClient.send(
 				new SendMessageCommand({
 					QueueUrl: this.queueUrl,
-					MessageBody: JSON.stringify(validatedPayload),
+					MessageBody: JSON.stringify(payload),
 					MessageAttributes: {
 						request_id: {
 							DataType: 'String',
@@ -276,12 +347,11 @@ export class OptimizationService {
 				})
 			);
 
-			// Update to running after successful queue
-			await this.updateJobStatus(job.id, 'running');
-			logger.info({ jobId: job.id }, 'Job queued to SQS');
+			await this.updateJobStatus(jobId, 'running');
+			logger.info({ jobId }, 'Job queued to SQS');
 		} catch (error) {
 			await this.updateJobStatus(
-				job.id,
+				jobId,
 				'failed',
 				'Failed to queue optimization job'
 			);
@@ -289,111 +359,119 @@ export class OptimizationService {
 				cause: error
 			});
 		}
-
-		return job;
 	}
 
-	async completeOptimization(response: OptimizationResponse) {
+	async completeOptimization(response: OptimizationResponse): Promise<void> {
 		const log = logger.child({ jobId: response.job_id });
 		log.info(
 			{ success: response.success },
 			'Processing optimization completion'
 		);
 
+		const job = await this.getJobById(response.job_id);
+
+		const completableStatuses: JobStatus[] = ['pending', 'running'];
+		if (!completableStatuses.includes(job.status as JobStatus)) {
+			log.info({ status: job.status }, 'Job not in valid state, skipping');
+			return;
+		}
+
 		try {
-			const [job] = await db
-				.select()
-				.from(optimizationJobs)
-				.where(eq(optimizationJobs.id, response.job_id))
-				.limit(1);
-
-			if (!job) {
-				throw ServiceError.validation(
-					`Optimization job ${response.job_id} not found`
-				);
-			}
-
-			// Only process jobs in valid states (pending or running)
-			// This handles cancelled jobs and prevents double-processing
-			const validStatesForCompletion = ['pending', 'running'];
-			if (!validStatesForCompletion.includes(job.status)) {
-				log.info({ status: job.status }, 'Job not in valid state, skipping');
-				return;
-			}
-
-			const {
-				map_id: mapId,
-				organization_id: organizationId,
-				depot_id: depotId
-			} = job;
-
-			await this.updateJobStatus(response.job_id, 'completing');
-
-			// Discriminated union: TypeScript narrows type based on success field
-			if (!response.success) {
-				log.warn(
-					{ errorMessage: response.error_message },
-					'Optimization failed'
-				);
-				await this.updateJobStatus(
-					response.job_id,
-					'failed',
-					response.error_message // Type-safe: guaranteed to exist when success=false
-				);
-				throw ServiceError.internal(
-					`Optimization failed to complete: ${response.error_message}`
-				);
-			}
-
-			// TypeScript now knows: response.success === true, so response.result exists
-			const result = response.result;
-
-			const { depotCoord, locationCoordMap } = await this.getCoordinatesData(
-				mapId,
-				depotId,
-				organizationId
-			);
-
-			await this.clearStopAssignments(mapId);
-			await this.applyOptimizedRoutes(mapId, result);
-			await this.computeAndSaveRoutes(
-				mapId,
-				organizationId,
-				depotId,
-				result,
-				depotCoord,
-				locationCoordMap
-			);
-
-			await this.updateJobStatus(response.job_id, 'completed');
-
-			// Record credit usage based on number of stops optimized
-			const totalStops = result.routes.reduce(
-				(sum, route) => sum + route.legs.length,
-				0
-			);
-			await billingService.recordUsage(
-				organizationId,
-				totalStops,
-				response.job_id,
-				`Route optimization: ${totalStops} stops`
-			);
-
-			log.info(
-				{
-					routeCount: result.routes.length,
-					totalCost: result.total_cost,
-					creditsUsed: totalStops
-				},
-				'Optimization completed successfully'
-			);
+			await this.processCompletion(job, response, log);
 		} catch (error) {
-			// Recovery: mark job as failed before re-throwing
 			const errorMessage =
 				error instanceof Error ? error.message : 'Unknown error';
 			await this.updateJobStatus(response.job_id, 'failed', errorMessage);
 			throw error;
 		}
+	}
+
+	private async getJobById(jobId: string): Promise<OptimizationJob> {
+		const [job] = await db
+			.select()
+			.from(optimizationJobs)
+			.where(eq(optimizationJobs.id, jobId))
+			.limit(1);
+
+		if (!job) {
+			throw ServiceError.validation(`Optimization job ${jobId} not found`);
+		}
+
+		return job;
+	}
+
+	private async processCompletion(
+		job: OptimizationJob,
+		response: OptimizationResponse,
+		log: typeof logger
+	): Promise<void> {
+		const {
+			map_id: mapId,
+			organization_id: organizationId,
+			depot_id: depotId
+		} = job;
+
+		await this.updateJobStatus(response.job_id, 'completing');
+
+		if (!response.success) {
+			log.warn({ errorMessage: response.error_message }, 'Optimization failed');
+			await this.updateJobStatus(
+				response.job_id,
+				'failed',
+				response.error_message
+			);
+			throw ServiceError.internal(
+				`Optimization failed to complete: ${response.error_message}`
+			);
+		}
+
+		const result = response.result;
+		const { depotCoord, locationCoordMap } = await this.getCoordinatesData(
+			mapId,
+			depotId,
+			organizationId
+		);
+
+		await this.clearStopAssignments(mapId);
+		await this.applyOptimizedRoutes(mapId, result);
+		await this.computeAndSaveRoutes(
+			mapId,
+			organizationId,
+			depotId,
+			result,
+			depotCoord,
+			locationCoordMap
+		);
+
+		await this.updateJobStatus(response.job_id, 'completed');
+		await this.recordCreditUsage(organizationId, result, response.job_id);
+
+		log.info(
+			{
+				routeCount: result.routes.length,
+				totalCost: result.total_cost,
+				creditsUsed: this.countTotalStops(result)
+			},
+			'Optimization completed successfully'
+		);
+	}
+
+	private countTotalStops(result: OptimizationResult): number {
+		return result.routes.reduce((sum, route) => sum + route.legs.length, 0);
+	}
+
+	private async recordCreditUsage(
+		organizationId: string,
+		result: OptimizationResult,
+		jobId: string
+	): Promise<void> {
+		const totalStops = this.countTotalStops(result);
+		await billingService.recordUsage(
+			organizationId,
+			totalStops,
+			jobId,
+			`Route optimization: ${totalStops} stops`
+		);
 	}
 
 	private async clearStopAssignments(mapId: string): Promise<void> {
@@ -428,15 +506,21 @@ export class OptimizationService {
 			matchingStops.map((s) => [s.location_id, s.id])
 		);
 
-		const updates = optimizationResult.routes
-			.flatMap((route) =>
-				route.legs.map((leg, i) => ({
-					stopId: locationToStopId.get(leg.stop_id),
-					driverId: route.driver_id,
-					deliveryIndex: i
-				}))
-			)
-			.filter((update) => update.stopId);
+		type StopUpdate = {
+			stopId: string;
+			driverId: string;
+			deliveryIndex: number;
+		};
+
+		const updates: StopUpdate[] = optimizationResult.routes.flatMap((route) =>
+			route.legs
+				.map((leg, i) => {
+					const stopId = locationToStopId.get(leg.stop_id);
+					if (!stopId) return null;
+					return { stopId, driverId: route.driver_id, deliveryIndex: i };
+				})
+				.filter((update): update is StopUpdate => update !== null)
+		);
 
 		const now = new Date();
 		await db.transaction(async (tx) => {
@@ -449,7 +533,7 @@ export class OptimizationService {
 							delivery_index: update.deliveryIndex,
 							updated_at: now
 						})
-						.where(eq(stops.id, update.stopId!))
+						.where(eq(stops.id, update.stopId))
 				)
 			);
 		});
@@ -463,41 +547,35 @@ export class OptimizationService {
 		depotCoord: ValidatedCoordinate,
 		locationCoordMap: Map<string, ValidatedCoordinate>
 	): Promise<void> {
-		const routePromises = result.routes.map(async (route) => {
+		type RouteResult = { driverId: string; success: boolean; error?: string };
+
+		const computeRoute = async (route: Route): Promise<RouteResult | null> => {
+			if (route.legs.length === 0) return null;
+
+			const legStopIds = route.legs.map((leg) => leg.stop_id);
+			const missingIds = legStopIds.filter((id) => !locationCoordMap.has(id));
+
+			if (missingIds.length > 0) {
+				return {
+					driverId: route.driver_id,
+					success: false,
+					error: `Missing coordinates for stops: ${missingIds.join(', ')}`
+				};
+			}
+
 			try {
-				if (route.legs.length === 0) {
-					return null;
-				}
-
-				// Validate all leg stop_ids exist in the map BEFORE using them
-				const legStopIds = route.legs.map((leg) => leg.stop_id);
-				const missingIds = legStopIds.filter((id) => !locationCoordMap.has(id));
-
-				if (missingIds.length > 0) {
-					return {
-						driver_id: route.driver_id,
-						success: false,
-						error: `Missing coordinates for stops: ${missingIds.join(', ')}`
-					};
-				}
-
-				// Safe to use - we've validated all keys exist
 				const legCoords = route.legs.map(
 					(leg) => locationCoordMap.get(leg.stop_id)!
 				);
-
 				const directions = await mapboxNavigation.getDirections([
 					depotCoord,
 					...legCoords,
 					depotCoord
 				]);
 
-				if (directions.routes.length === 0) {
-					return null;
-				}
+				if (directions.routes.length === 0) return null;
 
 				const { geometry, duration } = directions.routes[0];
-
 				await routeService.upsertRoute({
 					organization_id: organizationId,
 					map_id: mapId,
@@ -507,26 +585,35 @@ export class OptimizationService {
 					duration
 				});
 
-				return { driver_id: route.driver_id, success: true };
+				return { driverId: route.driver_id, success: true };
 			} catch (error) {
-				return { driver_id: route.driver_id, success: false, error };
+				const errorMessage =
+					error instanceof Error ? error.message : 'Unknown error';
+				return {
+					driverId: route.driver_id,
+					success: false,
+					error: errorMessage
+				};
 			}
-		});
+		};
 
-		const results = await Promise.all(routePromises);
-		const failures = results.filter((r) => r && !r.success);
+		const results = await Promise.all(result.routes.map(computeRoute));
+		const failures = results.filter(
+			(r): r is RouteResult => r !== null && !r.success
+		);
+
 		if (failures.length > 0) {
-			const failedDriverIds = failures
-				.filter((f) => f)
-				.map((f) => f!.driver_id)
-				.join(', ');
+			const failedDriverIds = failures.map((f) => f.driverId).join(', ');
 			throw ServiceError.internal(
 				`Failed to compute routes for ${failures.length} driver(s): ${failedDriverIds}`
 			);
 		}
 	}
 
-	async cancelOptimization(mapId: string, organizationId: string) {
+	async cancelOptimization(
+		mapId: string,
+		organizationId: string
+	): Promise<{ success: boolean }> {
 		const job = await this.getActiveJobForMap(mapId, organizationId);
 
 		if (!job) {
@@ -539,32 +626,11 @@ export class OptimizationService {
 		return { success: true };
 	}
 
-	// Valid state transitions for optimization jobs
-	private readonly VALID_TRANSITIONS: Record<string, string[]> = {
-		pending: ['running', 'cancelled', 'failed'],
-		running: ['completing', 'cancelled', 'failed'],
-		completing: ['completed', 'failed'],
-		completed: [],
-		failed: [],
-		cancelled: []
-	};
-
-	private canTransition(from: string, to: string): boolean {
-		return this.VALID_TRANSITIONS[from]?.includes(to) ?? false;
-	}
-
 	private async updateJobStatus(
 		jobId: string,
-		status:
-			| 'pending'
-			| 'running'
-			| 'completing'
-			| 'completed'
-			| 'failed'
-			| 'cancelled',
+		status: JobStatus,
 		errorMessage?: string
 	): Promise<void> {
-		// Get current status to validate transition
 		const [job] = await db
 			.select({ status: optimizationJobs.status })
 			.from(optimizationJobs)
@@ -575,8 +641,7 @@ export class OptimizationService {
 			throw ServiceError.notFound('Optimization job not found');
 		}
 
-		// Validate state transition - skip invalid transitions to handle race conditions gracefully
-		if (!this.canTransition(job.status, status)) {
+		if (!canTransition(job.status as JobStatus, status)) {
 			return;
 		}
 
@@ -594,11 +659,10 @@ export class OptimizationService {
 		organizationId: string,
 		mapId: string,
 		coordinatesData: CoordinatesData
-	) {
+	): Promise<typeof matrices.$inferSelect> {
 		const inputHash = this.createInputHash(coordinatesData);
 
-		// Check for existing matrix with same input hash
-		const existingMatrix = await db
+		const [existingMatrix] = await db
 			.select()
 			.from(matrices)
 			.where(
@@ -609,16 +673,14 @@ export class OptimizationService {
 			)
 			.limit(1);
 
-		if (existingMatrix.length > 0) {
-			return existingMatrix[0];
+		if (existingMatrix) {
+			return existingMatrix;
 		}
 
-		// Create new matrix via API using pre-fetched coordinates
 		const matrixResult =
 			await mapboxDistanceMatrix.createDistanceMatrix(coordinatesData);
 
-		// Save matrix to database
-		const matrix = await db
+		const [newMatrix] = await db
 			.insert(matrices)
 			.values({
 				organization_id: organizationId,
@@ -628,11 +690,14 @@ export class OptimizationService {
 			})
 			.returning();
 
-		return matrix[0];
+		return newMatrix;
 	}
 
-	private async fetchAssignedDrivers(mapId: string, organizationId: string) {
-		return await db
+	private async fetchAssignedDrivers(
+		mapId: string,
+		organizationId: string
+	): Promise<{ driver: typeof drivers.$inferSelect }[]> {
+		return db
 			.select({ driver: drivers })
 			.from(driverMapMemberships)
 			.innerJoin(drivers, eq(driverMapMemberships.driver_id, drivers.id))
@@ -655,26 +720,19 @@ export class OptimizationService {
 		locationCoordMap: Map<string, ValidatedCoordinate>;
 	}> {
 		const depot = await depotService.getDepotById(depotId, organizationId);
-
-		// Parse depot coordinate - throws with context if invalid
-		const depotCoord = parseCoordinateOrThrow(
+		const depotCoord = parseCoordinate(
 			depot.location.lon,
 			depot.location.lat,
 			`depot ${depot.depot.name}`
 		);
 
 		const mapStops = await db
-			.select({
-				stop: stops,
-				location: locations
-			})
+			.select({ stop: stops, location: locations })
 			.from(stops)
 			.innerJoin(locations, eq(stops.location_id, locations.id))
 			.where(eq(stops.map_id, mapId));
 
-		// Parse into non-empty array - throws if no stops
-		const nonEmptyStops = parseNonEmptyOrThrow(mapStops, 'stops for this map');
-
+		const nonEmptyStops = requireNonEmpty(mapStops, 'stops for this map');
 		nonEmptyStops.sort((a, b) =>
 			(a.location.address_hash ?? '').localeCompare(
 				b.location.address_hash ?? ''
@@ -687,8 +745,7 @@ export class OptimizationService {
 		locationCoordMap.set(depot.location.id, depotCoord);
 
 		for (const { location } of nonEmptyStops) {
-			// Parse each location coordinate - throws with context if invalid
-			const coord = parseCoordinateOrThrow(
+			const coord = parseCoordinate(
 				location.lon,
 				location.lat,
 				`location ${location.address_line_1}`

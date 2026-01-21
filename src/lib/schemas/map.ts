@@ -72,19 +72,24 @@ export const optimizationOptionsSchema = z.object({
 });
 
 /**
+ * Job status enum - used for optimization job state machine
+ */
+export const jobStatusEnum = z.enum([
+	'pending',
+	'running',
+	'completing',
+	'completed',
+	'failed',
+	'cancelled'
+]);
+
+/**
  * Optimization job schema - represents a queued/running optimization job
  */
 export const optimizationJobSchema = z.object({
 	id: z.uuid(),
 	organization_id: z.uuid(),
-	status: z.enum([
-		'pending',
-		'running',
-		'completing',
-		'completed',
-		'failed',
-		'cancelled'
-	]),
+	status: jobStatusEnum,
 	matrix_id: z.uuid(),
 	map_id: z.uuid(),
 	depot_id: z.uuid(),
@@ -101,4 +106,5 @@ export type UpdateMap = z.infer<typeof updateMapSchema>;
 export type Map = z.infer<typeof mapSchema>;
 export type MapWithStats = z.infer<typeof mapWithStatsSchema>;
 export type OptimizationOptions = z.infer<typeof optimizationOptionsSchema>;
+export type JobStatus = z.infer<typeof jobStatusEnum>;
 export type OptimizationJob = z.infer<typeof optimizationJobSchema>;
