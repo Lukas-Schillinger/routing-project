@@ -8,9 +8,11 @@ import {
 	organizations,
 	routes,
 	routeShares,
+	subscriptions,
 	users
 } from '$lib/server/db/schema';
 import {
+	createBillingTestEnvironment,
 	createDepot,
 	createDriver,
 	createLocation,
@@ -23,6 +25,7 @@ import {
 } from '$lib/testing';
 import { eq, inArray } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { ServiceError } from './errors';
 import { routeShareService } from './route-share.service';
 
 /**
@@ -177,6 +180,226 @@ describe('RouteShareService', () => {
 			await expect(
 				routeShareService.setMailRecordId(NON_EXISTENT_UUID, NON_EXISTENT_UUID)
 			).resolves.not.toThrow();
+		});
+	});
+});
+
+/**
+ * Feature Gating Tests
+ *
+ * Tests that route sharing is gated behind the fleet_management feature.
+ * - Pro plan users can create shares
+ * - Free plan users get 403 forbidden
+ * - Free plan users can still view/revoke existing shares
+ */
+describe('RouteShareService - Feature Gating', () => {
+	// Separate test fixtures for feature gating tests
+	let billingOrg: { id: string };
+	let billingUser: { id: string };
+	let freePlan: { id: string };
+	let proPlan: { id: string };
+	let billingSubscription: { id: string };
+	let billingMap: { id: string };
+	let billingDriver: { id: string };
+	let billingDepot: { id: string };
+	let billingLocation: { id: string };
+	let billingRoute: { id: string };
+
+	// Track created IDs for cleanup
+	const featureTestShareIds: string[] = [];
+	const featureTestRouteIds: string[] = [];
+	const featureTestDepotIds: string[] = [];
+	const featureTestMapIds: string[] = [];
+	const featureTestLocationIds: string[] = [];
+	const featureTestDriverIds: string[] = [];
+	const featureTestSubscriptionIds: string[] = [];
+	const featureTestUserIds: string[] = [];
+	const featureTestOrgIds: string[] = [];
+
+	beforeAll(async () => {
+		const tx = db as unknown as TestTransaction;
+
+		// Create billing test environment (org with free plan subscription)
+		const billingEnv = await createBillingTestEnvironment(tx);
+		billingOrg = billingEnv.organization;
+		billingUser = billingEnv.user;
+		freePlan = billingEnv.freePlan;
+		proPlan = billingEnv.proPlan;
+		billingSubscription = billingEnv.subscription;
+
+		featureTestOrgIds.push(billingOrg.id);
+		featureTestUserIds.push(billingUser.id);
+		featureTestSubscriptionIds.push(billingSubscription.id);
+
+		// Create route setup for this org
+		billingLocation = await createLocation(tx, {
+			organization_id: billingOrg.id
+		});
+		featureTestLocationIds.push(billingLocation.id);
+
+		billingMap = await createMap(tx, { organization_id: billingOrg.id });
+		featureTestMapIds.push(billingMap.id);
+
+		billingDriver = await createDriver(tx, {
+			organization_id: billingOrg.id,
+			active: true
+		});
+		featureTestDriverIds.push(billingDriver.id);
+
+		billingDepot = await createDepot(tx, {
+			organization_id: billingOrg.id,
+			location_id: billingLocation.id,
+			default_depot: true
+		});
+		featureTestDepotIds.push(billingDepot.id);
+
+		billingRoute = await createRoute(tx, {
+			organization_id: billingOrg.id,
+			map_id: billingMap.id,
+			driver_id: billingDriver.id,
+			depot_id: billingDepot.id
+		});
+		featureTestRouteIds.push(billingRoute.id);
+	});
+
+	afterAll(async () => {
+		// Clean up in correct FK order
+		if (featureTestShareIds.length > 0) {
+			await db
+				.delete(routeShares)
+				.where(inArray(routeShares.id, featureTestShareIds));
+		}
+		if (featureTestRouteIds.length > 0) {
+			await db.delete(routes).where(inArray(routes.id, featureTestRouteIds));
+		}
+		if (featureTestDepotIds.length > 0) {
+			await db.delete(depots).where(inArray(depots.id, featureTestDepotIds));
+		}
+		if (featureTestMapIds.length > 0) {
+			await db.delete(maps).where(inArray(maps.id, featureTestMapIds));
+		}
+		if (featureTestLocationIds.length > 0) {
+			await db
+				.delete(locations)
+				.where(inArray(locations.id, featureTestLocationIds));
+		}
+		if (featureTestDriverIds.length > 0) {
+			await db.delete(drivers).where(inArray(drivers.id, featureTestDriverIds));
+		}
+		if (featureTestSubscriptionIds.length > 0) {
+			await db
+				.delete(subscriptions)
+				.where(inArray(subscriptions.id, featureTestSubscriptionIds));
+		}
+		if (featureTestUserIds.length > 0) {
+			await db.delete(users).where(inArray(users.id, featureTestUserIds));
+		}
+		if (featureTestOrgIds.length > 0) {
+			await db
+				.delete(organizations)
+				.where(inArray(organizations.id, featureTestOrgIds));
+		}
+		// Note: Do NOT delete plans - they are shared across tests
+	});
+
+	describe('createEmailShare()', () => {
+		it('blocks share creation for Free plan users', async () => {
+			// Subscription is on Free plan by default from createBillingTestEnvironment
+			await expect(
+				routeShareService.createEmailShare(
+					billingRoute.id,
+					'test@example.com',
+					billingOrg.id,
+					billingUser.id
+				)
+			).rejects.toThrow(ServiceError);
+
+			try {
+				await routeShareService.createEmailShare(
+					billingRoute.id,
+					'test@example.com',
+					billingOrg.id,
+					billingUser.id
+				);
+			} catch (err) {
+				expect(err).toBeInstanceOf(ServiceError);
+				expect((err as ServiceError).code).toBe('FORBIDDEN');
+				expect((err as ServiceError).message).toContain('Pro subscription');
+			}
+		});
+
+		it('allows share creation for Pro plan users', async () => {
+			// Upgrade to Pro plan
+			await db
+				.update(subscriptions)
+				.set({ plan_id: proPlan.id })
+				.where(eq(subscriptions.id, billingSubscription.id));
+
+			const result = await routeShareService.createEmailShare(
+				billingRoute.id,
+				'pro-test@example.com',
+				billingOrg.id,
+				billingUser.id
+			);
+
+			expect(result.share).toBeDefined();
+			expect(result.token).toBeDefined();
+			featureTestShareIds.push(result.share.id);
+
+			// Downgrade back to Free for other tests
+			await db
+				.update(subscriptions)
+				.set({ plan_id: freePlan.id })
+				.where(eq(subscriptions.id, billingSubscription.id));
+		});
+	});
+
+	describe('getSharesForRoute()', () => {
+		it('allows viewing shares regardless of plan', async () => {
+			const tx = db as unknown as TestTransaction;
+
+			// Create a share directly in DB (bypassing feature gate)
+			const share = await createRouteShare(tx, {
+				organization_id: billingOrg.id,
+				route_id: billingRoute.id,
+				created_by: billingUser.id
+			});
+			featureTestShareIds.push(share.id);
+
+			// Should be able to view shares even on Free plan
+			const shares = await routeShareService.getSharesForRoute(
+				billingRoute.id,
+				billingOrg.id
+			);
+
+			expect(shares.length).toBeGreaterThan(0);
+			expect(shares.some((s) => s.id === share.id)).toBe(true);
+		});
+	});
+
+	describe('revokeShare()', () => {
+		it('allows revoking shares regardless of plan', async () => {
+			const tx = db as unknown as TestTransaction;
+
+			// Create a share directly in DB (bypassing feature gate)
+			const share = await createRouteShare(tx, {
+				organization_id: billingOrg.id,
+				route_id: billingRoute.id,
+				created_by: billingUser.id
+			});
+			featureTestShareIds.push(share.id);
+
+			// Should be able to revoke shares even on Free plan
+			await expect(
+				routeShareService.revokeShare(share.id, billingOrg.id)
+			).resolves.not.toThrow();
+
+			// Verify it was revoked
+			const [revokedShare] = await db
+				.select()
+				.from(routeShares)
+				.where(eq(routeShares.id, share.id));
+			expect(revokedShare.revoked_at).not.toBeNull();
 		});
 	});
 });

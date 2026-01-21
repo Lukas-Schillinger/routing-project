@@ -13,6 +13,7 @@ import {
 	type LocationCreate
 } from './schemas/location';
 import type { GeocodingFeature } from './services/external/mapbox/types';
+import type { PlanFeatures } from './server/db/schema';
 import type { Permission } from './services/server/permissions';
 
 TimeAgo.addLocale(en);
@@ -202,6 +203,19 @@ export function checkPermission(
 	permission: Permission
 ): boolean {
 	return permissions.includes(permission);
+}
+
+/**
+ * Client-side feature checking utility. Used **only** for selectively displaying
+ * UI elements based on plan features. Cannot be relied on for authorization since
+ * it can be modified client-side.
+ */
+export function hasFeature(
+	features: PlanFeatures | null | undefined,
+	feature: keyof PlanFeatures
+): boolean {
+	if (!features) return false;
+	return features[feature] === true;
 }
 
 type AddressDisplayInput = Pick<

@@ -15,18 +15,18 @@ import {
 	routes,
 	routeShares,
 	stops,
+	subscriptions,
 	users
 } from '$lib/server/db/schema';
 import {
+	createBillingTestEnvironment,
 	createDepot,
 	createDriver,
 	createLocation,
 	createMap,
-	createOrganization,
 	createRoute,
 	createRouteShare,
 	createStop,
-	createUser,
 	type TestTransaction
 } from '$lib/testing';
 import { eq, inArray } from 'drizzle-orm';
@@ -74,6 +74,7 @@ vi.mock('$lib/services/external/mail', () => ({
  */
 let org: { id: string };
 let user: { id: string };
+let subscription: { id: string };
 let location: { id: string };
 let depot: { id: string };
 let map: { id: string };
@@ -84,6 +85,7 @@ let route: { id: string };
 // Track IDs for cleanup
 const orgIds: string[] = [];
 const userIds: string[] = [];
+const subscriptionIds: string[] = [];
 const locationIds: string[] = [];
 const depotIds: string[] = [];
 const mapIds: string[] = [];
@@ -96,12 +98,21 @@ const mailRecordIds: string[] = [];
 beforeAll(async () => {
 	const tx = db as unknown as TestTransaction;
 
-	// Create organization and user
-	org = await createOrganization(tx, { name: 'Route Share Test Org' });
-	orgIds.push(org.id);
+	// Create billing environment (org with subscription) and upgrade to Pro for fleet_management
+	const billingEnv = await createBillingTestEnvironment(tx);
+	org = billingEnv.organization;
+	user = billingEnv.user;
+	subscription = billingEnv.subscription;
 
-	user = await createUser(tx, { organization_id: org.id, role: 'admin' });
+	orgIds.push(org.id);
 	userIds.push(user.id);
+	subscriptionIds.push(subscription.id);
+
+	// Upgrade to Pro plan for fleet_management feature
+	await db
+		.update(subscriptions)
+		.set({ plan_id: billingEnv.proPlan.id })
+		.where(eq(subscriptions.id, subscription.id));
 
 	// Create location
 	location = await createLocation(tx, { organization_id: org.id });
@@ -172,6 +183,11 @@ afterAll(async () => {
 	}
 	if (locationIds.length > 0) {
 		await db.delete(locations).where(inArray(locations.id, locationIds));
+	}
+	if (subscriptionIds.length > 0) {
+		await db
+			.delete(subscriptions)
+			.where(inArray(subscriptions.id, subscriptionIds));
 	}
 	if (userIds.length > 0) {
 		await db.delete(users).where(inArray(users.id, userIds));

@@ -5,6 +5,7 @@ import * as Sentry from '@sentry/sveltekit';
 import { getLimiterForPath } from '$lib/server/rate-limit';
 import { createRequestLogger, logger } from '$lib/server/logger';
 import * as auth from '$lib/services/server/auth';
+import { billingService } from '$lib/services/server/billing.service';
 import { rolePermissions } from '$lib/services/server/permissions';
 import type { Handle, HandleServerError } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
@@ -79,6 +80,7 @@ const handleAuth: Handle = async ({ event, resolve }) => {
 		event.locals.user = null;
 		event.locals.session = null;
 		event.locals.permissions = [];
+		event.locals.features = null;
 		return resolve(event);
 	}
 
@@ -94,6 +96,10 @@ const handleAuth: Handle = async ({ event, resolve }) => {
 	event.locals.session = session;
 	if (user) {
 		event.locals.permissions = rolePermissions[user.role];
+		const { plan } = await billingService.getSubscription(user.organization_id);
+		event.locals.features = plan.features;
+	} else {
+		event.locals.features = null;
 	}
 	return resolve(event);
 };

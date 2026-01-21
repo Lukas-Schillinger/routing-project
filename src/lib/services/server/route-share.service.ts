@@ -8,11 +8,26 @@ import { db } from '$lib/server/db';
 import { mailRecords, routeShares, routes } from '$lib/server/db/schema';
 import { mailService } from '$lib/services/external/mail';
 import { and, eq, isNull } from 'drizzle-orm';
+import { billingService } from './billing.service';
 import { ServiceError } from './errors';
 import { routeService } from './route.service';
 import { TokenUtils } from './token.utils';
 
 export class RouteShareService {
+	/**
+	 * Verify the organization has the fleet_management feature enabled.
+	 * Throws ServiceError.forbidden if feature is not available.
+	 */
+	private async requireFleetManagement(organizationId: string): Promise<void> {
+		const { plan } = await billingService.getSubscription(organizationId);
+
+		if (!plan.features.fleet_management) {
+			throw ServiceError.forbidden(
+				'Route sharing requires a Pro subscription. Please upgrade to share routes with drivers.'
+			);
+		}
+	}
+
 	/**
 	 * Create an email share for a route
 	 * Returns the share record and the raw token (to be included in the email link)
@@ -23,6 +38,9 @@ export class RouteShareService {
 		organizationId: string,
 		createdBy: string
 	): Promise<{ share: RouteShare; token: string }> {
+		// Check fleet_management feature is enabled
+		await this.requireFleetManagement(organizationId);
+
 		// Verify the route exists and belongs to the organization
 		await routeService.verifyRouteOwnership(routeId, organizationId);
 
@@ -143,6 +161,51 @@ export class RouteShareService {
 	}
 
 	/**
+	 * Get a single share with its mail record
+	 */
+	async getShareWithMailRecord(
+		shareId: string,
+		organizationId: string
+	): Promise<RouteShareWithMailRecord> {
+		const [result] = await db
+			.select({ share: routeShares, mailRecord: mailRecords })
+			.from(routeShares)
+			.leftJoin(mailRecords, eq(routeShares.mail_record_id, mailRecords.id))
+			.where(
+				and(
+					eq(routeShares.id, shareId),
+					eq(routeShares.organization_id, organizationId)
+				)
+			)
+			.limit(1);
+
+		if (!result) {
+			throw ServiceError.notFound('Share not found');
+		}
+
+		return {
+			...result.share,
+			mailRecord: result.mailRecord
+		} as RouteShareWithMailRecord;
+	}
+
+	/**
+	 * Get mail record for a share (internal helper)
+	 */
+	private async getMailRecordForShare(
+		shareId: string
+	): Promise<{ to_email: string } | null> {
+		const [result] = await db
+			.select({ mailRecord: mailRecords })
+			.from(routeShares)
+			.leftJoin(mailRecords, eq(routeShares.mail_record_id, mailRecords.id))
+			.where(eq(routeShares.id, shareId))
+			.limit(1);
+
+		return result?.mailRecord ?? null;
+	}
+
+	/**
 	 * Revoke a share
 	 */
 	async revokeShare(shareId: string, organizationId: string): Promise<void> {
@@ -168,31 +231,22 @@ export class RouteShareService {
 		createdBy: string,
 		origin: string
 	): Promise<RouteShareWithMailRecord> {
-		// Get the existing share with mail record to get the email
-		const shares = await this.getSharesForRoute(
-			(await this.getShare(shareId, organizationId)).route_id,
-			organizationId
-		);
-		const existingShare = shares.find((s) => s.id === shareId);
+		const existingShare = await this.getShare(shareId, organizationId);
+		const mailRecord = await this.getMailRecordForShare(shareId);
 
-		if (!existingShare?.mailRecord?.to_email) {
+		if (!mailRecord?.to_email) {
 			throw ServiceError.badRequest(
 				'Cannot resend: no email address on original share'
 			);
 		}
 
-		const recipientEmail = existingShare.mailRecord.to_email;
-		const routeId = existingShare.route_id;
-
-		// Revoke the old share
 		if (!existingShare.revoked_at) {
 			await this.revokeShare(shareId, organizationId);
 		}
 
-		// Create and send new share
 		return this.createAndSendEmailShare(
-			routeId,
-			recipientEmail,
+			existingShare.route_id,
+			mailRecord.to_email,
 			organizationId,
 			createdBy,
 			origin
@@ -219,7 +273,6 @@ export class RouteShareService {
 		createdBy: string,
 		origin: string
 	): Promise<RouteShareWithMailRecord> {
-		// Create the share
 		const { share, token } = await this.createEmailShare(
 			routeId,
 			recipientEmail,
@@ -227,13 +280,11 @@ export class RouteShareService {
 			createdBy
 		);
 
-		// Get route details for email
 		const routeDetails = await routeService.getRouteWithDetails(
 			routeId,
 			organizationId
 		);
 
-		// Send the email
 		await mailService.sendRouteShareEmail(
 			share,
 			recipientEmail,
@@ -243,15 +294,7 @@ export class RouteShareService {
 			origin
 		);
 
-		// Fetch the share with mail record for response
-		const shares = await this.getSharesForRoute(routeId, organizationId);
-		const shareWithRecord = shares.find((s) => s.id === share.id);
-
-		if (!shareWithRecord) {
-			throw ServiceError.internal('Failed to retrieve created share');
-		}
-
-		return shareWithRecord;
+		return this.getShareWithMailRecord(share.id, organizationId);
 	}
 }
 
