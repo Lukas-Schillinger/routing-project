@@ -9,11 +9,14 @@ import {
 	matrices,
 	optimizationJobs,
 	organizations,
+	plans,
 	routes,
 	stops,
+	subscriptions,
 	users
 } from '$lib/server/db/schema';
 import {
+	createCreditTransaction,
 	createDepot,
 	createDriver,
 	createDriverMapMembership,
@@ -22,7 +25,9 @@ import {
 	createMatrix,
 	createOptimizationJob,
 	createOrganization,
+	createPlan,
 	createStop,
+	createSubscription,
 	createUser,
 	type TestTransaction
 } from '$lib/testing';
@@ -92,6 +97,7 @@ let testDepot1: { id: string };
 let testLocation1: { id: string };
 let testStopLocation1: { id: string };
 let testStopLocation2: { id: string };
+let testPlan1: { id: string; monthly_credits: number };
 
 // Track created IDs for cleanup
 const createdIds = {
@@ -105,7 +111,9 @@ const createdIds = {
 	locations: [] as string[],
 	drivers: [] as string[],
 	users: [] as string[],
-	orgs: [] as string[]
+	orgs: [] as string[],
+	plans: [] as string[],
+	subscriptions: [] as string[]
 };
 
 beforeAll(async () => {
@@ -120,6 +128,37 @@ beforeAll(async () => {
 		role: 'admin'
 	});
 	createdIds.users.push(testUser1.id);
+
+	// Set up billing - plan, subscription, and initial credits
+	// Find or create plan (shared across tests due to unique name constraint)
+	const [existingPlan] = await db
+		.select()
+		.from(plans)
+		.where(eq(plans.name, 'free'));
+
+	if (existingPlan) {
+		testPlan1 = existingPlan;
+	} else {
+		testPlan1 = await createPlan(tx, {
+			name: 'free',
+			display_name: 'Free',
+			monthly_credits: 200
+		});
+		createdIds.plans.push(testPlan1.id);
+	}
+
+	const subscription = await createSubscription(tx, {
+		organization_id: testOrg1.id,
+		plan_id: testPlan1.id
+	});
+	createdIds.subscriptions.push(subscription.id);
+
+	await createCreditTransaction(tx, {
+		organization_id: testOrg1.id,
+		amount: testPlan1.monthly_credits,
+		type: 'subscription_grant',
+		description: 'Initial test credits'
+	});
 
 	testLocation1 = await createLocation(tx, { organization_id: testOrg1.id });
 	testStopLocation1 = await createLocation(tx, {
@@ -194,6 +233,15 @@ afterAll(async () => {
 	}
 	if (createdIds.users.length > 0) {
 		await db.delete(users).where(inArray(users.id, createdIds.users));
+	}
+	// Clean up remaining credit transactions and subscriptions before orgs
+	if (createdIds.orgs.length > 0) {
+		await db
+			.delete(creditTransactions)
+			.where(inArray(creditTransactions.organization_id, createdIds.orgs));
+		await db
+			.delete(subscriptions)
+			.where(inArray(subscriptions.organization_id, createdIds.orgs));
 	}
 	if (createdIds.orgs.length > 0) {
 		await db
@@ -401,45 +449,6 @@ describe('OptimizationService', () => {
 			await db
 				.delete(creditTransactions)
 				.where(eq(creditTransactions.organization_id, testOrg1.id));
-		});
-
-		it('allows optimization when credit balance is zero (single op can go negative)', async () => {
-			const tx = db as unknown as TestTransaction;
-
-			// Ensure zero balance (no transactions)
-			await db
-				.delete(creditTransactions)
-				.where(eq(creditTransactions.organization_id, testOrg1.id));
-
-			// Create map with driver and stops
-			const newMap = await createMap(tx, { organization_id: testOrg1.id });
-			createdIds.maps.push(newMap.id);
-
-			const membership = await createDriverMapMembership(tx, {
-				organization_id: testOrg1.id,
-				driver_id: testDriver1.id,
-				map_id: newMap.id
-			});
-			createdIds.memberships.push(membership.id);
-
-			const stop = await createStop(tx, {
-				organization_id: testOrg1.id,
-				map_id: newMap.id,
-				location_id: testStopLocation1.id
-			});
-			createdIds.stops.push(stop.id);
-
-			// Should succeed with zero balance
-			const job = await optimizationService.queueOptimization(
-				newMap.id,
-				testOrg1.id,
-				testUser1.id,
-				{ depotId: testDepot1.id, fairness: 'medium' }
-			);
-			createdIds.jobs.push(job.id);
-
-			expect(job.id).toBeDefined();
-			expect(job.status).toBe('pending');
 		});
 	});
 

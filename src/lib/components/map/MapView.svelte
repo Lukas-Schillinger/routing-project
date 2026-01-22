@@ -23,6 +23,7 @@
 		stops = [],
 		routes = null,
 		drivers = [],
+		assignedDrivers = [],
 		depot = null,
 		center = [-98.5795, 39.8283],
 		zoom = 4,
@@ -33,11 +34,13 @@
 		toolbarLayoutControls,
 		mapId,
 		onStopCreated,
+		onStopUpdated,
 		onStopDeleted
 	}: {
 		stops?: StopWithLocation[];
 		routes?: Route[] | null;
 		drivers?: Driver[];
+		assignedDrivers?: Driver[];
 		depot?: DepotWithLocationJoin | null;
 		center?: [number, number];
 		zoom?: number;
@@ -48,6 +51,7 @@
 		toolbarLayoutControls?: Snippet;
 		mapId?: string;
 		onStopCreated?: (stop: StopWithLocation) => void;
+		onStopUpdated?: (stop: StopWithLocation) => void;
 		onStopDeleted?: () => void;
 	} = $props();
 
@@ -304,9 +308,10 @@
 							closeButton
 						>
 							<StopMapPopup
-								{stop}
-								{location}
-								driver={drivers.find((e) => e.id == stop.driver_id)}
+								stop={item}
+								{stops}
+								drivers={assignedDrivers}
+								onUpdate={onStopUpdated}
 								onDelete={onStopDeleted}
 							/>
 						</Popup>

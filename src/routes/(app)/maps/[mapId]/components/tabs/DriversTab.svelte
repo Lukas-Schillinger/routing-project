@@ -189,111 +189,123 @@
 	}
 </script>
 
-<div class="flex h-full flex-col">
+<div class="@container flex h-full flex-col">
 	<!-- Summary Header -->
-	<div class="flex items-center justify-between border-b border-border/50 py-3">
-		<div class="flex items-center gap-4 text-sm">
-			<span class="flex items-center gap-1.5 text-muted-foreground">
+	<div
+		class="flex flex-col items-center justify-between gap-2 border-b border-border/50 py-3 @sm:flex-row @sm:gap-0"
+	>
+		<div class="flex w-full justify-around gap-3 text-sm @sm:w-max">
+			<span
+				class="flex items-center gap-1 whitespace-nowrap text-muted-foreground"
+			>
 				<Truck class="h-3.5 w-3.5" />
 				{totals.drivers} driver{totals.drivers !== 1 ? 's' : ''}
 			</span>
 			{#if totals.routes > 0}
-				<span class="flex items-center gap-1.5 text-muted-foreground">
+				<span
+					class="flex items-center gap-1 whitespace-nowrap text-muted-foreground"
+				>
 					<Route class="h-3.5 w-3.5" />
 					{totals.routes} route{totals.routes !== 1 ? 's' : ''}
 				</span>
 			{/if}
-			<span class="flex items-center gap-1.5 text-muted-foreground">
+			<span
+				class="flex items-center gap-1 whitespace-nowrap text-muted-foreground"
+			>
 				<MapPin class="h-3.5 w-3.5" />
 				{totals.stops} stop{totals.stops !== 1 ? 's' : ''}
 			</span>
 			{#if totals.hasDuration}
-				<span class="flex items-center gap-1.5 text-muted-foreground">
+				<span
+					class="flex items-center gap-1 whitespace-nowrap text-muted-foreground"
+				>
 					<Clock class="h-3.5 w-3.5" />
 					{totals.duration}
 				</span>
 			{/if}
 		</div>
 
-		<Popover.Root bind:open={addPopoverOpen}>
-			<Popover.Trigger>
-				{#snippet child({ props })}
-					<Button {...props} variant="outline" class="gap-1.5 px-2">
-						<Plus class="h-3.5 w-3.5" />
-						Add Driver
-					</Button>
-				{/snippet}
-			</Popover.Trigger>
-			<Popover.Content class="w-[260px] p-0" align="end">
-				<Command.Root>
-					<Command.Input
-						placeholder="Search existing drivers..."
-						disabled={localIsLoading}
-					/>
-					<Command.Empty>No drivers found.</Command.Empty>
-					{#if availableDrivers.length > 0}
-						<Command.Group heading="Existing Drivers">
-							{#each availableDrivers as driver (driver.id)}
-								<Command.Item
-									value={driver.name}
-									onSelect={() => addExistingDriver(driver.id)}
-									disabled={localIsLoading}
-								>
-									<div class="flex items-center gap-2">
-										<Avatar.Root class="h-6 w-6">
-											<Avatar.Image
-												src={getIdenticon(driver)}
-												alt={driver.name}
-											/>
-											<Avatar.Fallback class="text-xs">
-												{driver.name.slice(0, 2).toUpperCase()}
-											</Avatar.Fallback>
-										</Avatar.Root>
-										<span class="truncate">{driver.name}</span>
-									</div>
-								</Command.Item>
-							{/each}
+		<div class="flex w-full justify-end @sm:w-max @sm:justify-start">
+			<Popover.Root bind:open={addPopoverOpen}>
+				<Popover.Trigger>
+					{#snippet child({ props })}
+						<Button {...props} variant="outline" class="gap-1.5 px-2">
+							<Plus class="h-3.5 w-3.5" />
+							Add Driver
+						</Button>
+					{/snippet}
+				</Popover.Trigger>
+				<Popover.Content class="w-65 p-0" align="end">
+					<Command.Root>
+						<Command.Input
+							placeholder="Search existing drivers..."
+							disabled={localIsLoading}
+						/>
+						<Command.Empty>No drivers found.</Command.Empty>
+						{#if availableDrivers.length > 0}
+							<Command.Group heading="Existing Drivers">
+								{#each availableDrivers as driver (driver.id)}
+									<Command.Item
+										value={driver.name}
+										onSelect={() => addExistingDriver(driver.id)}
+										disabled={localIsLoading}
+									>
+										<div class="flex items-center gap-2">
+											<Avatar.Root class="h-6 w-6">
+												<Avatar.Image
+													src={getIdenticon(driver)}
+													alt={driver.name}
+												/>
+												<Avatar.Fallback class="text-xs">
+													{driver.name.slice(0, 2).toUpperCase()}
+												</Avatar.Fallback>
+											</Avatar.Root>
+											<span class="truncate">{driver.name}</span>
+										</div>
+									</Command.Item>
+								{/each}
+							</Command.Group>
+						{/if}
+						<Command.Separator />
+						<Command.Group heading="Create New">
+							<EditOrCreateDriverPopover
+								mode="create"
+								{mapId}
+								onSuccess={handleDriverCreated}
+							>
+								{#snippet children({ props })}
+									<button
+										{...props}
+										type="button"
+										class="relative flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none select-none hover:bg-accent hover:text-accent-foreground"
+									>
+										<UserPlus class="h-4 w-4" />
+										Create new driver
+									</button>
+								{/snippet}
+							</EditOrCreateDriverPopover>
+							<EditOrCreateDriverPopover
+								mode="create"
+								{mapId}
+								temporaryDriver={true}
+								onSuccess={handleDriverCreated}
+							>
+								{#snippet children({ props })}
+									<button
+										{...props}
+										type="button"
+										class="relative flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-muted-foreground outline-none select-none hover:bg-accent hover:text-accent-foreground"
+									>
+										<Plus class="h-4 w-4" />
+										Create temporary driver
+									</button>
+								{/snippet}
+							</EditOrCreateDriverPopover>
 						</Command.Group>
-					{/if}
-					<Command.Separator />
-					<Command.Group heading="Create New">
-						<EditOrCreateDriverPopover
-							mode="create"
-							{mapId}
-							onSuccess={handleDriverCreated}
-						>
-							{#snippet children({ props })}
-								<button
-									{...props}
-									type="button"
-									class="relative flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none select-none hover:bg-accent hover:text-accent-foreground"
-								>
-									<UserPlus class="h-4 w-4" />
-									Create new driver
-								</button>
-							{/snippet}
-						</EditOrCreateDriverPopover>
-						<EditOrCreateDriverPopover
-							mode="create"
-							{mapId}
-							temporaryDriver={true}
-							onSuccess={handleDriverCreated}
-						>
-							{#snippet children({ props })}
-								<button
-									{...props}
-									type="button"
-									class="relative flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-muted-foreground outline-none select-none hover:bg-accent hover:text-accent-foreground"
-								>
-									<Plus class="h-4 w-4" />
-									Create temporary driver
-								</button>
-							{/snippet}
-						</EditOrCreateDriverPopover>
-					</Command.Group>
-				</Command.Root>
-			</Popover.Content>
-		</Popover.Root>
+					</Command.Root>
+				</Popover.Content>
+			</Popover.Root>
+		</div>
 	</div>
 
 	<!-- Driver Cards List -->

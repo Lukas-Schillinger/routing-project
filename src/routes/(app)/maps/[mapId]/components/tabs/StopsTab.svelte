@@ -1,9 +1,11 @@
 <script lang="ts">
+	import type { Driver } from '$lib/schemas/driver';
 	import type { StopWithLocation } from '$lib/schemas/stop';
 	import EditStopsDataTable from '../EditStopsDataTable';
 
 	let {
 		stops,
+		drivers,
 		mapId,
 		onUpdate,
 		onCreate,
@@ -11,6 +13,7 @@
 		onZoomToStop
 	}: {
 		stops: StopWithLocation[];
+		drivers: Driver[];
 		mapId: string;
 		onUpdate?: () => void;
 		onCreate?: () => void;
@@ -22,6 +25,7 @@
 <div class="h-full">
 	<EditStopsDataTable
 		{stops}
+		{drivers}
 		{mapId}
 		{onUpdate}
 		{onCreate}

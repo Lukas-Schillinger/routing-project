@@ -41,6 +41,8 @@
 	} from '@tanstack/table-core';
 	import { Check, ChevronDown, MapPin, Plus, Search } from 'lucide-svelte';
 	import { MediaQuery } from 'svelte/reactivity';
+	import DriverPicker from '$lib/components/map/DriverPicker.svelte';
+	import type { Driver } from '$lib/schemas/driver';
 	import AddressCell from './AddressCell.svelte';
 	import DateCell from './DateCell.svelte';
 	import NotesCell from './NotesCell.svelte';
@@ -48,6 +50,7 @@
 
 	interface Props {
 		stops: StopWithLocation[];
+		drivers: Driver[];
 		mapId: string;
 		onDelete?: () => Promise<void>;
 		onUpdate?: (stop: StopWithLocation) => void;
@@ -55,8 +58,15 @@
 		onZoomToStop: (stopId: string) => void;
 	}
 
-	let { stops, mapId, onDelete, onUpdate, onCreate, onZoomToStop }: Props =
-		$props();
+	let {
+		stops,
+		drivers,
+		mapId,
+		onDelete,
+		onUpdate,
+		onCreate,
+		onZoomToStop
+	}: Props = $props();
 
 	// CSV upload state
 	let csvError = $state<string | null>(null);
@@ -227,6 +237,21 @@
 				const contactName = row.original.stop.contact_name || '';
 				return contactName.toLowerCase().includes(value.toLowerCase());
 			}
+		}),
+
+		// Driver column
+		columnHelper.accessor((row) => row.stop.driver_id, {
+			id: 'driver',
+			header: 'Driver',
+			cell: ({ row }) =>
+				renderComponent(DriverPicker, {
+					stop: row.original,
+					stops,
+					drivers,
+					onDriverChange: onUpdate
+				}),
+			enableSorting: false,
+			enableHiding: true
 		}),
 
 		// Address column
