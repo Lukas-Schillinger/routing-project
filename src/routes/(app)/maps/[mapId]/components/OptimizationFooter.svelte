@@ -1,12 +1,15 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
+	import CreditBadge from '$lib/components/billing/CreditBadge.svelte';
 	import { ConfirmDeleteDialog } from '$lib/components/ConfirmDeleteDialog';
 	import EditOrCreateDepotPopover from '$lib/components/EditOrCreateDepotPopover';
 	import { Button, buttonVariants } from '$lib/components/ui/button';
 	import * as ButtonGroup from '$lib/components/ui/button-group';
+	import * as Dialog from '$lib/components/ui/dialog';
 	import * as Popover from '$lib/components/ui/popover';
 	import * as Select from '$lib/components/ui/select';
 	import { ServiceError } from '$lib/errors';
+	import type { CreditBalance } from '$lib/schemas/billing';
 	import type {
 		DepotWithLocationJoin,
 		Driver,
@@ -14,6 +17,7 @@
 		Route,
 		StopWithLocation
 	} from '$lib/schemas';
+	import type { Plan } from '$lib/server/db/schema';
 	import { mapApi } from '$lib/services/api';
 	import {
 		AlertCircle,
@@ -36,9 +40,12 @@
 		assignedDrivers,
 		routes,
 		pageState,
-		selectedDepotId = $bindable(),
+		plan,
+		credits,
+		onDepotChange,
 		onOptimize,
-		onCancel
+		onCancel,
+		onUpgrade
 	}: {
 		map: Map;
 		stops: StopWithLocation[];
@@ -46,10 +53,20 @@
 		assignedDrivers: Driver[];
 		routes: Route[];
 		pageState: PageState;
-		selectedDepotId: string | undefined;
+		plan?: Plan;
+		credits?: CreditBalance;
+		onDepotChange: (depotId: string) => Promise<void>;
 		onOptimize: () => void;
 		onCancel: () => void;
+		onUpgrade?: () => void;
 	} = $props();
+
+	// Derive selectedDepotId from map's depot_id
+	let selectedDepotId = $derived(map.depot_id ?? undefined);
+
+	// Pending depot change (for confirmation dialog)
+	let pendingDepotId = $state<string | null>(null);
+	let showDepotChangeConfirm = $state(false);
 
 	let fairness = $state<'high' | 'medium' | 'low'>('medium');
 	let isSubmitting = $state(false);
@@ -57,14 +74,6 @@
 	let error = $state('');
 
 	const hasRoutes = $derived(routes.length > 0);
-
-	// Set default depot if available
-	$effect(() => {
-		if (depots.length > 0 && !selectedDepotId) {
-			const defaultDepot = depots.find((d) => d.depot.default_depot);
-			selectedDepotId = defaultDepot?.depot.id || depots[0].depot.id;
-		}
-	});
 
 	// Count unassigned stops
 	const unassignedStopsCount = $derived(
@@ -125,8 +134,30 @@
 	}
 
 	function handleDepotCreated(depot: DepotWithLocationJoin) {
-		selectedDepotId = depot.depot.id;
-		invalidateAll();
+		onDepotChange(depot.depot.id);
+	}
+
+	function handleDepotSelect(newDepotId: string) {
+		// If routes exist and depot is changing, show confirmation
+		if (hasRoutes && newDepotId !== selectedDepotId) {
+			pendingDepotId = newDepotId;
+			showDepotChangeConfirm = true;
+		} else {
+			onDepotChange(newDepotId);
+		}
+	}
+
+	async function confirmDepotChange() {
+		if (pendingDepotId) {
+			await onDepotChange(pendingDepotId);
+			pendingDepotId = null;
+		}
+		showDepotChangeConfirm = false;
+	}
+
+	function cancelDepotChange() {
+		pendingDepotId = null;
+		showDepotChangeConfirm = false;
 	}
 
 	async function handleResetRoutes() {
@@ -171,11 +202,15 @@
 			</div>
 		{/if}
 
-		<div class="flex flex-col gap-2 @lg:flex-row">
+		<div class="flex flex-col gap-2 @2xl:flex-row">
 			<div class="flex gap-2">
 				<!-- Depot + Add button -->
 				<ButtonGroup.Root class="grow @lg:min-w-48">
-					<Select.Root type="single" bind:value={selectedDepotId}>
+					<Select.Root
+						type="single"
+						value={selectedDepotId}
+						onValueChange={(value) => value && handleDepotSelect(value)}
+					>
 						<Select.Trigger
 							size="sm"
 							class="h-7 w-32 grow rounded-r-none border-r-0"
@@ -263,7 +298,10 @@
 			</div>
 
 			<!-- Reset and Optimize Buttons with validation info -->
-			<div class="flex grow gap-2 @lg:max-w-52">
+			<div class="flex grow gap-2 @2xl:max-w-52">
+				{#if plan && credits}
+					<CreditBadge {plan} {credits} {onUpgrade} />
+				{/if}
 				<ConfirmDeleteDialog
 					title="Reset Routes"
 					description="Are you sure you want to reset all routes? This will clear all driver assignments and route geometries."
@@ -309,7 +347,7 @@
 							<TriangleAlert class="h-3.5 w-3.5" />
 						</Popover.Trigger>
 						<Popover.Content
-							class="w-auto max-w-[200px] border-warning/50 p-2 text-xs text-warning-foreground"
+							class="w-auto max-w-50 border-warning/50 p-2 text-xs text-warning-foreground"
 							side="top"
 						>
 							{validationMessage}
@@ -320,3 +358,22 @@
 		</div>
 	{/if}
 </div>
+
+<!-- Depot Change Confirmation Dialog -->
+<Dialog.Root bind:open={showDepotChangeConfirm}>
+	<Dialog.Content class="sm:max-w-md">
+		<Dialog.Header>
+			<Dialog.Title>Change Depot</Dialog.Title>
+			<Dialog.Description>
+				Changing the depot will reset all existing routes and driver
+				assignments. This cannot be undone.
+			</Dialog.Description>
+		</Dialog.Header>
+		<Dialog.Footer class="pt-4">
+			<Button variant="outline" onclick={cancelDepotChange}>Cancel</Button>
+			<Button variant="destructive" onclick={confirmDepotChange}
+				>Change Depot</Button
+			>
+		</Dialog.Footer>
+	</Dialog.Content>
+</Dialog.Root>

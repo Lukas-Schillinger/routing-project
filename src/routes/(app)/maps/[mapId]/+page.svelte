@@ -24,7 +24,6 @@
 	let isOptimizing = $state(false);
 	let focusedStopId = $state<string | null>(null);
 	let hiddenDrivers = $state<Driver[]>([]);
-	let selectedDepotId = $state<string | undefined>(undefined);
 
 	// Polling state
 	let pollInterval: ReturnType<typeof setInterval> | null = null;
@@ -39,13 +38,12 @@
 		debugPageStateOverride ?? (isOptimizing ? 'optimizing' : 'normal')
 	);
 
-	// Derive selected depot for map display
+	// Derive selected depot from map's depot_id
 	let selectedDepot = $derived.by(() => {
-		if (data.routes && data.routes.length > 0) {
-			const depotId = data.routes[0].depot_id;
-			return data.depots.find((d) => d.depot.id === depotId) ?? null;
+		if (data.map.depot_id) {
+			return data.depots.find((d) => d.depot.id === data.map.depot_id) ?? null;
 		}
-		return data.depots.find((d) => d.depot.id === selectedDepotId) ?? null;
+		return null;
 	});
 
 	// Check for active optimization job on load
@@ -123,6 +121,17 @@
 		isOptimizing = false;
 	}
 
+	async function handleDepotChange(depotId: string) {
+		try {
+			await mapApi.update(data.map.id, { depot_id: depotId });
+			await invalidateAll();
+		} catch (err) {
+			const message =
+				err instanceof ServiceError ? err.message : 'Failed to update depot';
+			toast.error(message);
+		}
+	}
+
 	onDestroy(() => {
 		stopPolling();
 	});
@@ -198,6 +207,7 @@
 					stops={data.stops}
 					routes={data.routes}
 					drivers={data.allDrivers}
+					assignedDrivers={data.assignedDrivers}
 					depot={selectedDepot}
 					bind:hiddenDrivers
 					bind:focusedStopId
@@ -205,6 +215,7 @@
 					toolbarLayoutControls={layoutControls}
 					mapId={data.map.id}
 					onStopCreated={() => invalidateAll()}
+					onStopUpdated={() => invalidateAll()}
 					onStopDeleted={() => invalidateAll()}
 				/>
 
@@ -223,6 +234,7 @@
 				{#snippet stopsTab()}
 					<StopsTab
 						stops={data.stops}
+						drivers={data.assignedDrivers}
 						mapId={data.map.id}
 						onUpdate={() => invalidateAll()}
 						onCreate={() => invalidateAll()}
@@ -254,7 +266,7 @@
 				assignedDrivers={data.assignedDrivers}
 				routes={data.routes}
 				{pageState}
-				bind:selectedDepotId
+				onDepotChange={handleDepotChange}
 				onOptimize={handleOptimizationStarted}
 				onCancel={handleOptimizationCancelled}
 			/>

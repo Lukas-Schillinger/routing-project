@@ -156,6 +156,7 @@ export function createMockMap(overrides?: Partial<MockMap>): MockMap {
 	return {
 		organization_id: '', // Must be provided
 		title: `Test Map ${uniqueId()}`,
+		depot_id: null,
 		...overrides
 	};
 }
@@ -513,10 +514,12 @@ export async function createTestEnvironment(tx: TestTransaction) {
 
 /**
  * Creates a complete route setup for testing optimization flows.
- * Includes: organization, user, driver, map, location, depot, and route.
+ * Includes: organization, user, driver, map, location, depot, route,
+ * and billing (plans, subscription, credits).
  */
 export async function createTestRouteSetup(tx: TestTransaction) {
-	const { organization, user } = await createTestEnvironment(tx);
+	const { organization, user, freePlan, proPlan, subscription, credits } =
+		await createBillingTestEnvironment(tx);
 
 	const driver = await createDriver(tx, {
 		organization_id: organization.id,
@@ -546,7 +549,20 @@ export async function createTestRouteSetup(tx: TestTransaction) {
 		depot_id: depot.id
 	});
 
-	return { organization, user, driver, map, location, depot, route };
+	return {
+		organization,
+		user,
+		driver,
+		map,
+		location,
+		depot,
+		route,
+		// Billing
+		freePlan,
+		proPlan,
+		subscription,
+		credits
+	};
 }
 
 // ============================================================================
@@ -706,5 +722,13 @@ export async function createBillingTestEnvironment(tx: TestTransaction) {
 		plan_id: freePlan.id
 	});
 
-	return { organization, user, freePlan, proPlan, subscription };
+	// Grant initial credits (mirrors production behavior on subscription creation)
+	const credits = await createCreditTransaction(tx, {
+		organization_id: organization.id,
+		amount: freePlan.monthly_credits,
+		type: 'subscription_grant',
+		description: 'Initial subscription credits'
+	});
+
+	return { organization, user, freePlan, proPlan, subscription, credits };
 }

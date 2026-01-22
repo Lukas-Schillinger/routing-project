@@ -24,6 +24,7 @@ import type { Coordinate } from '../external/mapbox/types';
 import { billingService } from './billing.service';
 import { depotService } from './depot.service';
 import { ServiceError } from './errors';
+import { mapService } from './map.service';
 import { routeService } from './route.service';
 
 // ============================================================================
@@ -220,6 +221,16 @@ export class OptimizationService {
 	): Promise<OptimizationJob> {
 		await this.validateCreditBalance(organizationId);
 
+		// Get map to fall back to its depot if not specified in options
+		const map = await mapService.getMapById(mapId, organizationId);
+		const depotId = options.depotId ?? map.depot_id;
+
+		if (!depotId) {
+			throw ServiceError.validation(
+				'No depot selected. Select a depot before optimizing routes.'
+			);
+		}
+
 		const assignedDrivers = await this.fetchAssignedDrivers(
 			mapId,
 			organizationId
@@ -231,7 +242,7 @@ export class OptimizationService {
 
 		const { coordinatesData } = await this.getCoordinatesData(
 			mapId,
-			options.depotId,
+			depotId,
 			organizationId
 		);
 
@@ -246,7 +257,7 @@ export class OptimizationService {
 			mapId,
 			organizationId,
 			userId,
-			options.depotId,
+			depotId,
 			matrixResult.id
 		);
 

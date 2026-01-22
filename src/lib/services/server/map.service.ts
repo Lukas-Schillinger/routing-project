@@ -9,6 +9,7 @@ import {
 	stops
 } from '$lib/server/db/schema';
 import { and, eq, sql } from 'drizzle-orm';
+import { depotService } from './depot.service';
 import { driverService } from './driver.service';
 import { ServiceError } from './errors';
 import { locationService } from './location.service';
@@ -68,6 +69,11 @@ export class MapService {
 		organizationId: string,
 		userId: string
 	): Promise<{ map: Map; stops: StopWithLocation[] | null }> {
+		// Validate depot ownership if provided
+		if (data.depot_id) {
+			await depotService.getDepotById(data.depot_id, organizationId);
+		}
+
 		// If stops are provided, create locations first (outside transaction)
 		// This is needed because locationService uses `db` directly
 		let locationIds: string[] = [];
@@ -98,7 +104,8 @@ export class MapService {
 					organization_id: organizationId,
 					created_by: userId,
 					updated_by: userId,
-					title: data.title
+					title: data.title,
+					depot_id: data.depot_id ?? null
 				})
 				.returning();
 
@@ -134,18 +141,35 @@ export class MapService {
 
 	/**
 	 * Update a map
+	 * If depot_id is being changed, uses setMapDepot to handle route reset logic
 	 */
 	async updateMap(
 		mapId: string,
 		data: UpdateMap,
 		organizationId: string,
 		userId: string
-	) {
-		// Atomic update with tenancy check in WHERE clause
+	): Promise<Map> {
+		if ('depot_id' in data) {
+			await this.setMapDepot(
+				mapId,
+				data.depot_id ?? null,
+				organizationId,
+				userId
+			);
+		}
+
+		const fieldsToUpdate = Object.fromEntries(
+			Object.entries(data).filter(([key]) => key !== 'depot_id')
+		);
+
+		if (Object.keys(fieldsToUpdate).length === 0) {
+			return this.getMapById(mapId, organizationId);
+		}
+
 		const [updatedMap] = await db
 			.update(maps)
 			.set({
-				...data,
+				...fieldsToUpdate,
 				updated_at: new Date(),
 				updated_by: userId
 			})
@@ -155,6 +179,49 @@ export class MapService {
 		if (!updatedMap) {
 			throw ServiceError.notFound('Map not found');
 		}
+
+		return updatedMap;
+	}
+
+	/**
+	 * Set the depot for a map
+	 * If the depot changes and routes exist, resets optimization (deletes routes and clears stop assignments)
+	 */
+	async setMapDepot(
+		mapId: string,
+		depotId: string | null,
+		organizationId: string,
+		userId: string
+	): Promise<Map> {
+		const map = await this.verifyMapOwnership(mapId, organizationId);
+
+		if (depotId) {
+			await depotService.getDepotById(depotId, organizationId);
+		}
+
+		if (map.depot_id === depotId) {
+			return map;
+		}
+
+		const existingRoutes = await db
+			.select()
+			.from(routes)
+			.where(eq(routes.map_id, mapId))
+			.limit(1);
+
+		if (existingRoutes.length > 0) {
+			await this.resetOptimization(mapId, organizationId, userId);
+		}
+
+		const [updatedMap] = await db
+			.update(maps)
+			.set({
+				depot_id: depotId,
+				updated_at: new Date(),
+				updated_by: userId
+			})
+			.where(and(eq(maps.id, mapId), eq(maps.organization_id, organizationId)))
+			.returning();
 
 		return updatedMap;
 	}

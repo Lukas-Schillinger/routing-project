@@ -406,6 +406,7 @@ export class RouteService {
 
 	/**
 	 * Recalculate route geometry for a driver after stop changes
+	 * - If no route exists but map has a depot, creates a new route
 	 * - If no stops remain, deletes the route
 	 * - If Mapbox fails, sets geometry to null and throws ServiceError
 	 */
@@ -415,34 +416,40 @@ export class RouteService {
 		organizationId: string,
 		userId?: string
 	): Promise<void> {
-		// Get existing route to find depot_id
 		const existingRoute = await this.getRouteByMapAndDriver(
 			mapId,
 			driverId,
 			organizationId
 		);
 
-		if (!existingRoute) {
-			// No route exists - nothing to recalculate
+		// Query map directly to avoid circular dependency with mapService
+		const [map] = await db
+			.select({ depot_id: maps.depot_id })
+			.from(maps)
+			.where(and(eq(maps.id, mapId), eq(maps.organization_id, organizationId)))
+			.limit(1);
+
+		const depotId = existingRoute?.depot_id ?? map?.depot_id;
+
+		if (!depotId) {
 			return;
 		}
 
-		// Get remaining stops for this driver
 		const remainingStops = await stopService.getStopsForRoute(
 			mapId,
 			driverId,
 			organizationId
 		);
 
-		// If no stops remain, delete the route
 		if (remainingStops.length === 0) {
-			await this.deleteRouteByMapAndDriver(mapId, driverId, organizationId);
+			if (existingRoute) {
+				await this.deleteRouteByMapAndDriver(mapId, driverId, organizationId);
+			}
 			return;
 		}
 
-		// Get depot coordinates
 		const depotWithLocation = await depotService.getDepotById(
-			existingRoute.depot_id,
+			depotId,
 			organizationId
 		);
 
@@ -451,8 +458,7 @@ export class RouteService {
 			depotWithLocation.location.lat
 		];
 
-		// Build coordinates array: depot -> stops (sorted by delivery_index) -> depot
-		const sortedStops = remainingStops.sort(
+		const sortedStops = remainingStops.toSorted(
 			(a, b) => (a.stop.delivery_index ?? 0) - (b.stop.delivery_index ?? 0)
 		);
 
@@ -464,7 +470,6 @@ export class RouteService {
 		const coordinates: Coordinate[] = [depotCoord, ...stopCoords, depotCoord];
 
 		try {
-			// Call Mapbox Directions API
 			const directionsResponse =
 				await mapboxNavigation.getDirections(coordinates);
 
@@ -473,26 +478,24 @@ export class RouteService {
 				throw new Error('No route returned from Mapbox');
 			}
 
-			// Update route with new geometry
 			await this.upsertRoute(
 				{
 					organization_id: organizationId,
 					map_id: mapId,
 					driver_id: driverId,
-					depot_id: existingRoute.depot_id,
+					depot_id: depotId,
 					geometry: route.geometry,
 					duration: route.duration
 				},
 				userId
 			);
 		} catch (error) {
-			// Set geometry to null on failure (recovery logic)
 			await this.upsertRoute(
 				{
 					organization_id: organizationId,
 					map_id: mapId,
 					driver_id: driverId,
-					depot_id: existingRoute.depot_id,
+					depot_id: depotId,
 					geometry: null,
 					duration: undefined
 				},

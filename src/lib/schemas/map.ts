@@ -28,6 +28,7 @@ export const createMapSchema = z.object({
 		.min(1, 'Title is required')
 		.max(200, 'Title must be 200 characters or less'),
 	description: z.string().max(1000).nullable().optional(),
+	depot_id: z.uuid().nullable().optional(),
 	stops: z.array(createMaplessStopSchema).optional().nullable() // optionally create stops in the same call as the map
 });
 
@@ -36,7 +37,8 @@ export const createMapSchema = z.object({
  */
 export const updateMapSchema = z.object({
 	title: z.string().min(1).max(200).optional(),
-	description: z.string().max(1000).nullable().optional()
+	description: z.string().max(1000).nullable().optional(),
+	depot_id: z.uuid().nullable().optional()
 });
 
 /**
@@ -46,6 +48,7 @@ export const mapSchema = z.object({
 	id: z.uuid(),
 	organization_id: z.uuid(),
 	title: z.string(),
+	depot_id: z.uuid().nullable(),
 	created_at: z.date(),
 	created_by: z.uuid().nullable(),
 	updated_at: z.date(),
@@ -65,9 +68,10 @@ export const mapWithStatsSchema = mapSchema.extend({
 
 /**
  * Optimization options schema - used by client API, server route, and optimization service
+ * depotId is optional and falls back to the map's depot_id
  */
 export const optimizationOptionsSchema = z.object({
-	depotId: z.uuid(),
+	depotId: z.uuid().optional(),
 	fairness: z.enum(['high', 'medium', 'low']).default('medium')
 });
 

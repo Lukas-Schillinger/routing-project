@@ -300,9 +300,15 @@ export const maps = pgTable(
 			onDelete: 'set null'
 		}),
 
-		title: varchar('title', { length: 200 }).notNull()
+		title: varchar('title', { length: 200 }).notNull(),
+		depot_id: uuid('depot_id').references(() => depots.id, {
+			onDelete: 'set null'
+		})
 	},
-	(t) => [index('maps_org_idx').on(t.organization_id)]
+	(t) => [
+		index('maps_org_idx').on(t.organization_id),
+		index('maps_depot_idx').on(t.depot_id)
+	]
 );
 
 export const locations = pgTable(
@@ -714,6 +720,10 @@ export const mapsRelations = relations(maps, ({ one, many }) => ({
 	organization: one(organizations, {
 		fields: [maps.organization_id],
 		references: [organizations.id]
+	}),
+	depot: one(depots, {
+		fields: [maps.depot_id],
+		references: [depots.id]
 	}),
 	stops: many(stops),
 	driverMemberships: many(driverMapMemberships),
