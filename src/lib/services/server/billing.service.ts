@@ -2,21 +2,16 @@ import { db } from '$lib/server/db';
 import {
 	creditTransactions,
 	plans,
-	subscriptions
+	subscriptions,
+	type Plan
 } from '$lib/server/db/schema';
+import type { CreditBalance } from '$lib/schemas/billing';
 import type { SQL } from 'drizzle-orm';
 import { and, eq, gt, isNull, or, sql, sum } from 'drizzle-orm';
 import { ServiceError } from './errors';
 
 type CreditTransaction = typeof creditTransactions.$inferSelect;
 type Subscription = typeof subscriptions.$inferSelect;
-type Plan = typeof plans.$inferSelect;
-
-type CreditBalance = {
-	available: number;
-	expiring: number;
-	expiresAt: Date | null;
-};
 
 type SubscriptionWithPlan = {
 	subscription: Subscription;

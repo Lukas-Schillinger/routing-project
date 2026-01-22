@@ -7,10 +7,11 @@
 
 	type Props = {
 		open: boolean;
+		currentBalance: number;
 		onSuccess?: () => void;
 	};
 
-	let { open = $bindable(false), onSuccess }: Props = $props();
+	let { open = $bindable(false), currentBalance, onSuccess }: Props = $props();
 
 	let creditAmount = $state(100);
 	let isLoading = $state(false);
@@ -23,6 +24,7 @@
 			currency: 'USD'
 		})
 	);
+	const newBalance = $derived(currentBalance + creditAmount);
 
 	async function handlePurchase() {
 		if (creditAmount < 100) {
@@ -52,7 +54,8 @@
 		<Dialog.Header>
 			<Dialog.Title>Purchase Credits</Dialog.Title>
 			<Dialog.Description>
-				Credits are used for route optimizations. $0.01 per credit.
+				You have {currentBalance.toLocaleString()} credits. Purchase more at $0.01
+				per credit.
 			</Dialog.Description>
 		</Dialog.Header>
 
@@ -76,14 +79,17 @@
 				</p>
 			</div>
 
-			<div class="rounded-lg bg-muted p-4">
+			<div class="space-y-2 rounded-lg bg-muted p-4">
 				<div class="flex items-center justify-between">
 					<span class="text-sm font-medium">Total Price</span>
 					<span class="text-lg font-semibold">{formattedPrice}</span>
 				</div>
-				<p class="mt-1 text-sm text-muted-foreground">
-					{creditAmount.toLocaleString()} credits
-				</p>
+				<div
+					class="flex items-center justify-between text-sm text-muted-foreground"
+				>
+					<span>New Balance</span>
+					<span>{newBalance.toLocaleString()} credits</span>
+				</div>
 			</div>
 
 			{#if error}

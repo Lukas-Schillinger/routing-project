@@ -12,3 +12,9 @@ export const creditPurchaseSchema = z.object({
 });
 
 export type CreditPurchaseInput = z.infer<typeof creditPurchaseSchema>;
+
+export type CreditBalance = {
+	available: number;
+	expiring: number;
+	expiresAt: Date | null;
+};

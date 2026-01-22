@@ -1,18 +1,56 @@
 <script lang="ts">
-	import {
-		CreditBadge,
-		CreditPurchaseModal,
-		OutOfCreditsModal,
-		PlanCard
-	} from '$lib/components/billing';
+	import { BillingModal, CreditBadge, PlanCard } from '$lib/components/billing';
 	import { Button } from '$lib/components/ui/button';
+	import type { CreditBalance } from '$lib/schemas/billing';
+	import type { Plan } from '$lib/server/db/schema';
 
-	let creditPurchaseModalOpen = $state(false);
-	let outOfCreditsModalOpen = $state(false);
+	// Mock plan data for demo purposes
+	const freePlan: Plan = {
+		id: 'demo-free',
+		created_at: new Date(),
+		updated_at: new Date(),
+		name: 'free',
+		display_name: 'Free',
+		stripe_price_id: 'price_free',
+		monthly_credits: 200,
+		features: { fleet_management: false }
+	};
 
-	function handleBuyCredits() {
-		creditPurchaseModalOpen = true;
-	}
+	const proPlan: Plan = {
+		id: 'demo-pro',
+		created_at: new Date(),
+		updated_at: new Date(),
+		name: 'pro',
+		display_name: 'Pro',
+		stripe_price_id: 'price_pro',
+		monthly_credits: 2000,
+		features: { fleet_management: true }
+	};
+
+	// Mock credit balances for different states
+	const creditsGreen: CreditBalance = {
+		available: 150,
+		expiring: 0,
+		expiresAt: null
+	};
+	const creditsYellow: CreditBalance = {
+		available: 40,
+		expiring: 0,
+		expiresAt: null
+	};
+	const creditsRed: CreditBalance = {
+		available: 0,
+		expiring: 0,
+		expiresAt: null
+	};
+	const creditsPro: CreditBalance = {
+		available: 1800,
+		expiring: 0,
+		expiresAt: null
+	};
+
+	let billingModalFreeOpen = $state(false);
+	let billingModalProOpen = $state(false);
 
 	function handleUpgrade() {
 		console.log('Upgrade clicked');
@@ -37,8 +75,8 @@
 		<div class="space-y-1">
 			<h2 class="text-xl font-semibold">CreditBadge</h2>
 			<p class="text-sm text-muted-foreground">
-				Displays credit balance with color-coded status. Click to see popover
-				with details.
+				Displays credit balance with color-coded status. Click to open the
+				billing modal.
 			</p>
 		</div>
 
@@ -47,10 +85,8 @@
 				<p class="text-sm font-medium text-green-600">Green State (25% used)</p>
 				<div class="flex items-center gap-2">
 					<CreditBadge
-						available={150}
-						total={200}
-						planName="Free"
-						onBuyCredits={handleBuyCredits}
+						plan={freePlan}
+						credits={creditsGreen}
 						onUpgrade={handleUpgrade}
 					/>
 					<span class="text-sm text-muted-foreground">150/200 credits</span>
@@ -63,10 +99,8 @@
 				</p>
 				<div class="flex items-center gap-2">
 					<CreditBadge
-						available={40}
-						total={200}
-						planName="Free"
-						onBuyCredits={handleBuyCredits}
+						plan={freePlan}
+						credits={creditsYellow}
 						onUpgrade={handleUpgrade}
 					/>
 					<span class="text-sm text-muted-foreground">40/200 credits</span>
@@ -77,10 +111,8 @@
 				<p class="text-sm font-medium text-red-600">Red State (100% used)</p>
 				<div class="flex items-center gap-2">
 					<CreditBadge
-						available={0}
-						total={200}
-						planName="Free"
-						onBuyCredits={handleBuyCredits}
+						plan={freePlan}
+						credits={creditsRed}
 						onUpgrade={handleUpgrade}
 					/>
 					<span class="text-sm text-muted-foreground">0/200 credits</span>
@@ -90,13 +122,7 @@
 			<div class="space-y-2 rounded-lg border p-4">
 				<p class="text-sm font-medium">Pro Plan</p>
 				<div class="flex items-center gap-2">
-					<CreditBadge
-						available={1800}
-						total={2000}
-						planName="Pro"
-						onBuyCredits={handleBuyCredits}
-						onUpgrade={handleUpgrade}
-					/>
+					<CreditBadge plan={proPlan} credits={creditsPro} />
 					<span class="text-sm text-muted-foreground">1,800/2,000 credits</span>
 				</div>
 			</div>
@@ -142,36 +168,33 @@
 	<!-- Modal Triggers Section -->
 	<section class="space-y-6">
 		<div class="space-y-1">
-			<h2 class="text-xl font-semibold">Modal Triggers</h2>
+			<h2 class="text-xl font-semibold">BillingModal</h2>
 			<p class="text-sm text-muted-foreground">
-				Buttons to open billing-related modals for purchasing credits or
-				handling insufficient balance.
+				Unified billing modal that shows upgrade options for Free users and
+				credit purchase for Pro users.
 			</p>
 		</div>
 
 		<div class="flex flex-wrap gap-4">
-			<Button onclick={() => (creditPurchaseModalOpen = true)}>
-				Open Credit Purchase Modal
+			<Button onclick={() => (billingModalFreeOpen = true)}>
+				Open Billing Modal (Free Plan)
 			</Button>
-			<Button
-				variant="destructive"
-				onclick={() => (outOfCreditsModalOpen = true)}
-			>
-				Open Out of Credits Modal
+			<Button variant="outline" onclick={() => (billingModalProOpen = true)}>
+				Open Billing Modal (Pro Plan)
 			</Button>
 		</div>
 	</section>
 </div>
 
-<CreditPurchaseModal bind:open={creditPurchaseModalOpen} />
-
-<OutOfCreditsModal
-	bind:open={outOfCreditsModalOpen}
-	currentBalance={50}
-	requiredCredits={150}
-	onBuyCredits={() => {
-		outOfCreditsModalOpen = false;
-		creditPurchaseModalOpen = true;
-	}}
+<BillingModal
+	bind:open={billingModalFreeOpen}
+	plan={freePlan}
+	credits={creditsYellow}
 	onUpgrade={handleUpgrade}
+/>
+
+<BillingModal
+	bind:open={billingModalProOpen}
+	plan={proPlan}
+	credits={creditsPro}
 />

@@ -63,6 +63,8 @@ export const plans = pgTable(
 	(t) => [uniqueIndex('plans_name_uidx').on(t.name)]
 );
 
+export type Plan = typeof plans.$inferSelect;
+
 export const subscriptions = pgTable(
 	'subscriptions',
 	{
