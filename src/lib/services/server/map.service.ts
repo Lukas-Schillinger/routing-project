@@ -203,13 +203,8 @@ export class MapService {
 			return map;
 		}
 
-		const existingRoutes = await db
-			.select()
-			.from(routes)
-			.where(eq(routes.map_id, mapId))
-			.limit(1);
-
-		if (existingRoutes.length > 0) {
+		const hasRoutes = await this.mapHasRoutes(mapId);
+		if (hasRoutes) {
 			await this.resetOptimization(mapId, organizationId, userId);
 		}
 
@@ -224,6 +219,19 @@ export class MapService {
 			.returning();
 
 		return updatedMap;
+	}
+
+	/**
+	 * Check if a map has any routes
+	 */
+	private async mapHasRoutes(mapId: string): Promise<boolean> {
+		const [route] = await db
+			.select({ id: routes.id })
+			.from(routes)
+			.where(eq(routes.map_id, mapId))
+			.limit(1);
+
+		return route !== undefined;
 	}
 
 	/**
@@ -430,13 +438,14 @@ export class MapService {
 	): Promise<Map> {
 		const sourceMap = await this.getMapById(mapId, organizationId);
 
-		return await db.transaction(async (tx) => {
+		return db.transaction(async (tx) => {
 			// Create new map with copied data
 			const [newMap] = await tx
 				.insert(maps)
 				.values({
 					organization_id: organizationId,
 					title: newTitle || `${sourceMap.title} (Copy)`,
+					depot_id: sourceMap.depot_id,
 					created_by: userId,
 					updated_by: userId
 				})

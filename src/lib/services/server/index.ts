@@ -3,6 +3,7 @@
  * Client access to services is mediated through $lib/services/api which calls API routes
  * at src/routes/api.
  */
+export { BillingService, billingService } from './billing.service';
 export { DepotService, depotService } from './depot.service';
 export { DriverService, driverService } from './driver.service';
 export { handleApiError, ServiceError } from './errors';

@@ -67,6 +67,7 @@
 	// Pending depot change (for confirmation dialog)
 	let pendingDepotId = $state<string | null>(null);
 	let showDepotChangeConfirm = $state(false);
+	let isChangingDepot = $state(false);
 
 	let fairness = $state<'high' | 'medium' | 'low'>('medium');
 	let isSubmitting = $state(false);
@@ -149,10 +150,15 @@
 
 	async function confirmDepotChange() {
 		if (pendingDepotId) {
-			await onDepotChange(pendingDepotId);
-			pendingDepotId = null;
+			isChangingDepot = true;
+			try {
+				await onDepotChange(pendingDepotId);
+				pendingDepotId = null;
+				showDepotChangeConfirm = false;
+			} finally {
+				isChangingDepot = false;
+			}
 		}
-		showDepotChangeConfirm = false;
 	}
 
 	function cancelDepotChange() {
@@ -370,10 +376,23 @@
 			</Dialog.Description>
 		</Dialog.Header>
 		<Dialog.Footer class="pt-4">
-			<Button variant="outline" onclick={cancelDepotChange}>Cancel</Button>
-			<Button variant="destructive" onclick={confirmDepotChange}
-				>Change Depot</Button
+			<Button
+				variant="outline"
+				onclick={cancelDepotChange}
+				disabled={isChangingDepot}>Cancel</Button
 			>
+			<Button
+				variant="destructive"
+				onclick={confirmDepotChange}
+				disabled={isChangingDepot}
+			>
+				{#if isChangingDepot}
+					<Loader2 class="mr-1.5 h-3.5 w-3.5 animate-spin" />
+					Changing...
+				{:else}
+					Change Depot
+				{/if}
+			</Button>
 		</Dialog.Footer>
 	</Dialog.Content>
 </Dialog.Root>

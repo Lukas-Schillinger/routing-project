@@ -265,6 +265,8 @@
 				depots={data.depots}
 				assignedDrivers={data.assignedDrivers}
 				routes={data.routes}
+				plan={data.plan}
+				credits={data.credits}
 				{pageState}
 				onDepotChange={handleDepotChange}
 				onOptimize={handleOptimizationStarted}

@@ -1,4 +1,5 @@
 import {
+	billingService,
 	depotService,
 	driverService,
 	mapService,
@@ -29,7 +30,9 @@ export const load: PageServerLoad = async ({ params }) => {
 			assignedDriversData,
 			depots,
 			routes,
-			activeJob
+			activeJob,
+			subscriptionData,
+			credits
 		] = await Promise.all([
 			mapService.getMapById(mapId, user.organization_id),
 			stopService.getStopsByMap(mapId, user.organization_id),
@@ -37,7 +40,9 @@ export const load: PageServerLoad = async ({ params }) => {
 			mapService.getDriversForMap(mapId, user.organization_id),
 			depotService.getDepots(user.organization_id),
 			routeService.getRoutesByMap(mapId, user.organization_id),
-			optimizationService.getActiveJobForMap(mapId, user.organization_id)
+			optimizationService.getActiveJobForMap(mapId, user.organization_id),
+			billingService.getSubscription(user.organization_id),
+			billingService.getCreditBalance(user.organization_id)
 		]);
 
 		const assignedDrivers = assignedDriversData.map((d) => d.driver);
@@ -49,7 +54,9 @@ export const load: PageServerLoad = async ({ params }) => {
 			assignedDrivers,
 			depots,
 			routes,
-			activeJob
+			activeJob,
+			plan: subscriptionData.plan,
+			credits
 		};
 	} catch (err) {
 		if (err instanceof ServiceError) {
