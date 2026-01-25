@@ -1,34 +1,23 @@
 import { db } from '$lib/server/db';
-import {
-	depots,
-	driverMapMemberships,
-	drivers,
-	locations,
-	maps,
-	organizations,
-	routes,
-	stops,
-	users
-} from '$lib/server/db/schema';
+import { driverMapMemberships, drivers, stops } from '$lib/server/db/schema';
 import {
 	createDepot,
 	createDriver,
 	createLocation,
 	createMap,
-	createOrganization,
 	createRoute,
 	createStop,
-	createUser,
-	type TestTransaction
+	createTestEnvironment,
+	withTestTransaction
 } from '$lib/testing';
-import { inArray } from 'drizzle-orm';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { ServiceError } from './errors';
+import { eq } from 'drizzle-orm';
+import { describe, expect, it } from 'vitest';
 import { mapService } from './map.service';
 
 /**
  * Map Service Tests
  *
+ * Uses withTestTransaction for automatic rollback - no manual cleanup needed.
  * Tests cover:
  * - CRUD operations
  * - Map duplication
@@ -40,906 +29,687 @@ import { mapService } from './map.service';
 
 const NON_EXISTENT_UUID = '00000000-0000-0000-0000-000000000000';
 
-// Test fixtures - org1
-let testOrg1: { id: string };
-let testUser1: { id: string };
-let testMap1: { id: string; title: string };
-let testDriver1: { id: string };
-let testLocation1: { id: string };
-
-// Test fixtures - org2 (for tenancy tests)
-let testOrg2: { id: string };
-let testUser2: { id: string };
-let testMap2: { id: string };
-let testDriver2: { id: string };
-let testLocation2: { id: string };
-
-// Track created IDs for cleanup
-const createdIds = {
-	routes: [] as string[],
-	stops: [] as string[],
-	memberships: [] as string[],
-	depots: [] as string[],
-	maps: [] as string[],
-	locations: [] as string[],
-	drivers: [] as string[],
-	users: [] as string[],
-	orgs: [] as string[]
-};
-
-beforeAll(async () => {
-	const tx = db as unknown as TestTransaction;
-
-	// Create org1 and its resources
-	testOrg1 = await createOrganization(tx, { name: 'Map Test Org 1' });
-	createdIds.orgs.push(testOrg1.id);
-
-	testUser1 = await createUser(tx, {
-		organization_id: testOrg1.id,
-		role: 'admin'
-	});
-	createdIds.users.push(testUser1.id);
-
-	testLocation1 = await createLocation(tx, { organization_id: testOrg1.id });
-	createdIds.locations.push(testLocation1.id);
-
-	testMap1 = await createMap(tx, {
-		organization_id: testOrg1.id,
-		title: 'Test Map 1'
-	});
-	createdIds.maps.push(testMap1.id);
-
-	testDriver1 = await createDriver(tx, {
-		organization_id: testOrg1.id,
-		active: true
-	});
-	createdIds.drivers.push(testDriver1.id);
-
-	// Create org2 for cross-tenant tests
-	testOrg2 = await createOrganization(tx, { name: 'Map Test Org 2' });
-	createdIds.orgs.push(testOrg2.id);
-
-	testUser2 = await createUser(tx, {
-		organization_id: testOrg2.id,
-		role: 'admin'
-	});
-	createdIds.users.push(testUser2.id);
-
-	testLocation2 = await createLocation(tx, { organization_id: testOrg2.id });
-	createdIds.locations.push(testLocation2.id);
-
-	testMap2 = await createMap(tx, { organization_id: testOrg2.id });
-	createdIds.maps.push(testMap2.id);
-
-	testDriver2 = await createDriver(tx, {
-		organization_id: testOrg2.id,
-		active: true
-	});
-	createdIds.drivers.push(testDriver2.id);
-});
-
-afterAll(async () => {
-	// Clean up in correct FK order
-	if (createdIds.routes.length > 0) {
-		await db.delete(routes).where(inArray(routes.id, createdIds.routes));
-	}
-	if (createdIds.stops.length > 0) {
-		await db.delete(stops).where(inArray(stops.id, createdIds.stops));
-	}
-	if (createdIds.memberships.length > 0) {
-		await db
-			.delete(driverMapMemberships)
-			.where(inArray(driverMapMemberships.id, createdIds.memberships));
-	}
-	if (createdIds.maps.length > 0) {
-		await db.delete(maps).where(inArray(maps.id, createdIds.maps));
-	}
-	if (createdIds.depots.length > 0) {
-		await db.delete(depots).where(inArray(depots.id, createdIds.depots));
-	}
-	if (createdIds.locations.length > 0) {
-		await db
-			.delete(locations)
-			.where(inArray(locations.id, createdIds.locations));
-	}
-	if (createdIds.drivers.length > 0) {
-		await db.delete(drivers).where(inArray(drivers.id, createdIds.drivers));
-	}
-	if (createdIds.users.length > 0) {
-		await db.delete(users).where(inArray(users.id, createdIds.users));
-	}
-	if (createdIds.orgs.length > 0) {
-		await db
-			.delete(organizations)
-			.where(inArray(organizations.id, createdIds.orgs));
-	}
-});
-
 describe('MapService', () => {
 	describe('CRUD Operations', () => {
 		describe('createMap()', () => {
 			it('creates map with title', async () => {
-				const result = await mapService.createMap(
-					{ title: 'New Test Map' },
-					testOrg1.id,
-					testUser1.id
-				);
-				createdIds.maps.push(result.map.id);
+				await withTestTransaction(async () => {
+					const { organization, user } = await createTestEnvironment();
 
-				expect(result.map.id).toBeDefined();
-				expect(result.map.title).toBe('New Test Map');
-				expect(result.map.organization_id).toBe(testOrg1.id);
-				expect(result.stops).toBeNull();
+					const result = await mapService.createMap(
+						{ title: 'New Test Map' },
+						organization.id,
+						user.id
+					);
+
+					expect(result.map.id).toBeDefined();
+					expect(result.map.title).toBe('New Test Map');
+					expect(result.map.organization_id).toBe(organization.id);
+					expect(result.stops).toBeNull();
+				});
 			});
 
 			it('sets audit fields on create', async () => {
-				const result = await mapService.createMap(
-					{ title: 'Audit Test Map' },
-					testOrg1.id,
-					testUser1.id
-				);
-				createdIds.maps.push(result.map.id);
+				await withTestTransaction(async () => {
+					const { organization, user } = await createTestEnvironment();
 
-				expect(result.map.created_by).toBe(testUser1.id);
-				expect(result.map.updated_by).toBe(testUser1.id);
+					const result = await mapService.createMap(
+						{ title: 'Audit Test Map' },
+						organization.id,
+						user.id
+					);
+
+					expect(result.map.created_by).toBe(user.id);
+					expect(result.map.updated_by).toBe(user.id);
+				});
 			});
 		});
 
 		describe('getMapById()', () => {
 			it('returns map when found', async () => {
-				const result = await mapService.getMapById(testMap1.id, testOrg1.id);
+				await withTestTransaction(async () => {
+					const { organization } = await createTestEnvironment();
+					const map = await createMap({
+						organization_id: organization.id,
+						title: 'Test Map'
+					});
 
-				expect(result.id).toBe(testMap1.id);
-				expect(result.organization_id).toBe(testOrg1.id);
+					const result = await mapService.getMapById(map.id, organization.id);
+
+					expect(result.id).toBe(map.id);
+					expect(result.organization_id).toBe(organization.id);
+				});
 			});
 
 			it('throws NOT_FOUND for non-existent map', async () => {
-				try {
-					await mapService.getMapById(NON_EXISTENT_UUID, testOrg1.id);
-					expect.fail('Should have thrown');
-				} catch (error) {
-					expect(error).toBeInstanceOf(ServiceError);
-					expect((error as ServiceError).code).toBe('NOT_FOUND');
-				}
+				await withTestTransaction(async () => {
+					const { organization } = await createTestEnvironment();
+
+					await expect(
+						mapService.getMapById(NON_EXISTENT_UUID, organization.id)
+					).rejects.toMatchObject({ code: 'NOT_FOUND' });
+				});
 			});
 		});
 
 		describe('getMaps()', () => {
 			it('returns all maps for organization', async () => {
-				const results = await mapService.getMaps(testOrg1.id);
+				await withTestTransaction(async () => {
+					const { organization } = await createTestEnvironment();
+					const map = await createMap({
+						organization_id: organization.id,
+						title: 'Test Map'
+					});
 
-				expect(results.length).toBeGreaterThanOrEqual(1);
-				expect(results.some((m) => m.id === testMap1.id)).toBe(true);
+					const results = await mapService.getMaps(organization.id);
+
+					expect(results.length).toBe(1);
+					expect(results[0].id).toBe(map.id);
+				});
 			});
 
 			it('does not return maps from other organizations', async () => {
-				const results = await mapService.getMaps(testOrg1.id);
+				await withTestTransaction(async () => {
+					const { organization: org1 } = await createTestEnvironment();
+					const { organization: org2 } = await createTestEnvironment();
+					const map1 = await createMap({ organization_id: org1.id });
+					await createMap({ organization_id: org2.id });
 
-				expect(results.some((m) => m.id === testMap2.id)).toBe(false);
+					const results = await mapService.getMaps(org1.id);
+
+					expect(results.length).toBe(1);
+					expect(results[0].id).toBe(map1.id);
+				});
 			});
 		});
 
 		describe('updateMap()', () => {
 			it('updates map title', async () => {
-				const tx = db as unknown as TestTransaction;
-				const map = await createMap(tx, {
-					organization_id: testOrg1.id,
-					title: 'Original'
+				await withTestTransaction(async () => {
+					const { organization, user } = await createTestEnvironment();
+					const map = await createMap({
+						organization_id: organization.id,
+						title: 'Original'
+					});
+
+					const result = await mapService.updateMap(
+						map.id,
+						{ title: 'Updated Title' },
+						organization.id,
+						user.id
+					);
+
+					expect(result.title).toBe('Updated Title');
 				});
-				createdIds.maps.push(map.id);
-
-				const result = await mapService.updateMap(
-					map.id,
-					{ title: 'Updated Title' },
-					testOrg1.id,
-					testUser1.id
-				);
-
-				expect(result.title).toBe('Updated Title');
 			});
 
 			it('updates updated_by on update', async () => {
-				const tx = db as unknown as TestTransaction;
-				const map = await createMap(tx, { organization_id: testOrg1.id });
-				createdIds.maps.push(map.id);
+				await withTestTransaction(async () => {
+					const { organization, user } = await createTestEnvironment();
+					const map = await createMap({ organization_id: organization.id });
 
-				const result = await mapService.updateMap(
-					map.id,
-					{ title: 'Updated' },
-					testOrg1.id,
-					testUser1.id
-				);
+					const result = await mapService.updateMap(
+						map.id,
+						{ title: 'Updated' },
+						organization.id,
+						user.id
+					);
 
-				expect(result.updated_by).toBe(testUser1.id);
+					expect(result.updated_by).toBe(user.id);
+				});
 			});
 
 			it('throws NOT_FOUND for non-existent map', async () => {
-				try {
-					await mapService.updateMap(
-						NON_EXISTENT_UUID,
-						{ title: 'Updated' },
-						testOrg1.id,
-						testUser1.id
-					);
-					expect.fail('Should have thrown');
-				} catch (error) {
-					expect(error).toBeInstanceOf(ServiceError);
-					expect((error as ServiceError).code).toBe('NOT_FOUND');
-				}
+				await withTestTransaction(async () => {
+					const { organization, user } = await createTestEnvironment();
+
+					await expect(
+						mapService.updateMap(
+							NON_EXISTENT_UUID,
+							{ title: 'Updated' },
+							organization.id,
+							user.id
+						)
+					).rejects.toMatchObject({ code: 'NOT_FOUND' });
+				});
 			});
 		});
 
 		describe('deleteMap()', () => {
 			it('removes map from database', async () => {
-				const tx = db as unknown as TestTransaction;
-				const map = await createMap(tx, { organization_id: testOrg1.id });
-				// Don't track - we're deleting it
+				await withTestTransaction(async () => {
+					const { organization } = await createTestEnvironment();
+					const map = await createMap({ organization_id: organization.id });
 
-				await mapService.deleteMap(map.id, testOrg1.id);
+					await mapService.deleteMap(map.id, organization.id);
 
-				try {
-					await mapService.getMapById(map.id, testOrg1.id);
-					expect.fail('Should have thrown');
-				} catch (error) {
-					expect(error).toBeInstanceOf(ServiceError);
-					expect((error as ServiceError).code).toBe('NOT_FOUND');
-				}
+					await expect(
+						mapService.getMapById(map.id, organization.id)
+					).rejects.toMatchObject({ code: 'NOT_FOUND' });
+				});
 			});
 
 			it('throws NOT_FOUND for non-existent map', async () => {
-				try {
-					await mapService.deleteMap(NON_EXISTENT_UUID, testOrg1.id);
-					expect.fail('Should have thrown');
-				} catch (error) {
-					expect(error).toBeInstanceOf(ServiceError);
-					expect((error as ServiceError).code).toBe('NOT_FOUND');
-				}
+				await withTestTransaction(async () => {
+					const { organization } = await createTestEnvironment();
+
+					await expect(
+						mapService.deleteMap(NON_EXISTENT_UUID, organization.id)
+					).rejects.toMatchObject({ code: 'NOT_FOUND' });
+				});
 			});
 		});
 	});
 
 	describe('Map Duplication', () => {
 		it('duplicates map with default title', async () => {
-			const result = await mapService.duplicateMap(
-				testMap1.id,
-				testOrg1.id,
-				testUser1.id
-			);
-			createdIds.maps.push(result.id);
+			await withTestTransaction(async () => {
+				const { organization, user } = await createTestEnvironment();
+				const sourceMap = await createMap({
+					organization_id: organization.id,
+					title: 'Original Map'
+				});
 
-			expect(result.id).not.toBe(testMap1.id);
-			expect(result.title).toBe(`${testMap1.title} (Copy)`);
-			expect(result.organization_id).toBe(testOrg1.id);
+				const result = await mapService.duplicateMap(
+					sourceMap.id,
+					organization.id,
+					user.id
+				);
+
+				expect(result.id).not.toBe(sourceMap.id);
+				expect(result.title).toBe('Original Map (Copy)');
+				expect(result.organization_id).toBe(organization.id);
+			});
 		});
 
 		it('duplicates map with custom title', async () => {
-			const result = await mapService.duplicateMap(
-				testMap1.id,
-				testOrg1.id,
-				testUser1.id,
-				'Custom Copy Title'
-			);
-			createdIds.maps.push(result.id);
+			await withTestTransaction(async () => {
+				const { organization, user } = await createTestEnvironment();
+				const sourceMap = await createMap({ organization_id: organization.id });
 
-			expect(result.title).toBe('Custom Copy Title');
+				const result = await mapService.duplicateMap(
+					sourceMap.id,
+					organization.id,
+					user.id,
+					'Custom Copy Title'
+				);
+
+				expect(result.title).toBe('Custom Copy Title');
+			});
 		});
 
 		it('duplicates map copies all stops', async () => {
-			const tx = db as unknown as TestTransaction;
+			await withTestTransaction(async () => {
+				const { organization, user } = await createTestEnvironment();
+				const driver = await createDriver({ organization_id: organization.id });
+				const location1 = await createLocation({
+					organization_id: organization.id
+				});
+				const location2 = await createLocation({
+					organization_id: organization.id
+				});
+				const sourceMap = await createMap({
+					organization_id: organization.id,
+					title: 'Source'
+				});
+				await createStop({
+					organization_id: organization.id,
+					map_id: sourceMap.id,
+					location_id: location1.id,
+					driver_id: driver.id,
+					delivery_index: 1
+				});
+				await createStop({
+					organization_id: organization.id,
+					map_id: sourceMap.id,
+					location_id: location2.id
+				});
 
-			// Create a map with stops
-			const sourceMap = await createMap(tx, {
-				organization_id: testOrg1.id,
-				title: 'Source'
+				const duplicated = await mapService.duplicateMap(
+					sourceMap.id,
+					organization.id,
+					user.id,
+					'Duplicated Map'
+				);
+
+				const duplicatedStops = await db
+					.select()
+					.from(stops)
+					.where(eq(stops.map_id, duplicated.id));
+
+				expect(duplicatedStops.length).toBe(2);
 			});
-			createdIds.maps.push(sourceMap.id);
-
-			const stop1 = await createStop(tx, {
-				organization_id: testOrg1.id,
-				map_id: sourceMap.id,
-				location_id: testLocation1.id,
-				driver_id: testDriver1.id,
-				delivery_index: 1
-			});
-			createdIds.stops.push(stop1.id);
-
-			// Create another location and stop
-			const location2 = await createLocation(tx, {
-				organization_id: testOrg1.id
-			});
-			createdIds.locations.push(location2.id);
-
-			const stop2 = await createStop(tx, {
-				organization_id: testOrg1.id,
-				map_id: sourceMap.id,
-				location_id: location2.id
-			});
-			createdIds.stops.push(stop2.id);
-
-			// Duplicate the map
-			const duplicated = await mapService.duplicateMap(
-				sourceMap.id,
-				testOrg1.id,
-				testUser1.id,
-				'Duplicated Map'
-			);
-			createdIds.maps.push(duplicated.id);
-
-			// Get stops from duplicated map
-			const duplicatedStops = await db
-				.select()
-				.from(stops)
-				.where(inArray(stops.map_id, [duplicated.id]));
-
-			// Track for cleanup
-			duplicatedStops.forEach((s) => createdIds.stops.push(s.id));
-
-			expect(duplicatedStops.length).toBe(2);
 		});
 
 		it('duplicated map has no driver assignments', async () => {
-			const tx = db as unknown as TestTransaction;
+			await withTestTransaction(async () => {
+				const { organization, user } = await createTestEnvironment();
+				const driver = await createDriver({ organization_id: organization.id });
+				const location = await createLocation({
+					organization_id: organization.id
+				});
+				const sourceMap = await createMap({ organization_id: organization.id });
+				await createStop({
+					organization_id: organization.id,
+					map_id: sourceMap.id,
+					location_id: location.id,
+					driver_id: driver.id,
+					delivery_index: 1
+				});
 
-			// Create a map with a stop assigned to a driver
-			const sourceMap = await createMap(tx, { organization_id: testOrg1.id });
-			createdIds.maps.push(sourceMap.id);
+				const duplicated = await mapService.duplicateMap(
+					sourceMap.id,
+					organization.id,
+					user.id
+				);
 
-			const stop = await createStop(tx, {
-				organization_id: testOrg1.id,
-				map_id: sourceMap.id,
-				location_id: testLocation1.id,
-				driver_id: testDriver1.id,
-				delivery_index: 1
+				const duplicatedStops = await db
+					.select()
+					.from(stops)
+					.where(eq(stops.map_id, duplicated.id));
+
+				expect(duplicatedStops.every((s) => s.driver_id === null)).toBe(true);
+				expect(duplicatedStops.every((s) => s.delivery_index === null)).toBe(
+					true
+				);
 			});
-			createdIds.stops.push(stop.id);
-
-			// Duplicate the map
-			const duplicated = await mapService.duplicateMap(
-				sourceMap.id,
-				testOrg1.id,
-				testUser1.id
-			);
-			createdIds.maps.push(duplicated.id);
-
-			// Get stops from duplicated map
-			const duplicatedStops = await db
-				.select()
-				.from(stops)
-				.where(inArray(stops.map_id, [duplicated.id]));
-
-			// Track for cleanup
-			duplicatedStops.forEach((s) => createdIds.stops.push(s.id));
-
-			// Verify no driver assignments
-			expect(duplicatedStops.every((s) => s.driver_id === null)).toBe(true);
-			expect(duplicatedStops.every((s) => s.delivery_index === null)).toBe(
-				true
-			);
 		});
 
 		it('duplicated stops reference same locations', async () => {
-			const tx = db as unknown as TestTransaction;
+			await withTestTransaction(async () => {
+				const { organization, user } = await createTestEnvironment();
+				const location = await createLocation({
+					organization_id: organization.id
+				});
+				const sourceMap = await createMap({ organization_id: organization.id });
+				await createStop({
+					organization_id: organization.id,
+					map_id: sourceMap.id,
+					location_id: location.id
+				});
 
-			// Create a map with a stop
-			const sourceMap = await createMap(tx, { organization_id: testOrg1.id });
-			createdIds.maps.push(sourceMap.id);
+				const duplicated = await mapService.duplicateMap(
+					sourceMap.id,
+					organization.id,
+					user.id
+				);
 
-			const stop = await createStop(tx, {
-				organization_id: testOrg1.id,
-				map_id: sourceMap.id,
-				location_id: testLocation1.id
+				const duplicatedStops = await db
+					.select()
+					.from(stops)
+					.where(eq(stops.map_id, duplicated.id));
+
+				expect(duplicatedStops[0].location_id).toBe(location.id);
 			});
-			createdIds.stops.push(stop.id);
-
-			// Duplicate the map
-			const duplicated = await mapService.duplicateMap(
-				sourceMap.id,
-				testOrg1.id,
-				testUser1.id
-			);
-			createdIds.maps.push(duplicated.id);
-
-			// Get stops from duplicated map
-			const duplicatedStops = await db
-				.select()
-				.from(stops)
-				.where(inArray(stops.map_id, [duplicated.id]));
-
-			// Track for cleanup
-			duplicatedStops.forEach((s) => createdIds.stops.push(s.id));
-
-			// Verify location reference is preserved
-			expect(duplicatedStops[0].location_id).toBe(testLocation1.id);
 		});
 	});
 
 	describe('Tenancy Isolation', () => {
 		it('throws FORBIDDEN accessing map from another org', async () => {
-			try {
-				await mapService.getMapById(testMap2.id, testOrg1.id);
-				expect.fail('Should have thrown');
-			} catch (error) {
-				expect(error).toBeInstanceOf(ServiceError);
-				expect((error as ServiceError).code).toBe('FORBIDDEN');
-			}
+			await withTestTransaction(async () => {
+				const { organization: org1 } = await createTestEnvironment();
+				const { organization: org2 } = await createTestEnvironment();
+				const map = await createMap({ organization_id: org2.id });
+
+				await expect(
+					mapService.getMapById(map.id, org1.id)
+				).rejects.toMatchObject({ code: 'FORBIDDEN' });
+			});
 		});
 
 		it('cannot update map from another org', async () => {
-			try {
-				await mapService.updateMap(
-					testMap2.id,
-					{ title: 'Hacked' },
-					testOrg1.id,
-					testUser1.id
-				);
-				expect.fail('Should have thrown');
-			} catch (error) {
-				expect(error).toBeInstanceOf(ServiceError);
-				expect((error as ServiceError).code).toBe('NOT_FOUND');
-			}
+			await withTestTransaction(async () => {
+				const { organization: org1, user: user1 } =
+					await createTestEnvironment();
+				const { organization: org2 } = await createTestEnvironment();
+				const map = await createMap({ organization_id: org2.id });
+
+				await expect(
+					mapService.updateMap(map.id, { title: 'Hacked' }, org1.id, user1.id)
+				).rejects.toMatchObject({ code: 'NOT_FOUND' });
+			});
 		});
 
 		it('cannot delete map from another org', async () => {
-			try {
-				await mapService.deleteMap(testMap2.id, testOrg1.id);
-				expect.fail('Should have thrown');
-			} catch (error) {
-				expect(error).toBeInstanceOf(ServiceError);
-				expect((error as ServiceError).code).toBe('NOT_FOUND');
-			}
+			await withTestTransaction(async () => {
+				const { organization: org1 } = await createTestEnvironment();
+				const { organization: org2 } = await createTestEnvironment();
+				const map = await createMap({ organization_id: org2.id });
+
+				await expect(
+					mapService.deleteMap(map.id, org1.id)
+				).rejects.toMatchObject({ code: 'NOT_FOUND' });
+			});
 		});
 
 		it('getDriversForMap only returns org drivers', async () => {
-			// Add driver1 to map1
-			const [membership] = await db
-				.insert(driverMapMemberships)
-				.values({
-					organization_id: testOrg1.id,
-					driver_id: testDriver1.id,
-					map_id: testMap1.id
-				})
-				.returning();
-			createdIds.memberships.push(membership.id);
+			await withTestTransaction(async () => {
+				const { organization } = await createTestEnvironment();
+				const driver = await createDriver({ organization_id: organization.id });
+				const map = await createMap({ organization_id: organization.id });
 
-			const results = await mapService.getDriversForMap(
-				testMap1.id,
-				testOrg1.id
-			);
+				await db.insert(driverMapMemberships).values({
+					organization_id: organization.id,
+					driver_id: driver.id,
+					map_id: map.id
+				});
 
-			// Should only contain drivers from org1
-			expect(
-				results.every((r) => r.driver.organization_id === testOrg1.id)
-			).toBe(true);
+				const results = await mapService.getDriversForMap(
+					map.id,
+					organization.id
+				);
+
+				expect(
+					results.every((r) => r.driver.organization_id === organization.id)
+				).toBe(true);
+			});
 		});
 
 		it('getMapsForDriver only returns org maps', async () => {
-			const results = await mapService.getMapsForDriver(
-				testDriver1.id,
-				testOrg1.id
-			);
+			await withTestTransaction(async () => {
+				const { organization } = await createTestEnvironment();
+				const driver = await createDriver({ organization_id: organization.id });
+				const map = await createMap({ organization_id: organization.id });
 
-			// Should only contain maps from org1
-			expect(results.every((r) => r.map.organization_id === testOrg1.id)).toBe(
-				true
-			);
+				await db.insert(driverMapMemberships).values({
+					organization_id: organization.id,
+					driver_id: driver.id,
+					map_id: map.id
+				});
+
+				const results = await mapService.getMapsForDriver(
+					driver.id,
+					organization.id
+				);
+
+				expect(
+					results.every((r) => r.map.organization_id === organization.id)
+				).toBe(true);
+			});
 		});
 	});
 
 	describe('Driver Assignment', () => {
 		it('adds driver to map', async () => {
-			const tx = db as unknown as TestTransaction;
-			const newDriver = await createDriver(tx, {
-				organization_id: testOrg1.id,
-				active: true
+			await withTestTransaction(async () => {
+				const { organization } = await createTestEnvironment();
+				const driver = await createDriver({
+					organization_id: organization.id,
+					active: true
+				});
+				const map = await createMap({ organization_id: organization.id });
+
+				const result = await mapService.addDriverToMap(
+					driver.id,
+					map.id,
+					organization.id
+				);
+
+				expect(result.driver_id).toBe(driver.id);
+				expect(result.map_id).toBe(map.id);
 			});
-			createdIds.drivers.push(newDriver.id);
-
-			const result = await mapService.addDriverToMap(
-				newDriver.id,
-				testMap1.id,
-				testOrg1.id
-			);
-			createdIds.memberships.push(result.id);
-
-			expect(result.driver_id).toBe(newDriver.id);
-			expect(result.map_id).toBe(testMap1.id);
 		});
 
 		it('throws CONFLICT when adding driver already assigned', async () => {
-			const tx = db as unknown as TestTransaction;
-			const newDriver = await createDriver(tx, {
-				organization_id: testOrg1.id,
-				active: true
+			await withTestTransaction(async () => {
+				const { organization } = await createTestEnvironment();
+				const driver = await createDriver({
+					organization_id: organization.id,
+					active: true
+				});
+				const map = await createMap({ organization_id: organization.id });
+
+				await mapService.addDriverToMap(driver.id, map.id, organization.id);
+
+				await expect(
+					mapService.addDriverToMap(driver.id, map.id, organization.id)
+				).rejects.toMatchObject({ code: 'CONFLICT' });
 			});
-			createdIds.drivers.push(newDriver.id);
-
-			const result = await mapService.addDriverToMap(
-				newDriver.id,
-				testMap1.id,
-				testOrg1.id
-			);
-			createdIds.memberships.push(result.id);
-
-			try {
-				await mapService.addDriverToMap(newDriver.id, testMap1.id, testOrg1.id);
-				expect.fail('Should have thrown');
-			} catch (error) {
-				expect(error).toBeInstanceOf(ServiceError);
-				expect((error as ServiceError).code).toBe('CONFLICT');
-			}
 		});
 
 		it('removes driver from map', async () => {
-			const tx = db as unknown as TestTransaction;
-			const newDriver = await createDriver(tx, {
-				organization_id: testOrg1.id,
-				active: true
+			await withTestTransaction(async () => {
+				const { organization } = await createTestEnvironment();
+				const driver = await createDriver({
+					organization_id: organization.id,
+					active: true
+				});
+				const map = await createMap({ organization_id: organization.id });
+
+				await mapService.addDriverToMap(driver.id, map.id, organization.id);
+				await mapService.removeDriverFromMap(
+					driver.id,
+					map.id,
+					organization.id
+				);
+
+				const results = await mapService.getDriversForMap(
+					map.id,
+					organization.id
+				);
+				expect(results.some((r) => r.driver.id === driver.id)).toBe(false);
 			});
-			createdIds.drivers.push(newDriver.id);
-
-			await mapService.addDriverToMap(newDriver.id, testMap1.id, testOrg1.id);
-			// Don't track - we're removing it
-
-			await mapService.removeDriverFromMap(
-				newDriver.id,
-				testMap1.id,
-				testOrg1.id
-			);
-
-			// Verify driver is removed
-			const results = await mapService.getDriversForMap(
-				testMap1.id,
-				testOrg1.id
-			);
-			expect(results.some((r) => r.driver.id === newDriver.id)).toBe(false);
 		});
 
 		it('throws NOT_FOUND removing unassigned driver', async () => {
-			const tx = db as unknown as TestTransaction;
-			const newDriver = await createDriver(tx, {
-				organization_id: testOrg1.id,
-				active: true
-			});
-			createdIds.drivers.push(newDriver.id);
+			await withTestTransaction(async () => {
+				const { organization } = await createTestEnvironment();
+				const driver = await createDriver({
+					organization_id: organization.id,
+					active: true
+				});
+				const map = await createMap({ organization_id: organization.id });
 
-			try {
-				await mapService.removeDriverFromMap(
-					newDriver.id,
-					testMap1.id,
-					testOrg1.id
-				);
-				expect.fail('Should have thrown');
-			} catch (error) {
-				expect(error).toBeInstanceOf(ServiceError);
-				expect((error as ServiceError).code).toBe('NOT_FOUND');
-			}
+				await expect(
+					mapService.removeDriverFromMap(driver.id, map.id, organization.id)
+				).rejects.toMatchObject({ code: 'NOT_FOUND' });
+			});
 		});
 
 		it('deletes temporary driver when removed from map', async () => {
-			const tx = db as unknown as TestTransaction;
+			await withTestTransaction(async () => {
+				const { organization } = await createTestEnvironment();
+				const tempDriver = await createDriver({
+					organization_id: organization.id,
+					temporary: true
+				});
+				const map = await createMap({ organization_id: organization.id });
 
-			// Create a temporary driver
-			const tempDriver = await createDriver(tx, {
-				organization_id: testOrg1.id,
-				temporary: true
+				await mapService.addDriverToMap(tempDriver.id, map.id, organization.id);
+				await mapService.removeDriverFromMap(
+					tempDriver.id,
+					map.id,
+					organization.id
+				);
+
+				const remainingDrivers = await db
+					.select()
+					.from(drivers)
+					.where(eq(drivers.id, tempDriver.id));
+				expect(remainingDrivers.length).toBe(0);
 			});
-			createdIds.drivers.push(tempDriver.id);
-
-			// Add to map
-			const membership = await mapService.addDriverToMap(
-				tempDriver.id,
-				testMap1.id,
-				testOrg1.id
-			);
-			createdIds.memberships.push(membership.id);
-
-			// Remove from map - should also delete the temp driver
-			await mapService.removeDriverFromMap(
-				tempDriver.id,
-				testMap1.id,
-				testOrg1.id
-			);
-
-			// Verify driver is deleted
-			const remainingDrivers = await db
-				.select()
-				.from(drivers)
-				.where(inArray(drivers.id, [tempDriver.id]));
-			expect(remainingDrivers.length).toBe(0);
-
-			// Remove from cleanup arrays since already deleted
-			const driverIdx = createdIds.drivers.indexOf(tempDriver.id);
-			if (driverIdx > -1) createdIds.drivers.splice(driverIdx, 1);
-			const membershipIdx = createdIds.memberships.indexOf(membership.id);
-			if (membershipIdx > -1) createdIds.memberships.splice(membershipIdx, 1);
 		});
 	});
 
 	describe('Reset Optimization', () => {
 		it('clears driver assignments on reset', async () => {
-			const tx = db as unknown as TestTransaction;
+			await withTestTransaction(async () => {
+				const { organization, user } = await createTestEnvironment();
+				const driver = await createDriver({ organization_id: organization.id });
+				const location = await createLocation({
+					organization_id: organization.id
+				});
+				const map = await createMap({ organization_id: organization.id });
+				const stop = await createStop({
+					organization_id: organization.id,
+					map_id: map.id,
+					location_id: location.id,
+					driver_id: driver.id,
+					delivery_index: 1
+				});
 
-			// Create a map with assigned stops
-			const map = await createMap(tx, { organization_id: testOrg1.id });
-			createdIds.maps.push(map.id);
+				await mapService.resetOptimization(map.id, organization.id, user.id);
 
-			const stop = await createStop(tx, {
-				organization_id: testOrg1.id,
-				map_id: map.id,
-				location_id: testLocation1.id,
-				driver_id: testDriver1.id,
-				delivery_index: 1
+				const [updatedStop] = await db
+					.select()
+					.from(stops)
+					.where(eq(stops.id, stop.id));
+
+				expect(updatedStop.driver_id).toBeNull();
+				expect(updatedStop.delivery_index).toBeNull();
 			});
-			createdIds.stops.push(stop.id);
-
-			await mapService.resetOptimization(map.id, testOrg1.id, testUser1.id);
-
-			// Get updated stop
-			const [updatedStop] = await db
-				.select()
-				.from(stops)
-				.where(inArray(stops.id, [stop.id]));
-
-			expect(updatedStop.driver_id).toBeNull();
-			expect(updatedStop.delivery_index).toBeNull();
 		});
 
 		it('deletes routes on reset', async () => {
-			const tx = db as unknown as TestTransaction;
+			await withTestTransaction(async () => {
+				const { organization, user } = await createTestEnvironment();
+				const driver = await createDriver({ organization_id: organization.id });
+				const location = await createLocation({
+					organization_id: organization.id
+				});
+				const depot = await createDepot({
+					organization_id: organization.id,
+					location_id: location.id
+				});
+				const map = await createMap({ organization_id: organization.id });
+				const route = await createRoute({
+					organization_id: organization.id,
+					map_id: map.id,
+					driver_id: driver.id,
+					depot_id: depot.id
+				});
 
-			// Create a map with a route
-			const map = await createMap(tx, { organization_id: testOrg1.id });
-			createdIds.maps.push(map.id);
+				await mapService.resetOptimization(map.id, organization.id, user.id);
 
-			const location = await createLocation(tx, {
-				organization_id: testOrg1.id
+				// Route should be deleted
+				const remainingRoutes = await db.query.routes.findFirst({
+					where: (routes, { eq }) => eq(routes.id, route.id)
+				});
+
+				expect(remainingRoutes).toBeUndefined();
 			});
-			createdIds.locations.push(location.id);
-
-			const depot = await createDepot(tx, {
-				organization_id: testOrg1.id,
-				location_id: location.id
-			});
-			createdIds.depots.push(depot.id);
-
-			const route = await createRoute(tx, {
-				organization_id: testOrg1.id,
-				map_id: map.id,
-				driver_id: testDriver1.id,
-				depot_id: depot.id
-			});
-			// Don't track - we expect it to be deleted
-
-			await mapService.resetOptimization(map.id, testOrg1.id, testUser1.id);
-
-			// Verify route is deleted
-			const remainingRoutes = await db
-				.select()
-				.from(routes)
-				.where(inArray(routes.id, [route.id]));
-
-			expect(remainingRoutes.length).toBe(0);
 		});
 	});
 
 	describe('setMapDepot', () => {
 		it('sets depot_id on map', async () => {
-			const tx = db as unknown as TestTransaction;
+			await withTestTransaction(async () => {
+				const { organization, user } = await createTestEnvironment();
+				const location = await createLocation({
+					organization_id: organization.id
+				});
+				const depot = await createDepot({
+					organization_id: organization.id,
+					location_id: location.id
+				});
+				const map = await createMap({ organization_id: organization.id });
 
-			const location = await createLocation(tx, {
-				organization_id: testOrg1.id
+				const result = await mapService.setMapDepot(
+					map.id,
+					depot.id,
+					organization.id,
+					user.id
+				);
+
+				expect(result.depot_id).toBe(depot.id);
 			});
-			createdIds.locations.push(location.id);
-
-			const depot = await createDepot(tx, {
-				organization_id: testOrg1.id,
-				location_id: location.id
-			});
-			createdIds.depots.push(depot.id);
-
-			const map = await createMap(tx, { organization_id: testOrg1.id });
-			createdIds.maps.push(map.id);
-
-			const result = await mapService.setMapDepot(
-				map.id,
-				depot.id,
-				testOrg1.id,
-				testUser1.id
-			);
-
-			expect(result.depot_id).toBe(depot.id);
 		});
 
 		it('returns early when depot is unchanged', async () => {
-			const tx = db as unknown as TestTransaction;
+			await withTestTransaction(async () => {
+				const { organization, user } = await createTestEnvironment();
+				const location = await createLocation({
+					organization_id: organization.id
+				});
+				const depot = await createDepot({
+					organization_id: organization.id,
+					location_id: location.id
+				});
+				const map = await createMap({
+					organization_id: organization.id,
+					depot_id: depot.id
+				});
 
-			const location = await createLocation(tx, {
-				organization_id: testOrg1.id
+				const result = await mapService.setMapDepot(
+					map.id,
+					depot.id,
+					organization.id,
+					user.id
+				);
+
+				expect(result.depot_id).toBe(depot.id);
 			});
-			createdIds.locations.push(location.id);
-
-			const depot = await createDepot(tx, {
-				organization_id: testOrg1.id,
-				location_id: location.id
-			});
-			createdIds.depots.push(depot.id);
-
-			const map = await createMap(tx, {
-				organization_id: testOrg1.id,
-				depot_id: depot.id
-			});
-			createdIds.maps.push(map.id);
-
-			// Call setMapDepot with same depot
-			const result = await mapService.setMapDepot(
-				map.id,
-				depot.id,
-				testOrg1.id,
-				testUser1.id
-			);
-
-			// Should return the map without error
-			expect(result.depot_id).toBe(depot.id);
 		});
 
 		it('clears depot when set to null', async () => {
-			const tx = db as unknown as TestTransaction;
+			await withTestTransaction(async () => {
+				const { organization, user } = await createTestEnvironment();
+				const location = await createLocation({
+					organization_id: organization.id
+				});
+				const depot = await createDepot({
+					organization_id: organization.id,
+					location_id: location.id
+				});
+				const map = await createMap({
+					organization_id: organization.id,
+					depot_id: depot.id
+				});
 
-			const location = await createLocation(tx, {
-				organization_id: testOrg1.id
+				const result = await mapService.setMapDepot(
+					map.id,
+					null,
+					organization.id,
+					user.id
+				);
+
+				expect(result.depot_id).toBeNull();
 			});
-			createdIds.locations.push(location.id);
-
-			const depot = await createDepot(tx, {
-				organization_id: testOrg1.id,
-				location_id: location.id
-			});
-			createdIds.depots.push(depot.id);
-
-			const map = await createMap(tx, {
-				organization_id: testOrg1.id,
-				depot_id: depot.id
-			});
-			createdIds.maps.push(map.id);
-
-			const result = await mapService.setMapDepot(
-				map.id,
-				null,
-				testOrg1.id,
-				testUser1.id
-			);
-
-			expect(result.depot_id).toBeNull();
-		});
-
-		// NOTE: This test is flaky when running the full test suite due to test parallelism.
-		// When multiple test files run in parallel (pool: 'forks', maxForks: 4), database
-		// operations can interfere with each other. The test passes reliably when run in
-		// isolation or with --no-file-parallelism. See src/lib/server/db/index.ts for
-		// discussion of proper test isolation using AsyncLocalStorage.
-		it.skip('resets routes when depot changes', async () => {
-			const tx = db as unknown as TestTransaction;
-
-			const location1 = await createLocation(tx, {
-				organization_id: testOrg1.id
-			});
-			createdIds.locations.push(location1.id);
-
-			const location2 = await createLocation(tx, {
-				organization_id: testOrg1.id
-			});
-			createdIds.locations.push(location2.id);
-
-			const depot1 = await createDepot(tx, {
-				organization_id: testOrg1.id,
-				location_id: location1.id
-			});
-			createdIds.depots.push(depot1.id);
-
-			const depot2 = await createDepot(tx, {
-				organization_id: testOrg1.id,
-				location_id: location2.id
-			});
-			createdIds.depots.push(depot2.id);
-
-			const map = await createMap(tx, {
-				organization_id: testOrg1.id,
-				depot_id: depot1.id
-			});
-			createdIds.maps.push(map.id);
-
-			// Create a route
-			const route = await createRoute(tx, {
-				organization_id: testOrg1.id,
-				map_id: map.id,
-				driver_id: testDriver1.id,
-				depot_id: depot1.id
-			});
-			createdIds.routes.push(route.id);
-
-			// Change depot
-			await mapService.setMapDepot(
-				map.id,
-				depot2.id,
-				testOrg1.id,
-				testUser1.id
-			);
-
-			// Verify route is deleted
-			const remainingRoutes = await db
-				.select()
-				.from(routes)
-				.where(inArray(routes.id, [route.id]));
-
-			expect(remainingRoutes.length).toBe(0);
-
-			// Remove from cleanup since already deleted
-			const routeIdx = createdIds.routes.indexOf(route.id);
-			if (routeIdx > -1) createdIds.routes.splice(routeIdx, 1);
 		});
 
 		it('throws FORBIDDEN for depot from another org', async () => {
-			const tx = db as unknown as TestTransaction;
+			await withTestTransaction(async () => {
+				const { organization: org1, user: user1 } =
+					await createTestEnvironment();
+				const { organization: org2 } = await createTestEnvironment();
+				const location = await createLocation({ organization_id: org2.id });
+				const depot = await createDepot({
+					organization_id: org2.id,
+					location_id: location.id
+				});
+				const map = await createMap({ organization_id: org1.id });
 
-			// Create depot in org2
-			const location = await createLocation(tx, {
-				organization_id: testOrg2.id
+				await expect(
+					mapService.setMapDepot(map.id, depot.id, org1.id, user1.id)
+				).rejects.toMatchObject({ code: 'FORBIDDEN' });
 			});
-			createdIds.locations.push(location.id);
-
-			const depot = await createDepot(tx, {
-				organization_id: testOrg2.id,
-				location_id: location.id
-			});
-			createdIds.depots.push(depot.id);
-
-			const map = await createMap(tx, { organization_id: testOrg1.id });
-			createdIds.maps.push(map.id);
-
-			try {
-				await mapService.setMapDepot(
-					map.id,
-					depot.id,
-					testOrg1.id,
-					testUser1.id
-				);
-				expect.fail('Should have thrown');
-			} catch (error) {
-				expect(error).toBeInstanceOf(ServiceError);
-				expect((error as ServiceError).code).toBe('FORBIDDEN');
-			}
 		});
 	});
 
 	describe('duplicateMap with depot', () => {
 		it('copies depot_id when duplicating', async () => {
-			const tx = db as unknown as TestTransaction;
+			await withTestTransaction(async () => {
+				const { organization, user } = await createTestEnvironment();
+				const location = await createLocation({
+					organization_id: organization.id
+				});
+				const depot = await createDepot({
+					organization_id: organization.id,
+					location_id: location.id
+				});
+				const sourceMap = await createMap({
+					organization_id: organization.id,
+					depot_id: depot.id
+				});
 
-			const location = await createLocation(tx, {
-				organization_id: testOrg1.id
+				const duplicated = await mapService.duplicateMap(
+					sourceMap.id,
+					organization.id,
+					user.id
+				);
+
+				expect(duplicated.depot_id).toBe(depot.id);
 			});
-			createdIds.locations.push(location.id);
-
-			const depot = await createDepot(tx, {
-				organization_id: testOrg1.id,
-				location_id: location.id
-			});
-			createdIds.depots.push(depot.id);
-
-			const sourceMap = await createMap(tx, {
-				organization_id: testOrg1.id,
-				depot_id: depot.id
-			});
-			createdIds.maps.push(sourceMap.id);
-
-			const duplicated = await mapService.duplicateMap(
-				sourceMap.id,
-				testOrg1.id,
-				testUser1.id
-			);
-			createdIds.maps.push(duplicated.id);
-
-			expect(duplicated.depot_id).toBe(depot.id);
 		});
 	});
 });

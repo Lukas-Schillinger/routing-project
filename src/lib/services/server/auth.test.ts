@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import type { RequestEvent } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
-import { session, users, organizations } from '$lib/server/db/schema';
+import { session } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 import { sha256 } from '@oslojs/crypto/sha2';
 import { encodeHexLowerCase } from '@oslojs/encoding';
@@ -14,52 +14,16 @@ import {
 	deleteSessionTokenCookie,
 	sessionCookieName
 } from './auth';
-import {
-	createOrganization,
-	createUser,
-	type TestTransaction
-} from '$lib/testing';
+import { createTestEnvironment, withTestTransaction } from '$lib/testing';
 
 /**
  * Session Service Tests
  *
- * Tests for session token generation, creation, validation, and invalidation.
- * Uses factories from $lib/testing for consistent test data generation.
+ * Uses withTestTransaction for automatic rollback - no manual cleanup needed.
  */
 
 const DAY_IN_MS = 1000 * 60 * 60 * 24;
 
-// Test fixtures - created via factories
-let testOrg: { id: string };
-let testUser: { id: string; email: string };
-
-// Track created sessions for cleanup
-const createdSessionIds: string[] = [];
-
-beforeAll(async () => {
-	// Use factories for consistent test data generation
-	// Cast db to TestTransaction since they share the same interface for inserts
-	const tx = db as unknown as TestTransaction;
-
-	testOrg = await createOrganization(tx);
-	testUser = await createUser(tx, {
-		organization_id: testOrg.id,
-		role: 'member'
-	});
-});
-
-afterAll(async () => {
-	// Clean up all created sessions
-	for (const sessionId of createdSessionIds) {
-		await db.delete(session).where(eq(session.id, sessionId));
-	}
-
-	// Clean up test user and org
-	await db.delete(users).where(eq(users.id, testUser.id));
-	await db.delete(organizations).where(eq(organizations.id, testOrg.id));
-});
-
-// Helper to hash token like the auth module does
 function hashToken(token: string): string {
 	return encodeHexLowerCase(sha256(new TextEncoder().encode(token)));
 }
@@ -69,10 +33,7 @@ describe('Session Service', () => {
 		it('produces valid base64url string', () => {
 			const token = generateSessionToken();
 
-			// Base64url characters only
 			expect(token).toMatch(/^[A-Za-z0-9_-]+$/);
-
-			// 18 bytes → 24 base64 chars
 			expect(token.length).toBe(24);
 		});
 
@@ -83,141 +44,149 @@ describe('Session Service', () => {
 				tokens.add(generateSessionToken());
 			}
 
-			// All 100 should be unique
 			expect(tokens.size).toBe(100);
 		});
 	});
 
 	describe('createSession', () => {
 		it('inserts session with hashed ID', async () => {
-			const token = generateSessionToken();
-			const createdSession = await createSession(token, testUser.id);
-			createdSessionIds.push(createdSession.id);
+			await withTestTransaction(async () => {
+				const { user } = await createTestEnvironment();
+				const token = generateSessionToken();
 
-			// Session ID should be hash of token
-			const expectedId = hashToken(token);
-			expect(createdSession.id).toBe(expectedId);
+				const createdSession = await createSession(token, user.id);
+
+				const expectedId = hashToken(token);
+				expect(createdSession.id).toBe(expectedId);
+			});
 		});
 
 		it('sets expiry to 30 days from now', async () => {
-			const token = generateSessionToken();
-			const createdSession = await createSession(token, testUser.id);
-			createdSessionIds.push(createdSession.id);
+			await withTestTransaction(async () => {
+				const { user } = await createTestEnvironment();
+				const token = generateSessionToken();
 
-			const expectedExpiry = Date.now() + DAY_IN_MS * 30;
-			const diff = Math.abs(
-				createdSession.expires_at.getTime() - expectedExpiry
-			);
+				const createdSession = await createSession(token, user.id);
 
-			// Allow 5 second tolerance
-			expect(diff).toBeLessThan(5000);
+				const expectedExpiry = Date.now() + DAY_IN_MS * 30;
+				const diff = Math.abs(
+					createdSession.expires_at.getTime() - expectedExpiry
+				);
+				expect(diff).toBeLessThan(5000);
+			});
 		});
 
 		it('returns session object with correct user_id', async () => {
-			const token = generateSessionToken();
-			const createdSession = await createSession(token, testUser.id);
-			createdSessionIds.push(createdSession.id);
+			await withTestTransaction(async () => {
+				const { user } = await createTestEnvironment();
+				const token = generateSessionToken();
 
-			expect(createdSession.user_id).toBe(testUser.id);
+				const createdSession = await createSession(token, user.id);
+
+				expect(createdSession.user_id).toBe(user.id);
+			});
 		});
 	});
 
 	describe('validateSessionToken', () => {
 		it('returns user+session for valid token', async () => {
-			const token = generateSessionToken();
-			const createdSession = await createSession(token, testUser.id);
-			createdSessionIds.push(createdSession.id);
+			await withTestTransaction(async () => {
+				const { user } = await createTestEnvironment();
+				const token = generateSessionToken();
+				const createdSession = await createSession(token, user.id);
 
-			const result = await validateSessionToken(token);
+				const result = await validateSessionToken(token);
 
-			expect(result.session).not.toBeNull();
-			expect(result.user).not.toBeNull();
-			expect(result.session!.id).toBe(createdSession.id);
-			expect(result.user!.id).toBe(testUser.id);
-			expect(result.user!.email).toBe(testUser.email);
+				expect(result.session).not.toBeNull();
+				expect(result.user).not.toBeNull();
+				expect(result.session!.id).toBe(createdSession.id);
+				expect(result.user!.id).toBe(user.id);
+				expect(result.user!.email).toBe(user.email);
+			});
 		});
 
 		it('returns null for invalid/unknown token', async () => {
-			const result = await validateSessionToken('invalid-token-xyz');
+			await withTestTransaction(async () => {
+				const result = await validateSessionToken('invalid-token-xyz');
 
-			expect(result.session).toBeNull();
-			expect(result.user).toBeNull();
+				expect(result.session).toBeNull();
+				expect(result.user).toBeNull();
+			});
 		});
 
 		it('returns null for expired token and deletes session', async () => {
-			// Insert session with past expiry directly in DB
-			// (This is an edge case that can't be created via normal flow)
-			const token = generateSessionToken();
-			const sessionId = hashToken(token);
-			const expiredAt = new Date(Date.now() - DAY_IN_MS); // 1 day ago
+			await withTestTransaction(async () => {
+				const { user } = await createTestEnvironment();
+				const token = generateSessionToken();
+				const sessionId = hashToken(token);
+				const expiredAt = new Date(Date.now() - DAY_IN_MS);
 
-			await db.insert(session).values({
-				id: sessionId,
-				user_id: testUser.id,
-				expires_at: expiredAt
+				await db.insert(session).values({
+					id: sessionId,
+					user_id: user.id,
+					expires_at: expiredAt
+				});
+
+				const result = await validateSessionToken(token);
+
+				expect(result.session).toBeNull();
+				expect(result.user).toBeNull();
+
+				const [remaining] = await db
+					.select()
+					.from(session)
+					.where(eq(session.id, sessionId));
+				expect(remaining).toBeUndefined();
 			});
-
-			const result = await validateSessionToken(token);
-
-			expect(result.session).toBeNull();
-			expect(result.user).toBeNull();
-
-			// Verify session was deleted
-			const [remaining] = await db
-				.select()
-				.from(session)
-				.where(eq(session.id, sessionId));
-			expect(remaining).toBeUndefined();
 		});
 
 		it('auto-renews session within 15 days of expiry', async () => {
-			// Insert session expiring in 10 days (within 15-day renewal window)
-			// (This is an edge case that can't be created via normal flow)
-			const token = generateSessionToken();
-			const sessionId = hashToken(token);
-			const expiresIn10Days = new Date(Date.now() + DAY_IN_MS * 10);
+			await withTestTransaction(async () => {
+				const { user } = await createTestEnvironment();
+				const token = generateSessionToken();
+				const sessionId = hashToken(token);
+				const expiresIn10Days = new Date(Date.now() + DAY_IN_MS * 10);
 
-			await db.insert(session).values({
-				id: sessionId,
-				user_id: testUser.id,
-				expires_at: expiresIn10Days
+				await db.insert(session).values({
+					id: sessionId,
+					user_id: user.id,
+					expires_at: expiresIn10Days
+				});
+
+				const result = await validateSessionToken(token);
+
+				expect(result.session).not.toBeNull();
+
+				const newExpiry = result.session!.expires_at.getTime();
+				const expectedNewExpiry = Date.now() + DAY_IN_MS * 30;
+				const diff = Math.abs(newExpiry - expectedNewExpiry);
+
+				expect(diff).toBeLessThan(5000);
 			});
-			createdSessionIds.push(sessionId);
-
-			const result = await validateSessionToken(token);
-
-			expect(result.session).not.toBeNull();
-
-			// Session should now expire in ~30 days, not 10
-			const newExpiry = result.session!.expires_at.getTime();
-			const expectedNewExpiry = Date.now() + DAY_IN_MS * 30;
-			const diff = Math.abs(newExpiry - expectedNewExpiry);
-
-			expect(diff).toBeLessThan(5000); // 5 second tolerance
 		});
 	});
 
 	describe('invalidateSession', () => {
 		it('removes session from DB', async () => {
-			const token = generateSessionToken();
-			const createdSession = await createSession(token, testUser.id);
+			await withTestTransaction(async () => {
+				const { user } = await createTestEnvironment();
+				const token = generateSessionToken();
+				const createdSession = await createSession(token, user.id);
 
-			// Verify it exists
-			const [exists] = await db
-				.select()
-				.from(session)
-				.where(eq(session.id, createdSession.id));
-			expect(exists).toBeDefined();
+				const [exists] = await db
+					.select()
+					.from(session)
+					.where(eq(session.id, createdSession.id));
+				expect(exists).toBeDefined();
 
-			// Invalidate it
-			await invalidateSession(createdSession.id);
+				await invalidateSession(createdSession.id);
 
-			// Verify it's gone
-			const [gone] = await db
-				.select()
-				.from(session)
-				.where(eq(session.id, createdSession.id));
-			expect(gone).toBeUndefined();
+				const [gone] = await db
+					.select()
+					.from(session)
+					.where(eq(session.id, createdSession.id));
+				expect(gone).toBeUndefined();
+			});
 		});
 	});
 

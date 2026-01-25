@@ -48,7 +48,7 @@ export default defineConfig(({ mode }) => {
 						fileParallelism: false, // Limit to one chrome instance at a time
 						includeTaskLocation: true,
 						include: ['src/**/*.svelte.{test,spec}.{js,ts}'],
-						exclude: ['src/lib/server/**'],
+						exclude: ['src/lib/server/**', 'src/lib/benchmarks/**'],
 						setupFiles: ['./vitest-setup-client.ts']
 					}
 				},
@@ -58,8 +58,12 @@ export default defineConfig(({ mode }) => {
 						name: 'server',
 						environment: 'node',
 						includeTaskLocation: true,
+						testTimeout: 15000,
 						include: ['src/**/*.{test,spec}.{js,ts}'],
-						exclude: ['src/**/*.svelte.{test,spec}.{js,ts}'],
+						exclude: [
+							'src/**/*.svelte.{test,spec}.{js,ts}',
+							'src/lib/benchmarks/**'
+						],
 						coverage: {
 							provider: 'v8',
 							include: ['src/lib/services/server/**/*.ts'],
@@ -77,6 +81,17 @@ export default defineConfig(({ mode }) => {
 							},
 							reporter: ['text', 'html', 'json-summary'],
 							reportsDirectory: './coverage'
+						}
+					}
+				},
+				{
+					extends: './vite.config.ts',
+					test: {
+						name: 'bench',
+						environment: 'node',
+						include: [],
+						benchmark: {
+							include: ['src/lib/benchmarks/**/*.bench.ts']
 						}
 					}
 				}

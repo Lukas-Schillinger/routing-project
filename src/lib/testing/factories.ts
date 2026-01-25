@@ -4,12 +4,15 @@
  *
  * Each model has two functions:
  * - `createMock<Model>(overrides?)` - returns plain object with fake data
- * - `create<Model>(tx, overrides?)` - inserts into DB and returns with generated ID
+ * - `create<Model>(overrides?)` - inserts into DB and returns with generated ID
+ *
+ * All create* functions use the context-aware `db` which automatically
+ * participates in test transactions when called within withTestTransaction().
  */
+import { db } from '$lib/server/db';
 import * as schema from '$lib/server/db/schema';
 import { generateRandomColor } from '$lib/utils';
 import { eq } from 'drizzle-orm';
-import type { TestTransaction } from './db';
 import locationsData from './data/locations.json';
 
 // ============================================================================
@@ -40,11 +43,10 @@ export function createMockOrganization(
 }
 
 export async function createOrganization(
-	tx: TestTransaction,
 	overrides?: Partial<MockOrganization>
 ): Promise<typeof schema.organizations.$inferSelect> {
 	const data = createMockOrganization(overrides);
-	const [result] = await tx
+	const [result] = await db
 		.insert(schema.organizations)
 		.values(data)
 		.returning();
@@ -69,11 +71,10 @@ export function createMockUser(overrides?: Partial<MockUser>): MockUser {
 }
 
 export async function createUser(
-	tx: TestTransaction,
 	overrides: Partial<MockUser> & { organization_id: string }
 ): Promise<typeof schema.users.$inferSelect> {
 	const data = createMockUser(overrides);
-	const [result] = await tx.insert(schema.users).values(data).returning();
+	const [result] = await db.insert(schema.users).values(data).returning();
 	return result;
 }
 
@@ -97,11 +98,10 @@ export function createMockDriver(overrides?: Partial<MockDriver>): MockDriver {
 }
 
 export async function createDriver(
-	tx: TestTransaction,
 	overrides: Partial<MockDriver> & { organization_id: string }
 ): Promise<typeof schema.drivers.$inferSelect> {
 	const data = createMockDriver(overrides);
-	const [result] = await tx.insert(schema.drivers).values(data).returning();
+	const [result] = await db.insert(schema.drivers).values(data).returning();
 	return result;
 }
 
@@ -138,11 +138,10 @@ export function createMockLocation(
 }
 
 export async function createLocation(
-	tx: TestTransaction,
 	overrides: Partial<MockLocation> & { organization_id: string }
 ): Promise<typeof schema.locations.$inferSelect> {
 	const data = createMockLocation(overrides);
-	const [result] = await tx.insert(schema.locations).values(data).returning();
+	const [result] = await db.insert(schema.locations).values(data).returning();
 	return result;
 }
 
@@ -162,11 +161,10 @@ export function createMockMap(overrides?: Partial<MockMap>): MockMap {
 }
 
 export async function createMap(
-	tx: TestTransaction,
 	overrides: Partial<MockMap> & { organization_id: string }
 ): Promise<typeof schema.maps.$inferSelect> {
 	const data = createMockMap(overrides);
-	const [result] = await tx.insert(schema.maps).values(data).returning();
+	const [result] = await db.insert(schema.maps).values(data).returning();
 	return result;
 }
 
@@ -192,7 +190,6 @@ export function createMockStop(overrides?: Partial<MockStop>): MockStop {
 }
 
 export async function createStop(
-	tx: TestTransaction,
 	overrides: Partial<MockStop> & {
 		organization_id: string;
 		map_id: string;
@@ -200,7 +197,7 @@ export async function createStop(
 	}
 ): Promise<typeof schema.stops.$inferSelect> {
 	const data = createMockStop(overrides);
-	const [result] = await tx.insert(schema.stops).values(data).returning();
+	const [result] = await db.insert(schema.stops).values(data).returning();
 	return result;
 }
 
@@ -221,14 +218,13 @@ export function createMockDepot(overrides?: Partial<MockDepot>): MockDepot {
 }
 
 export async function createDepot(
-	tx: TestTransaction,
 	overrides: Partial<MockDepot> & {
 		organization_id: string;
 		location_id: string;
 	}
 ): Promise<typeof schema.depots.$inferSelect> {
 	const data = createMockDepot(overrides);
-	const [result] = await tx.insert(schema.depots).values(data).returning();
+	const [result] = await db.insert(schema.depots).values(data).returning();
 	return result;
 }
 
@@ -258,7 +254,6 @@ export function createMockRoute(overrides?: Partial<MockRoute>): MockRoute {
 }
 
 export async function createRoute(
-	tx: TestTransaction,
 	overrides: Partial<MockRoute> & {
 		organization_id: string;
 		map_id: string;
@@ -267,7 +262,7 @@ export async function createRoute(
 	}
 ): Promise<typeof schema.routes.$inferSelect> {
 	const data = createMockRoute(overrides);
-	const [result] = await tx.insert(schema.routes).values(data).returning();
+	const [result] = await db.insert(schema.routes).values(data).returning();
 	return result;
 }
 
@@ -291,14 +286,13 @@ export function createMockLoginToken(
 }
 
 export async function createLoginToken(
-	tx: TestTransaction,
 	overrides: Partial<MockLoginToken> & {
 		organization_id: string;
 		user_id: string;
 	}
 ): Promise<typeof schema.loginTokens.$inferSelect> {
 	const data = createMockLoginToken(overrides);
-	const [result] = await tx.insert(schema.loginTokens).values(data).returning();
+	const [result] = await db.insert(schema.loginTokens).values(data).returning();
 	return result;
 }
 
@@ -323,11 +317,10 @@ export function createMockInvitation(
 }
 
 export async function createInvitation(
-	tx: TestTransaction,
 	overrides: Partial<MockInvitation> & { organization_id: string }
 ): Promise<typeof schema.invitations.$inferSelect> {
 	const data = createMockInvitation(overrides);
-	const [result] = await tx.insert(schema.invitations).values(data).returning();
+	const [result] = await db.insert(schema.invitations).values(data).returning();
 	return result;
 }
 
@@ -353,11 +346,10 @@ export function createMockMailRecord(
 }
 
 export async function createMailRecord(
-	tx: TestTransaction,
 	overrides: Partial<MockMailRecord> & { organization_id: string }
 ): Promise<typeof schema.mailRecords.$inferSelect> {
 	const data = createMockMailRecord(overrides);
-	const [result] = await tx.insert(schema.mailRecords).values(data).returning();
+	const [result] = await db.insert(schema.mailRecords).values(data).returning();
 	return result;
 }
 
@@ -381,14 +373,13 @@ export function createMockRouteShare(
 }
 
 export async function createRouteShare(
-	tx: TestTransaction,
 	overrides: Partial<MockRouteShare> & {
 		organization_id: string;
 		route_id: string;
 	}
 ): Promise<typeof schema.routeShares.$inferSelect> {
 	const data = createMockRouteShare(overrides);
-	const [result] = await tx.insert(schema.routeShares).values(data).returning();
+	const [result] = await db.insert(schema.routeShares).values(data).returning();
 	return result;
 }
 
@@ -411,7 +402,6 @@ export function createMockDriverMapMembership(
 }
 
 export async function createDriverMapMembership(
-	tx: TestTransaction,
 	overrides: Partial<MockDriverMapMembership> & {
 		organization_id: string;
 		driver_id: string;
@@ -419,7 +409,7 @@ export async function createDriverMapMembership(
 	}
 ): Promise<typeof schema.driverMapMemberships.$inferSelect> {
 	const data = createMockDriverMapMembership(overrides);
-	const [result] = await tx
+	const [result] = await db
 		.insert(schema.driverMapMemberships)
 		.values(data)
 		.returning();
@@ -447,14 +437,13 @@ export function createMockMatrix(overrides?: Partial<MockMatrix>): MockMatrix {
 }
 
 export async function createMatrix(
-	tx: TestTransaction,
 	overrides: Partial<MockMatrix> & {
 		organization_id: string;
 		map_id: string;
 	}
 ): Promise<typeof schema.matrices.$inferSelect> {
 	const data = createMockMatrix(overrides);
-	const [result] = await tx.insert(schema.matrices).values(data).returning();
+	const [result] = await db.insert(schema.matrices).values(data).returning();
 	return result;
 }
 
@@ -478,7 +467,6 @@ export function createMockOptimizationJob(
 }
 
 export async function createOptimizationJob(
-	tx: TestTransaction,
 	overrides: Partial<MockOptimizationJob> & {
 		organization_id: string;
 		map_id: string;
@@ -487,7 +475,7 @@ export async function createOptimizationJob(
 	}
 ): Promise<typeof schema.optimizationJobs.$inferSelect> {
 	const data = createMockOptimizationJob(overrides);
-	const [result] = await tx
+	const [result] = await db
 		.insert(schema.optimizationJobs)
 		.values(data)
 		.returning();
@@ -502,9 +490,9 @@ export async function createOptimizationJob(
  * Creates a complete test environment with an organization and admin user.
  * Useful as a starting point for most tests.
  */
-export async function createTestEnvironment(tx: TestTransaction) {
-	const organization = await createOrganization(tx);
-	const user = await createUser(tx, {
+export async function createTestEnvironment() {
+	const organization = await createOrganization();
+	const user = await createUser({
 		organization_id: organization.id,
 		role: 'admin'
 	});
@@ -517,32 +505,32 @@ export async function createTestEnvironment(tx: TestTransaction) {
  * Includes: organization, user, driver, map, location, depot, route,
  * and billing (plans, subscription, credits).
  */
-export async function createTestRouteSetup(tx: TestTransaction) {
+export async function createTestRouteSetup() {
 	const { organization, user, freePlan, proPlan, subscription, credits } =
-		await createBillingTestEnvironment(tx);
+		await createBillingTestEnvironment();
 
-	const driver = await createDriver(tx, {
+	const driver = await createDriver({
 		organization_id: organization.id,
 		created_by: user.id
 	});
 
-	const map = await createMap(tx, {
+	const map = await createMap({
 		organization_id: organization.id,
 		created_by: user.id
 	});
 
-	const location = await createLocation(tx, {
+	const location = await createLocation({
 		organization_id: organization.id
 	});
 
-	const depot = await createDepot(tx, {
+	const depot = await createDepot({
 		organization_id: organization.id,
 		location_id: location.id,
 		created_by: user.id,
 		default_depot: true
 	});
 
-	const route = await createRoute(tx, {
+	const route = await createRoute({
 		organization_id: organization.id,
 		map_id: map.id,
 		driver_id: driver.id,
@@ -584,11 +572,10 @@ export function createMockPlan(overrides?: Partial<MockPlan>): MockPlan {
 }
 
 export async function createPlan(
-	tx: TestTransaction,
 	overrides?: Partial<MockPlan>
 ): Promise<typeof schema.plans.$inferSelect> {
 	const data = createMockPlan(overrides);
-	const [result] = await tx.insert(schema.plans).values(data).returning();
+	const [result] = await db.insert(schema.plans).values(data).returning();
 	return result;
 }
 
@@ -617,14 +604,13 @@ export function createMockSubscription(
 }
 
 export async function createSubscription(
-	tx: TestTransaction,
 	overrides: Partial<MockSubscription> & {
 		organization_id: string;
 		plan_id: string;
 	}
 ): Promise<typeof schema.subscriptions.$inferSelect> {
 	const data = createMockSubscription(overrides);
-	const [result] = await tx
+	const [result] = await db
 		.insert(schema.subscriptions)
 		.values(data)
 		.returning();
@@ -652,11 +638,10 @@ export function createMockCreditTransaction(
 }
 
 export async function createCreditTransaction(
-	tx: TestTransaction,
 	overrides: Partial<MockCreditTransaction> & { organization_id: string }
 ): Promise<typeof schema.creditTransactions.$inferSelect> {
 	const data = createMockCreditTransaction(overrides);
-	const [result] = await tx
+	const [result] = await db
 		.insert(schema.creditTransactions)
 		.values(data)
 		.returning();
@@ -676,18 +661,18 @@ export async function createCreditTransaction(
  * Note: Plans are shared across tests since the schema enforces exactly
  * 'free' and 'pro' plan names. Tests should NOT delete plans in cleanup.
  */
-export async function createBillingTestEnvironment(tx: TestTransaction) {
-	const { organization, user } = await createTestEnvironment(tx);
+export async function createBillingTestEnvironment() {
+	const { organization, user } = await createTestEnvironment();
 	const id = uniqueId();
 
 	// Find or create plans (they're shared across tests due to unique name constraint)
-	let [freePlan] = await tx
+	let [freePlan] = await db
 		.select()
 		.from(schema.plans)
 		.where(eq(schema.plans.name, 'free'));
 
 	if (!freePlan) {
-		[freePlan] = await tx
+		[freePlan] = await db
 			.insert(schema.plans)
 			.values({
 				name: 'free',
@@ -699,13 +684,13 @@ export async function createBillingTestEnvironment(tx: TestTransaction) {
 			.returning();
 	}
 
-	let [proPlan] = await tx
+	let [proPlan] = await db
 		.select()
 		.from(schema.plans)
 		.where(eq(schema.plans.name, 'pro'));
 
 	if (!proPlan) {
-		[proPlan] = await tx
+		[proPlan] = await db
 			.insert(schema.plans)
 			.values({
 				name: 'pro',
@@ -717,13 +702,13 @@ export async function createBillingTestEnvironment(tx: TestTransaction) {
 			.returning();
 	}
 
-	const subscription = await createSubscription(tx, {
+	const subscription = await createSubscription({
 		organization_id: organization.id,
 		plan_id: freePlan.id
 	});
 
 	// Grant initial credits (mirrors production behavior on subscription creation)
-	const credits = await createCreditTransaction(tx, {
+	const credits = await createCreditTransaction({
 		organization_id: organization.id,
 		amount: freePlan.monthly_credits,
 		type: 'subscription_grant',

@@ -26,8 +26,7 @@ import {
 	createOptimizationJob,
 	createUser,
 	mockStripeClient,
-	mockStripeState,
-	type TestTransaction
+	mockStripeState
 } from '$lib/testing';
 import { eq } from 'drizzle-orm';
 import {
@@ -64,8 +63,7 @@ let testSubscription: {
 const createdOrgIds: string[] = [];
 
 beforeAll(async () => {
-	const tx = db as unknown as TestTransaction;
-	const env = await createBillingTestEnvironment(tx);
+	const env = await createBillingTestEnvironment();
 
 	testOrg = env.organization;
 	createdOrgIds.push(testOrg.id);
@@ -406,26 +404,25 @@ describe('Stripe Webhook - Credit Balance Verification', () => {
 		);
 
 		// Record some usage - create minimal required records
-		const tx = db as unknown as TestTransaction;
 
-		const user = await createUser(tx, {
+		const user = await createUser({
 			organization_id: testOrg.id,
 			role: 'admin'
 		});
-		const map = await createMap(tx, {
+		const map = await createMap({
 			organization_id: testOrg.id,
 			created_by: user.id
 		});
-		const location = await createLocation(tx, { organization_id: testOrg.id });
-		const depot = await createDepot(tx, {
+		const location = await createLocation({ organization_id: testOrg.id });
+		const depot = await createDepot({
 			organization_id: testOrg.id,
 			location_id: location.id
 		});
-		const matrix = await createMatrix(tx, {
+		const matrix = await createMatrix({
 			organization_id: testOrg.id,
 			map_id: map.id
 		});
-		const job = await createOptimizationJob(tx, {
+		const job = await createOptimizationJob({
 			organization_id: testOrg.id,
 			map_id: map.id,
 			matrix_id: matrix.id,

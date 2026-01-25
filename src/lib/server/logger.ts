@@ -11,7 +11,12 @@ import { dev } from '$app/environment';
  * - debug: Development details
  */
 
-const logLevel = dev ? 'debug' : process.env.LOG_LEVEL || 'info';
+const isTest = process.env.NODE_ENV === 'test' || !!process.env.VITEST;
+const logLevel = isTest
+	? 'silent'
+	: dev
+		? 'debug'
+		: process.env.LOG_LEVEL || 'info';
 
 export const logger = pino({
 	level: logLevel,

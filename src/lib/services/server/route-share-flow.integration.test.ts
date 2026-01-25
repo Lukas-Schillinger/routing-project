@@ -3,21 +3,10 @@
  *
  * Verifies the complete route sharing workflow including token generation,
  * validation, email sending, and access control.
+ * Uses withTestTransaction for automatic rollback - no manual cleanup needed.
  */
 import { db } from '$lib/server/db';
-import {
-	depots,
-	drivers,
-	locations,
-	mailRecords,
-	maps,
-	organizations,
-	routes,
-	routeShares,
-	stops,
-	subscriptions,
-	users
-} from '$lib/server/db/schema';
+import { mailRecords, routeShares, subscriptions } from '$lib/server/db/schema';
 import {
 	createBillingTestEnvironment,
 	createDepot,
@@ -27,19 +16,10 @@ import {
 	createRoute,
 	createRouteShare,
 	createStop,
-	type TestTransaction
+	withTestTransaction
 } from '$lib/testing';
-import { eq, inArray } from 'drizzle-orm';
-import {
-	afterAll,
-	beforeAll,
-	beforeEach,
-	describe,
-	expect,
-	it,
-	vi
-} from 'vitest';
-import { ServiceError } from './errors';
+import { eq } from 'drizzle-orm';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { routeShareService } from './route-share.service';
 import { TokenUtils } from './token.utils';
 
@@ -69,133 +49,48 @@ vi.mock('$lib/services/external/mail', () => ({
 	}
 }));
 
-/**
- * Test fixtures
- */
-let org: { id: string };
-let user: { id: string };
-let subscription: { id: string };
-let location: { id: string };
-let depot: { id: string };
-let map: { id: string };
-let driver: { id: string };
-let stop: { id: string };
-let route: { id: string };
-
-// Track IDs for cleanup
-const orgIds: string[] = [];
-const userIds: string[] = [];
-const subscriptionIds: string[] = [];
-const locationIds: string[] = [];
-const depotIds: string[] = [];
-const mapIds: string[] = [];
-const driverIds: string[] = [];
-const stopIds: string[] = [];
-const routeIds: string[] = [];
-const shareIds: string[] = [];
-const mailRecordIds: string[] = [];
-
-beforeAll(async () => {
-	const tx = db as unknown as TestTransaction;
-
-	// Create billing environment (org with subscription) and upgrade to Pro for fleet_management
-	const billingEnv = await createBillingTestEnvironment(tx);
-	org = billingEnv.organization;
-	user = billingEnv.user;
-	subscription = billingEnv.subscription;
-
-	orgIds.push(org.id);
-	userIds.push(user.id);
-	subscriptionIds.push(subscription.id);
-
-	// Upgrade to Pro plan for fleet_management feature
-	await db
-		.update(subscriptions)
-		.set({ plan_id: billingEnv.proPlan.id })
-		.where(eq(subscriptions.id, subscription.id));
-
-	// Create location
-	location = await createLocation(tx, { organization_id: org.id });
-	locationIds.push(location.id);
-
-	// Create depot
-	depot = await createDepot(tx, {
-		organization_id: org.id,
-		location_id: location.id
-	});
-	depotIds.push(depot.id);
-
-	// Create map
-	map = await createMap(tx, { organization_id: org.id, title: 'Test Map' });
-	mapIds.push(map.id);
-
-	// Create driver
-	driver = await createDriver(tx, {
-		organization_id: org.id,
-		name: 'Test Driver'
-	});
-	driverIds.push(driver.id);
-
-	// Create stop
-	stop = await createStop(tx, {
-		organization_id: org.id,
-		map_id: map.id,
-		location_id: location.id
-	});
-	stopIds.push(stop.id);
-
-	// Create route
-	route = await createRoute(tx, {
-		organization_id: org.id,
-		map_id: map.id,
-		driver_id: driver.id,
-		depot_id: depot.id
-	});
-	routeIds.push(route.id);
-});
-
 beforeEach(() => {
 	vi.clearAllMocks();
 });
 
-afterAll(async () => {
-	// Cleanup in reverse FK order
-	if (mailRecordIds.length > 0) {
-		await db.delete(mailRecords).where(inArray(mailRecords.id, mailRecordIds));
-	}
-	if (shareIds.length > 0) {
-		await db.delete(routeShares).where(inArray(routeShares.id, shareIds));
-	}
-	if (routeIds.length > 0) {
-		await db.delete(routes).where(inArray(routes.id, routeIds));
-	}
-	if (stopIds.length > 0) {
-		await db.delete(stops).where(inArray(stops.id, stopIds));
-	}
-	if (depotIds.length > 0) {
-		await db.delete(depots).where(inArray(depots.id, depotIds));
-	}
-	if (mapIds.length > 0) {
-		await db.delete(maps).where(inArray(maps.id, mapIds));
-	}
-	if (driverIds.length > 0) {
-		await db.delete(drivers).where(inArray(drivers.id, driverIds));
-	}
-	if (locationIds.length > 0) {
-		await db.delete(locations).where(inArray(locations.id, locationIds));
-	}
-	if (subscriptionIds.length > 0) {
-		await db
-			.delete(subscriptions)
-			.where(inArray(subscriptions.id, subscriptionIds));
-	}
-	if (userIds.length > 0) {
-		await db.delete(users).where(inArray(users.id, userIds));
-	}
-	if (orgIds.length > 0) {
-		await db.delete(organizations).where(inArray(organizations.id, orgIds));
-	}
-});
+/** Helper to create full test environment with Pro plan for fleet_management feature */
+async function createProTestEnvironment() {
+	const billingEnv = await createBillingTestEnvironment();
+	const { organization, user, subscription, proPlan } = billingEnv;
+
+	// Upgrade to Pro plan for fleet_management feature
+	await db
+		.update(subscriptions)
+		.set({ plan_id: proPlan.id })
+		.where(eq(subscriptions.id, subscription.id));
+
+	const location = await createLocation({ organization_id: organization.id });
+	const depot = await createDepot({
+		organization_id: organization.id,
+		location_id: location.id
+	});
+	const map = await createMap({
+		organization_id: organization.id,
+		title: 'Test Map'
+	});
+	const driver = await createDriver({
+		organization_id: organization.id,
+		name: 'Test Driver'
+	});
+	const stop = await createStop({
+		organization_id: organization.id,
+		map_id: map.id,
+		location_id: location.id
+	});
+	const route = await createRoute({
+		organization_id: organization.id,
+		map_id: map.id,
+		driver_id: driver.id,
+		depot_id: depot.id
+	});
+
+	return { organization, user, location, depot, map, driver, stop, route };
+}
 
 describe('Route Share Flow Tests', () => {
 	// ============================================================================
@@ -203,74 +98,79 @@ describe('Route Share Flow Tests', () => {
 	// ============================================================================
 	describe('Token Generation and Storage', () => {
 		it('createEmailShare returns raw token and stores hash', async () => {
-			const { share, token } = await routeShareService.createEmailShare(
-				route.id,
-				'recipient@example.com',
-				org.id,
-				user.id
-			);
-			shareIds.push(share.id);
+			await withTestTransaction(async () => {
+				const { organization, user, route } = await createProTestEnvironment();
 
-			// Token should be returned
-			expect(token).toBeDefined();
-			expect(typeof token).toBe('string');
+				const { share, token } = await routeShareService.createEmailShare(
+					route.id,
+					'recipient@example.com',
+					organization.id,
+					user.id
+				);
 
-			// Share should have a hash stored (not the raw token)
-			expect(share.access_token_hash).toBeDefined();
-			expect(share.access_token_hash).not.toBe(token);
+				// Token should be returned
+				expect(token).toBeDefined();
+				expect(typeof token).toBe('string');
+
+				// Share should have a hash stored (not the raw token)
+				expect(share.access_token_hash).toBeDefined();
+				expect(share.access_token_hash).not.toBe(token);
+			});
 		});
 
 		it('stored hash is SHA-256 of raw token', async () => {
-			const { share, token } = await routeShareService.createEmailShare(
-				route.id,
-				'recipient@example.com',
-				org.id,
-				user.id
-			);
-			shareIds.push(share.id);
+			await withTestTransaction(async () => {
+				const { organization, user, route } = await createProTestEnvironment();
 
-			// Compute the expected hash
-			const expectedHash = TokenUtils.hash(token);
-			expect(share.access_token_hash).toBe(expectedHash);
+				const { share, token } = await routeShareService.createEmailShare(
+					route.id,
+					'recipient@example.com',
+					organization.id,
+					user.id
+				);
+
+				// Compute the expected hash
+				const expectedHash = TokenUtils.hash(token);
+				expect(share.access_token_hash).toBe(expectedHash);
+			});
 		});
 
 		it('token is 64 hex characters (32 bytes)', async () => {
-			const { token } = await routeShareService.createEmailShare(
-				route.id,
-				'recipient@example.com',
-				org.id,
-				user.id
-			);
-			shareIds.push(
-				(await routeShareService.getSharesForRoute(route.id, org.id))[0].id
-			);
+			await withTestTransaction(async () => {
+				const { organization, user, route } = await createProTestEnvironment();
 
-			// 32 bytes = 64 hex characters
-			expect(token.length).toBe(64);
-			expect(/^[0-9a-f]+$/.test(token)).toBe(true);
+				const { token } = await routeShareService.createEmailShare(
+					route.id,
+					'recipient@example.com',
+					organization.id,
+					user.id
+				);
+
+				// 32 bytes = 64 hex characters
+				expect(token.length).toBe(64);
+				expect(/^[0-9a-f]+$/.test(token)).toBe(true);
+			});
 		});
 
 		it('each share gets a unique token', async () => {
-			const { token: token1 } = await routeShareService.createEmailShare(
-				route.id,
-				'recipient1@example.com',
-				org.id,
-				user.id
-			);
-			const { token: token2 } = await routeShareService.createEmailShare(
-				route.id,
-				'recipient2@example.com',
-				org.id,
-				user.id
-			);
+			await withTestTransaction(async () => {
+				const { organization, user, route } = await createProTestEnvironment();
 
-			const shares = await routeShareService.getSharesForRoute(
-				route.id,
-				org.id
-			);
-			shareIds.push(...shares.map((s) => s.id));
+				const { token: token1 } = await routeShareService.createEmailShare(
+					route.id,
+					'recipient1@example.com',
+					organization.id,
+					user.id
+				);
+				const { token: token2 } = await routeShareService.createEmailShare(
+					route.id,
+					'recipient2@example.com',
+					organization.id,
+					user.id
+				);
 
-			expect(token1).not.toBe(token2);
+				expect(token1).not.toBe(token2);
+			});
 		});
 	});
 
@@ -279,70 +179,73 @@ describe('Route Share Flow Tests', () => {
 	// ============================================================================
 	describe('Token Validation', () => {
 		it('valid token returns route with full details', async () => {
-			const { token } = await routeShareService.createEmailShare(
-				route.id,
-				'recipient@example.com',
-				org.id,
-				user.id
-			);
-			const shares = await routeShareService.getSharesForRoute(
-				route.id,
-				org.id
-			);
-			shareIds.push(...shares.map((s) => s.id));
+			await withTestTransaction(async () => {
+				const { organization, user, route } = await createProTestEnvironment();
 
-			const result = await routeShareService.validateTokenAndGetRoute(token);
+				const { token } = await routeShareService.createEmailShare(
+					route.id,
+					'recipient@example.com',
+					organization.id,
+					user.id
+				);
 
-			expect(result).not.toBeNull();
-			expect(result?.route.id).toBe(route.id);
-			expect(result?.driver).toBeDefined();
-			expect(result?.depot).toBeDefined();
-			expect(result?.map).toBeDefined();
+				const result = await routeShareService.validateTokenAndGetRoute(token);
+
+				expect(result).not.toBeNull();
+				expect(result?.route.id).toBe(route.id);
+				expect(result?.driver).toBeDefined();
+				expect(result?.depot).toBeDefined();
+				expect(result?.map).toBeDefined();
+			});
 		});
 
 		it('expired token returns null', async () => {
-			const tx = db as unknown as TestTransaction;
+			await withTestTransaction(async () => {
+				const { organization, route } = await createProTestEnvironment();
 
-			// Create a share with past expiration
-			const token = TokenUtils.generateHex();
-			const tokenHash = TokenUtils.hash(token);
+				// Create a share with past expiration
+				const token = TokenUtils.generateHex();
+				const tokenHash = TokenUtils.hash(token);
 
-			const share = await createRouteShare(tx, {
-				organization_id: org.id,
-				route_id: route.id,
-				access_token_hash: tokenHash,
-				expires_at: new Date(Date.now() - 1000) // 1 second ago
+				await createRouteShare({
+					organization_id: organization.id,
+					route_id: route.id,
+					access_token_hash: tokenHash,
+					expires_at: new Date(Date.now() - 1000) // 1 second ago
+				});
+
+				const result = await routeShareService.validateTokenAndGetRoute(token);
+				expect(result).toBeNull();
 			});
-			shareIds.push(share.id);
-
-			const result = await routeShareService.validateTokenAndGetRoute(token);
-			expect(result).toBeNull();
 		});
 
 		it('revoked token returns null', async () => {
-			const tx = db as unknown as TestTransaction;
+			await withTestTransaction(async () => {
+				const { organization, route } = await createProTestEnvironment();
 
-			// Create a revoked share
-			const token = TokenUtils.generateHex();
-			const tokenHash = TokenUtils.hash(token);
+				// Create a revoked share
+				const token = TokenUtils.generateHex();
+				const tokenHash = TokenUtils.hash(token);
 
-			const share = await createRouteShare(tx, {
-				organization_id: org.id,
-				route_id: route.id,
-				access_token_hash: tokenHash,
-				revoked_at: new Date()
+				await createRouteShare({
+					organization_id: organization.id,
+					route_id: route.id,
+					access_token_hash: tokenHash,
+					revoked_at: new Date()
+				});
+
+				const result = await routeShareService.validateTokenAndGetRoute(token);
+				expect(result).toBeNull();
 			});
-			shareIds.push(share.id);
-
-			const result = await routeShareService.validateTokenAndGetRoute(token);
-			expect(result).toBeNull();
 		});
 
 		it('invalid/non-existent token returns null', async () => {
-			const result = await routeShareService.validateTokenAndGetRoute(
-				'nonexistent_token_12345678901234567890123456789012'
-			);
-			expect(result).toBeNull();
+			await withTestTransaction(async () => {
+				const result = await routeShareService.validateTokenAndGetRoute(
+					'nonexistent_token_12345678901234567890123456789012'
+				);
+				expect(result).toBeNull();
+			});
 		});
 	});
 
@@ -351,53 +254,63 @@ describe('Route Share Flow Tests', () => {
 	// ============================================================================
 	describe('Share Lifecycle', () => {
 		it('new share has no revoked_at', async () => {
-			const { share } = await routeShareService.createEmailShare(
-				route.id,
-				'recipient@example.com',
-				org.id,
-				user.id
-			);
-			shareIds.push(share.id);
+			await withTestTransaction(async () => {
+				const { organization, user, route } = await createProTestEnvironment();
 
-			expect(share.revoked_at).toBeNull();
+				const { share } = await routeShareService.createEmailShare(
+					route.id,
+					'recipient@example.com',
+					organization.id,
+					user.id
+				);
+
+				expect(share.revoked_at).toBeNull();
+			});
 		});
 
 		it('revoked share has revoked_at set', async () => {
-			const { share } = await routeShareService.createEmailShare(
-				route.id,
-				'recipient@example.com',
-				org.id,
-				user.id
-			);
-			shareIds.push(share.id);
+			await withTestTransaction(async () => {
+				const { organization, user, route } = await createProTestEnvironment();
 
-			await routeShareService.revokeShare(share.id, org.id);
+				const { share } = await routeShareService.createEmailShare(
+					route.id,
+					'recipient@example.com',
+					organization.id,
+					user.id
+				);
 
-			const revokedShare = await routeShareService.getShare(share.id, org.id);
-			expect(revokedShare.revoked_at).not.toBeNull();
+				await routeShareService.revokeShare(share.id, organization.id);
+
+				const revokedShare = await routeShareService.getShare(
+					share.id,
+					organization.id
+				);
+				expect(revokedShare.revoked_at).not.toBeNull();
+			});
 		});
 
 		it('cannot revoke already revoked share - throws BAD_REQUEST', async () => {
-			const { share } = await routeShareService.createEmailShare(
-				route.id,
-				'recipient@example.com',
-				org.id,
-				user.id
-			);
-			shareIds.push(share.id);
+			await withTestTransaction(async () => {
+				const { organization, user, route } = await createProTestEnvironment();
 
-			// First revoke succeeds
-			await routeShareService.revokeShare(share.id, org.id);
+				const { share } = await routeShareService.createEmailShare(
+					route.id,
+					'recipient@example.com',
+					organization.id,
+					user.id
+				);
 
-			// Second revoke should throw
-			try {
-				await routeShareService.revokeShare(share.id, org.id);
-				expect.fail('Should have thrown');
-			} catch (error) {
-				expect(error).toBeInstanceOf(ServiceError);
-				expect((error as ServiceError).code).toBe('BAD_REQUEST');
-				expect((error as ServiceError).message).toContain('already revoked');
-			}
+				// First revoke succeeds
+				await routeShareService.revokeShare(share.id, organization.id);
+
+				// Second revoke should throw
+				await expect(
+					routeShareService.revokeShare(share.id, organization.id)
+				).rejects.toMatchObject({
+					code: 'BAD_REQUEST',
+					message: expect.stringContaining('already revoked')
+				});
+			});
 		});
 	});
 
@@ -406,45 +319,45 @@ describe('Route Share Flow Tests', () => {
 	// ============================================================================
 	describe('Email Share Workflow', () => {
 		it('createAndSendEmailShare creates share with mail record', async () => {
-			const result = await routeShareService.createAndSendEmailShare(
-				route.id,
-				'recipient@example.com',
-				org.id,
-				user.id,
-				'https://example.com'
-			);
-			shareIds.push(result.id);
-			if (result.mail_record_id) {
-				mailRecordIds.push(result.mail_record_id);
-			}
+			await withTestTransaction(async () => {
+				const { organization, user, route } = await createProTestEnvironment();
 
-			expect(result).toBeDefined();
-			expect(result.route_id).toBe(route.id);
-			expect(result.mail_record_id).toBeDefined();
+				const result = await routeShareService.createAndSendEmailShare(
+					route.id,
+					'recipient@example.com',
+					organization.id,
+					user.id,
+					'https://example.com'
+				);
+
+				expect(result).toBeDefined();
+				expect(result.route_id).toBe(route.id);
+				expect(result.mail_record_id).toBeDefined();
+			});
 		});
 
 		it('share links to mail record via mail_record_id', async () => {
-			const result = await routeShareService.createAndSendEmailShare(
-				route.id,
-				'recipient@example.com',
-				org.id,
-				user.id,
-				'https://example.com'
-			);
-			shareIds.push(result.id);
-			if (result.mail_record_id) {
-				mailRecordIds.push(result.mail_record_id);
-			}
+			await withTestTransaction(async () => {
+				const { organization, user, route } = await createProTestEnvironment();
 
-			// Verify the share is linked to a mail record
-			const shares = await routeShareService.getSharesForRoute(
-				route.id,
-				org.id
-			);
-			const shareWithRecord = shares.find((s) => s.id === result.id);
+				const result = await routeShareService.createAndSendEmailShare(
+					route.id,
+					'recipient@example.com',
+					organization.id,
+					user.id,
+					'https://example.com'
+				);
 
-			expect(shareWithRecord?.mailRecord).toBeDefined();
-			expect(shareWithRecord?.mailRecord?.type).toBe('route_share');
+				// Verify the share is linked to a mail record
+				const shares = await routeShareService.getSharesForRoute(
+					route.id,
+					organization.id
+				);
+				const shareWithRecord = shares.find((s) => s.id === result.id);
+
+				expect(shareWithRecord?.mailRecord).toBeDefined();
+				expect(shareWithRecord?.mailRecord?.type).toBe('route_share');
+			});
 		});
 	});
 
@@ -453,124 +366,117 @@ describe('Route Share Flow Tests', () => {
 	// ============================================================================
 	describe('Resend Flow', () => {
 		it('resend revokes old share and creates new share with new token', async () => {
-			// Create initial share
-			const initialShare = await routeShareService.createAndSendEmailShare(
-				route.id,
-				'recipient@example.com',
-				org.id,
-				user.id,
-				'https://example.com'
-			);
-			shareIds.push(initialShare.id);
-			if (initialShare.mail_record_id) {
-				mailRecordIds.push(initialShare.mail_record_id);
-			}
+			await withTestTransaction(async () => {
+				const { organization, user, route } = await createProTestEnvironment();
 
-			// Resend the share
-			const newShare = await routeShareService.resendEmailShare(
-				initialShare.id,
-				org.id,
-				user.id,
-				'https://example.com'
-			);
-			shareIds.push(newShare.id);
-			if (newShare.mail_record_id) {
-				mailRecordIds.push(newShare.mail_record_id);
-			}
-
-			// Old share should be revoked
-			const oldShare = await routeShareService.getShare(
-				initialShare.id,
-				org.id
-			);
-			expect(oldShare.revoked_at).not.toBeNull();
-
-			// New share should be active
-			expect(newShare.id).not.toBe(initialShare.id);
-			expect(newShare.revoked_at).toBeNull();
-
-			// Tokens should be different
-			expect(newShare.access_token_hash).not.toBe(
-				initialShare.access_token_hash
-			);
-		});
-
-		it('old token invalid after resend', async () => {
-			// Create initial share and get the token
-			const { share: initialShare, token: oldToken } =
-				await routeShareService.createEmailShare(
+				// Create initial share
+				const initialShare = await routeShareService.createAndSendEmailShare(
 					route.id,
 					'recipient@example.com',
-					org.id,
-					user.id
-				);
-			shareIds.push(initialShare.id);
-
-			// Set up mail record for resend
-			const [mailRecord] = await db
-				.insert(mailRecords)
-				.values({
-					organization_id: org.id,
-					type: 'route_share',
-					to_email: 'recipient@example.com',
-					from_email: 'noreply@test.com',
-					subject: 'Route shared',
-					resend_id: `mock-resend-${Date.now()}`
-				})
-				.returning();
-			mailRecordIds.push(mailRecord.id);
-
-			await db
-				.update(routeShares)
-				.set({ mail_record_id: mailRecord.id })
-				.where(eq(routeShares.id, initialShare.id));
-
-			// Verify old token works before resend
-			const beforeResend =
-				await routeShareService.validateTokenAndGetRoute(oldToken);
-			expect(beforeResend).not.toBeNull();
-
-			// Resend the share
-			const newShare = await routeShareService.resendEmailShare(
-				initialShare.id,
-				org.id,
-				user.id,
-				'https://example.com'
-			);
-			shareIds.push(newShare.id);
-			if (newShare.mail_record_id) {
-				mailRecordIds.push(newShare.mail_record_id);
-			}
-
-			// Old token should no longer work
-			const afterResend =
-				await routeShareService.validateTokenAndGetRoute(oldToken);
-			expect(afterResend).toBeNull();
-		});
-
-		it('resend fails if no email on original share - throws BAD_REQUEST', async () => {
-			const tx = db as unknown as TestTransaction;
-
-			// Create share without mail record (direct DB insert)
-			const share = await createRouteShare(tx, {
-				organization_id: org.id,
-				route_id: route.id
-			});
-			shareIds.push(share.id);
-
-			try {
-				await routeShareService.resendEmailShare(
-					share.id,
-					org.id,
+					organization.id,
 					user.id,
 					'https://example.com'
 				);
-				expect.fail('Should have thrown');
-			} catch (error) {
-				expect(error).toBeInstanceOf(ServiceError);
-				expect((error as ServiceError).code).toBe('BAD_REQUEST');
-				expect((error as ServiceError).message).toContain('no email address');
-			}
+
+				// Resend the share
+				const newShare = await routeShareService.resendEmailShare(
+					initialShare.id,
+					organization.id,
+					user.id,
+					'https://example.com'
+				);
+
+				// Old share should be revoked
+				const oldShare = await routeShareService.getShare(
+					initialShare.id,
+					organization.id
+				);
+				expect(oldShare.revoked_at).not.toBeNull();
+
+				// New share should be active
+				expect(newShare.id).not.toBe(initialShare.id);
+				expect(newShare.revoked_at).toBeNull();
+
+				// Tokens should be different
+				expect(newShare.access_token_hash).not.toBe(
+					initialShare.access_token_hash
+				);
+			});
+		});
+
+		it('old token invalid after resend', async () => {
+			await withTestTransaction(async () => {
+				const { organization, user, route } = await createProTestEnvironment();
+
+				// Create initial share and get the token
+				const { share: initialShare, token: oldToken } =
+					await routeShareService.createEmailShare(
+						route.id,
+						'recipient@example.com',
+						organization.id,
+						user.id
+					);
+
+				// Set up mail record for resend
+				const [mailRecord] = await db
+					.insert(mailRecords)
+					.values({
+						organization_id: organization.id,
+						type: 'route_share',
+						to_email: 'recipient@example.com',
+						from_email: 'noreply@test.com',
+						subject: 'Route shared',
+						resend_id: `mock-resend-${Date.now()}`
+					})
+					.returning();
+
+				await db
+					.update(routeShares)
+					.set({ mail_record_id: mailRecord.id })
+					.where(eq(routeShares.id, initialShare.id));
+
+				// Verify old token works before resend
+				const beforeResend =
+					await routeShareService.validateTokenAndGetRoute(oldToken);
+				expect(beforeResend).not.toBeNull();
+
+				// Resend the share
+				await routeShareService.resendEmailShare(
+					initialShare.id,
+					organization.id,
+					user.id,
+					'https://example.com'
+				);
+
+				// Old token should no longer work
+				const afterResend =
+					await routeShareService.validateTokenAndGetRoute(oldToken);
+				expect(afterResend).toBeNull();
+			});
+		});
+
+		it('resend fails if no email on original share - throws BAD_REQUEST', async () => {
+			await withTestTransaction(async () => {
+				const { organization, user, route } = await createProTestEnvironment();
+
+				// Create share without mail record (direct DB insert)
+				const share = await createRouteShare({
+					organization_id: organization.id,
+					route_id: route.id
+				});
+
+				await expect(
+					routeShareService.resendEmailShare(
+						share.id,
+						organization.id,
+						user.id,
+						'https://example.com'
+					)
+				).rejects.toMatchObject({
+					code: 'BAD_REQUEST',
+					message: expect.stringContaining('no email address')
+				});
+			});
 		});
 	});
 
@@ -579,37 +485,37 @@ describe('Route Share Flow Tests', () => {
 	// ============================================================================
 	describe('Public Access via Token', () => {
 		it('validateTokenAndGetRoute returns complete RouteWithDetails', async () => {
-			const { token } = await routeShareService.createEmailShare(
-				route.id,
-				'recipient@example.com',
-				org.id,
-				user.id
-			);
-			const shares = await routeShareService.getSharesForRoute(
-				route.id,
-				org.id
-			);
-			shareIds.push(...shares.map((s) => s.id));
+			await withTestTransaction(async () => {
+				const { organization, user, route, driver, depot, map } =
+					await createProTestEnvironment();
 
-			const result = await routeShareService.validateTokenAndGetRoute(token);
+				const { token } = await routeShareService.createEmailShare(
+					route.id,
+					'recipient@example.com',
+					organization.id,
+					user.id
+				);
 
-			expect(result).not.toBeNull();
-			expect(result?.route).toBeDefined();
-			expect(result?.route.id).toBe(route.id);
+				const result = await routeShareService.validateTokenAndGetRoute(token);
 
-			// Should include driver details
-			expect(result?.driver).toBeDefined();
-			expect(result?.driver.id).toBe(driver.id);
-			expect(result?.driver.name).toBe('Test Driver');
+				expect(result).not.toBeNull();
+				expect(result?.route).toBeDefined();
+				expect(result?.route.id).toBe(route.id);
 
-			// Should include depot details (DepotWithLocationJoin has depot.depot)
-			expect(result?.depot).toBeDefined();
-			expect(result?.depot.depot.id).toBe(depot.id);
+				// Should include driver details
+				expect(result?.driver).toBeDefined();
+				expect(result?.driver.id).toBe(driver.id);
+				expect(result?.driver.name).toBe('Test Driver');
 
-			// Should include map details
-			expect(result?.map).toBeDefined();
-			expect(result?.map.id).toBe(map.id);
-			expect(result?.map.title).toBe('Test Map');
+				// Should include depot details (DepotWithLocationJoin has depot.depot)
+				expect(result?.depot).toBeDefined();
+				expect(result?.depot.depot.id).toBe(depot.id);
+
+				// Should include map details
+				expect(result?.map).toBeDefined();
+				expect(result?.map.id).toBe(map.id);
+				expect(result?.map.title).toBe('Test Map');
+			});
 		});
 	});
 });

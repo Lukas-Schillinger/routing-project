@@ -42,8 +42,8 @@ describe('Testing Utilities', () => {
 	describe('Database Factories', () => {
 		it('createOrganization inserts and returns with ID', async () => {
 			expect.assertions(2);
-			await withTestTransaction(async (tx) => {
-				const org = await createOrganization(tx);
+			await withTestTransaction(async () => {
+				const org = await createOrganization();
 				expect(org.id).toBeDefined();
 				expect(org.name).toContain('Test Organization');
 			});
@@ -51,9 +51,9 @@ describe('Testing Utilities', () => {
 
 		it('createUser inserts with organization reference', async () => {
 			expect.assertions(2);
-			await withTestTransaction(async (tx) => {
-				const org = await createOrganization(tx);
-				const user = await createUser(tx, { organization_id: org.id });
+			await withTestTransaction(async () => {
+				const org = await createOrganization();
+				const user = await createUser({ organization_id: org.id });
 				expect(user.id).toBeDefined();
 				expect(user.organization_id).toBe(org.id);
 			});
@@ -61,9 +61,9 @@ describe('Testing Utilities', () => {
 
 		it('createDriver inserts with organization reference', async () => {
 			expect.assertions(3);
-			await withTestTransaction(async (tx) => {
-				const org = await createOrganization(tx);
-				const driver = await createDriver(tx, { organization_id: org.id });
+			await withTestTransaction(async () => {
+				const org = await createOrganization();
+				const driver = await createDriver({ organization_id: org.id });
 				expect(driver.id).toBeDefined();
 				expect(driver.organization_id).toBe(org.id);
 				expect(driver.color).toMatch(/^#[0-9A-F]{6}$/i);
@@ -72,9 +72,9 @@ describe('Testing Utilities', () => {
 
 		it('createLocation inserts with coordinates', async () => {
 			expect.assertions(3);
-			await withTestTransaction(async (tx) => {
-				const org = await createOrganization(tx);
-				const location = await createLocation(tx, { organization_id: org.id });
+			await withTestTransaction(async () => {
+				const org = await createOrganization();
+				const location = await createLocation({ organization_id: org.id });
 				expect(location.id).toBeDefined();
 				expect(typeof location.lat).toBe('number');
 				expect(typeof location.lon).toBe('number');
@@ -83,9 +83,9 @@ describe('Testing Utilities', () => {
 
 		it('createMap inserts with organization reference', async () => {
 			expect.assertions(2);
-			await withTestTransaction(async (tx) => {
-				const org = await createOrganization(tx);
-				const map = await createMap(tx, { organization_id: org.id });
+			await withTestTransaction(async () => {
+				const org = await createOrganization();
+				const map = await createMap({ organization_id: org.id });
 				expect(map.id).toBeDefined();
 				expect(map.title).toContain('Test Map');
 			});
@@ -93,11 +93,11 @@ describe('Testing Utilities', () => {
 
 		it('createStop inserts with all required references', async () => {
 			expect.assertions(3);
-			await withTestTransaction(async (tx) => {
-				const org = await createOrganization(tx);
-				const map = await createMap(tx, { organization_id: org.id });
-				const location = await createLocation(tx, { organization_id: org.id });
-				const stop = await createStop(tx, {
+			await withTestTransaction(async () => {
+				const org = await createOrganization();
+				const map = await createMap({ organization_id: org.id });
+				const location = await createLocation({ organization_id: org.id });
+				const stop = await createStop({
 					organization_id: org.id,
 					map_id: map.id,
 					location_id: location.id
@@ -110,10 +110,10 @@ describe('Testing Utilities', () => {
 
 		it('createDepot inserts with location reference', async () => {
 			expect.assertions(2);
-			await withTestTransaction(async (tx) => {
-				const org = await createOrganization(tx);
-				const location = await createLocation(tx, { organization_id: org.id });
-				const depot = await createDepot(tx, {
+			await withTestTransaction(async () => {
+				const org = await createOrganization();
+				const location = await createLocation({ organization_id: org.id });
+				const depot = await createDepot({
 					organization_id: org.id,
 					location_id: location.id
 				});
@@ -124,16 +124,16 @@ describe('Testing Utilities', () => {
 
 		it('createRoute inserts with all required references', async () => {
 			expect.assertions(4);
-			await withTestTransaction(async (tx) => {
-				const org = await createOrganization(tx);
-				const driver = await createDriver(tx, { organization_id: org.id });
-				const map = await createMap(tx, { organization_id: org.id });
-				const location = await createLocation(tx, { organization_id: org.id });
-				const depot = await createDepot(tx, {
+			await withTestTransaction(async () => {
+				const org = await createOrganization();
+				const driver = await createDriver({ organization_id: org.id });
+				const map = await createMap({ organization_id: org.id });
+				const location = await createLocation({ organization_id: org.id });
+				const depot = await createDepot({
 					organization_id: org.id,
 					location_id: location.id
 				});
-				const route = await createRoute(tx, {
+				const route = await createRoute({
 					organization_id: org.id,
 					map_id: map.id,
 					driver_id: driver.id,
@@ -150,8 +150,8 @@ describe('Testing Utilities', () => {
 	describe('Convenience Helpers', () => {
 		it('createTestEnvironment creates org and admin user', async () => {
 			expect.assertions(3);
-			await withTestTransaction(async (tx) => {
-				const { organization, user } = await createTestEnvironment(tx);
+			await withTestTransaction(async () => {
+				const { organization, user } = await createTestEnvironment();
 				expect(organization.id).toBeDefined();
 				expect(user.organization_id).toBe(organization.id);
 				expect(user.role).toBe('admin');
@@ -160,8 +160,8 @@ describe('Testing Utilities', () => {
 
 		it('createTestRouteSetup creates complete route setup', async () => {
 			expect.assertions(7);
-			await withTestTransaction(async (tx) => {
-				const setup = await createTestRouteSetup(tx);
+			await withTestTransaction(async () => {
+				const setup = await createTestRouteSetup();
 				expect(setup.organization.id).toBeDefined();
 				expect(setup.user.id).toBeDefined();
 				expect(setup.driver.id).toBeDefined();
@@ -177,8 +177,8 @@ describe('Testing Utilities', () => {
 		it('rolls back changes after test', async () => {
 			expect.assertions(1);
 
-			await withTestTransaction(async (tx) => {
-				const org = await createOrganization(tx, { name: 'Rollback Test Org' });
+			await withTestTransaction(async () => {
+				const org = await createOrganization({ name: 'Rollback Test Org' });
 				const orgId = org.id;
 				expect(orgId).toBeDefined();
 			});

@@ -2,21 +2,7 @@
  * Test Database Helper
  * Provides transaction isolation for tests - all changes are rolled back after each test.
  */
-import { db } from '$lib/server/db';
-import type * as schema from '$lib/server/db/schema';
-import type { ExtractTablesWithRelations } from 'drizzle-orm';
-import type { PgTransaction } from 'drizzle-orm/pg-core';
-import type { PostgresJsQueryResultHKT } from 'drizzle-orm/postgres-js';
-
-/**
- * Transaction type for test functions.
- * Use this type when accepting a transaction parameter in factories/helpers.
- */
-export type TestTransaction = PgTransaction<
-	PostgresJsQueryResultHKT,
-	typeof schema,
-	ExtractTablesWithRelations<typeof schema>
->;
+import { db, withTransaction } from '$lib/server/db';
 
 /**
  * Custom error thrown to trigger transaction rollback.
@@ -31,44 +17,41 @@ class RollbackError extends Error {
 
 /**
  * Wraps a test function in a database transaction that is always rolled back.
- * This provides test isolation - any database changes are automatically undone.
+ * All db operations (including those in services) automatically use the transaction
+ * via the AsyncLocalStorage context.
  *
  * @example
  * ```ts
  * it('creates a user', async () => {
- *   await withTestTransaction(async (tx) => {
- *     const org = await createOrganization(tx);
- *     const user = await createUser(tx, { organization_id: org.id });
- *     expect(user.email).toContain('@');
+ *   await withTestTransaction(async () => {
+ *     // Services automatically use the transaction!
+ *     const org = await createOrganization();
+ *     const result = await userService.createUser({ ... }, org.id);
+ *     expect(result.email).toContain('@');
+ *     // No cleanup needed - auto rollback!
  *   });
  * });
  * ```
  */
-export async function withTestTransaction<T>(
-	fn: (tx: TestTransaction) => Promise<T>
-): Promise<T> {
+export async function withTestTransaction<T>(fn: () => Promise<T>): Promise<T> {
 	let result: T;
 
 	try {
-		await db.transaction(async (tx) => {
-			result = await fn(tx as TestTransaction);
-			// Always rollback by throwing - this is the cleanest way in Drizzle
+		await withTransaction(async () => {
+			result = await fn();
 			throw new RollbackError();
 		});
 	} catch (error) {
 		if (error instanceof RollbackError) {
-			// Expected - transaction was rolled back successfully
 			return result!;
 		}
-		// Re-throw unexpected errors
 		throw error;
 	}
 
-	// This shouldn't be reached, but TypeScript needs it
 	return result!;
 }
 
 /**
- * Re-export db for cases where you need direct access (e.g., setup scripts)
+ * Re-export db for cases where you need direct access
  */
 export { db };

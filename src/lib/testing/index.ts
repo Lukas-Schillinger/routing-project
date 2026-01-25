@@ -5,24 +5,23 @@
  *
  * @example
  * ```ts
- * import {
- *   withTestTransaction,
- *   createOrganization,
- *   createUser,
- *   createTestEnvironment
- * } from '$lib/testing';
+ * import { withTestTransaction, db, createTestEnvironment } from '$lib/testing';
+ * import { userService } from '$lib/services/server/user.service';
  *
  * it('creates a user', async () => {
- *   await withTestTransaction(async (tx) => {
- *     const { organization, user } = await createTestEnvironment(tx);
+ *   await withTestTransaction(async () => {
+ *     // All db operations (including service calls) use the test transaction
+ *     const { organization } = await createTestEnvironment(db);
+ *     const user = await userService.createUser({ ... }, organization.id);
  *     expect(user.organization_id).toBe(organization.id);
+ *     // No cleanup needed - auto rollback!
  *   });
  * });
  * ```
  */
 
 // Database helpers
-export { withTestTransaction, db, type TestTransaction } from './db';
+export { withTestTransaction, db } from './db';
 
 // Mock factories - data generators
 export {
