@@ -250,6 +250,89 @@ describe('DepotService', () => {
 		});
 	});
 
+	describe('getDefaultDepot()', () => {
+		it('returns default depot when one exists', async () => {
+			await withTestTransaction(async () => {
+				const { organization, user } = await createTestEnvironment();
+				const location = await createLocation({
+					organization_id: organization.id
+				});
+
+				const depot = await depotService.createDepot(
+					{
+						name: 'Default Depot',
+						location_id: location.id,
+						default_depot: true
+					},
+					organization.id,
+					user.id
+				);
+
+				const result = await depotService.getDefaultDepot(organization.id);
+
+				expect(result).not.toBeNull();
+				expect(result!.depot.id).toBe(depot.depot.id);
+				expect(result!.depot.default_depot).toBe(true);
+			});
+		});
+
+		it('returns null when no default depot exists', async () => {
+			await withTestTransaction(async () => {
+				const { organization, user } = await createTestEnvironment();
+				const location = await createLocation({
+					organization_id: organization.id
+				});
+
+				await depotService.createDepot(
+					{
+						name: 'Non-default Depot',
+						location_id: location.id,
+						default_depot: false
+					},
+					organization.id,
+					user.id
+				);
+
+				const result = await depotService.getDefaultDepot(organization.id);
+
+				expect(result).toBeNull();
+			});
+		});
+
+		it('returns null for organization with no depots', async () => {
+			await withTestTransaction(async () => {
+				const { organization } = await createTestEnvironment();
+
+				const result = await depotService.getDefaultDepot(organization.id);
+
+				expect(result).toBeNull();
+			});
+		});
+
+		it('only returns default depot from same organization', async () => {
+			await withTestTransaction(async () => {
+				const { organization: org1 } = await createTestEnvironment();
+				const { organization: org2, user: user2 } =
+					await createTestEnvironment();
+				const location = await createLocation({ organization_id: org2.id });
+
+				await depotService.createDepot(
+					{
+						name: 'Org2 Default',
+						location_id: location.id,
+						default_depot: true
+					},
+					org2.id,
+					user2.id
+				);
+
+				const result = await depotService.getDefaultDepot(org1.id);
+
+				expect(result).toBeNull();
+			});
+		});
+	});
+
 	describe('Default Depot Management (unsetDefaultDepot)', () => {
 		it('unsets other default depots when creating a new default depot', async () => {
 			await withTestTransaction(async () => {

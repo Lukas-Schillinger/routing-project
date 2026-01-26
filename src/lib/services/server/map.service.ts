@@ -17,6 +17,21 @@ import { stopService } from './stop.service';
 
 export class MapService {
 	/**
+	 * Resolve depot ID - validates provided depot or falls back to default
+	 */
+	private async resolveDepotId(
+		depotId: string | null | undefined,
+		organizationId: string
+	): Promise<string | null> {
+		if (depotId) {
+			await depotService.getDepotById(depotId, organizationId);
+			return depotId;
+		}
+		const defaultDepot = await depotService.getDefaultDepot(organizationId);
+		return defaultDepot?.depot.id ?? null;
+	}
+
+	/**
 	 * Verify map ownership
 	 */
 	private async verifyMapOwnership(mapId: string, organizationId: string) {
@@ -69,10 +84,8 @@ export class MapService {
 		organizationId: string,
 		userId: string
 	): Promise<{ map: Map; stops: StopWithLocation[] | null }> {
-		// Validate depot ownership if provided
-		if (data.depot_id) {
-			await depotService.getDepotById(data.depot_id, organizationId);
-		}
+		// Use provided depot_id, or fall back to organization's default depot
+		const depotId = await this.resolveDepotId(data.depot_id, organizationId);
 
 		// If stops are provided, create locations first (outside transaction)
 		// This is needed because locationService uses `db` directly
@@ -105,7 +118,7 @@ export class MapService {
 					created_by: userId,
 					updated_by: userId,
 					title: data.title,
-					depot_id: data.depot_id ?? null
+					depot_id: depotId
 				})
 				.returning();
 

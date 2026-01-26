@@ -63,6 +63,72 @@ describe('MapService', () => {
 					expect(result.map.updated_by).toBe(user.id);
 				});
 			});
+
+			it('uses organization default depot when no depot specified', async () => {
+				await withTestTransaction(async () => {
+					const { organization, user } = await createTestEnvironment();
+					const location = await createLocation({
+						organization_id: organization.id
+					});
+					const defaultDepot = await createDepot({
+						organization_id: organization.id,
+						location_id: location.id,
+						default_depot: true
+					});
+
+					const result = await mapService.createMap(
+						{ title: 'Map with default depot' },
+						organization.id,
+						user.id
+					);
+
+					expect(result.map.depot_id).toBe(defaultDepot.id);
+				});
+			});
+
+			it('uses provided depot_id instead of default depot', async () => {
+				await withTestTransaction(async () => {
+					const { organization, user } = await createTestEnvironment();
+					const location1 = await createLocation({
+						organization_id: organization.id
+					});
+					const location2 = await createLocation({
+						organization_id: organization.id
+					});
+					await createDepot({
+						organization_id: organization.id,
+						location_id: location1.id,
+						default_depot: true
+					});
+					const specificDepot = await createDepot({
+						organization_id: organization.id,
+						location_id: location2.id,
+						default_depot: false
+					});
+
+					const result = await mapService.createMap(
+						{ title: 'Map with specific depot', depot_id: specificDepot.id },
+						organization.id,
+						user.id
+					);
+
+					expect(result.map.depot_id).toBe(specificDepot.id);
+				});
+			});
+
+			it('sets depot_id to null when no default depot exists', async () => {
+				await withTestTransaction(async () => {
+					const { organization, user } = await createTestEnvironment();
+
+					const result = await mapService.createMap(
+						{ title: 'Map without depot' },
+						organization.id,
+						user.id
+					);
+
+					expect(result.map.depot_id).toBeNull();
+				});
+			});
 		});
 
 		describe('getMapById()', () => {

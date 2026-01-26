@@ -84,6 +84,30 @@ export class DepotService {
 	}
 
 	/**
+	 * Get the default depot for an organization, if one exists
+	 */
+	async getDefaultDepot(
+		organizationId: string
+	): Promise<DepotWithLocationJoin | null> {
+		const [depot] = await db
+			.select({
+				depot: depots,
+				location: locations
+			})
+			.from(depots)
+			.innerJoin(locations, eq(depots.location_id, locations.id))
+			.where(
+				and(
+					eq(depots.organization_id, organizationId),
+					eq(depots.default_depot, true)
+				)
+			)
+			.limit(1);
+
+		return depot ?? null;
+	}
+
+	/**
 	 * Get a specific depot by ID
 	 */
 	async getDepotById(
