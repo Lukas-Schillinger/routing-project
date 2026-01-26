@@ -16,7 +16,6 @@ export const POST: RequestHandler = async ({ request, url }) => {
 
 		const checkoutUrl = await subscriptionService.createUpgradeCheckoutSession(
 			user.organization_id,
-			user.email,
 			url.origin,
 			returnUrl
 		);

@@ -16,7 +16,6 @@ export const POST: RequestHandler = async ({ request, url }) => {
 
 		const checkoutUrl = await subscriptionService.createCreditPurchaseSession(
 			user.organization_id,
-			user.email,
 			amount,
 			url.origin,
 			returnUrl

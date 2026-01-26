@@ -191,7 +191,7 @@ export class UserService {
 	 * Creates a new organization with Stripe customer and Free plan subscription.
 	 * If Stripe setup fails, the organization is rolled back.
 	 */
-	private async generateOrganization(): Promise<string> {
+	private async generateOrganization(adminEmail: string): Promise<string> {
 		const timestamp = Date.now();
 		const randomSuffix = Math.random().toString(36).substring(2, 8);
 		const orgName = `Organization-${timestamp}-${randomSuffix}`;
@@ -205,8 +205,15 @@ export class UserService {
 		const orgId = org.id;
 
 		try {
-			// Create Stripe customer (email omitted - avoids drift if user changes email)
-			const stripeCustomer = await stripeClient.createCustomer(orgId);
+			// Create Stripe customer with admin's email for checkout prefill.
+			// TODO: When "change email" feature is added, also update Stripe customer email.
+			// TODO: Consider adding a dedicated "billing email" field to organizations
+			// if the founding admin leaving becomes an issue (their email would persist
+			// on the Stripe customer even after they're removed from the org).
+			const stripeCustomer = await stripeClient.createCustomer(
+				orgId,
+				adminEmail
+			);
 
 			// Get Free plan from database
 			const [freePlan] = await db
@@ -255,7 +262,7 @@ export class UserService {
 		// If no organization ID provided, create a new organization with Stripe billing
 		const orgId = data.organization_id
 			? data.organization_id
-			: await this.generateOrganization();
+			: await this.generateOrganization(data.email);
 
 		// Create the user with the organization ID
 		const [result] = await db

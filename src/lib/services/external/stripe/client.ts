@@ -22,12 +22,15 @@ class StripeClient {
 
 	/**
 	 * Create a Stripe customer for an organization.
-	 * Email is omitted - Stripe doesn't require it and it avoids drift issues
-	 * if the user changes their email later.
+	 * Email is set at creation for checkout prefill. Update it if user changes email.
 	 */
-	async createCustomer(organizationId: string): Promise<Stripe.Customer> {
+	async createCustomer(
+		organizationId: string,
+		email: string
+	): Promise<Stripe.Customer> {
 		log.info({ organizationId }, 'Creating Stripe customer');
 		return this.stripe.customers.create({
+			email,
 			metadata: { organization_id: organizationId }
 		});
 	}

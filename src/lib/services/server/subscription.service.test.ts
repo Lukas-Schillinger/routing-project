@@ -40,7 +40,6 @@ describe('SubscriptionService', () => {
 
 				const url = await service.createUpgradeCheckoutSession(
 					organization.id,
-					'test@example.com',
 					'https://example.com'
 				);
 
@@ -55,7 +54,6 @@ describe('SubscriptionService', () => {
 
 				await service.createUpgradeCheckoutSession(
 					organization.id,
-					'test@example.com',
 					'https://example.com'
 				);
 
@@ -71,7 +69,6 @@ describe('SubscriptionService', () => {
 
 				await service.createUpgradeCheckoutSession(
 					organization.id,
-					'test@example.com',
 					'https://example.com',
 					'/settings/billing'
 				);
@@ -87,7 +84,6 @@ describe('SubscriptionService', () => {
 				await expect(
 					service.createUpgradeCheckoutSession(
 						'00000000-0000-0000-0000-000000000000',
-						'test@example.com',
 						'https://example.com'
 					)
 				).rejects.toMatchObject({ code: 'NOT_FOUND' });
@@ -108,7 +104,6 @@ describe('SubscriptionService', () => {
 				await expect(
 					service.createUpgradeCheckoutSession(
 						organization.id,
-						'test@example.com',
 						'https://example.com'
 					)
 				).rejects.toThrow('already on Pro plan');
@@ -123,7 +118,6 @@ describe('SubscriptionService', () => {
 
 				const url = await service.createCreditPurchaseSession(
 					organization.id,
-					'test@example.com',
 					500,
 					'https://example.com'
 				);
@@ -139,7 +133,6 @@ describe('SubscriptionService', () => {
 
 				await service.createCreditPurchaseSession(
 					organization.id,
-					'test@example.com',
 					500,
 					'https://example.com'
 				);
@@ -156,7 +149,6 @@ describe('SubscriptionService', () => {
 
 				await service.createCreditPurchaseSession(
 					organization.id,
-					'test@example.com',
 					500,
 					'https://example.com',
 					'/maps/123'
@@ -175,7 +167,6 @@ describe('SubscriptionService', () => {
 				await expect(
 					service.createCreditPurchaseSession(
 						organization.id,
-						'test@example.com',
 						billingConfig.minCreditPurchase - 1,
 						'https://example.com'
 					)

@@ -757,6 +757,7 @@ export function createMockR2Service() {
 
 type CreateCustomerCall = {
 	organizationId: string;
+	email: string;
 };
 
 type CreateSubscriptionCall = {
@@ -843,7 +844,11 @@ type MockSubscriptionSchedule = {
  * ```
  */
 export const mockStripeState = {
-	customers: [] as Array<{ id: string; metadata: Record<string, string> }>,
+	customers: [] as Array<{
+		id: string;
+		email?: string;
+		metadata: Record<string, string>;
+	}>,
 	subscriptions: [] as Array<{
 		id: string;
 		customer: string;
@@ -906,10 +911,11 @@ export const mockStripeState = {
  * Use with vi.mock for hoisting compatibility.
  */
 export const mockStripeClient = {
-	createCustomer: async (organizationId: string) => {
-		mockStripeState.calls.createCustomer.push({ organizationId });
+	createCustomer: async (organizationId: string, email: string) => {
+		mockStripeState.calls.createCustomer.push({ organizationId, email });
 		const customer = {
 			id: `cus_mock_${++mockStripeState.customerIdCounter}`,
+			email,
 			metadata: { organization_id: organizationId }
 		};
 		mockStripeState.customers.push(customer);

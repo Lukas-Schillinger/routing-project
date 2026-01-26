@@ -1,14 +1,14 @@
+import { billingConfig, PlanSlug } from '$lib/config/billing';
 import { db } from '$lib/server/db';
 import {
 	plans,
 	subscriptions,
 	type SubscriptionStatus
 } from '$lib/server/db/schema';
-import { billingConfig, PlanSlug } from '$lib/config/billing';
 import { stripeClient } from '$lib/services/external/stripe/client';
-import { ServiceError } from './errors';
 import { eq } from 'drizzle-orm';
 import type Stripe from 'stripe';
+import { ServiceError } from './errors';
 
 type StripeClientType = typeof stripeClient;
 
@@ -25,7 +25,6 @@ export class SubscriptionService {
 	 */
 	async createUpgradeCheckoutSession(
 		organizationId: string,
-		userEmail: string,
 		origin: string,
 		returnUrl?: string
 	): Promise<string> {
@@ -40,12 +39,6 @@ export class SubscriptionService {
 			throw ServiceError.conflict('Organization is already on Pro plan');
 		}
 
-		// Ensure customer has email set
-		await this.stripe.updateCustomer(subscription.stripe_customer_id, {
-			email: userEmail
-		});
-
-		// Default to /app if no return URL provided
 		const redirectUrl = `${origin}${returnUrl || '/maps'}`;
 
 		// Create Checkout session for subscription upgrade
@@ -83,7 +76,6 @@ export class SubscriptionService {
 	 */
 	async createCreditPurchaseSession(
 		organizationId: string,
-		userEmail: string,
 		creditAmount: number,
 		origin: string,
 		returnUrl?: string
@@ -101,12 +93,6 @@ export class SubscriptionService {
 			throw ServiceError.notFound('Subscription not found');
 		}
 
-		// Ensure customer has email set
-		await this.stripe.updateCustomer(subscription.stripe_customer_id, {
-			email: userEmail
-		});
-
-		// Default to /app if no return URL provided
 		const redirectUrl = `${origin}${returnUrl || '/maps'}`;
 
 		// Create Checkout session for one-time credit purchase
