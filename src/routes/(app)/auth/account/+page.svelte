@@ -9,6 +9,7 @@
 	import { Settings, Trash2 } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 	import type { PageData } from './$types';
+	import BillingCard from './BillingCard.svelte';
 	import InvitationsCard from './InvitationsCard.svelte';
 	import OrganizationCard from './OrganizationCard.svelte';
 	import ProfileInformationCard from './ProfileInformationCard.svelte';
@@ -49,10 +50,16 @@
 			<!-- User Profile Section -->
 			<ProfileInformationCard user={data.user} />
 
-			<!-- Security Section -->
-			<!-- 		<SecurityCard user={data.user} /> -->
-
-			<Separator />
+			<!-- Billing Section -->
+			{#if data.billing}
+				<BillingCard
+					subscription={data.billing.subscription}
+					plan={data.billing.plan}
+					credits={data.billing.credits}
+					transactions={data.billing.transactions}
+					canManageBilling={data.permissions.includes('billing:update')}
+				/>
+			{/if}
 
 			<!-- Organization Section -->
 			<OrganizationCard
@@ -62,7 +69,7 @@
 				permissions={data.permissions}
 			/>
 
-			{#if data.permissions.includes('users:update')}
+			{#if data.invitationsWithMailRecord}
 				<!-- Invitations Section -->
 				<InvitationsCard
 					invitationsWithMailRecord={data.invitationsWithMailRecord}
