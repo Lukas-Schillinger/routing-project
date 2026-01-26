@@ -39,6 +39,7 @@
 	let code = $state('');
 	let isSubmitting = $state(false);
 	let internalOtpSent = $derived(initialOtpSent);
+	let otpFormRef: HTMLFormElement | undefined = $state();
 
 	let internalErrorMessage = $state<string | null>(null);
 	let internalSuccessMessage = $state<string | null>(null);
@@ -140,6 +141,7 @@
 	</form>
 {:else}
 	<form
+		bind:this={otpFormRef}
 		method="POST"
 		action="?/verifyOTP"
 		use:enhance={() => {
@@ -169,6 +171,9 @@
 					maxlength={6}
 					bind:value={code}
 					disabled={isSubmitting}
+					inputmode="numeric"
+					pattern="^[0-9]+$"
+					onComplete={() => otpFormRef?.requestSubmit()}
 				>
 					{#snippet children({ cells })}
 						<div class="flex w-full items-center justify-around gap-2">
