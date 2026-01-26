@@ -990,6 +990,26 @@ export const mockStripeClient = {
 		return customer;
 	},
 
+	updateCustomer: async (
+		customerId: string,
+		params: { email?: string; metadata?: Record<string, string> }
+	) => {
+		let customer = mockStripeState.customers.find((c) => c.id === customerId);
+		// If customer doesn't exist in mock state (e.g., created via test factory),
+		// create it in the mock state to allow the update to proceed
+		if (!customer) {
+			customer = {
+				id: customerId,
+				metadata: {}
+			};
+			mockStripeState.customers.push(customer);
+		}
+		if (params.metadata) {
+			customer.metadata = { ...customer.metadata, ...params.metadata };
+		}
+		return customer;
+	},
+
 	updateSubscription: async (
 		subscriptionId: string,
 		params: Stripe.SubscriptionUpdateParams

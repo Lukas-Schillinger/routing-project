@@ -40,6 +40,7 @@ describe('SubscriptionService', () => {
 
 				const url = await service.createUpgradeCheckoutSession(
 					organization.id,
+					'test@example.com',
 					'https://example.com'
 				);
 
@@ -48,11 +49,45 @@ describe('SubscriptionService', () => {
 			});
 		});
 
+		it('uses default returnUrl of /maps when not provided', async () => {
+			await withTestTransaction(async () => {
+				const { organization } = await createBillingTestEnvironment();
+
+				await service.createUpgradeCheckoutSession(
+					organization.id,
+					'test@example.com',
+					'https://example.com'
+				);
+
+				const call = mockStripeState.calls.createCheckoutSession[0];
+				expect(call.success_url).toBe('https://example.com/maps');
+				expect(call.cancel_url).toBe('https://example.com/maps');
+			});
+		});
+
+		it('uses custom returnUrl when provided', async () => {
+			await withTestTransaction(async () => {
+				const { organization } = await createBillingTestEnvironment();
+
+				await service.createUpgradeCheckoutSession(
+					organization.id,
+					'test@example.com',
+					'https://example.com',
+					'/settings/billing'
+				);
+
+				const call = mockStripeState.calls.createCheckoutSession[0];
+				expect(call.success_url).toBe('https://example.com/settings/billing');
+				expect(call.cancel_url).toBe('https://example.com/settings/billing');
+			});
+		});
+
 		it('throws not found if subscription does not exist', async () => {
 			await withTestTransaction(async () => {
 				await expect(
 					service.createUpgradeCheckoutSession(
 						'00000000-0000-0000-0000-000000000000',
+						'test@example.com',
 						'https://example.com'
 					)
 				).rejects.toMatchObject({ code: 'NOT_FOUND' });
@@ -73,6 +108,7 @@ describe('SubscriptionService', () => {
 				await expect(
 					service.createUpgradeCheckoutSession(
 						organization.id,
+						'test@example.com',
 						'https://example.com'
 					)
 				).rejects.toThrow('already on Pro plan');
@@ -87,12 +123,48 @@ describe('SubscriptionService', () => {
 
 				const url = await service.createCreditPurchaseSession(
 					organization.id,
+					'test@example.com',
 					500,
 					'https://example.com'
 				);
 
 				expect(url).toContain('https://checkout.stripe.com');
 				expect(mockStripeState.calls.createCheckoutSession).toHaveLength(1);
+			});
+		});
+
+		it('uses default returnUrl of /maps when not provided', async () => {
+			await withTestTransaction(async () => {
+				const { organization } = await createBillingTestEnvironment();
+
+				await service.createCreditPurchaseSession(
+					organization.id,
+					'test@example.com',
+					500,
+					'https://example.com'
+				);
+
+				const call = mockStripeState.calls.createCheckoutSession[0];
+				expect(call.success_url).toBe('https://example.com/maps');
+				expect(call.cancel_url).toBe('https://example.com/maps');
+			});
+		});
+
+		it('uses custom returnUrl when provided', async () => {
+			await withTestTransaction(async () => {
+				const { organization } = await createBillingTestEnvironment();
+
+				await service.createCreditPurchaseSession(
+					organization.id,
+					'test@example.com',
+					500,
+					'https://example.com',
+					'/maps/123'
+				);
+
+				const call = mockStripeState.calls.createCheckoutSession[0];
+				expect(call.success_url).toBe('https://example.com/maps/123');
+				expect(call.cancel_url).toBe('https://example.com/maps/123');
 			});
 		});
 
@@ -103,6 +175,7 @@ describe('SubscriptionService', () => {
 				await expect(
 					service.createCreditPurchaseSession(
 						organization.id,
+						'test@example.com',
 						billingConfig.minCreditPurchase - 1,
 						'https://example.com'
 					)
@@ -125,6 +198,35 @@ describe('SubscriptionService', () => {
 				expect(mockStripeState.calls.createBillingPortalSession).toHaveLength(
 					1
 				);
+			});
+		});
+
+		it('uses default returnUrl of /maps when not provided', async () => {
+			await withTestTransaction(async () => {
+				const { organization } = await createBillingTestEnvironment();
+
+				await service.createBillingPortalSession(
+					organization.id,
+					'https://example.com'
+				);
+
+				const call = mockStripeState.calls.createBillingPortalSession[0];
+				expect(call.return_url).toBe('https://example.com/maps');
+			});
+		});
+
+		it('uses custom returnUrl when provided', async () => {
+			await withTestTransaction(async () => {
+				const { organization } = await createBillingTestEnvironment();
+
+				await service.createBillingPortalSession(
+					organization.id,
+					'https://example.com',
+					'/settings/billing'
+				);
+
+				const call = mockStripeState.calls.createBillingPortalSession[0];
+				expect(call.return_url).toBe('https://example.com/settings/billing');
 			});
 		});
 	});

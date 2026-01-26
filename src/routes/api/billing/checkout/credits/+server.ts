@@ -12,12 +12,14 @@ export const POST: RequestHandler = async ({ request, url }) => {
 
 	try {
 		const body = await request.json();
-		const { amount } = creditPurchaseSchema.parse(body);
+		const { amount, returnUrl } = creditPurchaseSchema.parse(body);
 
 		const checkoutUrl = await subscriptionService.createCreditPurchaseSession(
 			user.organization_id,
+			user.email,
 			amount,
-			url.origin
+			url.origin,
+			returnUrl
 		);
 
 		return json({ url: checkoutUrl });

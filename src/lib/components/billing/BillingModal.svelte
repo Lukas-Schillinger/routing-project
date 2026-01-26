@@ -8,6 +8,7 @@
 	import type { CreditBalance } from '$lib/schemas/billing';
 	import type { Plan } from '$lib/server/db/schema';
 	import { Check, RocketLaunch } from 'phosphor-svelte';
+	import { page } from '$app/stores';
 
 	type Props = {
 		open: boolean;
@@ -26,6 +27,12 @@
 	}: Props = $props();
 
 	const isFreePlan = $derived(plan.name === 'free');
+	let showPurchaseCredits = $state(false);
+
+	// Reset state when modal closes
+	$effect(() => {
+		if (!open) showPurchaseCredits = false;
+	});
 
 	// Credit usage calculations
 	const used = $derived(plan.monthly_credits - credits.available);
@@ -70,6 +77,29 @@
 		'Email support'
 	];
 
+	async function handleUpgrade() {
+		// If parent provides custom onUpgrade handler, use that
+		if (onUpgrade) {
+			onUpgrade();
+			return;
+		}
+
+		// Otherwise, handle upgrade directly
+		error = null;
+		isLoading = true;
+
+		try {
+			const response = await billingApi.createUpgradeCheckout({
+				returnUrl: $page.url.pathname
+			});
+			window.location.href = response.url;
+		} catch (e) {
+			error =
+				e instanceof Error ? e.message : 'Failed to create checkout session';
+			isLoading = false;
+		}
+	}
+
 	async function handlePurchase() {
 		if (creditAmount < 100) {
 			error = 'Minimum purchase is 100 credits';
@@ -81,7 +111,8 @@
 
 		try {
 			const response = await billingApi.createCreditsCheckout({
-				amount: creditAmount
+				amount: creditAmount,
+				returnUrl: $page.url.pathname
 			});
 			window.location.href = response.url;
 			onSuccess?.();
@@ -109,7 +140,7 @@
 {/snippet}
 
 <Dialog.Root bind:open>
-	{#if isFreePlan}
+	{#if isFreePlan && !showPurchaseCredits}
 		<Dialog.Content class="sm:max-w-lg">
 			<Dialog.Header class="text-center">
 				<Dialog.Title class="text-2xl">Get More Credits</Dialog.Title>
@@ -141,7 +172,11 @@
 						<span class="text-muted-foreground">/ month</span>
 					</div>
 
-					<Button class="mt-4 w-full" onclick={() => onUpgrade?.()}>
+					<Button
+						class="mt-4 w-full"
+						onclick={handleUpgrade}
+						disabled={isLoading}
+					>
 						Upgrade to Pro
 					</Button>
 
@@ -164,7 +199,7 @@
 			<div class="flex items-center justify-center border-t pt-4">
 				<button
 					class="text-sm text-muted-foreground underline-offset-4 hover:underline"
-					onclick={() => (open = false)}
+					onclick={() => (showPurchaseCredits = true)}
 				>
 					Buy credits instead
 				</button>

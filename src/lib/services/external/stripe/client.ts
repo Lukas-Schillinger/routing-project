@@ -33,6 +33,16 @@ class StripeClient {
 	}
 
 	/**
+	 * Update a customer's details
+	 */
+	async updateCustomer(
+		customerId: string,
+		params: Stripe.CustomerUpdateParams
+	): Promise<Stripe.Customer> {
+		return this.stripe.customers.update(customerId, params);
+	}
+
+	/**
 	 * Create a subscription for a customer
 	 */
 	async createSubscription(params: {

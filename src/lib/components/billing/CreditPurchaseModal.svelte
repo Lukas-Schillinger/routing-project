@@ -4,6 +4,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { billingApi } from '$lib/services/api/billing';
+	import { page } from '$app/stores';
 
 	type Props = {
 		open: boolean;
@@ -37,7 +38,8 @@
 
 		try {
 			const response = await billingApi.createCreditsCheckout({
-				amount: creditAmount
+				amount: creditAmount,
+				returnUrl: $page.url.pathname
 			});
 			window.location.href = response.url;
 			onSuccess?.();

@@ -25,7 +25,9 @@ export class SubscriptionService {
 	 */
 	async createUpgradeCheckoutSession(
 		organizationId: string,
-		origin: string
+		userEmail: string,
+		origin: string,
+		returnUrl?: string
 	): Promise<string> {
 		// Get current subscription with plan details for proper plan type checking
 		const subscription = await this.getSubscriptionWithPlan(organizationId);
@@ -38,6 +40,14 @@ export class SubscriptionService {
 			throw ServiceError.conflict('Organization is already on Pro plan');
 		}
 
+		// Ensure customer has email set
+		await this.stripe.updateCustomer(subscription.stripe_customer_id, {
+			email: userEmail
+		});
+
+		// Default to /app if no return URL provided
+		const redirectUrl = `${origin}${returnUrl || '/maps'}`;
+
 		// Create Checkout session for subscription upgrade
 		const session = await this.stripe.createCheckoutSession({
 			customer: subscription.stripe_customer_id,
@@ -48,8 +58,8 @@ export class SubscriptionService {
 					quantity: 1
 				}
 			],
-			success_url: `${origin}/app/auth/billing?upgrade=success`,
-			cancel_url: `${origin}/app/auth/billing`,
+			success_url: redirectUrl,
+			cancel_url: redirectUrl,
 			metadata: {
 				organization_id: organizationId,
 				checkout_type: 'upgrade'
@@ -73,8 +83,10 @@ export class SubscriptionService {
 	 */
 	async createCreditPurchaseSession(
 		organizationId: string,
+		userEmail: string,
 		creditAmount: number,
-		origin: string
+		origin: string,
+		returnUrl?: string
 	): Promise<string> {
 		if (creditAmount < billingConfig.minCreditPurchase) {
 			throw ServiceError.validation(
@@ -89,6 +101,14 @@ export class SubscriptionService {
 			throw ServiceError.notFound('Subscription not found');
 		}
 
+		// Ensure customer has email set
+		await this.stripe.updateCustomer(subscription.stripe_customer_id, {
+			email: userEmail
+		});
+
+		// Default to /app if no return URL provided
+		const redirectUrl = `${origin}${returnUrl || '/maps'}`;
+
 		// Create Checkout session for one-time credit purchase
 		const session = await this.stripe.createCheckoutSession({
 			customer: subscription.stripe_customer_id,
@@ -99,8 +119,8 @@ export class SubscriptionService {
 					quantity: creditAmount
 				}
 			],
-			success_url: `${origin}/app/auth/billing?purchase=success`,
-			cancel_url: `${origin}/app/auth/billing`,
+			success_url: redirectUrl,
+			cancel_url: redirectUrl,
 			metadata: {
 				organization_id: organizationId,
 				checkout_type: 'credits',
@@ -120,7 +140,8 @@ export class SubscriptionService {
 	 */
 	async createBillingPortalSession(
 		organizationId: string,
-		origin: string
+		origin: string,
+		returnUrl?: string
 	): Promise<string> {
 		const subscription = await this.getSubscriptionByOrgId(organizationId);
 
@@ -128,9 +149,12 @@ export class SubscriptionService {
 			throw ServiceError.notFound('Subscription not found');
 		}
 
+		// Default to /app if no return URL provided
+		const redirectUrl = `${origin}${returnUrl || '/maps'}`;
+
 		const session = await this.stripe.createBillingPortalSession({
 			customer: subscription.stripe_customer_id,
-			return_url: `${origin}/app/auth/billing`
+			return_url: redirectUrl
 		});
 
 		return session.url;
