@@ -55,6 +55,9 @@ const requiredSchema = z.object({
 });
 
 const optionalSchema = z.object({
+	// Admin
+	ADMIN_EMAILS: z.string().optional(), // Comma-separated list of admin emails
+
 	// Webhook secrets
 	RESEND_WEBHOOK_SECRET: z.string().optional(),
 	OPTIMIZATION_WEBHOOK_SECRET: z.string().optional(),

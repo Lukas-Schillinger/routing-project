@@ -170,6 +170,19 @@ class StripeClient {
 		log.info({ scheduleId }, 'Releasing subscription schedule');
 		return this.stripe.subscriptionSchedules.release(scheduleId);
 	}
+
+	/**
+	 * List all subscriptions for a customer
+	 */
+	async listCustomerSubscriptions(
+		customerId: string
+	): Promise<Stripe.Subscription[]> {
+		const subscriptions = await this.stripe.subscriptions.list({
+			customer: customerId,
+			limit: 100
+		});
+		return subscriptions.data;
+	}
 }
 
 // Export singleton instance
