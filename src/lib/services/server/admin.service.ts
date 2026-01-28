@@ -1,3 +1,4 @@
+import type { PublicUser } from '$lib/schemas';
 import { db } from '$lib/server/db';
 import {
 	creditTransactions,
@@ -7,11 +8,20 @@ import {
 	users,
 	type Plan
 } from '$lib/server/db/schema';
+import { logger } from '$lib/server/logger';
 import { stripeClient } from '$lib/services/external/stripe/client';
 import { count, desc, eq, sql } from 'drizzle-orm';
 import type Stripe from 'stripe';
+import { createSession, generateSessionToken } from './auth';
 import { ServiceError } from './errors';
 import { subscriptionService } from './subscription.service';
+import {
+	organizationService,
+	publicUserColumns,
+	userService
+} from './user.service';
+
+const log = logger.child({ service: 'admin' });
 
 type Subscription = typeof subscriptions.$inferSelect;
 type Organization = typeof organizations.$inferSelect;
@@ -372,6 +382,108 @@ export class AdminService {
 			totalOrganizations: orgCount[0]?.count ?? 0,
 			subscriptionsByPlan: subsByPlan,
 			recentTransactions
+		};
+	}
+
+	/**
+	 * Create a test account with organization, user, and Stripe subscription.
+	 * Matches the normal registration flow - always starts on Free plan.
+	 */
+	async createTestAccount(params: {
+		email: string;
+		name?: string;
+		organizationName?: string;
+	}): Promise<{
+		organization: Organization;
+		user: PublicUser;
+		subscription: Subscription;
+	}> {
+		// Check if email is already in use
+		const existingUser = await userService.findAnyUserByEmail(params.email);
+		if (existingUser) {
+			throw ServiceError.conflict('Email already in use');
+		}
+
+		// Create user with admin role (same as normal registration)
+		// This auto-creates org + Stripe customer + Free subscription
+		const user = await userService.createUser({
+			email: params.email,
+			name: params.name ?? null,
+			role: 'admin'
+		});
+
+		// Update organization name if provided, otherwise fetch the created one
+		const organization = params.organizationName
+			? await organizationService.updateOrganization(
+					user.organization_id,
+					{ name: params.organizationName },
+					user.id
+				)
+			: await organizationService.getOrganization(user.organization_id);
+
+		// Get the subscription
+		const [subscription] = await db
+			.select()
+			.from(subscriptions)
+			.where(eq(subscriptions.organization_id, user.organization_id))
+			.limit(1);
+
+		if (!subscription) {
+			throw ServiceError.internal('Subscription not created');
+		}
+
+		log.info(
+			{ userId: user.id, organizationId: organization.id },
+			'Test account created'
+		);
+
+		return {
+			organization,
+			user: userService.toPublicUser(user),
+			subscription
+		};
+	}
+
+	/**
+	 * Create an impersonation session for a target user.
+	 */
+	async createImpersonationSession(
+		targetUserId: string,
+		adminUserId: string
+	): Promise<{ sessionToken: string; expiresAt: Date }> {
+		// Verify target user exists
+		const [targetUser] = await db
+			.select(publicUserColumns)
+			.from(users)
+			.where(eq(users.id, targetUserId))
+			.limit(1);
+
+		if (!targetUser) {
+			throw ServiceError.notFound('User not found');
+		}
+
+		// Prevent impersonating self
+		if (targetUserId === adminUserId) {
+			throw ServiceError.badRequest('Cannot impersonate yourself');
+		}
+
+		// Generate session token and create session
+		const sessionToken = generateSessionToken();
+		const session = await createSession(sessionToken, targetUserId);
+
+		log.info(
+			{
+				adminUserId,
+				targetUserId,
+				targetEmail: targetUser.email,
+				sessionId: session.id
+			},
+			'Admin started impersonation'
+		);
+
+		return {
+			sessionToken,
+			expiresAt: session.expires_at
 		};
 	}
 }

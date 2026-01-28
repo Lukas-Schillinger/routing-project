@@ -1,6 +1,6 @@
 <!-- @component Admin Organization Detail Page - displays detailed info for a single organization -->
 <script lang="ts">
-	import { invalidateAll } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
@@ -9,7 +9,7 @@
 	import * as Select from '$lib/components/ui/select';
 	import * as Table from '$lib/components/ui/table';
 	import { formatDate } from '$lib/utils';
-	import { RefreshCw } from 'lucide-svelte';
+	import { LogIn, RefreshCw } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 	import type { PageData } from './$types';
 
@@ -27,6 +27,36 @@
 	// Set plan state
 	let selectedPlanId = $state('');
 	let isSettingPlan = $state(false);
+
+	// Impersonation state
+	let impersonatingUserId = $state<string | null>(null);
+
+	async function handleLoginAs(userId: string) {
+		impersonatingUserId = userId;
+		try {
+			const response = await fetch('/api/admin/impersonate/start', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ userId })
+			});
+
+			if (!response.ok) {
+				const error = await response.json();
+				throw new Error(
+					error.error || error.message || 'Failed to start impersonation'
+				);
+			}
+
+			const result = await response.json();
+			goto(result.redirectUrl || '/maps');
+		} catch (error) {
+			toast.error(
+				error instanceof Error ? error.message : 'Failed to login as user'
+			);
+		} finally {
+			impersonatingUserId = null;
+		}
+	}
 
 	// Sync selectedPlanId when data changes (e.g., after plan update)
 	$effect(() => {
@@ -312,6 +342,7 @@
 							<Table.Head>Email</Table.Head>
 							<Table.Head>Role</Table.Head>
 							<Table.Head>Joined</Table.Head>
+							<Table.Head class="w-[100px]"></Table.Head>
 						</Table.Row>
 					</Table.Header>
 					<Table.Body>
@@ -326,6 +357,21 @@
 								</Table.Cell>
 								<Table.Cell class="text-muted-foreground">
 									{formatDate(user.created_at)}
+								</Table.Cell>
+								<Table.Cell>
+									<Button
+										variant="outline"
+										size="sm"
+										onclick={() => handleLoginAs(user.id)}
+										disabled={impersonatingUserId === user.id}
+									>
+										{#if impersonatingUserId === user.id}
+											<RefreshCw class="mr-1 h-3 w-3 animate-spin" />
+										{:else}
+											<LogIn class="mr-1 h-3 w-3" />
+										{/if}
+										Login As
+									</Button>
 								</Table.Cell>
 							</Table.Row>
 						{/each}

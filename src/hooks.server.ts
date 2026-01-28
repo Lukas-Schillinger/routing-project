@@ -27,7 +27,6 @@ const handleRequestId: Handle = async ({ event, resolve }) => {
 	const response = await resolve(event); // Auth runs during this
 	const duration = Date.now() - start;
 
-	// Log completion (userId now available via enriched logger)
 	const log = event.locals.log;
 	if (response.status >= 500) {
 		log.error({ status: response.status, duration }, 'Request failed');
@@ -73,8 +72,14 @@ const handleRateLimit: Handle = async ({ event, resolve }) => {
 	return response;
 };
 
+const IMPERSONATION_COOKIE_NAME = 'admin-original-session';
+
 const handleAuth: Handle = async ({ event, resolve }) => {
 	const sessionToken = event.cookies.get(auth.sessionCookieName);
+
+	// Check if currently impersonating (admin's original session stored in separate cookie)
+	const isImpersonating = !!event.cookies.get(IMPERSONATION_COOKIE_NAME);
+	event.locals.isImpersonating = isImpersonating;
 
 	if (!sessionToken) {
 		event.locals.user = null;

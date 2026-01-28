@@ -1,12 +1,74 @@
 <!-- @component Admin Organizations Page - displays a table of all organizations with subscription info -->
 <script lang="ts">
+	import { goto, invalidateAll } from '$app/navigation';
 	import { Badge } from '$lib/components/ui/badge';
+	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
+	import * as Dialog from '$lib/components/ui/dialog';
+	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
 	import * as Table from '$lib/components/ui/table';
 	import { formatDate } from '$lib/utils';
+	import { Plus } from 'lucide-svelte';
+	import { toast } from 'svelte-sonner';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
+
+	// Create account dialog state
+	let dialogOpen = $state(false);
+	let email = $state('');
+	let name = $state('');
+	let organizationName = $state('');
+	let isCreating = $state(false);
+
+	function generateTestData() {
+		const id = Math.random().toString(36).substring(2, 8);
+		email = `test-${id}@example.com`;
+		name = `Test User ${id}`;
+		organizationName = `Test Org ${id}`;
+	}
+
+	function handleDialogOpen(open: boolean) {
+		dialogOpen = open;
+		if (open) {
+			generateTestData();
+		}
+	}
+
+	async function handleCreateAccount(event: SubmitEvent) {
+		event.preventDefault();
+		isCreating = true;
+
+		try {
+			const response = await fetch('/api/admin/accounts', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					email,
+					name: name || undefined,
+					organizationName: organizationName || undefined
+				})
+			});
+
+			if (!response.ok) {
+				const error = await response.json();
+				throw new Error(error.message || 'Failed to create account');
+			}
+
+			const result = await response.json();
+			toast.success('Test account created');
+			dialogOpen = false;
+			await invalidateAll();
+			goto(`/admin/organizations/${result.organization.id}`);
+		} catch (error) {
+			toast.error(
+				error instanceof Error ? error.message : 'Failed to create account'
+			);
+		} finally {
+			isCreating = false;
+		}
+	}
 
 	function getPlanBadgeVariant(
 		planName: string
@@ -46,7 +108,70 @@
 </svelte:head>
 
 <div class="space-y-6">
-	<h1 class="text-2xl font-bold">Organizations</h1>
+	<div class="flex items-center justify-between">
+		<h1 class="text-2xl font-bold">Organizations</h1>
+		<Dialog.Root open={dialogOpen} onOpenChange={handleDialogOpen}>
+			<Dialog.Trigger>
+				{#snippet child({ props })}
+					<Button {...props}>
+						<Plus class="mr-2 h-4 w-4" />
+						Create Test Account
+					</Button>
+				{/snippet}
+			</Dialog.Trigger>
+			<Dialog.Content>
+				<Dialog.Header>
+					<Dialog.Title>Create Test Account</Dialog.Title>
+					<Dialog.Description>
+						Create a new organization with admin user and Free plan
+						subscription.
+					</Dialog.Description>
+				</Dialog.Header>
+				<form onsubmit={handleCreateAccount} class="space-y-4">
+					<div class="space-y-2">
+						<Label for="email">Email *</Label>
+						<Input
+							id="email"
+							type="email"
+							placeholder="test@example.com"
+							bind:value={email}
+							required
+						/>
+					</div>
+					<div class="space-y-2">
+						<Label for="name">User Name</Label>
+						<Input
+							id="name"
+							type="text"
+							placeholder="Test User"
+							bind:value={name}
+						/>
+					</div>
+					<div class="space-y-2">
+						<Label for="organizationName">Organization Name</Label>
+						<Input
+							id="organizationName"
+							type="text"
+							placeholder="Test Organization"
+							bind:value={organizationName}
+						/>
+					</div>
+					<Dialog.Footer>
+						<Button
+							type="button"
+							variant="outline"
+							onclick={() => (dialogOpen = false)}
+						>
+							Cancel
+						</Button>
+						<Button type="submit" disabled={isCreating || !email}>
+							{isCreating ? 'Creating...' : 'Create Account'}
+						</Button>
+					</Dialog.Footer>
+				</form>
+			</Dialog.Content>
+		</Dialog.Root>
+	</div>
 
 	<Card.Root>
 		<Card.Header>
