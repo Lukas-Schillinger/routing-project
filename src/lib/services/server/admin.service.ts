@@ -445,6 +445,41 @@ export class AdminService {
 	}
 
 	/**
+	 * Delete an organization and all related data.
+	 * Cancels Stripe subscription first, then deletes organization (cascades to users, subscriptions, etc).
+	 */
+	async deleteOrganization(organizationId: string): Promise<void> {
+		const [org] = await db
+			.select()
+			.from(organizations)
+			.where(eq(organizations.id, organizationId))
+			.limit(1);
+
+		if (!org) {
+			throw ServiceError.notFound('Organization not found');
+		}
+
+		const [subscription] = await db
+			.select()
+			.from(subscriptions)
+			.where(eq(subscriptions.organization_id, organizationId))
+			.limit(1);
+
+		if (subscription) {
+			await stripeClient.cancelSubscription(
+				subscription.stripe_subscription_id
+			);
+		}
+
+		await db.delete(organizations).where(eq(organizations.id, organizationId));
+
+		log.info(
+			{ organizationId, organizationName: org.name },
+			'Organization deleted'
+		);
+	}
+
+	/**
 	 * Create an impersonation session for a target user.
 	 */
 	async createImpersonationSession(

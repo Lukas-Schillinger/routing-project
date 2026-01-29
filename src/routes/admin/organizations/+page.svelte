@@ -1,6 +1,7 @@
 <!-- @component Admin Organizations Page - displays a table of all organizations with subscription info -->
 <script lang="ts">
 	import { goto, invalidateAll } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
@@ -60,7 +61,7 @@
 			toast.success('Test account created');
 			dialogOpen = false;
 			await invalidateAll();
-			goto(`/admin/organizations/${result.organization.id}`);
+			goto(resolve(`/admin/organizations/${result.organization.id}`));
 		} catch (error) {
 			toast.error(
 				error instanceof Error ? error.message : 'Failed to create account'
@@ -197,7 +198,7 @@
 							<Table.Row>
 								<Table.Cell class="font-medium">
 									<a
-										href="/admin/organizations/{organization.id}"
+										href={resolve(`/admin/organizations/${organization.id}`)}
 										class="text-primary hover:underline"
 									>
 										{organization.name}

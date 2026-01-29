@@ -1,6 +1,8 @@
 <!-- @component Admin Organization Detail Page - displays detailed info for a single organization -->
 <script lang="ts">
 	import { goto, invalidateAll } from '$app/navigation';
+	import { resolve } from '$app/paths';
+	import { ConfirmDeleteDialog } from '$lib/components/ConfirmDeleteDialog';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
@@ -9,7 +11,7 @@
 	import * as Select from '$lib/components/ui/select';
 	import * as Table from '$lib/components/ui/table';
 	import { formatDate } from '$lib/utils';
-	import { LogIn, RefreshCw } from 'lucide-svelte';
+	import { LogIn, RefreshCw, Trash2 } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 	import type { PageData } from './$types';
 
@@ -31,6 +33,9 @@
 	// Impersonation state
 	let impersonatingUserId = $state<string | null>(null);
 
+	// Delete state
+	let isDeleting = $state(false);
+
 	async function handleLoginAs(userId: string) {
 		impersonatingUserId = userId;
 		try {
@@ -48,7 +53,7 @@
 			}
 
 			const result = await response.json();
-			goto(result.redirectUrl || '/maps');
+			goto(resolve(result.redirectUrl || '/maps'));
 		} catch (error) {
 			toast.error(
 				error instanceof Error ? error.message : 'Failed to login as user'
@@ -200,6 +205,30 @@
 		if (type === 'debit') return 'destructive';
 		return 'secondary';
 	}
+
+	async function handleDeleteOrganization() {
+		isDeleting = true;
+		try {
+			const response = await fetch(
+				`/api/admin/organizations/${data.organization.id}`,
+				{ method: 'DELETE' }
+			);
+
+			if (!response.ok) {
+				const error = await response.json();
+				throw new Error(error.message || 'Failed to delete organization');
+			}
+
+			toast.success('Organization deleted');
+			goto(resolve('/admin/organizations'));
+		} catch (error) {
+			toast.error(
+				error instanceof Error ? error.message : 'Failed to delete organization'
+			);
+		} finally {
+			isDeleting = false;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -208,8 +237,9 @@
 
 <div class="space-y-6">
 	<div class="flex items-center gap-2">
-		<a href="/admin/organizations" class="text-muted-foreground hover:underline"
-			>Organizations</a
+		<a
+			href={resolve('/admin/organizations')}
+			class="text-muted-foreground hover:underline">Organizations</a
 		>
 		<span class="text-muted-foreground">/</span>
 		<h1 class="text-2xl font-bold">{data.organization.name}</h1>
@@ -342,7 +372,7 @@
 							<Table.Head>Email</Table.Head>
 							<Table.Head>Role</Table.Head>
 							<Table.Head>Joined</Table.Head>
-							<Table.Head class="w-[100px]"></Table.Head>
+							<Table.Head class="w-25"></Table.Head>
 						</Table.Row>
 					</Table.Header>
 					<Table.Body>
@@ -580,6 +610,39 @@
 					{isSubmittingCredits ? 'Adjusting...' : 'Adjust Credits'}
 				</Button>
 			</form>
+		</Card.Content>
+	</Card.Root>
+
+	<!-- Danger Zone -->
+	<Card.Root class="border-destructive">
+		<Card.Header>
+			<Card.Title class="text-destructive">Danger Zone</Card.Title>
+			<Card.Description>
+				Irreversible actions that permanently affect this organization
+			</Card.Description>
+		</Card.Header>
+		<Card.Content>
+			<div class="flex items-center justify-between">
+				<div>
+					<p class="font-medium">Delete this organization</p>
+					<p class="text-sm text-muted-foreground">
+						Permanently delete all users, subscriptions, and data.
+					</p>
+				</div>
+				<ConfirmDeleteDialog
+					title="Delete Organization"
+					description="Are you sure you want to delete {data.organization
+						.name}? This will permanently delete all users, subscriptions, and data. This action cannot be undone."
+					onConfirm={handleDeleteOrganization}
+				>
+					{#snippet trigger({ props })}
+						<Button {...props} variant="destructive" disabled={isDeleting}>
+							<Trash2 class="mr-2 h-4 w-4" />
+							{isDeleting ? 'Deleting...' : 'Delete'}
+						</Button>
+					{/snippet}
+				</ConfirmDeleteDialog>
+			</div>
 		</Card.Content>
 	</Card.Root>
 </div>
