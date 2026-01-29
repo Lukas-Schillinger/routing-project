@@ -1,5 +1,6 @@
 <!-- @component Admin Subscriptions Page - displays a table of all subscriptions -->
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { Badge } from '$lib/components/ui/badge';
 	import * as Card from '$lib/components/ui/card';
 	import * as Table from '$lib/components/ui/table';
@@ -71,7 +72,7 @@
 							<Table.Row>
 								<Table.Cell class="font-medium">
 									<a
-										href="/admin/organizations/{organization.id}"
+										href={resolve(`/admin/organizations/${organization.id}`)}
 										class="text-primary hover:underline"
 									>
 										{organization.name}

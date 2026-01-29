@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { page } from '$app/stores';
 	import * as Sidebar from '$lib/components/ui/sidebar';
 	import {
@@ -19,7 +20,7 @@
 		{ href: '/admin/subscriptions', label: 'Subscriptions', icon: CreditCard },
 		{ href: '/admin/plans', label: 'Plans', icon: Package },
 		{ href: '/admin/credits', label: 'Credits', icon: Coins }
-	];
+	] as const;
 
 	let currentPath = $derived($page.url.pathname);
 
@@ -54,7 +55,7 @@
 									tooltipContent={item.label}
 								>
 									{#snippet child({ props })}
-										<a href={item.href} {...props}>
+										<a href={resolve(item.href)} {...props}>
 											<item.icon class="h-4 w-4" />
 											<span>{item.label}</span>
 										</a>

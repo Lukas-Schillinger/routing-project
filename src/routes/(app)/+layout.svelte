@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto, invalidateAll } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import favicon from '$lib/assets/favicon.svg';
 	import Footer from '$lib/components/Footer.svelte';
 	import Header from '$lib/components/Header.svelte';
@@ -25,7 +26,7 @@
 
 			const result = await response.json();
 			await invalidateAll();
-			goto(result.redirectUrl || '/admin/organizations');
+			goto(resolve(result.redirectUrl || '/admin/organizations'));
 		} catch (error) {
 			toast.error(
 				error instanceof Error ? error.message : 'Failed to return to admin'

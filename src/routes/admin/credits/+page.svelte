@@ -1,6 +1,7 @@
 <!-- @component Admin Credits Page - displays all credit transactions across organizations with adjustment form -->
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
@@ -204,7 +205,9 @@
 							<Table.Row>
 								<Table.Cell class="font-medium">
 									<a
-										href="/admin/organizations/{transaction.organization_id}"
+										href={resolve(
+											`/admin/organizations/${transaction.organization_id}`
+										)}
 										class="text-primary hover:underline"
 									>
 										{transaction.organizationName ?? 'Unknown'}
