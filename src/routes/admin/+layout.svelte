@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { Button } from '$lib/components/ui/button';
+	import * as Sidebar from '$lib/components/ui/sidebar';
 	import {
 		Building2,
 		Coins,
@@ -31,32 +31,56 @@
 	}
 </script>
 
-<div class="flex min-h-screen">
-	<aside class="w-64 border-r bg-muted/40">
-		<div class="flex h-14 items-center border-b px-4">
-			<h1 class="text-lg font-semibold">Admin Panel</h1>
-		</div>
-		<nav class="flex flex-col gap-1 p-4">
-			{#each navItems as item (item.href)}
-				{@const active = isActive(item.href)}
-				<Button
-					variant={active ? 'secondary' : 'ghost'}
-					class="justify-start gap-2"
-					href={item.href}
+<Sidebar.Provider>
+	<Sidebar.Root collapsible="icon">
+		<Sidebar.Header>
+			<div class="flex h-10 items-center px-2">
+				<span
+					class="text-lg font-semibold group-data-[collapsible=icon]:hidden"
 				>
-					<item.icon class="h-4 w-4" />
-					{item.label}
-				</Button>
-			{/each}
-		</nav>
-	</aside>
-	<div class="flex flex-1 flex-col">
-		<header class="flex h-14 items-center justify-between border-b px-6">
+					Admin Panel
+				</span>
+			</div>
+		</Sidebar.Header>
+		<Sidebar.Content>
+			<Sidebar.Group>
+				<Sidebar.GroupContent>
+					<Sidebar.Menu>
+						{#each navItems as item (item.href)}
+							{@const active = isActive(item.href)}
+							<Sidebar.MenuItem>
+								<Sidebar.MenuButton
+									isActive={active}
+									tooltipContent={item.label}
+								>
+									{#snippet child({ props })}
+										<a href={item.href} {...props}>
+											<item.icon class="h-4 w-4" />
+											<span>{item.label}</span>
+										</a>
+									{/snippet}
+								</Sidebar.MenuButton>
+							</Sidebar.MenuItem>
+						{/each}
+					</Sidebar.Menu>
+				</Sidebar.GroupContent>
+			</Sidebar.Group>
+		</Sidebar.Content>
+		<Sidebar.Footer>
+			<div
+				class="px-2 py-1 text-sm text-muted-foreground group-data-[collapsible=icon]:hidden"
+			>
+				{data.user.email}
+			</div>
+		</Sidebar.Footer>
+	</Sidebar.Root>
+	<Sidebar.Inset>
+		<header class="flex h-14 items-center gap-2 border-b px-6">
+			<Sidebar.Trigger />
 			<span class="text-sm text-muted-foreground">Admin Panel</span>
-			<span class="text-sm text-muted-foreground">{data.user.email}</span>
 		</header>
 		<main class="flex-1 p-6">
 			{@render children?.()}
 		</main>
-	</div>
-</div>
+	</Sidebar.Inset>
+</Sidebar.Provider>
