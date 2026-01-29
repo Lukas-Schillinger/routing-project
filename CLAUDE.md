@@ -11,6 +11,9 @@
 - Code should be functional and avoid functions with side effects where possible.
 - Ensure all pages are mobile compatible.
 - Prefer type over interface. Use string literals instead of enums.
+- All URLs must use the `resolve()` function from `$app/paths`. This is enforced by the linter.
+  - Import: `import { resolve } from '$app/paths'`
+  - Usage: `href={resolve('/dashboard')}`, `goto(resolve('/settings'))`
 
 ## Architecture Overview
 
