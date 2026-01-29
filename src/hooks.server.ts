@@ -1,12 +1,12 @@
 // Validate environment variables at startup
 import '$lib/server/env';
 
-import * as Sentry from '@sentry/sveltekit';
-import { getLimiterForPath } from '$lib/server/rate-limit';
 import { createRequestLogger, logger } from '$lib/server/logger';
+import { getLimiterForPath } from '$lib/server/rate-limit';
 import * as auth from '$lib/services/server/auth';
 import { billingService } from '$lib/services/server/billing.service';
 import { rolePermissions } from '$lib/services/server/permissions';
+import * as Sentry from '@sentry/sveltekit';
 import type { Handle, HandleServerError } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 

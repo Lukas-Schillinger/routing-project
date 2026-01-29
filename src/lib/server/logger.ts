@@ -1,5 +1,5 @@
-import pino from 'pino';
 import { dev } from '$app/environment';
+import pino from 'pino';
 
 /**
  * Pino structured logger for server-side logging
