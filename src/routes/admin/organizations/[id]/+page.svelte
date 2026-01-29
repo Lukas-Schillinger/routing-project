@@ -26,10 +26,6 @@
 	// Sync state
 	let isSyncing = $state(false);
 
-	// Set plan state
-	let selectedPlanId = $state('');
-	let isSettingPlan = $state(false);
-
 	// Impersonation state
 	let impersonatingUserId = $state<string | null>(null);
 
@@ -63,11 +59,6 @@
 		}
 	}
 
-	// Sync selectedPlanId when data changes (e.g., after plan update)
-	$effect(() => {
-		selectedPlanId = data.subscription?.plan.id ?? '';
-	});
-
 	function getStatusBadgeVariant(
 		status: string
 	): 'default' | 'secondary' | 'destructive' | 'outline' {
@@ -100,37 +91,6 @@
 			month: 'short',
 			day: 'numeric'
 		});
-	}
-
-	async function handleSetPlan() {
-		if (!selectedPlanId || selectedPlanId === data.subscription?.plan.id)
-			return;
-
-		isSettingPlan = true;
-		try {
-			const response = await fetch('/api/admin/subscriptions/set-plan', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					organizationId: data.organization.id,
-					planId: selectedPlanId
-				})
-			});
-
-			if (!response.ok) {
-				const error = await response.json();
-				throw new Error(error.message || 'Failed to set plan');
-			}
-
-			toast.success('Plan updated successfully');
-			await invalidateAll();
-		} catch (error) {
-			toast.error(
-				error instanceof Error ? error.message : 'Failed to set plan'
-			);
-		} finally {
-			isSettingPlan = false;
-		}
 	}
 
 	async function handleSyncFromStripe() {
@@ -311,45 +271,6 @@
 					<div class="flex justify-between">
 						<span class="text-sm text-muted-foreground">Credit Balance</span>
 						<span class="text-sm font-medium">{data.creditBalance}</span>
-					</div>
-
-					<!-- Set Plan -->
-					<div class="border-t pt-4">
-						<Label for="set-plan" class="text-sm text-muted-foreground"
-							>Change Plan</Label
-						>
-						<div class="mt-2 flex gap-2">
-							<Select.Root
-								type="single"
-								value={selectedPlanId}
-								onValueChange={(value) => {
-									if (value) selectedPlanId = value;
-								}}
-							>
-								<Select.Trigger id="set-plan" class="flex-1">
-									{@const selected = data.plans.find(
-										(p) => p.id === selectedPlanId
-									)}
-									{selected?.display_name ?? 'Select plan'}
-								</Select.Trigger>
-								<Select.Content>
-									{#each data.plans as plan (plan.id)}
-										<Select.Item value={plan.id}
-											>{plan.display_name}</Select.Item
-										>
-									{/each}
-								</Select.Content>
-							</Select.Root>
-							<Button
-								variant="outline"
-								size="default"
-								onclick={handleSetPlan}
-								disabled={isSettingPlan ||
-									selectedPlanId === data.subscription.plan.id}
-							>
-								{isSettingPlan ? 'Setting...' : 'Set Plan'}
-							</Button>
-						</div>
 					</div>
 				{:else}
 					<p class="text-sm text-muted-foreground">No subscription</p>
