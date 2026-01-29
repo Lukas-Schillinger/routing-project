@@ -183,6 +183,16 @@ class StripeClient {
 		});
 		return subscriptions.data;
 	}
+
+	/**
+	 * Cancel a subscription immediately.
+	 */
+	async cancelSubscription(
+		subscriptionId: string
+	): Promise<Stripe.Subscription> {
+		log.info({ subscriptionId }, 'Canceling Stripe subscription');
+		return this.stripe.subscriptions.cancel(subscriptionId);
+	}
 }
 
 // Export singleton instance

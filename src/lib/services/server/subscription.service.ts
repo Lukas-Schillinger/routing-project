@@ -415,6 +415,25 @@ export class SubscriptionService {
 
 		return result[0] ?? null;
 	}
+
+	/**
+	 * Cancel the old free subscription when upgrading to Pro.
+	 * Called when an upgrade checkout completes to prevent duplicate subscriptions.
+	 * Safe to call even if there is no existing subscription or if not on free plan.
+	 */
+	async cancelOldFreeSubscription(organizationId: string): Promise<void> {
+		const subscription = await this.getSubscriptionWithPlan(organizationId);
+
+		const shouldCancel =
+			subscription?.planName === PlanSlug.FREE &&
+			subscription.stripe_subscription_id;
+
+		if (!shouldCancel) {
+			return;
+		}
+
+		await this.stripe.cancelSubscription(subscription.stripe_subscription_id);
+	}
 }
 
 export const subscriptionService = new SubscriptionService();

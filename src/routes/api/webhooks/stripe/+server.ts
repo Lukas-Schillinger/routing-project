@@ -2,12 +2,12 @@
 
 import { env } from '$env/dynamic/private';
 import { handleWebhookError, ServiceError } from '$lib/errors';
+import { stripeClient } from '$lib/services/external/stripe/client';
 import { billingService } from '$lib/services/server/billing.service';
 import { subscriptionService } from '$lib/services/server/subscription.service';
-import { stripeClient } from '$lib/services/external/stripe/client';
 import { json } from '@sveltejs/kit';
-import type { RequestHandler } from './$types';
 import type Stripe from 'stripe';
+import type { RequestHandler } from './$types';
 
 type Logger = typeof import('$lib/server/logger').logger;
 
@@ -119,24 +119,34 @@ async function handleCheckoutCompleted(
 		'Processing checkout completion'
 	);
 
-	if (checkoutType === 'credits') {
-		const creditAmount = parseInt(session.metadata?.credit_amount ?? '0', 10);
-		const paymentIntentId = session.payment_intent as string;
+	switch (checkoutType) {
+		case 'credits': {
+			const creditAmount = parseInt(session.metadata?.credit_amount ?? '0', 10);
+			const paymentIntentId = session.payment_intent as string;
 
-		if (creditAmount > 0 && paymentIntentId) {
-			await billingService.grantPurchasedCredits(
-				organizationId,
-				creditAmount,
-				paymentIntentId,
-				`Purchased ${creditAmount} credits`
-			);
-			log.info(
-				{ organizationId, creditAmount },
-				'Credits granted from purchase'
-			);
+			if (creditAmount > 0 && paymentIntentId) {
+				await billingService.grantPurchasedCredits(
+					organizationId,
+					creditAmount,
+					paymentIntentId,
+					`Purchased ${creditAmount} credits`
+				);
+				log.info(
+					{ organizationId, creditAmount },
+					'Credits granted from purchase'
+				);
+			}
+			break;
 		}
-	} else if (checkoutType === 'upgrade') {
-		log.info({ organizationId }, 'Subscription upgrade checkout completed');
+
+		/* The old free subscription is cancelled here. If its not cancelled users will
+		continue receiving 200 free plan credits a month. The user will get their new plan 
+		from the `invoice.paid` webhook.  */
+		case 'upgrade': {
+			await subscriptionService.cancelOldFreeSubscription(organizationId);
+			log.info({ organizationId }, 'Upgrade checkout completed');
+			break;
+		}
 	}
 }
 
