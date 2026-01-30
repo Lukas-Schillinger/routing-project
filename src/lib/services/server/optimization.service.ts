@@ -21,7 +21,6 @@ import { z } from 'zod';
 import { mapboxDistanceMatrix, mapboxNavigation } from '../external/mapbox';
 import type { CoordinatesData } from '../external/mapbox/distance-matrix';
 import type { Coordinate } from '../external/mapbox/types';
-import { billingService } from './billing.service';
 import { depotService } from './depot.service';
 import { ServiceError } from './errors';
 import { mapService } from './map.service';
@@ -144,6 +143,16 @@ export type SuccessfulOptimizationResponse = z.infer<
 >;
 export type FailedOptimizationResponse = z.infer<typeof failedResponseSchema>;
 
+/**
+ * Result returned from completeOptimization for billing purposes.
+ * Returns null when job was already processed (idempotency) or optimization failed.
+ */
+export type OptimizationCompletionResult = {
+	stopCount: number;
+	organizationId: string;
+	jobId: string;
+} | null;
+
 // ============================================================================
 // State Machine
 // ============================================================================
@@ -219,8 +228,6 @@ export class OptimizationService {
 		options: OptimizationOptions,
 		requestId?: string
 	): Promise<OptimizationJob> {
-		await this.validateCreditBalance(organizationId);
-
 		// Get map to fall back to its depot if not specified in options
 		const map = await mapService.getMapById(mapId, organizationId);
 		const depotId = options.depotId ?? map.depot_id;
@@ -282,16 +289,6 @@ export class OptimizationService {
 
 		await this.sendToSQS(job.id, payload, requestId);
 		return job;
-	}
-
-	private async validateCreditBalance(organizationId: string): Promise<void> {
-		const availableCredits =
-			await billingService.getAvailableCredits(organizationId);
-		if (availableCredits <= 0) {
-			throw ServiceError.forbidden(
-				'Insufficient credits. Please purchase more credits to continue optimizing routes.'
-			);
-		}
 	}
 
 	private async createJob(
@@ -372,7 +369,9 @@ export class OptimizationService {
 		}
 	}
 
-	async completeOptimization(response: OptimizationResponse): Promise<void> {
+	async completeOptimization(
+		response: OptimizationResponse
+	): Promise<OptimizationCompletionResult> {
 		const log = logger.child({ jobId: response.job_id });
 		log.info(
 			{ success: response.success },
@@ -384,11 +383,11 @@ export class OptimizationService {
 		const completableStatuses: JobStatus[] = ['pending', 'running'];
 		if (!completableStatuses.includes(job.status as JobStatus)) {
 			log.info({ status: job.status }, 'Job not in valid state, skipping');
-			return;
+			return null;
 		}
 
 		try {
-			await this.processCompletion(job, response, log);
+			return await this.processCompletion(job, response, log);
 		} catch (error) {
 			const errorMessage =
 				error instanceof Error ? error.message : 'Unknown error';
@@ -415,22 +414,19 @@ export class OptimizationService {
 		job: OptimizationJob,
 		response: OptimizationResponse,
 		log: typeof logger
-	): Promise<void> {
+	): Promise<OptimizationCompletionResult> {
 		const {
 			map_id: mapId,
 			organization_id: organizationId,
 			depot_id: depotId
 		} = job;
+		const jobId = response.job_id;
 
-		await this.updateJobStatus(response.job_id, 'completing');
+		await this.updateJobStatus(jobId, 'completing');
 
 		if (!response.success) {
 			log.warn({ errorMessage: response.error_message }, 'Optimization failed');
-			await this.updateJobStatus(
-				response.job_id,
-				'failed',
-				response.error_message
-			);
+			await this.updateJobStatus(jobId, 'failed', response.error_message);
 			throw ServiceError.internal(
 				`Optimization failed to complete: ${response.error_message}`
 			);
@@ -454,35 +450,24 @@ export class OptimizationService {
 			locationCoordMap
 		);
 
-		await this.updateJobStatus(response.job_id, 'completed');
-		await this.recordCreditUsage(organizationId, result, response.job_id);
+		await this.updateJobStatus(jobId, 'completed');
 
+		const stopCount = OptimizationService.countTotalStops(result);
 		log.info(
 			{
 				routeCount: result.routes.length,
 				totalCost: result.total_cost,
-				creditsUsed: this.countTotalStops(result)
+				stopCount
 			},
 			'Optimization completed successfully'
 		);
+
+		return { stopCount, organizationId, jobId };
 	}
 
-	private countTotalStops(result: OptimizationResult): number {
+	/** Count total stops across all routes in an optimization result */
+	static countTotalStops(result: OptimizationResult): number {
 		return result.routes.reduce((sum, route) => sum + route.legs.length, 0);
-	}
-
-	private async recordCreditUsage(
-		organizationId: string,
-		result: OptimizationResult,
-		jobId: string
-	): Promise<void> {
-		const totalStops = this.countTotalStops(result);
-		await billingService.recordUsage(
-			organizationId,
-			totalStops,
-			jobId,
-			`Route optimization: ${totalStops} stops`
-		);
 	}
 
 	private async clearStopAssignments(mapId: string): Promise<void> {

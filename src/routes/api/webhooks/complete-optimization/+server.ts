@@ -1,5 +1,6 @@
 import { env } from '$env/dynamic/private';
 import { handleWebhookError, ServiceError } from '$lib/errors';
+import { billingService } from '$lib/services/server/billing.service';
 import {
 	optimizationResponseSchema,
 	optimizationService
@@ -35,7 +36,23 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		);
 
 		// Process the optimization result
-		await optimizationService.completeOptimization(validatedData);
+		const completionResult =
+			await optimizationService.completeOptimization(validatedData);
+
+		// Record billing usage for successful optimizations
+		// completionResult is null if job was already processed (idempotency)
+		if (completionResult !== null) {
+			await billingService.recordUsage(
+				completionResult.organizationId,
+				completionResult.stopCount,
+				completionResult.jobId,
+				`Route optimization: ${completionResult.stopCount} stops`
+			);
+			log.info(
+				{ jobId, stopCount: completionResult.stopCount },
+				'Credit usage recorded'
+			);
+		}
 
 		log.info({ jobId }, 'Optimization webhook processed');
 		return json({ success: true });

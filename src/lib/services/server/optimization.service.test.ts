@@ -1,12 +1,6 @@
 import { db } from '$lib/server/db';
+import { optimizationJobs, routes, stops } from '$lib/server/db/schema';
 import {
-	creditTransactions,
-	optimizationJobs,
-	routes,
-	stops
-} from '$lib/server/db/schema';
-import {
-	createBillingTestEnvironment,
 	createDepot,
 	createDriver,
 	createDriverMapMembership,
@@ -15,6 +9,7 @@ import {
 	createMatrix,
 	createOptimizationJob,
 	createStop,
+	createTestEnvironment,
 	withTestTransaction
 } from '$lib/testing';
 import { createMockSqsService } from '$lib/testing/mocks';
@@ -66,13 +61,13 @@ vi.mock('$lib/services/external/mapbox', () => ({
 }));
 
 /**
- * Creates a complete optimization test setup with billing enabled.
- * Uses createBillingTestEnvironment for proper plan handling (find-or-create pattern).
+ * Creates a complete optimization test setup.
+ * Billing is now handled at the API layer, so no billing setup is needed here.
  */
 async function createOptimizationTestSetup() {
-	const { organization, user, freePlan } = await createBillingTestEnvironment();
+	const { organization, user } = await createTestEnvironment();
 
-	// Add additional locations for stops
+	// Add locations for depot and stops
 	const depotLocation = await createLocation({
 		organization_id: organization.id
 	});
@@ -99,7 +94,6 @@ async function createOptimizationTestSetup() {
 	return {
 		organization,
 		user,
-		plan: freePlan,
 		map,
 		driver,
 		depot,
@@ -248,45 +242,6 @@ describe('OptimizationService', () => {
 
 				expect(job.created_by).toBe(user.id);
 				expect(job.updated_by).toBe(user.id);
-			});
-		});
-
-		it('blocks optimization when credit balance is negative', async () => {
-			await withTestTransaction(async () => {
-				const { organization, user, map, driver, depot, stopLocation1 } =
-					await createOptimizationTestSetup();
-
-				// Create negative credit balance
-				await db.insert(creditTransactions).values({
-					organization_id: organization.id,
-					type: 'usage',
-					amount: -300, // More than initial credits
-					expires_at: null
-				});
-
-				await createDriverMapMembership({
-					organization_id: organization.id,
-					driver_id: driver.id,
-					map_id: map.id
-				});
-
-				await createStop({
-					organization_id: organization.id,
-					map_id: map.id,
-					location_id: stopLocation1.id
-				});
-
-				await expect(
-					optimizationService.queueOptimization(
-						map.id,
-						organization.id,
-						user.id,
-						{ depotId: depot.id, fairness: 'medium' }
-					)
-				).rejects.toMatchObject({
-					code: 'FORBIDDEN',
-					message: expect.stringContaining('Insufficient credits')
-				});
 			});
 		});
 	});
@@ -753,76 +708,6 @@ describe('OptimizationService', () => {
 				expect(updatedJob.status).toBe('completed');
 			});
 		});
-
-		it(
-			'records credit usage after successful optimization',
-			{ timeout: 15000 },
-			async () => {
-				await withTestTransaction(async () => {
-					const {
-						organization,
-						driver,
-						map,
-						depot,
-						stopLocation1,
-						stopLocation2
-					} = await createOptimizationTestSetup();
-
-					await createStop({
-						organization_id: organization.id,
-						map_id: map.id,
-						location_id: stopLocation1.id
-					});
-					await createStop({
-						organization_id: organization.id,
-						map_id: map.id,
-						location_id: stopLocation2.id
-					});
-
-					const matrix = await createMatrix({
-						organization_id: organization.id,
-						map_id: map.id
-					});
-
-					const job = await createOptimizationJob({
-						organization_id: organization.id,
-						map_id: map.id,
-						matrix_id: matrix.id,
-						depot_id: depot.id,
-						status: 'running'
-					});
-
-					await optimizationService.completeOptimization({
-						success: true,
-						job_id: job.id,
-						result: {
-							routes: [
-								{
-									driver_id: driver.id,
-									legs: [
-										{ stop_id: stopLocation1.id, stop_index: 0 },
-										{ stop_id: stopLocation2.id, stop_index: 1 }
-									],
-									cost: 500
-								}
-							],
-							total_cost: 500
-						}
-					});
-
-					const [transaction] = await db
-						.select()
-						.from(creditTransactions)
-						.where(eq(creditTransactions.optimization_job_id, job.id))
-						.limit(1);
-
-					expect(transaction).toBeDefined();
-					expect(transaction.type).toBe('usage');
-					expect(transaction.amount).toBe(-2); // 2 stops = -2 credits
-					expect(transaction.organization_id).toBe(organization.id);
-				});
-			}
-		);
 	});
 
 	describe('getActiveJobForMap()', () => {

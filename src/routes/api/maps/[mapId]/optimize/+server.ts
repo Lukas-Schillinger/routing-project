@@ -1,8 +1,9 @@
 // GET /api/maps/[mapId]/optimize - Get current optimization job status
 // POST /api/maps/[mapId]/optimize - Optimize routes for a map using TSP solver
 
-import { handleApiError } from '$lib/errors';
+import { handleApiError, ServiceError } from '$lib/errors';
 import { optimizationOptionsSchema } from '$lib/schemas/map';
+import { billingService } from '$lib/services/server/billing.service';
 import { optimizationService } from '$lib/services/server/optimization.service';
 import { requirePermissionApi } from '$lib/services/server/permissions';
 import { json } from '@sveltejs/kit';
@@ -34,6 +35,16 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 
 		if (!parsed.success) {
 			throw parsed.error;
+		}
+
+		// Check credit balance before queueing optimization
+		const availableCredits = await billingService.getAvailableCredits(
+			user.organization_id
+		);
+		if (!(availableCredits > 0)) {
+			throw ServiceError.forbidden(
+				'Insufficient credits. Please purchase more credits to continue optimizing routes.'
+			);
 		}
 
 		log.info({ mapId }, 'Starting optimization request');
