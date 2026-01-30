@@ -20,15 +20,18 @@ export class SubscriptionService {
 	}
 
 	/**
-	 * Create a Stripe Checkout session for upgrading to Pro plan.
-	 * The customer already exists (created at signup).
+	 * Upgrade an organization's subscription to Pro plan.
+	 * Creates a Checkout session for the new subscription - the old subscription
+	 * will be cancelled when the checkout completes (handled by webhook).
+	 *
+	 * @returns url - Stripe Checkout session URL for redirect
 	 */
-	async createUpgradeCheckoutSession(
+	async upgradeToProPlan(
 		organizationId: string,
 		origin: string,
 		returnUrl?: string
-	): Promise<string> {
-		// Get current subscription with plan details for proper plan type checking
+	): Promise<{ url: string }> {
+		// Get current subscription with plan details
 		const subscription = await this.getSubscriptionWithPlan(organizationId);
 
 		if (!subscription) {
@@ -39,9 +42,9 @@ export class SubscriptionService {
 			throw ServiceError.conflict('Organization is already on Pro plan');
 		}
 
-		const redirectUrl = `${origin}${returnUrl || '/maps'}`;
+		const redirectUrl = `${origin}${returnUrl || '/settings/billing'}`;
 
-		// Create Checkout session for subscription upgrade
+		// Create Checkout session for new Pro subscription
 		const session = await this.stripe.createCheckoutSession({
 			customer: subscription.stripe_customer_id,
 			mode: 'subscription',
@@ -55,12 +58,8 @@ export class SubscriptionService {
 			cancel_url: redirectUrl,
 			metadata: {
 				organization_id: organizationId,
-				checkout_type: 'upgrade'
-			},
-			subscription_data: {
-				metadata: {
-					organization_id: organizationId
-				}
+				checkout_type: 'upgrade',
+				existing_subscription_id: subscription.stripe_subscription_id
 			}
 		});
 
@@ -68,7 +67,7 @@ export class SubscriptionService {
 			throw ServiceError.internal('Failed to create checkout session URL');
 		}
 
-		return session.url;
+		return { url: session.url };
 	}
 
 	/**
@@ -414,25 +413,6 @@ export class SubscriptionService {
 			.limit(1);
 
 		return result[0] ?? null;
-	}
-
-	/**
-	 * Cancel the old free subscription when upgrading to Pro.
-	 * Called when an upgrade checkout completes to prevent duplicate subscriptions.
-	 * Safe to call even if there is no existing subscription or if not on free plan.
-	 */
-	async cancelOldFreeSubscription(organizationId: string): Promise<void> {
-		const subscription = await this.getSubscriptionWithPlan(organizationId);
-
-		const shouldCancel =
-			subscription?.planName === PlanSlug.FREE &&
-			subscription.stripe_subscription_id;
-
-		if (!shouldCancel) {
-			return;
-		}
-
-		await this.stripe.cancelSubscription(subscription.stripe_subscription_id);
 	}
 }
 

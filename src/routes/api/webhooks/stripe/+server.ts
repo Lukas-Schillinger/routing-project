@@ -119,34 +119,57 @@ async function handleCheckoutCompleted(
 		'Processing checkout completion'
 	);
 
-	switch (checkoutType) {
-		case 'credits': {
-			const creditAmount = parseInt(session.metadata?.credit_amount ?? '0', 10);
-			const paymentIntentId = session.payment_intent as string;
+	if (checkoutType === 'credits') {
+		const creditAmount = parseInt(session.metadata?.credit_amount ?? '0', 10);
+		const paymentIntentId = session.payment_intent as string;
 
-			if (creditAmount > 0 && paymentIntentId) {
-				await billingService.grantPurchasedCredits(
-					organizationId,
-					creditAmount,
-					paymentIntentId,
-					`Purchased ${creditAmount} credits`
-				);
-				log.info(
-					{ organizationId, creditAmount },
-					'Credits granted from purchase'
-				);
-			}
-			break;
+		if (creditAmount > 0 && paymentIntentId) {
+			await billingService.grantPurchasedCredits(
+				organizationId,
+				creditAmount,
+				paymentIntentId,
+				`Purchased ${creditAmount} credits`
+			);
+			log.info(
+				{ organizationId, creditAmount },
+				'Credits granted from purchase'
+			);
+		}
+	}
+
+	if (checkoutType === 'upgrade') {
+		const existingSubscriptionId = session.metadata?.existing_subscription_id;
+		const newSubscriptionId = session.subscription as string;
+
+		if (!existingSubscriptionId || !newSubscriptionId) {
+			log.warn(
+				{ sessionId: session.id, existingSubscriptionId, newSubscriptionId },
+				'Upgrade checkout missing subscription IDs'
+			);
+			return;
 		}
 
-		/* The old free subscription is cancelled here. If its not cancelled users will
-		continue receiving 200 free plan credits a month. The user will get their new plan 
-		from the `invoice.paid` webhook.  */
-		case 'upgrade': {
-			await subscriptionService.cancelOldFreeSubscription(organizationId);
-			log.info({ organizationId }, 'Upgrade checkout completed');
-			break;
-		}
+		// Cancel the old subscription
+		await stripeClient.cancelSubscription(existingSubscriptionId);
+		log.info(
+			{ organizationId, oldSubscriptionId: existingSubscriptionId },
+			'Cancelled old subscription during upgrade'
+		);
+
+		// Update new subscription metadata with organization_id
+		await stripeClient.updateSubscription(newSubscriptionId, {
+			metadata: { organization_id: organizationId }
+		});
+
+		// Sync the new subscription to local DB
+		const newSubscription =
+			await stripeClient.getSubscription(newSubscriptionId);
+		await subscriptionService.syncSubscription(newSubscription);
+
+		log.info(
+			{ organizationId, newSubscriptionId },
+			'Upgrade completed - new subscription synced'
+		);
 	}
 }
 
@@ -204,10 +227,11 @@ async function handleSubscriptionEvent(
 	log: Logger
 ) {
 	const config = subscriptionEventConfig[eventType as SubscriptionEventType];
+	const organizationId = subscription.metadata.organization_id;
 
 	const context = {
 		subscriptionId: subscription.id,
-		organizationId: subscription.metadata.organization_id,
+		organizationId,
 		status: subscription.status,
 		schedule: subscription.schedule
 	};
@@ -220,6 +244,17 @@ async function handleSubscriptionEvent(
 	log[config.level](context, config.message);
 
 	if (config.sync) {
+		// Skip syncing if organization_id is missing - this happens during upgrades
+		// when customer.subscription.created fires before checkout.session.completed
+		// adds the metadata. The checkout handler will sync it properly.
+		if (!organizationId) {
+			log.info(
+				context,
+				'Skipping sync - subscription missing organization_id (will be synced by checkout handler)'
+			);
+			return;
+		}
+
 		await subscriptionService.syncSubscription(subscription);
 
 		// Clear scheduled change tracking when schedule completes

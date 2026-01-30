@@ -790,6 +790,10 @@ type CancelScheduleCall = {
 	scheduleId: string;
 };
 
+type CancelSubscriptionCall = {
+	subscriptionId: string;
+};
+
 type ConstructWebhookEventCall = {
 	payload: string;
 	signature: string;
@@ -876,6 +880,7 @@ export const mockStripeState = {
 		createSubscriptionSchedule: [] as CreateScheduleCall[],
 		updateSubscriptionSchedule: [] as UpdateScheduleCall[],
 		cancelSubscriptionSchedule: [] as CancelScheduleCall[],
+		cancelSubscription: [] as CancelSubscriptionCall[],
 		constructWebhookEvent: [] as ConstructWebhookEventCall[]
 	},
 	customerIdCounter: 0,
@@ -898,6 +903,7 @@ export const mockStripeState = {
 		this.calls.createSubscriptionSchedule = [];
 		this.calls.updateSubscriptionSchedule = [];
 		this.calls.cancelSubscriptionSchedule = [];
+		this.calls.cancelSubscription = [];
 		this.calls.constructWebhookEvent = [];
 		this.customerIdCounter = 0;
 		this.subscriptionIdCounter = 0;
@@ -1018,7 +1024,8 @@ export const mockStripeClient = {
 
 	updateSubscription: async (
 		subscriptionId: string,
-		params: Stripe.SubscriptionUpdateParams
+		params: Stripe.SubscriptionUpdateParams,
+		expand?: string[]
 	) => {
 		const sub = mockStripeState.subscriptions.find(
 			(s) => s.id === subscriptionId
@@ -1034,6 +1041,29 @@ export const mockStripeClient = {
 				)
 			);
 			sub.metadata = { ...sub.metadata, ...filteredMetadata };
+		}
+		// Handle items update (for plan changes)
+		if (params.items) {
+			for (const item of params.items) {
+				if (item.id && item.price) {
+					const existingItem = sub.items.data.find((i) => i.id === item.id);
+					if (existingItem && typeof item.price === 'string') {
+						existingItem.price.id = item.price;
+					}
+				}
+			}
+		}
+		// Handle expand for latest_invoice
+		if (expand?.includes('latest_invoice')) {
+			const invoice = {
+				id: `in_mock_${Date.now()}`,
+				hosted_invoice_url: `https://invoice.stripe.com/i/mock_${Date.now()}`,
+				status: 'open'
+			};
+			return {
+				...sub,
+				latest_invoice: invoice
+			} as unknown as Stripe.Subscription;
 		}
 		return sub;
 	},
@@ -1118,6 +1148,18 @@ export const mockStripeClient = {
 			throw new Error(`Mock: Schedule ${scheduleId} not found`);
 		}
 		return schedule;
+	},
+
+	cancelSubscription: async (subscriptionId: string) => {
+		mockStripeState.calls.cancelSubscription.push({ subscriptionId });
+		const index = mockStripeState.subscriptions.findIndex(
+			(s) => s.id === subscriptionId
+		);
+		if (index === -1) {
+			throw new Error(`Mock: Subscription ${subscriptionId} not found`);
+		}
+		const [subscription] = mockStripeState.subscriptions.splice(index, 1);
+		return { ...subscription, status: 'canceled' };
 	},
 
 	constructWebhookEvent: (

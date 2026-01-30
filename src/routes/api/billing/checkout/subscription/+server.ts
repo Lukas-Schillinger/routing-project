@@ -1,7 +1,6 @@
-// POST /api/billing/checkout/subscription - Create checkout session for plan upgrade
+// POST /api/billing/checkout/subscription - Upgrade subscription to Pro plan
 
 import { handleApiError } from '$lib/errors';
-import { upgradeCheckoutSchema } from '$lib/schemas/billing';
 import { requirePermissionApi } from '$lib/services/server/permissions';
 import { subscriptionService } from '$lib/services/server/subscription.service';
 import { json } from '@sveltejs/kit';
@@ -12,9 +11,10 @@ export const POST: RequestHandler = async ({ request, url }) => {
 
 	try {
 		const body = await request.json().catch(() => ({}));
-		const { returnUrl } = upgradeCheckoutSchema.parse(body);
+		const returnUrl =
+			typeof body.returnUrl === 'string' ? body.returnUrl : undefined;
 
-		const checkoutUrl = await subscriptionService.createUpgradeCheckoutSession(
+		const { url: checkoutUrl } = await subscriptionService.upgradeToProPlan(
 			user.organization_id,
 			url.origin,
 			returnUrl
@@ -22,6 +22,6 @@ export const POST: RequestHandler = async ({ request, url }) => {
 
 		return json({ url: checkoutUrl });
 	} catch (err) {
-		handleApiError(err, 'Failed to create checkout session');
+		handleApiError(err, 'Failed to upgrade subscription');
 	}
 };

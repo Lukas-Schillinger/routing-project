@@ -33,45 +33,43 @@ beforeEach(() => {
 });
 
 describe('SubscriptionService', () => {
-	describe('createUpgradeCheckoutSession()', () => {
-		it('creates checkout session for upgrade', async () => {
+	describe('upgradeToProPlan()', () => {
+		it('creates checkout session and returns URL', async () => {
 			await withTestTransaction(async () => {
 				const { organization } = await createBillingTestEnvironment();
 
-				const url = await service.createUpgradeCheckoutSession(
+				const result = await service.upgradeToProPlan(
 					organization.id,
 					'https://example.com'
 				);
 
-				expect(url).toContain('https://checkout.stripe.com');
+				expect(result.url).toContain('https://checkout.stripe.com');
 				expect(mockStripeState.calls.createCheckoutSession).toHaveLength(1);
 			});
 		});
 
-		it('uses default returnUrl of /maps when not provided', async () => {
+		it('creates checkout session with correct metadata', async () => {
 			await withTestTransaction(async () => {
-				const { organization } = await createBillingTestEnvironment();
+				const { organization, subscription } =
+					await createBillingTestEnvironment();
 
-				await service.createUpgradeCheckoutSession(
-					organization.id,
-					'https://example.com'
-				);
+				await service.upgradeToProPlan(organization.id, 'https://example.com');
 
 				const call = mockStripeState.calls.createCheckoutSession[0];
-				expect(call.success_url).toBe('https://example.com/maps');
-				expect(call.cancel_url).toBe('https://example.com/maps');
+				expect(call.mode).toBe('subscription');
+				expect(call.metadata).toMatchObject({
+					organization_id: organization.id,
+					checkout_type: 'upgrade',
+					existing_subscription_id: subscription.stripe_subscription_id
+				});
 			});
 		});
 
-		it('uses custom returnUrl when provided', async () => {
+		it('uses default returnUrl of /settings/billing when not provided', async () => {
 			await withTestTransaction(async () => {
 				const { organization } = await createBillingTestEnvironment();
 
-				await service.createUpgradeCheckoutSession(
-					organization.id,
-					'https://example.com',
-					'/settings/billing'
-				);
+				await service.upgradeToProPlan(organization.id, 'https://example.com');
 
 				const call = mockStripeState.calls.createCheckoutSession[0];
 				expect(call.success_url).toBe('https://example.com/settings/billing');
@@ -79,10 +77,26 @@ describe('SubscriptionService', () => {
 			});
 		});
 
+		it('uses custom returnUrl when provided', async () => {
+			await withTestTransaction(async () => {
+				const { organization } = await createBillingTestEnvironment();
+
+				await service.upgradeToProPlan(
+					organization.id,
+					'https://example.com',
+					'/dashboard'
+				);
+
+				const call = mockStripeState.calls.createCheckoutSession[0];
+				expect(call.success_url).toBe('https://example.com/dashboard');
+				expect(call.cancel_url).toBe('https://example.com/dashboard');
+			});
+		});
+
 		it('throws not found if subscription does not exist', async () => {
 			await withTestTransaction(async () => {
 				await expect(
-					service.createUpgradeCheckoutSession(
+					service.upgradeToProPlan(
 						'00000000-0000-0000-0000-000000000000',
 						'https://example.com'
 					)
@@ -102,10 +116,7 @@ describe('SubscriptionService', () => {
 					.where(eq(subscriptions.id, subscription.id));
 
 				await expect(
-					service.createUpgradeCheckoutSession(
-						organization.id,
-						'https://example.com'
-					)
+					service.upgradeToProPlan(organization.id, 'https://example.com')
 				).rejects.toThrow('already on Pro plan');
 			});
 		});

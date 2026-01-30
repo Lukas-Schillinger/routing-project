@@ -69,10 +69,14 @@ class StripeClient {
 	 */
 	async updateSubscription(
 		subscriptionId: string,
-		params: Stripe.SubscriptionUpdateParams
+		params: Stripe.SubscriptionUpdateParams,
+		expand?: string[]
 	): Promise<Stripe.Subscription> {
 		log.info({ subscriptionId }, 'Updating Stripe subscription');
-		return this.stripe.subscriptions.update(subscriptionId, params);
+		return this.stripe.subscriptions.update(subscriptionId, {
+			...params,
+			expand
+		});
 	}
 
 	/**
