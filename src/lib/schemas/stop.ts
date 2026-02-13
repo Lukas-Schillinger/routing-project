@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { BULK_LIMITS } from '$lib/config';
 import { phoneSchema } from './common';
 import type { Location } from './location';
 import { locationCreateSchema } from './location';
@@ -20,22 +21,25 @@ export const createStopSchema = z
 	});
 
 // Schema for bulk creating stops (map_id comes from URL param)
-export const bulkCreateStopsSchema = z.array(
-	z
-		.object({
-			location_id: z.uuid().optional(),
-			location: locationCreateSchema.optional(),
-			driver_id: z.uuid().nullable().optional(),
-			delivery_index: z.number().int().nullable().optional(),
-			contact_name: z.string().max(200).nullable().optional(),
-			contact_phone: phoneSchema.optional(),
-			notes: z.string().nullable().optional()
-		})
-		.refine((data) => data.location_id || data.location, {
-			message: 'Either location_id or location data must be provided',
-			path: ['location_id']
-		})
-);
+export const bulkCreateStopsSchema = z
+	.array(
+		z
+			.object({
+				location_id: z.uuid().optional(),
+				location: locationCreateSchema.optional(),
+				driver_id: z.uuid().nullable().optional(),
+				delivery_index: z.number().int().nullable().optional(),
+				contact_name: z.string().max(200).nullable().optional(),
+				contact_phone: phoneSchema.optional(),
+				notes: z.string().nullable().optional()
+			})
+			.refine((data) => data.location_id || data.location, {
+				message: 'Either location_id or location data must be provided',
+				path: ['location_id']
+			})
+	)
+	.min(1)
+	.max(BULK_LIMITS.MAX_STOPS);
 
 export const updateStopSchema = z.object({
 	location_id: z.uuid().optional(),

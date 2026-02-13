@@ -16,3 +16,8 @@ export const TOKEN_EXPIRY = {
 export const FILE_LIMITS = {
 	MAX_SIZE_BYTES: 10 * 1024 * 1024 // 10 MB
 } as const;
+
+// Bulk operation limits
+export const BULK_LIMITS = {
+	MAX_STOPS: 200
+} as const;
