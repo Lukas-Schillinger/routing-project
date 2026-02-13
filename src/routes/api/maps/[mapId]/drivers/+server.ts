@@ -2,6 +2,7 @@
 // POST /api/maps/[mapId]/drivers - Assign a driver to a map
 
 import { handleApiError } from '$lib/errors';
+import { createDriverMapMembershipSchema } from '$lib/schemas/driverMapMembership';
 import { mapService } from '$lib/services/server';
 import { requirePermissionApi } from '$lib/services/server/permissions';
 import { json } from '@sveltejs/kit';
@@ -10,14 +11,9 @@ import type { RequestHandler } from './$types';
 export const GET: RequestHandler = async ({ params }) => {
 	const user = requirePermissionApi('resources:read');
 
-	const mapId = params.mapId;
-	if (!mapId) {
-		return json({ error: 'Map ID is required' }, { status: 400 });
-	}
-
 	try {
 		const memberships = await mapService.getDriversForMap(
-			mapId,
+			params.mapId,
 			user.organization_id
 		);
 
@@ -30,22 +26,15 @@ export const GET: RequestHandler = async ({ params }) => {
 export const POST: RequestHandler = async ({ params, request }) => {
 	const user = requirePermissionApi('resources:create');
 
-	const mapId = params.mapId;
-	if (!mapId) {
-		return json({ error: 'Map ID is required' }, { status: 400 });
-	}
-
 	try {
 		const body = await request.json();
-		const driverId = body.driver_id;
-
-		if (!driverId || typeof driverId !== 'string') {
-			return json({ error: 'driver_id is required' }, { status: 400 });
-		}
+		const { driver_id } = createDriverMapMembershipSchema
+			.pick({ driver_id: true })
+			.parse(body);
 
 		const membership = await mapService.addDriverToMap(
-			driverId,
-			mapId,
+			driver_id,
+			params.mapId,
 			user.organization_id
 		);
 

@@ -9,23 +9,14 @@ import type { RequestHandler } from './$types';
 export const DELETE: RequestHandler = async ({ params }) => {
 	const user = requirePermissionApi('resources:delete');
 
-	const mapId = params.mapId;
-	const driverId = params.driverId;
-
-	if (!mapId || !driverId) {
-		return json(
-			{ error: 'Map ID and Driver ID are required' },
-			{ status: 400 }
-		);
-	}
-
 	try {
-		await mapService.removeDriverFromMap(driverId, mapId, user.organization_id);
+		await mapService.removeDriverFromMap(
+			params.driverId,
+			params.mapId,
+			user.organization_id
+		);
 
-		return json({
-			success: true,
-			message: 'Driver removed from map successfully'
-		});
+		return json({ success: true });
 	} catch (err) {
 		handleApiError(err, 'Failed to remove driver from map');
 	}
