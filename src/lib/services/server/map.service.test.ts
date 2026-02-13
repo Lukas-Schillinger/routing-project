@@ -595,6 +595,101 @@ describe('MapService', () => {
 				expect(remainingDrivers.length).toBe(0);
 			});
 		});
+
+		it('prevents adding driver from another organization', async () => {
+			await withTestTransaction(async () => {
+				const { organization: orgA } = await createTestEnvironment();
+				const { organization: orgB } = await createTestEnvironment();
+				const driverB = await createDriver({ organization_id: orgB.id });
+				const mapA = await createMap({ organization_id: orgA.id });
+
+				await expect(
+					mapService.addDriverToMap(driverB.id, mapA.id, orgA.id)
+				).rejects.toMatchObject({ code: 'NOT_FOUND' });
+			});
+		});
+
+		it('returns drivers for map', async () => {
+			await withTestTransaction(async () => {
+				const { organization } = await createTestEnvironment();
+				const driver1 = await createDriver({
+					organization_id: organization.id,
+					active: true
+				});
+				const driver2 = await createDriver({
+					organization_id: organization.id,
+					active: true
+				});
+				const map = await createMap({ organization_id: organization.id });
+
+				await mapService.addDriverToMap(driver1.id, map.id, organization.id);
+				await mapService.addDriverToMap(driver2.id, map.id, organization.id);
+
+				const results = await mapService.getDriversForMap(
+					map.id,
+					organization.id
+				);
+
+				expect(results).toHaveLength(2);
+				const driverIds = results.map((r) => r.driver.id);
+				expect(driverIds).toContain(driver1.id);
+				expect(driverIds).toContain(driver2.id);
+			});
+		});
+
+		it('returns maps for driver', async () => {
+			await withTestTransaction(async () => {
+				const { organization } = await createTestEnvironment();
+				const driver = await createDriver({
+					organization_id: organization.id,
+					active: true
+				});
+				const map1 = await createMap({ organization_id: organization.id });
+				const map2 = await createMap({ organization_id: organization.id });
+
+				await mapService.addDriverToMap(driver.id, map1.id, organization.id);
+				await mapService.addDriverToMap(driver.id, map2.id, organization.id);
+
+				const results = await mapService.getMapsForDriver(
+					driver.id,
+					organization.id
+				);
+
+				expect(results).toHaveLength(2);
+				const mapIds = results.map((r) => r.map.id);
+				expect(mapIds).toContain(map1.id);
+				expect(mapIds).toContain(map2.id);
+			});
+		});
+
+		it('throws NOT_FOUND for nonexistent map', async () => {
+			await withTestTransaction(async () => {
+				const { organization } = await createTestEnvironment();
+				const driver = await createDriver({
+					organization_id: organization.id,
+					active: true
+				});
+
+				await expect(
+					mapService.addDriverToMap(
+						driver.id,
+						NON_EXISTENT_UUID,
+						organization.id
+					)
+				).rejects.toMatchObject({ code: 'NOT_FOUND' });
+			});
+		});
+
+		it('throws NOT_FOUND for nonexistent driver', async () => {
+			await withTestTransaction(async () => {
+				const { organization } = await createTestEnvironment();
+				const map = await createMap({ organization_id: organization.id });
+
+				await expect(
+					mapService.addDriverToMap(NON_EXISTENT_UUID, map.id, organization.id)
+				).rejects.toMatchObject({ code: 'NOT_FOUND' });
+			});
+		});
 	});
 
 	describe('Reset Optimization', () => {
