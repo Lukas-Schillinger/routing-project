@@ -23,7 +23,7 @@ import { stopService } from './stop.service';
 
 export class RouteService {
 	/**
-	 * Create or update a route for a driver on a map
+	 * Verify that a route exists and belongs to the given organization
 	 */
 	async verifyRouteOwnership(
 		routeId: string,
@@ -174,14 +174,15 @@ export class RouteService {
 	/**
 	 * Bulk upsert routes with transaction wrapping for atomicity
 	 */
-	async upsertRoutes(inputs: CreateRoute[], userId?: string) {
-		// Process sequentially to ensure atomicity - if one fails, none are committed
-		const results: Route[] = [];
-		for (const input of inputs) {
-			const result = await this.upsertRoute(input, userId);
-			results.push(result);
-		}
-		return results;
+	async upsertRoutes(inputs: CreateRoute[], userId?: string): Promise<Route[]> {
+		return db.transaction(async () => {
+			const results: Route[] = [];
+			for (const input of inputs) {
+				const result = await this.upsertRoute(input, userId);
+				results.push(result);
+			}
+			return results;
+		});
 	}
 
 	async getRouteById(routeId: string, organizationId: string): Promise<Route> {
