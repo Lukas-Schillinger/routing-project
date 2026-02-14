@@ -506,7 +506,7 @@ export async function createTestEnvironment() {
  * and billing (plans, subscription, credits).
  */
 export async function createTestRouteSetup() {
-	const { organization, user, freePlan, proPlan, subscription, credits } =
+	const { organization, user, freePlan, proPlan, subscription } =
 		await createBillingTestEnvironment();
 
 	const driver = await createDriver({
@@ -548,8 +548,7 @@ export async function createTestRouteSetup() {
 		// Billing
 		freePlan,
 		proPlan,
-		subscription,
-		credits
+		subscription
 	};
 }
 
@@ -590,6 +589,9 @@ export function createMockSubscription(
 ): MockSubscription {
 	const id = uniqueId();
 	const now = new Date();
+	// Use a period start in the past to avoid timing issues with PostgreSQL's
+	// now() being frozen at transaction start within withTestTransaction
+	const periodStart = new Date(now.getTime() - 60 * 60 * 1000);
 	const periodEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
 	return {
 		organization_id: '', // Must be provided
@@ -597,7 +599,7 @@ export function createMockSubscription(
 		stripe_customer_id: `cus_mock_${id}`,
 		stripe_subscription_id: `sub_mock_${id}`,
 		status: 'active',
-		period_starts_at: now,
+		period_starts_at: periodStart,
 		period_ends_at: periodEnd,
 		...overrides
 	};
@@ -629,9 +631,9 @@ export function createMockCreditTransaction(
 ): MockCreditTransaction {
 	return {
 		organization_id: '', // Must be provided
-		type: 'subscription_grant',
+		type: 'purchase',
 		amount: 200,
-		expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+		expires_at: null,
 		description: 'Test credit grant',
 		...overrides
 	};
@@ -707,13 +709,6 @@ export async function createBillingTestEnvironment() {
 		plan_id: freePlan.id
 	});
 
-	// Grant initial credits (mirrors production behavior on subscription creation)
-	const credits = await createCreditTransaction({
-		organization_id: organization.id,
-		amount: freePlan.monthly_credits,
-		type: 'subscription_grant',
-		description: 'Initial subscription credits'
-	});
-
-	return { organization, user, freePlan, proPlan, subscription, credits };
+	// No initial credit grant needed - credits are now derived from the plan
+	return { organization, user, freePlan, proPlan, subscription };
 }

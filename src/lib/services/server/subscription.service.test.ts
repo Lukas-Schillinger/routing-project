@@ -15,8 +15,8 @@ import { SubscriptionService } from './subscription.service';
 /**
  * Subscription Service Tests
  *
- * Tests subscription management including upgrades, downgrades, and scheduling.
- * Uses withTestTransaction for automatic rollback - no manual cleanup needed.
+ * Tests subscription management including upgrades, downgrades via cancel_at_period_end,
+ * and subscription syncing. Uses withTestTransaction for automatic rollback.
  */
 
 // Mock the Stripe client module
@@ -263,6 +263,34 @@ describe('SubscriptionService', () => {
 			});
 		});
 
+		it('syncs cancel_at_period_end from Stripe', async () => {
+			await withTestTransaction(async () => {
+				const { organization, subscription, proPlan } =
+					await createBillingTestEnvironment();
+
+				const now = Math.floor(Date.now() / 1000);
+				const stripeSubscription = createMockStripeSubscription({
+					id: 'sub_cancel_sync',
+					customer: subscription.stripe_customer_id,
+					organizationId: organization.id,
+					priceId: proPlan.stripe_price_id,
+					status: 'active',
+					periodStart: now,
+					periodEnd: now + 30 * 24 * 60 * 60,
+					cancelAtPeriodEnd: true
+				});
+
+				await service.syncSubscription(stripeSubscription);
+
+				const [updated] = await db
+					.select()
+					.from(subscriptions)
+					.where(eq(subscriptions.organization_id, organization.id));
+
+				expect(updated.cancel_at_period_end).toBe(true);
+			});
+		});
+
 		it('throws error when organization_id missing from metadata', async () => {
 			await withTestTransaction(async () => {
 				const stripeSubscription = createMockStripeSubscription({
@@ -294,87 +322,51 @@ describe('SubscriptionService', () => {
 		});
 	});
 
-	describe('getScheduledDowngrade()', () => {
-		it('returns scheduled downgrade info', async () => {
+	describe('getPendingCancellation()', () => {
+		it('returns effective date when cancel_at_period_end is true', async () => {
 			await withTestTransaction(async () => {
-				const { organization, subscription, proPlan, freePlan } =
+				const { organization, subscription } =
 					await createBillingTestEnvironment();
 
 				await db
 					.update(subscriptions)
-					.set({
-						plan_id: proPlan.id,
-						stripe_schedule_id: 'sched_test',
-						scheduled_plan_id: freePlan.id
-					})
+					.set({ cancel_at_period_end: true })
 					.where(eq(subscriptions.id, subscription.id));
 
-				const result = await service.getScheduledDowngrade(organization.id);
+				const result = await service.getPendingCancellation(organization.id);
 
 				expect(result).not.toBeNull();
-				expect(result?.scheduledPlanId).toBe(freePlan.id);
+				expect(result?.effectiveDate).toBeInstanceOf(Date);
 			});
 		});
 
-		it('returns null when no schedule exists', async () => {
+		it('returns null when no cancellation pending', async () => {
 			await withTestTransaction(async () => {
 				const { organization } = await createBillingTestEnvironment();
 
-				const result = await service.getScheduledDowngrade(organization.id);
+				const result = await service.getPendingCancellation(organization.id);
 
 				expect(result).toBeNull();
 			});
 		});
 	});
 
-	describe('clearScheduledChange()', () => {
-		it('clears scheduled change tracking', async () => {
-			await withTestTransaction(async () => {
-				const { organization, subscription, freePlan } =
-					await createBillingTestEnvironment();
-
-				await db
-					.update(subscriptions)
-					.set({
-						stripe_schedule_id: 'sched_to_clear',
-						scheduled_plan_id: freePlan.id
-					})
-					.where(eq(subscriptions.id, subscription.id));
-
-				await service.clearScheduledChange(organization.id);
-
-				const [updated] = await db
-					.select()
-					.from(subscriptions)
-					.where(eq(subscriptions.organization_id, organization.id));
-
-				expect(updated.stripe_schedule_id).toBeNull();
-				expect(updated.scheduled_plan_id).toBeNull();
-			});
-		});
-	});
-
 	describe('scheduleDowngrade()', () => {
-		it('creates subscription schedule for downgrade from Pro', async () => {
+		it('sets cancel_at_period_end on Stripe and local record', async () => {
 			await withTestTransaction(async () => {
-				const { organization, subscription, proPlan, freePlan } =
+				const { organization, subscription, proPlan } =
 					await createBillingTestEnvironment();
 
-				// Set subscription to Pro plan with a mock Stripe subscription
-				const mockSubId = 'sub_mock_downgrade_test';
+				// Set subscription to Pro plan
 				await db
 					.update(subscriptions)
-					.set({
-						plan_id: proPlan.id,
-						stripe_subscription_id: mockSubId
-					})
+					.set({ plan_id: proPlan.id })
 					.where(eq(subscriptions.id, subscription.id));
 
-				// Add the subscription to mock state so createSubscriptionSchedule can find it
+				// Add subscription to mock Stripe state
 				const now = Math.floor(Date.now() / 1000);
-				const oneMonthFromNow = now + 30 * 24 * 60 * 60;
 				mockStripeState.subscriptions.push({
-					id: mockSubId,
+					id: subscription.stripe_subscription_id,
 					customer: subscription.stripe_customer_id,
 					status: 'active',
 					schedule: null,
@@ -384,7 +376,7 @@ describe('SubscriptionService', () => {
 								id: 'si_mock',
 								price: { id: proPlan.stripe_price_id },
 								current_period_start: now,
-								current_period_end: oneMonthFromNow
+								current_period_end: now + 30 * 24 * 60 * 60
 							}
 						]
 					},
@@ -394,12 +386,6 @@ describe('SubscriptionService', () => {
 				const effectiveDate = await service.scheduleDowngrade(organization.id);
 
 				expect(effectiveDate).toBeInstanceOf(Date);
-				expect(mockStripeState.calls.createSubscriptionSchedule).toHaveLength(
-					1
-				);
-				expect(mockStripeState.calls.updateSubscriptionSchedule).toHaveLength(
-					1
-				);
 
 				// Verify local record updated
 				const [updated] = await db
@@ -407,8 +393,7 @@ describe('SubscriptionService', () => {
 					.from(subscriptions)
 					.where(eq(subscriptions.organization_id, organization.id));
 
-				expect(updated.stripe_schedule_id).not.toBeNull();
-				expect(updated.scheduled_plan_id).toBe(freePlan.id);
+				expect(updated.cancel_at_period_end).toBe(true);
 			});
 		});
 
@@ -428,12 +413,12 @@ describe('SubscriptionService', () => {
 				const { organization, subscription, proPlan } =
 					await createBillingTestEnvironment();
 
-				// Set subscription to Pro plan with existing schedule
+				// Set subscription to Pro plan with cancel_at_period_end already set
 				await db
 					.update(subscriptions)
 					.set({
 						plan_id: proPlan.id,
-						stripe_schedule_id: 'sched_existing'
+						cancel_at_period_end: true
 					})
 					.where(eq(subscriptions.id, subscription.id));
 
@@ -445,44 +430,41 @@ describe('SubscriptionService', () => {
 	});
 
 	describe('cancelScheduledDowngrade()', () => {
-		it('cancels scheduled downgrade', async () => {
+		it('removes cancel_at_period_end on Stripe and local record', async () => {
 			await withTestTransaction(async () => {
-				const { organization, subscription, proPlan, freePlan } =
+				const { organization, subscription, proPlan } =
 					await createBillingTestEnvironment();
 
-				const scheduleId = 'sched_to_cancel';
-
-				// Set subscription with scheduled downgrade
+				// Set subscription with pending cancellation
 				await db
 					.update(subscriptions)
 					.set({
 						plan_id: proPlan.id,
-						stripe_schedule_id: scheduleId,
-						scheduled_plan_id: freePlan.id
+						cancel_at_period_end: true
 					})
 					.where(eq(subscriptions.id, subscription.id));
 
-				// Add schedule to mock state
-				mockStripeState.schedules.push({
-					id: scheduleId,
-					subscription: subscription.stripe_subscription_id,
-					phases: [
-						{
-							items: [{ price: proPlan.stripe_price_id }],
-							start_date: Math.floor(Date.now() / 1000),
-							end_date: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60
-						}
-					]
+				// Add subscription to mock Stripe state
+				const now = Math.floor(Date.now() / 1000);
+				mockStripeState.subscriptions.push({
+					id: subscription.stripe_subscription_id,
+					customer: subscription.stripe_customer_id,
+					status: 'active',
+					schedule: null,
+					items: {
+						data: [
+							{
+								id: 'si_mock',
+								price: { id: proPlan.stripe_price_id },
+								current_period_start: now,
+								current_period_end: now + 30 * 24 * 60 * 60
+							}
+						]
+					},
+					metadata: { organization_id: organization.id }
 				});
 
 				await service.cancelScheduledDowngrade(organization.id);
-
-				expect(mockStripeState.calls.cancelSubscriptionSchedule).toHaveLength(
-					1
-				);
-				expect(
-					mockStripeState.calls.cancelSubscriptionSchedule[0].scheduleId
-				).toBe(scheduleId);
 
 				// Verify local record cleared
 				const [updated] = await db
@@ -490,8 +472,7 @@ describe('SubscriptionService', () => {
 					.from(subscriptions)
 					.where(eq(subscriptions.organization_id, organization.id));
 
-				expect(updated.stripe_schedule_id).toBeNull();
-				expect(updated.scheduled_plan_id).toBeNull();
+				expect(updated.cancel_at_period_end).toBe(false);
 			});
 		});
 
@@ -499,7 +480,7 @@ describe('SubscriptionService', () => {
 			await withTestTransaction(async () => {
 				const { organization } = await createBillingTestEnvironment();
 
-				// No schedule set
+				// No cancel_at_period_end set
 				await expect(
 					service.cancelScheduledDowngrade(organization.id)
 				).rejects.toThrow('No plan change is scheduled');
@@ -579,6 +560,28 @@ describe('SubscriptionService', () => {
 				const plan = await service.getPlanById(
 					'00000000-0000-0000-0000-000000000000'
 				);
+
+				expect(plan).toBeNull();
+			});
+		});
+	});
+
+	describe('getPlanBySlug()', () => {
+		it('returns plan for valid slug', async () => {
+			await withTestTransaction(async () => {
+				await createBillingTestEnvironment();
+
+				const plan = await service.getPlanBySlug('free');
+
+				expect(plan).not.toBeNull();
+				expect(plan?.name).toBe('free');
+			});
+		});
+
+		it('returns null for unknown slug', async () => {
+			await withTestTransaction(async () => {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				const plan = await service.getPlanBySlug('enterprise' as any);
 
 				expect(plan).toBeNull();
 			});

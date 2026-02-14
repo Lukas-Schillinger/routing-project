@@ -28,26 +28,10 @@
 	};
 
 	// Mock credit balances for different states
-	const creditsGreen: CreditBalance = {
-		available: 150,
-		expiring: 0,
-		expiresAt: null
-	};
-	const creditsYellow: CreditBalance = {
-		available: 40,
-		expiring: 0,
-		expiresAt: null
-	};
-	const creditsRed: CreditBalance = {
-		available: 0,
-		expiring: 0,
-		expiresAt: null
-	};
-	const creditsPro: CreditBalance = {
-		available: 1800,
-		expiring: 0,
-		expiresAt: null
-	};
+	const creditsGreen: CreditBalance = { available: 150 };
+	const creditsYellow: CreditBalance = { available: 40 };
+	const creditsRed: CreditBalance = { available: 0 };
+	const creditsPro: CreditBalance = { available: 1800 };
 
 	let billingModalFreeOpen = $state(false);
 	let billingModalProOpen = $state(false);

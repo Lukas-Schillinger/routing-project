@@ -6,8 +6,7 @@ import {
 	type Plan
 } from '$lib/server/db/schema';
 import type { CreditBalance } from '$lib/schemas/billing';
-import type { SQL } from 'drizzle-orm';
-import { and, eq, gt, isNull, or, sql, sum } from 'drizzle-orm';
+import { and, eq, gte, inArray, sql } from 'drizzle-orm';
 import { ServiceError } from './errors';
 
 type CreditTransaction = typeof creditTransactions.$inferSelect;
@@ -19,7 +18,6 @@ type SubscriptionWithPlan = {
 };
 
 type IdempotencyColumn =
-	| typeof creditTransactions.stripe_invoice_id
 	| typeof creditTransactions.stripe_payment_intent_id
 	| typeof creditTransactions.optimization_job_id;
 
@@ -40,62 +38,70 @@ async function transactionExists(
 	return existing.length > 0;
 }
 
-function nonExpiredCreditsFilter(
-	organizationId: string,
-	now: Date
-): SQL<unknown> {
-	return and(
-		eq(creditTransactions.organization_id, organizationId),
-		or(
-			isNull(creditTransactions.expires_at),
-			gt(creditTransactions.expires_at, now)
-		)
-	)!;
-}
-
 export class BillingService {
 	/**
-	 * Get available credit balance for an organization (non-expired credits only).
+	 * Get the total usage (as a positive number) within the current billing period.
 	 */
-	async getAvailableCredits(organizationId: string): Promise<number> {
+	private async getUsageInPeriod(
+		organizationId: string,
+		periodStartsAt: Date
+	): Promise<number> {
 		const result = await db
-			.select({ total: sum(creditTransactions.amount) })
+			.select({
+				total: sql<number>`COALESCE(SUM(ABS(${creditTransactions.amount})), 0)::int`
+			})
 			.from(creditTransactions)
-			.where(nonExpiredCreditsFilter(organizationId, new Date()));
+			.where(
+				and(
+					eq(creditTransactions.organization_id, organizationId),
+					eq(creditTransactions.type, 'usage'),
+					gte(creditTransactions.created_at, periodStartsAt)
+				)
+			);
 
-		return Number(result[0]?.total ?? 0);
+		return result[0]?.total ?? 0;
 	}
 
 	/**
-	 * Get detailed credit balance including expiring credits.
+	 * Get the balance of purchased/adjusted/refunded credits (all time, no expiry).
+	 */
+	private async getPurchasedBalance(organizationId: string): Promise<number> {
+		const result = await db
+			.select({
+				total: sql<number>`COALESCE(SUM(${creditTransactions.amount}), 0)::int`
+			})
+			.from(creditTransactions)
+			.where(
+				and(
+					eq(creditTransactions.organization_id, organizationId),
+					inArray(creditTransactions.type, ['purchase', 'adjustment', 'refund'])
+				)
+			);
+
+		return result[0]?.total ?? 0;
+	}
+
+	/**
+	 * Get available credit balance for an organization.
+	 * Derives subscription credits from the plan instead of tracking them in a ledger.
+	 *
+	 * Formula: plan.monthly_credits - usage_this_period + purchased_balance
+	 */
+	async getAvailableCredits(organizationId: string): Promise<number> {
+		const { subscription, plan } = await this.getSubscription(organizationId);
+		const [usageThisPeriod, purchasedBalance] = await Promise.all([
+			this.getUsageInPeriod(organizationId, subscription.period_starts_at),
+			this.getPurchasedBalance(organizationId)
+		]);
+		return plan.monthly_credits - usageThisPeriod + purchasedBalance;
+	}
+
+	/**
+	 * Get credit balance details for display.
 	 */
 	async getCreditBalance(organizationId: string): Promise<CreditBalance> {
-		const now = new Date();
-
-		const [availableResult, expiringResult] = await Promise.all([
-			db
-				.select({ total: sum(creditTransactions.amount) })
-				.from(creditTransactions)
-				.where(nonExpiredCreditsFilter(organizationId, now)),
-			db
-				.select({
-					amount: sum(creditTransactions.amount),
-					expiresAt: sql<Date>`MIN(${creditTransactions.expires_at})`
-				})
-				.from(creditTransactions)
-				.where(
-					and(
-						eq(creditTransactions.organization_id, organizationId),
-						gt(creditTransactions.expires_at, now)
-					)
-				)
-		]);
-
-		return {
-			available: Number(availableResult[0]?.total ?? 0),
-			expiring: Number(expiringResult[0]?.amount ?? 0),
-			expiresAt: expiringResult[0]?.expiresAt ?? null
-		};
+		const available = await this.getAvailableCredits(organizationId);
+		return { available };
 	}
 
 	/**
@@ -107,35 +113,6 @@ export class BillingService {
 	): Promise<boolean> {
 		const available = await this.getAvailableCredits(organizationId);
 		return available >= requiredAmount;
-	}
-
-	/**
-	 * Grant subscription credits on renewal. Credits expire at billing period end.
-	 */
-	async grantSubscriptionCredits(
-		organizationId: string,
-		amount: number,
-		expiresAt: Date,
-		stripeInvoiceId: string,
-		description?: string
-	): Promise<void> {
-		if (
-			await transactionExists(
-				creditTransactions.stripe_invoice_id,
-				stripeInvoiceId
-			)
-		) {
-			return;
-		}
-
-		await db.insert(creditTransactions).values({
-			organization_id: organizationId,
-			type: 'subscription_grant',
-			amount,
-			expires_at: expiresAt,
-			stripe_invoice_id: stripeInvoiceId,
-			description: description ?? 'Monthly subscription credits'
-		});
 	}
 
 	/**

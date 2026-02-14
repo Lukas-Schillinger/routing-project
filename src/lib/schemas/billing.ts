@@ -27,6 +27,4 @@ export type UpgradeCheckoutInput = z.infer<typeof upgradeCheckoutSchema>;
 
 export type CreditBalance = {
 	available: number;
-	expiring: number;
-	expiresAt: Date | null;
 };

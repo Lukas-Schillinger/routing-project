@@ -37,10 +37,8 @@ export type SubscriptionStatus =
 	| 'unpaid';
 
 export type CreditTransactionType =
-	| 'subscription_grant'
 	| 'purchase'
 	| 'usage'
-	| 'expiration'
 	| 'adjustment'
 	| 'refund';
 
@@ -92,9 +90,10 @@ export const subscriptions = pgTable(
 			withTimezone: true
 		}).notNull(),
 
-		// Tracks scheduled plan changes (e.g., downgrade at period end)
-		stripe_schedule_id: text('stripe_schedule_id'),
-		scheduled_plan_id: uuid('scheduled_plan_id').references(() => plans.id)
+		// Whether the subscription will cancel at the end of the current period (downgrade to Free)
+		cancel_at_period_end: boolean('cancel_at_period_end')
+			.default(false)
+			.notNull()
 	},
 	(t) => [
 		uniqueIndex('subscriptions_org_uidx').on(t.organization_id),

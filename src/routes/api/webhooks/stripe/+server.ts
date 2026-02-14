@@ -1,6 +1,7 @@
 // POST /api/webhooks/stripe - Handle Stripe webhook events
 
 import { env } from '$env/dynamic/private';
+import { PlanSlug } from '$lib/config/billing';
 import { handleWebhookError, ServiceError } from '$lib/errors';
 import { stripeClient } from '$lib/services/external/stripe/client';
 import { billingService } from '$lib/services/server/billing.service';
@@ -25,10 +26,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			throw ServiceError.unauthorized('Missing Stripe signature');
 		}
 
-		// Get raw body for signature verification
 		const rawBody = await request.text();
 
-		// Verify and construct event
 		let event: Stripe.Event;
 		try {
 			event = stripeClient.constructWebhookEvent(
@@ -135,9 +134,7 @@ async function handleCheckoutCompleted(
 				'Credits granted from purchase'
 			);
 		}
-	}
-
-	if (checkoutType === 'upgrade') {
+	} else if (checkoutType === 'upgrade') {
 		const existingSubscriptionId = session.metadata?.existing_subscription_id;
 		const newSubscriptionId = session.subscription as string;
 
@@ -149,19 +146,16 @@ async function handleCheckoutCompleted(
 			return;
 		}
 
-		// Cancel the old subscription
 		await stripeClient.cancelSubscription(existingSubscriptionId);
 		log.info(
 			{ organizationId, oldSubscriptionId: existingSubscriptionId },
 			'Cancelled old subscription during upgrade'
 		);
 
-		// Update new subscription metadata with organization_id
 		await stripeClient.updateSubscription(newSubscriptionId, {
 			metadata: { organization_id: organizationId }
 		});
 
-		// Sync the new subscription to local DB
 		const newSubscription =
 			await stripeClient.getSubscription(newSubscriptionId);
 		await subscriptionService.syncSubscription(newSubscription);
@@ -202,7 +196,7 @@ const subscriptionEventConfig: Record<
 	'customer.subscription.deleted': {
 		level: 'info',
 		message: 'Subscription deleted',
-		sync: true
+		sync: false // Handled specially to auto-create Free subscription
 	},
 	'customer.subscription.paused': {
 		level: 'warn',
@@ -232,8 +226,7 @@ async function handleSubscriptionEvent(
 	const context = {
 		subscriptionId: subscription.id,
 		organizationId,
-		status: subscription.status,
-		schedule: subscription.schedule
+		status: subscription.status
 	};
 
 	if (!config) {
@@ -242,6 +235,11 @@ async function handleSubscriptionEvent(
 	}
 
 	log[config.level](context, config.message);
+
+	if (eventType === 'customer.subscription.deleted') {
+		await handleSubscriptionDeleted(subscription, log);
+		return;
+	}
 
 	if (config.sync) {
 		// Skip syncing if organization_id is missing - this happens during upgrades
@@ -256,22 +254,69 @@ async function handleSubscriptionEvent(
 		}
 
 		await subscriptionService.syncSubscription(subscription);
-
-		// Clear scheduled change tracking when schedule completes
-		if (
-			eventType === 'customer.subscription.updated' &&
-			!subscription.schedule &&
-			subscription.metadata.organization_id
-		) {
-			await subscriptionService.clearScheduledChange(
-				subscription.metadata.organization_id
-			);
-			log.info(
-				{ organizationId: subscription.metadata.organization_id },
-				'Cleared scheduled change after completion'
-			);
-		}
 	}
+}
+
+/**
+ * When a subscription is deleted (cancelled), auto-create a Free subscription
+ * so the org always has an active subscription.
+ */
+async function handleSubscriptionDeleted(
+	subscription: Stripe.Subscription,
+	log: Logger
+) {
+	const organizationId = subscription.metadata.organization_id;
+	const customerId =
+		typeof subscription.customer === 'string'
+			? subscription.customer
+			: subscription.customer?.id;
+
+	if (!organizationId || !customerId) {
+		log.warn(
+			{
+				subscriptionId: subscription.id,
+				organizationId,
+				customerId
+			},
+			'Subscription deleted but missing organization_id or customer_id - cannot auto-create Free subscription'
+		);
+		return;
+	}
+
+	const plan =
+		await subscriptionService.getPlanFromStripeSubscription(subscription);
+	if (plan?.name === PlanSlug.FREE) {
+		log.info(
+			{ organizationId },
+			'Free subscription deleted - not creating another'
+		);
+		return;
+	}
+
+	const freePlan = await subscriptionService.getPlanBySlug(PlanSlug.FREE);
+	if (!freePlan) {
+		log.error(
+			{ organizationId },
+			'Cannot auto-create Free subscription - Free plan not found'
+		);
+		return;
+	}
+
+	const newSubscription = await stripeClient.createSubscription({
+		customerId,
+		priceId: freePlan.stripe_price_id,
+		organizationId
+	});
+
+	await subscriptionService.syncSubscription(newSubscription);
+
+	log.info(
+		{
+			organizationId,
+			newSubscriptionId: newSubscription.id
+		},
+		'Auto-created Free subscription after Pro cancellation'
+	);
 }
 
 // ============================================================================
@@ -289,7 +334,7 @@ type InvoiceEventType =
 	| 'invoice.marked_uncollectible'
 	| 'invoice.voided';
 
-type InvoiceAction = 'grant_credits' | 'sync_subscription' | 'none';
+type InvoiceAction = 'sync_subscription' | 'none';
 
 const invoiceEventConfig: Record<
 	InvoiceEventType,
@@ -313,7 +358,7 @@ const invoiceEventConfig: Record<
 	'invoice.paid': {
 		level: 'info',
 		message: 'Invoice paid',
-		action: 'grant_credits'
+		action: 'none'
 	},
 	'invoice.payment_failed': {
 		level: 'warn',
@@ -376,12 +421,7 @@ async function handleInvoiceEvent(
 		return;
 	}
 
-	// Execute the action
 	switch (config.action) {
-		case 'grant_credits':
-			await grantSubscriptionCredits(invoice, context, config, log);
-			break;
-
 		case 'sync_subscription':
 			await syncSubscriptionFromInvoice(invoice, context, config, log);
 			break;
@@ -390,76 +430,6 @@ async function handleInvoiceEvent(
 		default:
 			log[config.level](context, config.message);
 	}
-}
-
-async function grantSubscriptionCredits(
-	invoice: Stripe.Invoice,
-	context: ReturnType<typeof getInvoiceContext>,
-	config: (typeof invoiceEventConfig)[InvoiceEventType],
-	log: Logger
-) {
-	const subscriptionRef = invoice.parent?.subscription_details?.subscription;
-
-	if (!subscriptionRef) {
-		log.info(
-			context,
-			`${config.message} (non-subscription, no credits to grant)`
-		);
-		return;
-	}
-
-	const subscription = await stripeClient.getSubscription(
-		typeof subscriptionRef === 'string' ? subscriptionRef : subscriptionRef.id
-	);
-	const organizationId = subscription.metadata.organization_id;
-
-	if (!organizationId) {
-		log.warn(
-			{ ...context, subscriptionId: subscription.id },
-			`${config.message} but subscription missing organization_id - cannot grant credits`
-		);
-		return;
-	}
-
-	const plan =
-		await subscriptionService.getPlanFromStripeSubscription(subscription);
-
-	if (!plan) {
-		log.warn(
-			{ ...context, organizationId },
-			`${config.message} but plan not found - cannot grant credits`
-		);
-		return;
-	}
-
-	const subscriptionItem = subscription.items.data[0];
-	if (!subscriptionItem) {
-		log.warn(
-			{ ...context, organizationId },
-			`${config.message} but subscription has no items - cannot grant credits`
-		);
-		return;
-	}
-
-	const periodEnd = new Date(subscriptionItem.current_period_end * 1000);
-
-	await billingService.grantSubscriptionCredits(
-		organizationId,
-		plan.monthly_credits,
-		periodEnd,
-		invoice.id,
-		`Monthly ${plan.name} plan credits`
-	);
-
-	log.info(
-		{
-			...context,
-			organizationId,
-			credits: plan.monthly_credits,
-			expiresAt: periodEnd.toISOString()
-		},
-		`${config.message} - credits granted`
-	);
 }
 
 async function syncSubscriptionFromInvoice(

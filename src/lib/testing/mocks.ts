@@ -1042,6 +1042,11 @@ export const mockStripeClient = {
 			);
 			sub.metadata = { ...sub.metadata, ...filteredMetadata };
 		}
+		// Handle cancel_at_period_end
+		if (params.cancel_at_period_end !== undefined) {
+			(sub as Record<string, unknown>).cancel_at_period_end =
+				params.cancel_at_period_end;
+		}
 		// Handle items update (for plan changes)
 		if (params.items) {
 			for (const item of params.items) {

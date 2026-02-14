@@ -38,10 +38,7 @@ export const billingConfig = {
 	freeMonthlyCredits: 200,
 
 	/** Monthly credits included in Pro plan */
-	proMonthlyCredits: 2000,
-
-	/** Grace period in days after payment failure */
-	gracePeriodDays: 7
+	proMonthlyCredits: 2000
 } as const;
 
 /**

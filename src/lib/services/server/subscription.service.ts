@@ -31,7 +31,6 @@ export class SubscriptionService {
 		origin: string,
 		returnUrl?: string
 	): Promise<{ url: string }> {
-		// Get current subscription with plan details
 		const subscription = await this.getSubscriptionWithPlan(organizationId);
 
 		if (!subscription) {
@@ -42,9 +41,8 @@ export class SubscriptionService {
 			throw ServiceError.conflict('Organization is already on Pro plan');
 		}
 
-		const redirectUrl = `${origin}${returnUrl || '/settings/billing'}`;
+		const redirectUrl = `${origin}${returnUrl ?? '/settings/billing'}`;
 
-		// Create Checkout session for new Pro subscription
 		const session = await this.stripe.createCheckoutSession({
 			customer: subscription.stripe_customer_id,
 			mode: 'subscription',
@@ -85,16 +83,14 @@ export class SubscriptionService {
 			);
 		}
 
-		// Get current subscription to find the Stripe customer
 		const subscription = await this.getSubscriptionByOrgId(organizationId);
 
 		if (!subscription) {
 			throw ServiceError.notFound('Subscription not found');
 		}
 
-		const redirectUrl = `${origin}${returnUrl || '/maps'}`;
+		const redirectUrl = `${origin}${returnUrl ?? '/maps'}`;
 
-		// Create Checkout session for one-time credit purchase
 		const session = await this.stripe.createCheckoutSession({
 			customer: subscription.stripe_customer_id,
 			mode: 'payment',
@@ -134,8 +130,7 @@ export class SubscriptionService {
 			throw ServiceError.notFound('Subscription not found');
 		}
 
-		// Default to /app if no return URL provided
-		const redirectUrl = `${origin}${returnUrl || '/maps'}`;
+		const redirectUrl = `${origin}${returnUrl ?? '/maps'}`;
 
 		const session = await this.stripe.createBillingPortalSession({
 			customer: subscription.stripe_customer_id,
@@ -151,8 +146,7 @@ export class SubscriptionService {
 	async syncSubscription(
 		stripeSubscription: Stripe.Subscription
 	): Promise<void> {
-		const organizationId = stripeSubscription.metadata
-			.organization_id as string;
+		const organizationId = stripeSubscription.metadata.organization_id;
 
 		if (!organizationId) {
 			throw ServiceError.badRequest(
@@ -160,7 +154,6 @@ export class SubscriptionService {
 			);
 		}
 
-		// Find the plan by Stripe price ID
 		const subscriptionItem = stripeSubscription.items.data[0];
 		if (!subscriptionItem) {
 			throw ServiceError.badRequest('Subscription has no items');
@@ -184,6 +177,7 @@ export class SubscriptionService {
 					subscriptionItem.current_period_start * 1000
 				),
 				period_ends_at: new Date(subscriptionItem.current_period_end * 1000),
+				cancel_at_period_end: stripeSubscription.cancel_at_period_end ?? false,
 				updated_at: new Date()
 			})
 			.where(eq(subscriptions.organization_id, organizationId));
@@ -203,22 +197,12 @@ export class SubscriptionService {
 	}
 
 	/**
-	 * Get subscription with plan details by organization ID.
-	 * Returns both subscription and plan name for proper plan type checking.
+	 * Get subscription with plan name by organization ID.
 	 */
 	private async getSubscriptionWithPlan(organizationId: string) {
 		const result = await db
 			.select({
-				id: subscriptions.id,
-				organization_id: subscriptions.organization_id,
-				plan_id: subscriptions.plan_id,
-				stripe_customer_id: subscriptions.stripe_customer_id,
-				stripe_subscription_id: subscriptions.stripe_subscription_id,
-				stripe_schedule_id: subscriptions.stripe_schedule_id,
-				scheduled_plan_id: subscriptions.scheduled_plan_id,
-				status: subscriptions.status,
-				period_starts_at: subscriptions.period_starts_at,
-				period_ends_at: subscriptions.period_ends_at,
+				subscription: subscriptions,
 				planName: plans.name
 			})
 			.from(subscriptions)
@@ -226,7 +210,9 @@ export class SubscriptionService {
 			.where(eq(subscriptions.organization_id, organizationId))
 			.limit(1);
 
-		return result[0] ?? null;
+		if (!result[0]) return null;
+
+		return { ...result[0].subscription, planName: result[0].planName };
 	}
 
 	/**
@@ -268,12 +254,12 @@ export class SubscriptionService {
 
 	/**
 	 * Schedule a downgrade to Free plan at the end of the current billing period.
-	 * Uses Stripe Subscription Schedules to handle the timing automatically.
+	 * Sets cancel_at_period_end on the Stripe subscription. When the subscription
+	 * cancels, the webhook will auto-create a new Free subscription.
 	 *
 	 * @returns The date when the downgrade will take effect
 	 */
 	async scheduleDowngrade(organizationId: string): Promise<Date> {
-		// Get subscription with plan details for proper plan type checking
 		const subscription = await this.getSubscriptionWithPlan(organizationId);
 
 		if (!subscription) {
@@ -284,52 +270,18 @@ export class SubscriptionService {
 			throw ServiceError.conflict('Organization is already on Free plan');
 		}
 
-		if (subscription.stripe_schedule_id) {
+		if (subscription.cancel_at_period_end) {
 			throw ServiceError.conflict('A plan change is already scheduled');
 		}
 
-		// Get the Free plan for the scheduled phase
-		const freePlan = await this.getPlanBySlug(PlanSlug.FREE);
-		if (!freePlan) {
-			throw ServiceError.internal('Free plan not found');
-		}
-
-		// Create a schedule from the existing subscription
-		const schedule = await this.stripe.createSubscriptionSchedule(
-			subscription.stripe_subscription_id
-		);
-
-		// Get the current phase end time (period end)
-		const currentPhase = schedule.phases[0];
-		if (!currentPhase) {
-			throw ServiceError.internal('Schedule has no current phase');
-		}
-
-		// Update schedule with two phases:
-		// 1. Current plan until period end
-		// 2. Free plan after period end
-		await this.stripe.updateSubscriptionSchedule(schedule.id, {
-			phases: [
-				{
-					items: currentPhase.items.map((item) => ({
-						price: typeof item.price === 'string' ? item.price : item.price.id,
-						quantity: item.quantity
-					})),
-					start_date: currentPhase.start_date,
-					end_date: currentPhase.end_date
-				},
-				{
-					items: [{ price: billingConfig.freePlanPriceId }]
-				}
-			]
+		await this.stripe.updateSubscription(subscription.stripe_subscription_id, {
+			cancel_at_period_end: true
 		});
 
-		// Update local record to track the scheduled change
 		await db
 			.update(subscriptions)
 			.set({
-				stripe_schedule_id: schedule.id,
-				scheduled_plan_id: freePlan.id,
+				cancel_at_period_end: true,
 				updated_at: new Date()
 			})
 			.where(eq(subscriptions.organization_id, organizationId));
@@ -339,7 +291,6 @@ export class SubscriptionService {
 
 	/**
 	 * Cancel a scheduled downgrade, keeping the current plan.
-	 * This is used when a user decides to stay on Pro before the period ends.
 	 */
 	async cancelScheduledDowngrade(organizationId: string): Promise<void> {
 		const subscription = await this.getSubscriptionByOrgId(organizationId);
@@ -348,64 +299,44 @@ export class SubscriptionService {
 			throw ServiceError.notFound('Subscription not found');
 		}
 
-		if (!subscription.stripe_schedule_id) {
+		if (!subscription.cancel_at_period_end) {
 			throw ServiceError.conflict('No plan change is scheduled');
 		}
 
-		// Release the schedule (keeps subscription active, removes scheduled changes)
-		await this.stripe.cancelSubscriptionSchedule(
-			subscription.stripe_schedule_id
-		);
+		await this.stripe.updateSubscription(subscription.stripe_subscription_id, {
+			cancel_at_period_end: false
+		});
 
-		// Clear the scheduled change from local record
 		await db
 			.update(subscriptions)
 			.set({
-				stripe_schedule_id: null,
-				scheduled_plan_id: null,
+				cancel_at_period_end: false,
 				updated_at: new Date()
 			})
 			.where(eq(subscriptions.organization_id, organizationId));
 	}
 
 	/**
-	 * Check if a downgrade is scheduled for an organization.
+	 * Check if a downgrade is pending for an organization.
 	 */
-	async getScheduledDowngrade(organizationId: string): Promise<{
-		scheduledPlanId: string;
+	async getPendingCancellation(organizationId: string): Promise<{
 		effectiveDate: Date;
 	} | null> {
 		const subscription = await this.getSubscriptionByOrgId(organizationId);
 
-		if (!subscription?.stripe_schedule_id || !subscription.scheduled_plan_id) {
+		if (!subscription?.cancel_at_period_end) {
 			return null;
 		}
 
 		return {
-			scheduledPlanId: subscription.scheduled_plan_id,
 			effectiveDate: subscription.period_ends_at
 		};
 	}
 
 	/**
-	 * Clear scheduled change tracking after the schedule completes.
-	 * Called from webhook when subscription.updated fires after schedule executes.
-	 */
-	async clearScheduledChange(organizationId: string): Promise<void> {
-		await db
-			.update(subscriptions)
-			.set({
-				stripe_schedule_id: null,
-				scheduled_plan_id: null,
-				updated_at: new Date()
-			})
-			.where(eq(subscriptions.organization_id, organizationId));
-	}
-
-	/**
 	 * Get plan by slug (name).
 	 */
-	private async getPlanBySlug(slug: PlanSlug) {
+	async getPlanBySlug(slug: PlanSlug) {
 		const result = await db
 			.select()
 			.from(plans)

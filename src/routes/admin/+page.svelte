@@ -12,8 +12,8 @@
 	function getTransactionBadgeVariant(
 		type: string
 	): 'default' | 'secondary' | 'destructive' | 'outline' {
-		const positiveTypes = ['subscription_grant', 'purchase', 'refund'];
-		const negativeTypes = ['usage', 'expiration'];
+		const positiveTypes = ['purchase', 'refund'];
+		const negativeTypes = ['usage'];
 
 		if (negativeTypes.includes(type)) return 'destructive';
 		if (positiveTypes.includes(type)) return 'default';
@@ -22,10 +22,8 @@
 
 	function formatTransactionType(type: string): string {
 		const labels: Record<string, string> = {
-			subscription_grant: 'Subscription',
 			purchase: 'Purchase',
 			usage: 'Usage',
-			expiration: 'Expired',
 			adjustment: 'Adjustment',
 			refund: 'Refund'
 		};

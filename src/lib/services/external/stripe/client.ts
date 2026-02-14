@@ -132,50 +132,6 @@ class StripeClient {
 	}
 
 	/**
-	 * Create a subscription schedule from an existing subscription.
-	 * This allows scheduling plan changes at the end of the current period.
-	 */
-	async createSubscriptionSchedule(
-		subscriptionId: string
-	): Promise<Stripe.SubscriptionSchedule> {
-		log.info({ subscriptionId }, 'Creating subscription schedule');
-		return this.stripe.subscriptionSchedules.create({
-			from_subscription: subscriptionId
-		});
-	}
-
-	/**
-	 * Update a subscription schedule with new phases.
-	 */
-	async updateSubscriptionSchedule(
-		scheduleId: string,
-		params: Stripe.SubscriptionScheduleUpdateParams
-	): Promise<Stripe.SubscriptionSchedule> {
-		log.info({ scheduleId }, 'Updating subscription schedule');
-		return this.stripe.subscriptionSchedules.update(scheduleId, params);
-	}
-
-	/**
-	 * Retrieve a subscription schedule.
-	 */
-	async getSubscriptionSchedule(
-		scheduleId: string
-	): Promise<Stripe.SubscriptionSchedule> {
-		return this.stripe.subscriptionSchedules.retrieve(scheduleId);
-	}
-
-	/**
-	 * Cancel/release a subscription schedule (keeps the subscription active
-	 * but removes scheduled changes).
-	 */
-	async cancelSubscriptionSchedule(
-		scheduleId: string
-	): Promise<Stripe.SubscriptionSchedule> {
-		log.info({ scheduleId }, 'Releasing subscription schedule');
-		return this.stripe.subscriptionSchedules.release(scheduleId);
-	}
-
-	/**
 	 * List all subscriptions for a customer
 	 */
 	async listCustomerSubscriptions(

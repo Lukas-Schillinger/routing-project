@@ -25,9 +25,9 @@
 	function getTypeBadgeVariant(
 		transactionType: string
 	): 'default' | 'secondary' | 'destructive' | 'outline' {
-		const positiveTypes = ['subscription_grant', 'purchase'];
-		const negativeTypes = ['usage', 'expiration'];
-		const neutralTypes = ['adjustment', 'refund'];
+		const positiveTypes = ['purchase', 'refund'];
+		const negativeTypes = ['usage'];
+		const neutralTypes = ['adjustment'];
 
 		if (positiveTypes.includes(transactionType)) return 'default';
 		if (negativeTypes.includes(transactionType)) return 'destructive';

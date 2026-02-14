@@ -17,7 +17,7 @@ type MockStripeSubscriptionOptions = {
 	priceId?: string;
 	periodStart?: number;
 	periodEnd?: number;
-	schedule?: string | null;
+	cancelAtPeriodEnd?: boolean;
 };
 
 /**
@@ -35,7 +35,7 @@ export function createMockStripeSubscription(
 		priceId: 'price_mock',
 		periodStart: now,
 		periodEnd: now + 30 * 24 * 60 * 60,
-		schedule: null
+		cancelAtPeriodEnd: false
 	};
 	const config = { ...defaults, ...options };
 
@@ -44,7 +44,7 @@ export function createMockStripeSubscription(
 		object: 'subscription',
 		customer: config.customer,
 		status: config.status,
-		schedule: config.schedule,
+		cancel_at_period_end: config.cancelAtPeriodEnd,
 		items: {
 			object: 'list',
 			data: [
