@@ -777,17 +777,18 @@ type GetSubscriptionCall = {
 	subscriptionId: string;
 };
 
-type CreateScheduleCall = {
-	subscriptionId: string;
+type CreateSetupIntentCall = {
+	customer: string;
+	metadata?: Record<string, string>;
 };
 
-type UpdateScheduleCall = {
-	scheduleId: string;
-	params: Stripe.SubscriptionScheduleUpdateParams;
+type RetrieveSetupIntentCall = {
+	id: string;
 };
 
-type CancelScheduleCall = {
-	scheduleId: string;
+type SetDefaultPaymentMethodCall = {
+	customerId: string;
+	paymentMethodId: string;
 };
 
 type CancelSubscriptionCall = {
@@ -816,15 +817,13 @@ type MockBillingPortalSession = {
 	return_url: string;
 };
 
-type MockSubscriptionSchedule = {
+type MockSetupIntent = {
 	id: string;
-	subscription: string;
-	phases: Array<{
-		items: Array<{ price: string; quantity?: number }>;
-		start_date: number;
-		end_date: number;
-	}>;
-	status?: string;
+	client_secret: string;
+	customer: string;
+	status: string;
+	payment_method: string | null;
+	metadata: Record<string, string>;
 };
 
 /**
@@ -870,23 +869,23 @@ export const mockStripeState = {
 	}>,
 	checkoutSessions: [] as MockCheckoutSession[],
 	billingPortalSessions: [] as MockBillingPortalSession[],
-	schedules: [] as MockSubscriptionSchedule[],
+	setupIntents: [] as MockSetupIntent[],
 	calls: {
 		createCustomer: [] as CreateCustomerCall[],
 		createSubscription: [] as CreateSubscriptionCall[],
 		createCheckoutSession: [] as CreateCheckoutSessionCall[],
 		createBillingPortalSession: [] as CreateBillingPortalSessionCall[],
 		getSubscription: [] as GetSubscriptionCall[],
-		createSubscriptionSchedule: [] as CreateScheduleCall[],
-		updateSubscriptionSchedule: [] as UpdateScheduleCall[],
-		cancelSubscriptionSchedule: [] as CancelScheduleCall[],
+		createSetupIntent: [] as CreateSetupIntentCall[],
+		retrieveSetupIntent: [] as RetrieveSetupIntentCall[],
+		setCustomerDefaultPaymentMethod: [] as SetDefaultPaymentMethodCall[],
 		cancelSubscription: [] as CancelSubscriptionCall[],
 		constructWebhookEvent: [] as ConstructWebhookEventCall[]
 	},
 	customerIdCounter: 0,
 	subscriptionIdCounter: 0,
 	checkoutSessionIdCounter: 0,
-	scheduleIdCounter: 0,
+	setupIntentIdCounter: 0,
 
 	/** Reset all state (call in beforeEach) */
 	clear() {
@@ -894,21 +893,21 @@ export const mockStripeState = {
 		this.subscriptions = [];
 		this.checkoutSessions = [];
 		this.billingPortalSessions = [];
-		this.schedules = [];
+		this.setupIntents = [];
 		this.calls.createCustomer = [];
 		this.calls.createSubscription = [];
 		this.calls.createCheckoutSession = [];
 		this.calls.createBillingPortalSession = [];
 		this.calls.getSubscription = [];
-		this.calls.createSubscriptionSchedule = [];
-		this.calls.updateSubscriptionSchedule = [];
-		this.calls.cancelSubscriptionSchedule = [];
+		this.calls.createSetupIntent = [];
+		this.calls.retrieveSetupIntent = [];
+		this.calls.setCustomerDefaultPaymentMethod = [];
 		this.calls.cancelSubscription = [];
 		this.calls.constructWebhookEvent = [];
 		this.customerIdCounter = 0;
 		this.subscriptionIdCounter = 0;
 		this.checkoutSessionIdCounter = 0;
-		this.scheduleIdCounter = 0;
+		this.setupIntentIdCounter = 0;
 	}
 };
 
@@ -1073,86 +1072,45 @@ export const mockStripeClient = {
 		return sub;
 	},
 
-	createSubscriptionSchedule: async (subscriptionId: string) => {
-		mockStripeState.calls.createSubscriptionSchedule.push({ subscriptionId });
-		const sub = mockStripeState.subscriptions.find(
-			(s) => s.id === subscriptionId
-		);
-		if (!sub) {
-			throw new Error(`Mock: Subscription ${subscriptionId} not found`);
-		}
-
-		const schedule: MockSubscriptionSchedule = {
-			id: `sub_sched_mock_${++mockStripeState.scheduleIdCounter}`,
-			subscription: subscriptionId,
-			phases: [
-				{
-					items: [{ price: sub.items.data[0].price.id, quantity: 1 }],
-					start_date: sub.items.data[0].current_period_start,
-					end_date: sub.items.data[0].current_period_end
-				}
-			]
+	createSetupIntent: async (params: {
+		customer: string;
+		metadata?: Record<string, string>;
+	}) => {
+		mockStripeState.calls.createSetupIntent.push(params);
+		const setupIntent: MockSetupIntent = {
+			id: `seti_mock_${++mockStripeState.setupIntentIdCounter}`,
+			client_secret: `seti_mock_${mockStripeState.setupIntentIdCounter}_secret_mock`,
+			customer: params.customer,
+			status: 'requires_payment_method',
+			payment_method: null,
+			metadata: params.metadata ?? {}
 		};
-		mockStripeState.schedules.push(schedule);
-		sub.schedule = schedule.id;
-		return schedule;
+		mockStripeState.setupIntents.push(setupIntent);
+		return setupIntent;
 	},
 
-	updateSubscriptionSchedule: async (
-		scheduleId: string,
-		params: Stripe.SubscriptionScheduleUpdateParams
+	retrieveSetupIntent: async (id: string) => {
+		mockStripeState.calls.retrieveSetupIntent.push({ id });
+		const si = mockStripeState.setupIntents.find((s) => s.id === id);
+		if (!si) {
+			throw new Error(`Mock: SetupIntent ${id} not found`);
+		}
+		return si;
+	},
+
+	setCustomerDefaultPaymentMethod: async (
+		customerId: string,
+		paymentMethodId: string
 	) => {
-		mockStripeState.calls.updateSubscriptionSchedule.push({
-			scheduleId,
-			params
+		mockStripeState.calls.setCustomerDefaultPaymentMethod.push({
+			customerId,
+			paymentMethodId
 		});
-		const schedule = mockStripeState.schedules.find((s) => s.id === scheduleId);
-		if (!schedule) {
-			throw new Error(`Mock: Schedule ${scheduleId} not found`);
+		const customer = mockStripeState.customers.find((c) => c.id === customerId);
+		if (!customer) {
+			throw new Error(`Mock: Customer ${customerId} not found`);
 		}
-		if (params.phases) {
-			schedule.phases = params.phases.map((p) => ({
-				items:
-					p.items?.map((i) => ({
-						price: typeof i.price === 'string' ? i.price : '',
-						quantity: i.quantity
-					})) ?? [],
-				start_date:
-					typeof p.start_date === 'number' ? p.start_date : Date.now() / 1000,
-				end_date:
-					typeof p.end_date === 'number'
-						? p.end_date
-						: Date.now() / 1000 + 30 * 24 * 60 * 60
-			}));
-		}
-		return schedule;
-	},
-
-	cancelSubscriptionSchedule: async (scheduleId: string) => {
-		mockStripeState.calls.cancelSubscriptionSchedule.push({ scheduleId });
-		const index = mockStripeState.schedules.findIndex(
-			(s) => s.id === scheduleId
-		);
-		if (index === -1) {
-			throw new Error(`Mock: Schedule ${scheduleId} not found`);
-		}
-		const [schedule] = mockStripeState.schedules.splice(index, 1);
-		// Clear schedule reference from subscription
-		const sub = mockStripeState.subscriptions.find(
-			(s) => s.schedule === scheduleId
-		);
-		if (sub) {
-			sub.schedule = null;
-		}
-		return { ...schedule, status: 'released' };
-	},
-
-	getSubscriptionSchedule: async (scheduleId: string) => {
-		const schedule = mockStripeState.schedules.find((s) => s.id === scheduleId);
-		if (!schedule) {
-			throw new Error(`Mock: Schedule ${scheduleId} not found`);
-		}
-		return schedule;
+		return customer;
 	},
 
 	cancelSubscription: async (subscriptionId: string) => {

@@ -87,7 +87,42 @@ class StripeClient {
 	}
 
 	/**
-	 * Create a Checkout Session for subscription upgrade
+	 * Create a Setup Intent to collect a payment method without charging.
+	 */
+	async createSetupIntent(params: {
+		customer: string;
+		metadata?: Record<string, string>;
+	}): Promise<Stripe.SetupIntent> {
+		log.info({ customer: params.customer }, 'Creating Stripe Setup Intent');
+		return this.stripe.setupIntents.create({
+			customer: params.customer,
+			payment_method_types: ['card'],
+			metadata: params.metadata
+		});
+	}
+
+	/**
+	 * Retrieve a Setup Intent by ID.
+	 */
+	async retrieveSetupIntent(id: string): Promise<Stripe.SetupIntent> {
+		return this.stripe.setupIntents.retrieve(id);
+	}
+
+	/**
+	 * Set the default payment method on a customer.
+	 */
+	async setCustomerDefaultPaymentMethod(
+		customerId: string,
+		paymentMethodId: string
+	): Promise<Stripe.Customer> {
+		log.info({ customerId }, 'Setting default payment method');
+		return this.stripe.customers.update(customerId, {
+			invoice_settings: { default_payment_method: paymentMethodId }
+		});
+	}
+
+	/**
+	 * Create a Checkout Session for credit purchases.
 	 */
 	async createCheckoutSession(
 		params: Stripe.Checkout.SessionCreateParams

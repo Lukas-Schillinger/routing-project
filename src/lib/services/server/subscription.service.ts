@@ -20,52 +20,93 @@ export class SubscriptionService {
 	}
 
 	/**
-	 * Upgrade an organization's subscription to Pro plan.
-	 * Creates a Checkout session for the new subscription - the old subscription
-	 * will be cancelled when the checkout completes (handled by webhook).
-	 *
-	 * @returns url - Stripe Checkout session URL for redirect
+	 * Create a Setup Intent for collecting a payment method before upgrading.
+	 * Returns the clientSecret for the Payment Element on the client.
 	 */
-	async upgradeToProPlan(
-		organizationId: string,
-		origin: string,
-		returnUrl?: string
-	): Promise<{ url: string }> {
-		const subscription = await this.getSubscriptionWithPlan(organizationId);
+	async createUpgradeSetupIntent(
+		organizationId: string
+	): Promise<{ clientSecret: string }> {
+		const subscription = await this.requireUpgradeEligible(organizationId);
 
-		if (!subscription) {
-			throw ServiceError.notFound('Subscription not found');
-		}
-
-		if (subscription.planName === PlanSlug.PRO) {
-			throw ServiceError.conflict('Organization is already on Pro plan');
-		}
-
-		const redirectUrl = `${origin}${returnUrl ?? '/settings/billing'}`;
-
-		const session = await this.stripe.createCheckoutSession({
+		const setupIntent = await this.stripe.createSetupIntent({
 			customer: subscription.stripe_customer_id,
-			mode: 'subscription',
-			line_items: [
-				{
-					price: billingConfig.proPlanPriceId,
-					quantity: 1
-				}
-			],
-			success_url: redirectUrl,
-			cancel_url: redirectUrl,
-			metadata: {
-				organization_id: organizationId,
-				checkout_type: 'upgrade',
-				existing_subscription_id: subscription.stripe_subscription_id
-			}
+			metadata: { organization_id: organizationId }
 		});
 
-		if (!session.url) {
-			throw ServiceError.internal('Failed to create checkout session URL');
+		if (!setupIntent.client_secret) {
+			throw ServiceError.internal('Failed to create Setup Intent');
 		}
 
-		return { url: session.url };
+		return { clientSecret: setupIntent.client_secret };
+	}
+
+	/**
+	 * Complete the upgrade to Pro after a Setup Intent succeeds.
+	 * Sets the payment method as customer default, then updates the subscription in-place.
+	 */
+	async completeUpgrade(
+		organizationId: string,
+		setupIntentId: string
+	): Promise<void> {
+		const setupIntent = await this.stripe.retrieveSetupIntent(setupIntentId);
+
+		if (setupIntent.status !== 'succeeded') {
+			throw ServiceError.badRequest(
+				`Setup Intent status is '${setupIntent.status}', expected 'succeeded'`
+			);
+		}
+
+		if (setupIntent.metadata?.organization_id !== organizationId) {
+			throw ServiceError.forbidden(
+				'Setup Intent does not belong to this organization'
+			);
+		}
+
+		const subscription = await this.requireUpgradeEligible(organizationId);
+
+		const paymentMethodId =
+			typeof setupIntent.payment_method === 'string'
+				? setupIntent.payment_method
+				: setupIntent.payment_method?.id;
+
+		if (!paymentMethodId) {
+			throw ServiceError.badRequest(
+				'Setup Intent has no payment method attached'
+			);
+		}
+
+		// Set as customer default so future invoices charge this card
+		await this.stripe.setCustomerDefaultPaymentMethod(
+			subscription.stripe_customer_id,
+			paymentMethodId
+		);
+
+		// Fetch the current Stripe subscription to get its item ID
+		const stripeSubscription = await this.stripe.getSubscription(
+			subscription.stripe_subscription_id
+		);
+		const subscriptionItemId = stripeSubscription.items.data[0]?.id;
+
+		if (!subscriptionItemId) {
+			throw ServiceError.internal('Could not find subscription item to update');
+		}
+
+		// Update the existing subscription in-place to the Pro price
+		const updatedSubscription = await this.stripe.updateSubscription(
+			subscription.stripe_subscription_id,
+			{
+				items: [
+					{
+						id: subscriptionItemId,
+						price: billingConfig.proPlanPriceId
+					}
+				],
+				proration_behavior: 'create_prorations',
+				metadata: { organization_id: organizationId }
+			}
+		);
+
+		await this.syncSubscription(updatedSubscription);
 	}
 
 	/**
@@ -194,6 +235,24 @@ export class SubscriptionService {
 			.limit(1);
 
 		return result[0] ?? null;
+	}
+
+	/**
+	 * Get subscription with plan and verify it is eligible for upgrade to Pro.
+	 * Throws if no subscription exists or already on Pro.
+	 */
+	private async requireUpgradeEligible(organizationId: string) {
+		const subscription = await this.getSubscriptionWithPlan(organizationId);
+
+		if (!subscription) {
+			throw ServiceError.notFound('Subscription not found');
+		}
+
+		if (subscription.planName === PlanSlug.PRO) {
+			throw ServiceError.conflict('Organization is already on Pro plan');
+		}
+
+		return subscription;
 	}
 
 	/**

@@ -49,6 +49,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 		return json({ received: true });
 	} catch (error) {
+		log.error({ err: error }, 'Stripe webhook handler error');
 		const { body, status } = handleWebhookError(error, 'stripe');
 		return json(body, { status });
 	}
@@ -134,36 +135,6 @@ async function handleCheckoutCompleted(
 				'Credits granted from purchase'
 			);
 		}
-	} else if (checkoutType === 'upgrade') {
-		const existingSubscriptionId = session.metadata?.existing_subscription_id;
-		const newSubscriptionId = session.subscription as string;
-
-		if (!existingSubscriptionId || !newSubscriptionId) {
-			log.warn(
-				{ sessionId: session.id, existingSubscriptionId, newSubscriptionId },
-				'Upgrade checkout missing subscription IDs'
-			);
-			return;
-		}
-
-		await stripeClient.cancelSubscription(existingSubscriptionId);
-		log.info(
-			{ organizationId, oldSubscriptionId: existingSubscriptionId },
-			'Cancelled old subscription during upgrade'
-		);
-
-		await stripeClient.updateSubscription(newSubscriptionId, {
-			metadata: { organization_id: organizationId }
-		});
-
-		const newSubscription =
-			await stripeClient.getSubscription(newSubscriptionId);
-		await subscriptionService.syncSubscription(newSubscription);
-
-		log.info(
-			{ organizationId, newSubscriptionId },
-			'Upgrade completed - new subscription synced'
-		);
 	}
 }
 
@@ -328,6 +299,7 @@ type InvoiceEventType =
 	| 'invoice.finalized'
 	| 'invoice.finalization_failed'
 	| 'invoice.paid'
+	| 'invoice.payment_succeeded'
 	| 'invoice.payment_failed'
 	| 'invoice.payment_action_required'
 	| 'invoice.upcoming'
@@ -358,6 +330,11 @@ const invoiceEventConfig: Record<
 	'invoice.paid': {
 		level: 'info',
 		message: 'Invoice paid',
+		action: 'none'
+	},
+	'invoice.payment_succeeded': {
+		level: 'info',
+		message: 'Invoice payment succeeded',
 		action: 'none'
 	},
 	'invoice.payment_failed': {

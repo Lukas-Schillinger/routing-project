@@ -2,11 +2,13 @@
 <script lang="ts">
 	import { goto, invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import { page } from '$app/stores';
 	import { ConfirmDeleteDialog } from '$lib/components/ConfirmDeleteDialog';
 	import { Button } from '$lib/components/ui/button';
 	import { Separator } from '$lib/components/ui/separator';
 	import { usersApi } from '$lib/services/api/auth';
 	import { Settings, Trash2 } from 'lucide-svelte';
+	import { onMount } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import type { PageData } from './$types';
 	import BillingCard from './BillingCard.svelte';
@@ -17,6 +19,15 @@
 	let { data }: { data: PageData } = $props();
 
 	const canDeleteAccount = $derived(data.permissions.includes('users:delete'));
+
+	onMount(() => {
+		if ($page.url.searchParams.has('upgraded')) {
+			toast.success('Upgraded to Pro!');
+			const url = new URL($page.url);
+			url.searchParams.delete('upgraded');
+			history.replaceState({}, '', url.pathname + url.search);
+		}
+	});
 
 	async function handleDeleteAccount() {
 		try {

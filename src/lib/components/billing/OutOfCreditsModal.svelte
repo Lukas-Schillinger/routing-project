@@ -1,11 +1,10 @@
 <script lang="ts">
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { Button } from '$lib/components/ui/button';
-	import { Spinner } from '$lib/components/ui/spinner';
+	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import type { PlanSlug } from '$lib/config/billing';
-	import { billingApi } from '$lib/services/api/billing';
 	import { Check, RocketLaunch } from 'phosphor-svelte';
-	import { page } from '$app/stores';
 
 	type Props = {
 		open: boolean;
@@ -24,8 +23,6 @@
 	}: Props = $props();
 
 	const isFreePlan = $derived(planSlug === 'free');
-	let isLoading = $state(false);
-	let error = $state<string | null>(null);
 
 	const proFeatures = [
 		'2,000 monthly credits included',
@@ -34,27 +31,12 @@
 		'Email support'
 	];
 
-	async function handleUpgrade() {
-		// If parent provides custom onUpgrade handler, use that
+	function handleUpgrade() {
 		if (onUpgrade) {
 			onUpgrade();
 			return;
 		}
-
-		// Otherwise, handle upgrade directly
-		error = null;
-		isLoading = true;
-
-		try {
-			const response = await billingApi.createUpgradeCheckout({
-				returnUrl: $page.url.pathname
-			});
-			window.location.href = response.url;
-		} catch (e) {
-			error =
-				e instanceof Error ? e.message : 'Failed to create checkout session';
-			isLoading = false;
-		}
+		goto(resolve('/auth/account/upgrade'));
 	}
 </script>
 
@@ -89,22 +71,9 @@
 						<span class="text-muted-foreground">/ month</span>
 					</div>
 
-					<Button
-						class="mt-4 w-full"
-						onclick={handleUpgrade}
-						disabled={isLoading}
-					>
-						{#if isLoading}
-							<Spinner class="mr-2" />
-							Processing...
-						{:else}
-							Upgrade to Pro
-						{/if}
+					<Button class="mt-4 w-full" onclick={handleUpgrade}>
+						Upgrade to Pro
 					</Button>
-
-					{#if error}
-						<p class="mt-2 text-sm text-destructive">{error}</p>
-					{/if}
 
 					<div class="mt-6 border-t pt-4">
 						<p class="mb-3 text-sm font-medium">Everything in Free, plus:</p>

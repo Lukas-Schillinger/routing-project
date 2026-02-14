@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { creditPurchaseSchema, upgradeCheckoutSchema } from './billing';
+import { creditPurchaseSchema } from './billing';
 
 /**
  * Billing Schema Tests
@@ -56,37 +56,6 @@ describe('creditPurchaseSchema', () => {
 		const result = creditPurchaseSchema.safeParse({
 			amount: 500,
 			returnUrl: 'maps/123'
-		});
-		expect(result.success).toBe(false);
-	});
-});
-
-describe('upgradeCheckoutSchema', () => {
-	it('accepts empty object', () => {
-		const result = upgradeCheckoutSchema.safeParse({});
-		expect(result.success).toBe(true);
-	});
-
-	it('accepts valid returnUrl', () => {
-		const result = upgradeCheckoutSchema.safeParse({
-			returnUrl: '/settings/billing'
-		});
-		expect(result.success).toBe(true);
-		if (result.success) {
-			expect(result.data.returnUrl).toBe('/settings/billing');
-		}
-	});
-
-	it('rejects absolute URL in returnUrl', () => {
-		const result = upgradeCheckoutSchema.safeParse({
-			returnUrl: 'https://evil.com/phish'
-		});
-		expect(result.success).toBe(false);
-	});
-
-	it('rejects protocol-relative URL in returnUrl', () => {
-		const result = upgradeCheckoutSchema.safeParse({
-			returnUrl: '//evil.com/phish'
 		});
 		expect(result.success).toBe(false);
 	});

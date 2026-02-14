@@ -7,6 +7,8 @@
 	import { billingApi } from '$lib/services/api/billing';
 	import type { CreditBalance } from '$lib/schemas/billing';
 	import type { Plan } from '$lib/server/db/schema';
+	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { Check, RocketLaunch } from 'phosphor-svelte';
 	import { page } from '$app/stores';
 
@@ -76,27 +78,12 @@
 		'Email support'
 	];
 
-	async function handleUpgrade() {
-		// If parent provides custom onUpgrade handler, use that
+	function handleUpgrade() {
 		if (onUpgrade) {
 			onUpgrade();
 			return;
 		}
-
-		// Otherwise, handle upgrade directly
-		error = null;
-		isLoading = true;
-
-		try {
-			const response = await billingApi.createUpgradeCheckout({
-				returnUrl: $page.url.pathname
-			});
-			window.location.href = response.url;
-		} catch (e) {
-			error =
-				e instanceof Error ? e.message : 'Failed to create checkout session';
-			isLoading = false;
-		}
+		goto(resolve('/auth/account/upgrade'));
 	}
 
 	async function handlePurchase() {
@@ -131,7 +118,11 @@
 				{credits.available.toLocaleString()} / {plan.monthly_credits.toLocaleString()}
 			</span>
 		</div>
-		<Progress value={remainingPercentage} max={100} class={progressColorClass} />
+		<Progress
+			value={remainingPercentage}
+			max={100}
+			class={progressColorClass}
+		/>
 		<p class="text-center text-xs text-muted-foreground">
 			{remainingPercentage}% remaining this period
 		</p>

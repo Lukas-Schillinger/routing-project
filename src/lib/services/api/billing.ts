@@ -1,25 +1,9 @@
-import type {
-	CreditPurchaseInput,
-	UpgradeCheckoutInput
-} from '$lib/schemas/billing';
+import type { CreditPurchaseInput } from '$lib/schemas/billing';
 import { apiClient } from './base';
 
 type CheckoutResponse = { url: string };
 
 class BillingApiService {
-	/**
-	 * Create Stripe Checkout session for upgrading to Pro plan
-	 * @param data.returnUrl - Optional URL to redirect to after checkout (defaults to /maps)
-	 */
-	async createUpgradeCheckout(
-		data?: UpgradeCheckoutInput
-	): Promise<CheckoutResponse> {
-		return apiClient.post<CheckoutResponse>(
-			'/billing/checkout/subscription',
-			data ?? {}
-		);
-	}
-
 	/**
 	 * Create Stripe Checkout session for purchasing credits
 	 * @param data.amount - Number of credits to purchase

@@ -33,72 +33,29 @@ beforeEach(() => {
 });
 
 describe('SubscriptionService', () => {
-	describe('upgradeToProPlan()', () => {
-		it('creates checkout session and returns URL', async () => {
-			await withTestTransaction(async () => {
-				const { organization } = await createBillingTestEnvironment();
-
-				const result = await service.upgradeToProPlan(
-					organization.id,
-					'https://example.com'
-				);
-
-				expect(result.url).toContain('https://checkout.stripe.com');
-				expect(mockStripeState.calls.createCheckoutSession).toHaveLength(1);
-			});
-		});
-
-		it('creates checkout session with correct metadata', async () => {
+	describe('createUpgradeSetupIntent()', () => {
+		it('creates setup intent for the correct customer and returns clientSecret', async () => {
 			await withTestTransaction(async () => {
 				const { organization, subscription } =
 					await createBillingTestEnvironment();
 
-				await service.upgradeToProPlan(organization.id, 'https://example.com');
+				const result = await service.createUpgradeSetupIntent(organization.id);
 
-				const call = mockStripeState.calls.createCheckoutSession[0];
-				expect(call.mode).toBe('subscription');
+				expect(result.clientSecret).toContain('seti_mock_');
+
+				const call = mockStripeState.calls.createSetupIntent[0];
+				expect(call.customer).toBe(subscription.stripe_customer_id);
 				expect(call.metadata).toMatchObject({
-					organization_id: organization.id,
-					checkout_type: 'upgrade',
-					existing_subscription_id: subscription.stripe_subscription_id
+					organization_id: organization.id
 				});
-			});
-		});
-
-		it('uses default returnUrl of /settings/billing when not provided', async () => {
-			await withTestTransaction(async () => {
-				const { organization } = await createBillingTestEnvironment();
-
-				await service.upgradeToProPlan(organization.id, 'https://example.com');
-
-				const call = mockStripeState.calls.createCheckoutSession[0];
-				expect(call.success_url).toBe('https://example.com/settings/billing');
-				expect(call.cancel_url).toBe('https://example.com/settings/billing');
-			});
-		});
-
-		it('uses custom returnUrl when provided', async () => {
-			await withTestTransaction(async () => {
-				const { organization } = await createBillingTestEnvironment();
-
-				await service.upgradeToProPlan(
-					organization.id,
-					'https://example.com',
-					'/dashboard'
-				);
-
-				const call = mockStripeState.calls.createCheckoutSession[0];
-				expect(call.success_url).toBe('https://example.com/dashboard');
-				expect(call.cancel_url).toBe('https://example.com/dashboard');
 			});
 		});
 
 		it('throws not found if subscription does not exist', async () => {
 			await withTestTransaction(async () => {
 				await expect(
-					service.upgradeToProPlan(
-						'00000000-0000-0000-0000-000000000000',
-						'https://example.com'
+					service.createUpgradeSetupIntent(
+						'00000000-0000-0000-0000-000000000000'
 					)
 				).rejects.toMatchObject({ code: 'NOT_FOUND' });
 			});
@@ -109,14 +66,159 @@ describe('SubscriptionService', () => {
 				const { organization, subscription, proPlan } =
 					await createBillingTestEnvironment();
 
-				// Set subscription to Pro plan
 				await db
 					.update(subscriptions)
 					.set({ plan_id: proPlan.id })
 					.where(eq(subscriptions.id, subscription.id));
 
 				await expect(
-					service.upgradeToProPlan(organization.id, 'https://example.com')
+					service.createUpgradeSetupIntent(organization.id)
+				).rejects.toThrow('already on Pro plan');
+			});
+		});
+	});
+
+	describe('completeUpgrade()', () => {
+		it('sets payment method, updates subscription in-place, and syncs to DB', async () => {
+			await withTestTransaction(async () => {
+				const { organization, subscription, proPlan } =
+					await createBillingTestEnvironment();
+
+				// Add customer to mock Stripe state
+				mockStripeState.customers.push({
+					id: subscription.stripe_customer_id,
+					metadata: { organization_id: organization.id }
+				});
+
+				// Create a succeeded setup intent
+				const setupIntentId = 'seti_test_upgrade';
+				mockStripeState.setupIntents.push({
+					id: setupIntentId,
+					client_secret: `${setupIntentId}_secret`,
+					customer: subscription.stripe_customer_id,
+					status: 'succeeded',
+					payment_method: 'pm_mock_card',
+					metadata: { organization_id: organization.id }
+				});
+
+				// Add active subscription to mock Stripe state
+				const now = Math.floor(Date.now() / 1000);
+				mockStripeState.subscriptions.push({
+					id: subscription.stripe_subscription_id,
+					customer: subscription.stripe_customer_id,
+					status: 'active',
+					schedule: null,
+					items: {
+						data: [
+							{
+								id: 'si_mock_item',
+								price: { id: billingConfig.freePlanPriceId },
+								current_period_start: now,
+								current_period_end: now + 30 * 24 * 60 * 60
+							}
+						]
+					},
+					metadata: { organization_id: organization.id }
+				});
+
+				await service.completeUpgrade(organization.id, setupIntentId);
+
+				// Verify payment method was set as default on the correct customer
+				const pmCall = mockStripeState.calls.setCustomerDefaultPaymentMethod[0];
+				expect(pmCall.customerId).toBe(subscription.stripe_customer_id);
+				expect(pmCall.paymentMethodId).toBe('pm_mock_card');
+
+				// Verify the subscription was updated in-place (not created new)
+				expect(mockStripeState.calls.createSubscription).toHaveLength(0);
+				expect(mockStripeState.calls.getSubscription).toHaveLength(1);
+
+				// Verify the Stripe subscription item was updated with Pro price
+				const mockSub = mockStripeState.subscriptions.find(
+					(s) => s.id === subscription.stripe_subscription_id
+				);
+				expect(mockSub?.items.data[0].price.id).toBe(
+					billingConfig.proPlanPriceId
+				);
+
+				// Verify DB was synced to Pro plan
+				const [updated] = await db
+					.select()
+					.from(subscriptions)
+					.where(eq(subscriptions.organization_id, organization.id));
+				expect(updated.plan_id).toBe(proPlan.id);
+			});
+		});
+
+		it('rejects setup intent that has not succeeded', async () => {
+			mockStripeState.setupIntents.push({
+				id: 'seti_pending',
+				client_secret: 'seti_pending_secret',
+				customer: 'cus_test',
+				status: 'requires_payment_method',
+				payment_method: null,
+				metadata: { organization_id: 'any-org' }
+			});
+
+			await expect(
+				service.completeUpgrade('any-org', 'seti_pending')
+			).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+		});
+
+		it('rejects setup intent belonging to a different organization', async () => {
+			mockStripeState.setupIntents.push({
+				id: 'seti_wrong_org',
+				client_secret: 'seti_wrong_org_secret',
+				customer: 'cus_test',
+				status: 'succeeded',
+				payment_method: 'pm_mock',
+				metadata: { organization_id: 'org-a' }
+			});
+
+			await expect(
+				service.completeUpgrade('org-b', 'seti_wrong_org')
+			).rejects.toMatchObject({ code: 'FORBIDDEN' });
+		});
+
+		it('rejects setup intent with no payment method attached', async () => {
+			await withTestTransaction(async () => {
+				const { organization } = await createBillingTestEnvironment();
+
+				mockStripeState.setupIntents.push({
+					id: 'seti_no_pm',
+					client_secret: 'seti_no_pm_secret',
+					customer: 'cus_test',
+					status: 'succeeded',
+					payment_method: null,
+					metadata: { organization_id: organization.id }
+				});
+
+				await expect(
+					service.completeUpgrade(organization.id, 'seti_no_pm')
+				).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+			});
+		});
+
+		it('throws conflict if already on Pro plan', async () => {
+			await withTestTransaction(async () => {
+				const { organization, subscription, proPlan } =
+					await createBillingTestEnvironment();
+
+				await db
+					.update(subscriptions)
+					.set({ plan_id: proPlan.id })
+					.where(eq(subscriptions.id, subscription.id));
+
+				mockStripeState.setupIntents.push({
+					id: 'seti_already_pro',
+					client_secret: 'seti_already_pro_secret',
+					customer: subscription.stripe_customer_id,
+					status: 'succeeded',
+					payment_method: 'pm_mock',
+					metadata: { organization_id: organization.id }
+				});
+
+				await expect(
+					service.completeUpgrade(organization.id, 'seti_already_pro')
 				).rejects.toThrow('already on Pro plan');
 			});
 		});
