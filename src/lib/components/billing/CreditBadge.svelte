@@ -16,12 +16,6 @@
 
 	let modalOpen = $state(false);
 
-	const used = $derived(plan.monthly_credits - credits.available);
-	const usagePercentage = $derived(
-		plan.monthly_credits > 0
-			? Math.round((used / plan.monthly_credits) * 100)
-			: 0
-	);
 	const remainingPercentage = $derived(
 		plan.monthly_credits > 0
 			? Math.min(
@@ -32,15 +26,15 @@
 	);
 
 	const colorClass = $derived.by(() => {
-		if (usagePercentage >= 100) return 'text-red-600';
-		if (usagePercentage >= 80) return 'text-yellow-600';
-		return 'text-green-600';
+		if (remainingPercentage <= 0) return 'text-red-600';
+		if (remainingPercentage <= 20) return 'text-yellow-600';
+		return 'text-primary';
 	});
 
 	const strokeColor = $derived.by(() => {
-		if (usagePercentage >= 100) return '#dc2626';
-		if (usagePercentage >= 80) return '#ca8a04';
-		return '#16a34a';
+		if (remainingPercentage <= 0) return '#dc2626';
+		if (remainingPercentage <= 20) return '#ca8a04';
+		return 'var(--primary)';
 	});
 </script>
 

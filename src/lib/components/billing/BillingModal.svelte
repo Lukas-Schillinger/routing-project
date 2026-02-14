@@ -34,26 +34,25 @@
 		if (!open) showPurchaseCredits = false;
 	});
 
-	// Credit usage calculations
-	const used = $derived(plan.monthly_credits - credits.available);
-	const usagePercentage = $derived(
+	// Credit remaining calculations
+	const remainingPercentage = $derived(
 		plan.monthly_credits > 0
-			? Math.round((used / plan.monthly_credits) * 100)
+			? Math.round((credits.available / plan.monthly_credits) * 100)
 			: 0
 	);
 
 	const progressColorClass = $derived.by(() => {
-		if (usagePercentage >= 100)
+		if (remainingPercentage <= 0)
 			return '[&_[data-slot=progress-indicator]]:bg-red-600';
-		if (usagePercentage >= 80)
+		if (remainingPercentage <= 20)
 			return '[&_[data-slot=progress-indicator]]:bg-yellow-600';
-		return '[&_[data-slot=progress-indicator]]:bg-green-600';
+		return '[&_[data-slot=progress-indicator]]:bg-primary';
 	});
 
 	const statusColorClass = $derived.by(() => {
-		if (usagePercentage >= 100) return 'text-red-600';
-		if (usagePercentage >= 80) return 'text-yellow-600';
-		return 'text-green-600';
+		if (remainingPercentage <= 0) return 'text-red-600';
+		if (remainingPercentage <= 20) return 'text-yellow-600';
+		return 'text-primary';
 	});
 
 	// Credit purchase state
@@ -132,9 +131,9 @@
 				{credits.available.toLocaleString()} / {plan.monthly_credits.toLocaleString()}
 			</span>
 		</div>
-		<Progress value={usagePercentage} max={100} class={progressColorClass} />
+		<Progress value={remainingPercentage} max={100} class={progressColorClass} />
 		<p class="text-center text-xs text-muted-foreground">
-			{usagePercentage}% used this period
+			{remainingPercentage}% remaining this period
 		</p>
 	</div>
 {/snippet}

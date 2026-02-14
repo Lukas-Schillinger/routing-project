@@ -35,29 +35,26 @@
 	// Collapsible state
 	let historyOpen = $state(false);
 
-	// Credit usage calculations
-	const used = $derived(plan.monthly_credits - credits.available);
-	const usagePercentage = $derived(
+	// Credit remaining calculations
+	const remainingPercentage = $derived(
 		plan.monthly_credits > 0
-			? Math.round((used / plan.monthly_credits) * 100)
+			? Math.round((credits.available / plan.monthly_credits) * 100)
 			: 0
 	);
 
 	const progressColorClass = $derived.by(() => {
-		if (usagePercentage >= 100)
+		if (remainingPercentage <= 0)
 			return '[&_[data-slot=progress-indicator]]:bg-red-600';
-		if (usagePercentage >= 80)
+		if (remainingPercentage <= 20)
 			return '[&_[data-slot=progress-indicator]]:bg-yellow-600';
-		return '[&_[data-slot=progress-indicator]]:bg-green-600';
+		return '[&_[data-slot=progress-indicator]]:bg-primary';
 	});
 
 	// Transaction formatting helpers
 	function formatTransactionType(type: CreditTransactionType): string {
 		const labels: Record<CreditTransactionType, string> = {
-			subscription_grant: 'Subscription',
 			purchase: 'Purchase',
 			usage: 'Usage',
-			expiration: 'Expired',
 			adjustment: 'Adjustment',
 			refund: 'Refund'
 		};
@@ -67,13 +64,8 @@
 	function getTransactionBadgeVariant(
 		type: CreditTransactionType
 	): 'default' | 'secondary' | 'destructive' | 'outline' {
-		if (type === 'usage' || type === 'expiration') return 'destructive';
-		if (
-			type === 'subscription_grant' ||
-			type === 'purchase' ||
-			type === 'refund'
-		)
-			return 'default';
+		if (type === 'usage') return 'destructive';
+		if (type === 'purchase' || type === 'refund') return 'default';
 		return 'secondary';
 	}
 
@@ -130,7 +122,7 @@
 			</div>
 			<div class="flex flex-1 flex-col gap-2 md:max-w-xs">
 				<Progress
-					value={usagePercentage}
+					value={remainingPercentage}
 					max={100}
 					class={progressColorClass}
 				/>
