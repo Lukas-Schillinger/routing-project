@@ -42,6 +42,14 @@
 import Stripe from 'stripe';
 import { env } from '$env/dynamic/private';
 
+function toUnixSeconds(date: Date): number {
+	return Math.floor(date.getTime() / 1000);
+}
+
+function sleep(ms: number): Promise<void> {
+	return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export type StripeTestClockHelper = {
 	/** The test clock ID */
 	id: string;
@@ -77,6 +85,27 @@ export type StripeTestClockHelper = {
 	) => Promise<Stripe.Subscription>;
 
 	/**
+	 * Attach a payment method to a customer and set it as the default invoice payment method.
+	 * Uses Stripe test tokens (e.g. 'tok_visa', 'tok_chargeDeclined').
+	 */
+	attachPaymentMethod: (
+		customerId: string,
+		token?: string
+	) => Promise<Stripe.PaymentMethod>;
+
+	/** Update a subscription. */
+	updateSubscription: (
+		subscriptionId: string,
+		params: Stripe.SubscriptionUpdateParams
+	) => Promise<Stripe.Subscription>;
+
+	/** Retrieve a subscription by ID. */
+	getSubscription: (subscriptionId: string) => Promise<Stripe.Subscription>;
+
+	/** List invoices for a customer. */
+	listInvoices: (customerId: string) => Promise<Stripe.Invoice[]>;
+
+	/**
 	 * Delete the test clock and clean up.
 	 * Always call this in afterAll to avoid leaving test clocks behind.
 	 */
@@ -99,18 +128,30 @@ export async function createStripeTestClock(
 	const initialTime = frozenTime ?? new Date();
 
 	const testClock = await stripe.testHelpers.testClocks.create({
-		frozen_time: Math.floor(initialTime.getTime() / 1000),
+		frozen_time: toUnixSeconds(initialTime),
 		name
 	});
 
 	let currentFrozenTime = new Date(testClock.frozen_time * 1000);
 
-	// Define advanceTime before using it in advanceDays
+	const pollUntilReady = async (clockId: string, timeoutMs = 90_000) => {
+		const start = Date.now();
+		while (Date.now() - start < timeoutMs) {
+			const clock = await stripe.testHelpers.testClocks.retrieve(clockId);
+			if (clock.status === 'ready') return;
+			await sleep(1000);
+		}
+		throw new Error(
+			`Test clock ${clockId} did not become ready within ${timeoutMs}ms`
+		);
+	};
+
 	const advanceTime = async (seconds: number) => {
-		const newTime = Math.floor(currentFrozenTime.getTime() / 1000) + seconds;
+		const newTime = toUnixSeconds(currentFrozenTime) + seconds;
 		await stripe.testHelpers.testClocks.advance(testClock.id, {
 			frozen_time: newTime
 		});
+		await pollUntilReady(testClock.id);
 		currentFrozenTime = new Date(newTime * 1000);
 	};
 
@@ -146,11 +187,42 @@ export async function createStripeTestClock(
 			});
 		},
 
+		async attachPaymentMethod(customerId: string, token = 'tok_visa') {
+			const paymentMethod = await stripe.paymentMethods.create({
+				type: 'card',
+				card: { token }
+			});
+			await stripe.paymentMethods.attach(paymentMethod.id, {
+				customer: customerId
+			});
+			await stripe.customers.update(customerId, {
+				invoice_settings: { default_payment_method: paymentMethod.id }
+			});
+			return paymentMethod;
+		},
+
+		async updateSubscription(
+			subscriptionId: string,
+			params: Stripe.SubscriptionUpdateParams
+		) {
+			return stripe.subscriptions.update(subscriptionId, params);
+		},
+
+		async getSubscription(subscriptionId: string) {
+			return stripe.subscriptions.retrieve(subscriptionId);
+		},
+
+		async listInvoices(customerId: string) {
+			const { data } = await stripe.invoices.list({ customer: customerId, limit: 100 });
+			return data;
+		},
+
 		async delete() {
 			try {
+				await pollUntilReady(testClock.id);
 				await stripe.testHelpers.testClocks.del(testClock.id);
 			} catch (error) {
-				// Ignore errors if the test clock was already deleted
+				// Ignore errors if the test clock was already deleted or still advancing
 				console.warn(`Failed to delete test clock ${testClock.id}:`, error);
 			}
 		}

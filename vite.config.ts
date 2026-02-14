@@ -62,7 +62,8 @@ export default defineConfig(({ mode }) => {
 						include: ['src/**/*.{test,spec}.{js,ts}'],
 						exclude: [
 							'src/**/*.svelte.{test,spec}.{js,ts}',
-							'src/lib/benchmarks/**'
+							'src/lib/benchmarks/**',
+							'src/lib/services/external/**/*.spec.{js,ts}'
 						],
 						coverage: {
 							provider: 'v8',
@@ -82,6 +83,17 @@ export default defineConfig(({ mode }) => {
 							reporter: ['text', 'html', 'json-summary'],
 							reportsDirectory: './coverage'
 						}
+					}
+				},
+				{
+					extends: './vite.config.ts',
+					test: {
+						name: 'external',
+						environment: 'node',
+						includeTaskLocation: true,
+						testTimeout: 120_000,
+						include: ['src/lib/services/external/**/*.spec.{js,ts}'],
+						exclude: []
 					}
 				},
 				{
