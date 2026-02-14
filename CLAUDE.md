@@ -3,6 +3,9 @@
 - Always use the code-simplifier agent after modifying service files to ensure clarity and consistency.
 - Before committing, ensure checks pass: `npm run check` (types) and `npm run lint` (ESLint). CI will reject commits that fail.
 - Always prefer using test factories over manually creating test data.
+- Never run interactive CLI commands — Claude cannot handle interactive terminal prompts. Always pass flags to skip prompts:
+  - Drizzle: use `drizzle-kit generate`, `drizzle-kit push`, or `drizzle-kit migrate` (all non-interactive). Avoid `drizzle-kit studio`.
+  - shadcn-svelte: always pass component names directly and use `--yes` to skip confirmation (e.g., `npx shadcn-svelte@latest add button card --yes`).
 
 ## Conventions
 
