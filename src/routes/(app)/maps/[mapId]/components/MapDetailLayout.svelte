@@ -121,7 +121,7 @@
 
 {#snippet layoutControlsSnippet()}
 	<Menubar.Root
-		class=" gap-0 border-border/50 bg-background/80 p-0.5 backdrop-blur-sm"
+		class=" h-9.5 gap-0 border-border/50 bg-background/80  backdrop-blur-sm"
 	>
 		<Menubar.Menu>
 			<Menubar.Trigger
@@ -151,7 +151,7 @@
 						opacity="0.3"
 					/>
 				</svg>
-				<span class="hidden @md:inline">Map</span>
+				<span class="hidden @lg:inline">Map</span>
 			</Menubar.Trigger>
 		</Menubar.Menu>
 		<Menubar.Menu>
@@ -182,7 +182,7 @@
 						stroke-width="1.5"
 					/>
 				</svg>
-				<span class="hidden @md:inline">Split</span>
+				<span class="hidden @lg:inline">Split</span>
 			</Menubar.Trigger>
 		</Menubar.Menu>
 		<Menubar.Menu>
@@ -213,7 +213,7 @@
 						stroke-width="1.5"
 					/>
 				</svg>
-				<span class="hidden @md:inline">List</span>
+				<span class="hidden @lg:inline">List</span>
 			</Menubar.Trigger>
 		</Menubar.Menu>
 	</Menubar.Root>
