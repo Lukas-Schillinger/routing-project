@@ -1,49 +1,114 @@
 <script lang="ts">
+	import { browser } from '$app/environment';
+	import { resolve } from '$app/paths';
 	import { Button } from '$lib/components/ui/button';
+	import {
+		ditheringFragmentShader,
+		DitheringShapes,
+		DitheringTypes
+	} from '@paper-design/shaders';
 	import { ArrowRight } from 'lucide-svelte';
+	import { mode } from 'mode-watcher';
+	import ShaderCanvas from './ShaderCanvas.svelte';
+
+	let sectionEl = $state<HTMLElement | null>(null);
+
+	const shaderUniforms = $derived({
+		u_colorBack:
+			mode.current === 'dark'
+				? [0.039, 0.039, 0.039, 1.0]
+				: [1.0, 0.984, 0.957, 1.0],
+		u_colorFront:
+			mode.current === 'dark'
+				? [0.85, 0.65, 0.2, 0.3]
+				: [0.059, 0.31, 0.267, 0.3],
+		u_shape: DitheringShapes.warp,
+		u_type: DitheringTypes['2x2'],
+		u_pxSize: 4,
+		u_scale: 1.4,
+		u_rotation: 0,
+		u_originX: 0.5,
+		u_originY: 0.5,
+		u_offsetX: 0.5,
+		u_offsetY: 0,
+		u_worldWidth: 0,
+		u_worldHeight: 0,
+		u_fit: 0
+	});
+
+	$effect(() => {
+		if (!sectionEl || !browser) return;
+
+		const targets = sectionEl.querySelectorAll<HTMLElement>('[data-animate]');
+		targets.forEach((el, i) => {
+			setTimeout(
+				() => {
+					el.style.opacity = '1';
+					el.style.transform = 'translateY(0)';
+				},
+				200 + i * 120
+			);
+		});
+	});
 </script>
 
-<section class="px-4 pt-32 pb-24 md:px-8 md:pt-40 md:pb-32">
-	<div class="mx-auto max-w-4xl text-center">
-		<!-- Eyebrow -->
+<section
+	bind:this={sectionEl}
+	class="relative -mt-14 overflow-hidden pt-36 pb-36 md:pt-48 md:pb-48"
+>
+	<ShaderCanvas
+		fragmentShader={ditheringFragmentShader}
+		uniforms={shaderUniforms}
+		speed={0.2}
+	/>
+
+	<div class="relative mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
 		<p
-			class="mb-6 text-sm font-medium tracking-[0.2em] text-landing-primary uppercase"
+			data-animate
+			class="mb-5 text-xs font-medium tracking-[0.25em] text-landing-primary uppercase transition-all duration-600 ease-out"
+			style="opacity: 0; transform: translateY(20px)"
 		>
 			Route Optimization
 		</p>
 
-		<!-- Headline -->
 		<h1
-			class="font-serif text-5xl leading-[1.1] tracking-tight text-foreground md:text-7xl"
+			data-animate
+			class="max-w-4xl font-serif text-5xl leading-[1.08] tracking-tight text-foreground transition-all duration-600 ease-out md:text-7xl lg:text-8xl"
+			style="opacity: 0; transform: translateY(20px)"
 		>
-			Effortless routes from
-			<br class="hidden sm:block" />
-			start to finish
+			Effortless routing<br />from start to finish
 		</h1>
 
-		<!-- Subtitle -->
 		<p
-			class="mx-auto mt-8 max-w-2xl text-lg leading-relaxed text-muted-foreground md:text-xl"
+			data-animate
+			class="mt-7 max-w-xl text-base leading-relaxed text-muted-foreground transition-all duration-600 ease-out md:text-lg"
+			style="opacity: 0; transform: translateY(20px)"
 		>
 			Plan, optimize, and dispatch routes for your entire fleet in seconds.
-			Built for teams who deliver.
+			Fewer miles. Faster deliveries. Less wasted time.
 		</p>
 
-		<!-- CTA Buttons -->
 		<div
-			class="mt-12 flex flex-col items-center justify-center gap-4 sm:flex-row"
+			data-animate
+			class="mt-10 flex items-center gap-4 transition-all duration-600 ease-out"
+			style="opacity: 0; transform: translateY(20px)"
 		>
 			<Button
-				href="/auth/register"
+				href={resolve('/auth/register')}
 				size="lg"
-				class="h-12 gap-2 bg-landing-primary px-8 hover:bg-landing-primary-hover"
+				class="h-11 gap-2 rounded-sm bg-landing-primary px-7 text-sm font-medium tracking-wide text-landing-primary-foreground hover:bg-landing-primary-hover"
 			>
 				Start for free
 				<ArrowRight class="h-4 w-4" />
 			</Button>
-			<Button href="/demo" variant="outline" size="lg" class="h-12 px-8"
-				>See how it works</Button
+			<Button
+				href={resolve('/demo')}
+				variant="outline"
+				size="lg"
+				class="h-11 rounded-sm px-7 text-sm font-medium tracking-wide"
 			>
+				See how it works
+			</Button>
 		</div>
 	</div>
 </section>

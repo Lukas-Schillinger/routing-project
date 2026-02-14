@@ -1,66 +1,91 @@
 <script lang="ts">
+	import { browser } from '$app/environment';
+	import { grainGradientFragmentShader, GrainGradientShapes, ShaderFitOptions } from '@paper-design/shaders';
+	import { inView } from 'motion';
+	import ShaderCanvas from './ShaderCanvas.svelte';
+
 	const metrics = [
-		{
-			value: '23%',
-			label: 'shorter routes',
-			description:
-				'Average reduction in total driving distance compared to manual planning'
-		},
-		{
-			value: '14',
-			label: 'drivers per route',
-			description: 'Assign up to 14 drivers per route with balanced stops'
-		},
-		{
-			value: '100',
-			label: 'stops optimized',
-			description:
-				'Handle up to 100 delivery stops across 14 drivers in one optimization'
-		},
-		{
-			value: '< 5s',
-			label: 'to optimize',
-			description:
-				'Routes calculated in seconds, not minutes—ready when you are'
-		}
+		{ value: '200M+', label: 'routes evaluated', description: 'Permutations tested per optimization to find the shortest path' },
+		{ value: '< 3s', label: 'solve time', description: 'Full fleet optimization including distance matrix computation' },
+		{ value: '100', label: 'stops per run', description: 'Delivery stops handled in a single optimization' },
+		{ value: '14', label: 'concurrent drivers', description: 'Routes split and balanced across your entire fleet' }
 	];
+
+	const shaderUniforms = {
+		u_colorBack: [0.04, 0.2, 0.17, 1.0],
+		u_colors: [
+			[0.059, 0.31, 0.267, 1.0],
+			[0.043, 0.23, 0.2, 1.0],
+			[0.02, 0.15, 0.13, 1.0]
+		],
+		u_colorsCount: 3,
+		u_softness: 0.7,
+		u_intensity: 0.3,
+		u_noise: 0.4,
+		u_shape: GrainGradientShapes.wave,
+		u_scale: 1,
+		u_rotation: 0,
+		u_originX: 0.5,
+		u_originY: 0.5,
+		u_offsetX: 0,
+		u_offsetY: 0,
+		u_worldWidth: 0,
+		u_worldHeight: 0,
+		u_fit: ShaderFitOptions.none
+	};
+
+	let sectionEl = $state<HTMLElement | null>(null);
+
+	$effect(() => {
+		if (!sectionEl || !browser) return;
+		return inView(
+			sectionEl,
+			() => {
+				const cards = sectionEl!.querySelectorAll<HTMLElement>('[data-metric]');
+				cards.forEach((card, i) => {
+					setTimeout(() => {
+						card.style.opacity = '1';
+						card.style.transform = 'translateY(0)';
+					}, i * 80);
+				});
+			},
+			{ amount: 0.25 }
+		);
+	});
 </script>
 
-<section class="py-24">
-	<div class="mx-auto">
-		<!-- Section Header -->
-		<div class="mb-16 text-center">
-			<p
-				class="mb-4 text-sm font-medium tracking-[0.2em] text-landing-primary uppercase"
-			>
-				The impact
+<section bind:this={sectionEl} class="relative overflow-hidden py-24 md:py-32">
+	<ShaderCanvas fragmentShader={grainGradientFragmentShader} uniforms={shaderUniforms} speed={0.15} class="opacity-60" />
+	<div class="absolute inset-0 bg-forest-900/80"></div>
+
+	<div class="relative mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
+		<div class="mb-12">
+			<p class="mb-3 text-xs font-medium tracking-[0.25em] text-landing-primary uppercase">
+				The numbers
 			</p>
-			<h2 class="font-serif text-4xl leading-tight tracking-tight md:text-5xl">
+			<h2 class="max-w-md font-serif text-4xl leading-tight tracking-tight text-sand-50 md:text-5xl">
 				Results that speak for themselves
 			</h2>
 		</div>
 
-		<!-- Metrics Grid -->
-		<div class="bg-texture flex w-full justify-center p-4 sm:p-8">
-			<div
-				class="grid max-w-7xl grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-8 lg:grid-cols-4"
-			>
-				{#each metrics as metric (metric.label)}
-					<div class="rounded-lg border border-foreground/5 bg-background p-8">
-						<p
-							class="font-mono text-5xl font-medium tracking-tight text-landing-primary"
-						>
-							{metric.value}
-						</p>
-						<p class="mt-2 text-lg font-semibold tracking-tight">
-							{metric.label}
-						</p>
-						<p class="mt-2 text-sm leading-relaxed text-muted-foreground">
-							{metric.description}
-						</p>
-					</div>
-				{/each}
-			</div>
+		<div class="grid grid-cols-2 gap-px overflow-hidden rounded-sm border border-white/10 bg-white/10 lg:grid-cols-4">
+			{#each metrics as metric (metric.label)}
+				<div
+					data-metric
+					class="bg-forest-900/60 p-6 backdrop-blur-sm transition-all duration-500 ease-out"
+					style="opacity: 0; transform: translateY(12px)"
+				>
+					<p class="font-mono text-4xl font-extralight tracking-tight text-sand-50 md:text-5xl">
+						{metric.value}
+					</p>
+					<p class="mt-2 text-sm font-bold tracking-tight text-sand-100">
+						{metric.label}
+					</p>
+					<p class="mt-1.5 text-xs leading-relaxed text-sand-300">
+						{metric.description}
+					</p>
+				</div>
+			{/each}
 		</div>
 	</div>
 </section>
