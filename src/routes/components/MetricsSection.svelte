@@ -1,14 +1,62 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
-	import { grainGradientFragmentShader, GrainGradientShapes, ShaderFitOptions } from '@paper-design/shaders';
+	import {
+		grainGradientFragmentShader,
+		GrainGradientShapes,
+		ShaderFitOptions
+	} from '@paper-design/shaders';
 	import { inView } from 'motion';
 	import ShaderCanvas from './ShaderCanvas.svelte';
 
-	const metrics = [
-		{ value: '200M+', label: 'routes evaluated', description: 'Permutations tested per optimization to find the shortest path' },
-		{ value: '< 3s', label: 'solve time', description: 'Full fleet optimization including distance matrix computation' },
-		{ value: '100', label: 'stops per run', description: 'Delivery stops handled in a single optimization' },
-		{ value: '14', label: 'concurrent drivers', description: 'Routes split and balanced across your entire fleet' }
+	type MetricConfig = {
+		value: string;
+		label: string;
+		description: string;
+		from: number;
+		to: number;
+		prefix: string;
+		suffix: string;
+	};
+
+	const metrics: MetricConfig[] = [
+		{
+			value: '200M+',
+			label: 'routes evaluated',
+			description:
+				'Permutations tested per optimization to find the shortest path',
+			from: 0,
+			to: 200,
+			prefix: '',
+			suffix: 'M+'
+		},
+		{
+			value: '< 3s',
+			label: 'solve time',
+			description:
+				'Full fleet optimization including distance matrix computation',
+			from: 10,
+			to: 3,
+			prefix: '< ',
+			suffix: 's'
+		},
+		{
+			value: '100',
+			label: 'stops per run',
+			description: 'Delivery stops handled in a single optimization',
+			from: 0,
+			to: 100,
+			prefix: '',
+			suffix: ''
+		},
+		{
+			value: '14',
+			label: 'concurrent drivers',
+			description: 'Routes split and balanced across your entire fleet',
+			from: 0,
+			to: 14,
+			prefix: '',
+			suffix: ''
+		}
 	];
 
 	const shaderUniforms = {
@@ -34,7 +82,42 @@
 		u_fit: ShaderFitOptions.none
 	};
 
+	const ANIMATION_DURATION = 1500;
+	const STAGGER_DELAY = 100;
+
+	function easeOutCubic(t: number): number {
+		return 1 - Math.pow(1 - t, 3);
+	}
+
 	let sectionEl = $state<HTMLElement | null>(null);
+	let displayValues = $state<string[]>(
+		metrics.map((m) => `${m.prefix}${m.from}${m.suffix}`)
+	);
+	let hasAnimated = $state(false);
+
+	function animateCounter(index: number) {
+		const metric = metrics[index];
+		const startTime = performance.now();
+
+		function tick(now: number) {
+			const elapsed = now - startTime;
+			const progress = Math.min(elapsed / ANIMATION_DURATION, 1);
+			const easedProgress = easeOutCubic(progress);
+
+			const currentValue = Math.round(
+				metric.from + (metric.to - metric.from) * easedProgress
+			);
+			displayValues[index] = `${metric.prefix}${currentValue}${metric.suffix}`;
+
+			if (progress < 1) {
+				requestAnimationFrame(tick);
+			} else {
+				displayValues[index] = metric.value;
+			}
+		}
+
+		requestAnimationFrame(tick);
+	}
 
 	$effect(() => {
 		if (!sectionEl || !browser) return;
@@ -48,6 +131,13 @@
 						card.style.transform = 'translateY(0)';
 					}, i * 80);
 				});
+
+				if (!hasAnimated) {
+					hasAnimated = true;
+					metrics.forEach((_, i) => {
+						setTimeout(() => animateCounter(i), i * STAGGER_DELAY);
+					});
+				}
 			},
 			{ amount: 0.25 }
 		);
@@ -55,28 +145,41 @@
 </script>
 
 <section bind:this={sectionEl} class="relative overflow-hidden py-24 md:py-32">
-	<ShaderCanvas fragmentShader={grainGradientFragmentShader} uniforms={shaderUniforms} speed={0.15} class="opacity-60" />
+	<ShaderCanvas
+		fragmentShader={grainGradientFragmentShader}
+		uniforms={shaderUniforms}
+		speed={0.15}
+		class="opacity-60"
+	/>
 	<div class="absolute inset-0 bg-forest-900/80"></div>
 
 	<div class="relative mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
 		<div class="mb-12">
-			<p class="mb-3 text-xs font-medium tracking-[0.25em] text-landing-primary uppercase">
+			<p
+				class="mb-3 text-xs font-medium tracking-[0.25em] text-landing-secondary uppercase dark:text-landing-primary"
+			>
 				The numbers
 			</p>
-			<h2 class="max-w-md font-serif text-4xl leading-tight tracking-tight text-sand-50 md:text-5xl">
+			<h2
+				class="max-w-md font-serif text-4xl leading-tight tracking-tight text-sand-50 md:text-5xl"
+			>
 				Results that speak for themselves
 			</h2>
 		</div>
 
-		<div class="grid grid-cols-2 gap-px overflow-hidden rounded-sm border border-white/10 bg-white/10 lg:grid-cols-4">
-			{#each metrics as metric (metric.label)}
+		<div
+			class="grid grid-cols-2 gap-px overflow-hidden rounded-sm border border-white/10 bg-white/10 lg:grid-cols-4"
+		>
+			{#each metrics as metric, i (metric.label)}
 				<div
 					data-metric
 					class="bg-forest-900/60 p-6 backdrop-blur-sm transition-all duration-500 ease-out"
 					style="opacity: 0; transform: translateY(12px)"
 				>
-					<p class="font-mono text-4xl font-extralight tracking-tight text-sand-50 md:text-5xl">
-						{metric.value}
+					<p
+						class="font-mono text-4xl font-extralight tracking-tight text-sand-50 md:text-5xl"
+					>
+						{displayValues[i]}
 					</p>
 					<p class="mt-2 text-sm font-bold tracking-tight text-sand-100">
 						{metric.label}

@@ -21,9 +21,21 @@
 	<main>
 		<HeroSection />
 		<RouteDemo />
+		<!-- Thin separator between RouteDemo and Workflow -->
+		<div class="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
+			<div
+				class="h-px bg-gradient-to-r from-transparent via-foreground/10 to-transparent"
+			></div>
+		</div>
 		<WorkflowSection />
 		<MetricsSection />
 		<PricingSection />
+		<!-- Breathing space before CTA -->
+		<div class="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
+			<div
+				class="h-px bg-gradient-to-r from-transparent via-foreground/10 to-transparent"
+			></div>
+		</div>
 		<CTASection />
 	</main>
 	<Footer />

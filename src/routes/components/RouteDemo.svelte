@@ -379,9 +379,9 @@
 	})();
 </script>
 
-<section class="py-12 md:py-20">
+<section class="py-20 md:py-28">
 	<div bind:this={containerEl} class="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
-		<div class="grid grid-cols-1 items-center gap-8 md:grid-cols-2 md:gap-12">
+		<div class="grid grid-cols-1 items-end gap-8 md:grid-cols-2 md:gap-12">
 			<!-- Left: context + live stats -->
 			<div>
 				<p
@@ -392,7 +392,7 @@
 				<h2
 					class="font-serif text-4xl leading-tight tracking-tight md:text-5xl"
 				>
-					Route math doesn't scale
+					Manual routing breaks at scale
 				</h2>
 				<p class="mt-3 text-base leading-relaxed text-muted-foreground">
 					Twenty stops, three drivers, billions of possible combinations.
@@ -402,7 +402,7 @@
 
 				<!-- Live stats row -->
 				<div
-					class="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4 md:grid-cols-2 lg:grid-cols-4"
+					class="mt-6 grid grid-cols-4 gap-3 rounded-sm border border-foreground/10 bg-foreground/[0.02] p-3"
 				>
 					<div>
 						<p
@@ -410,7 +410,9 @@
 						>
 							Distance
 						</p>
-						<p class="mt-0.5 font-mono text-2xl font-extralight tracking-tight">
+						<p
+							class="mt-0.5 font-mono text-xl font-extralight tracking-tight md:text-2xl"
+						>
 							{displayDistance.toFixed(1)}
 						</p>
 					</div>
@@ -421,7 +423,7 @@
 							Saved
 						</p>
 						<p
-							class="mt-0.5 font-mono text-2xl font-extralight tracking-tight {improvement >
+							class="mt-0.5 font-mono text-xl font-extralight tracking-tight md:text-2xl {improvement >
 							0
 								? 'text-landing-primary'
 								: 'text-foreground'}"
@@ -435,7 +437,9 @@
 						>
 							Iterations
 						</p>
-						<p class="mt-0.5 font-mono text-2xl font-extralight tracking-tight">
+						<p
+							class="mt-0.5 font-mono text-xl font-extralight tracking-tight md:text-2xl"
+						>
 							{iterations.toLocaleString()}
 						</p>
 					</div>
@@ -445,7 +449,9 @@
 						>
 							Swaps
 						</p>
-						<p class="mt-0.5 font-mono text-2xl font-extralight tracking-tight">
+						<p
+							class="mt-0.5 font-mono text-xl font-extralight tracking-tight md:text-2xl"
+						>
 							{improvements}
 						</p>
 					</div>
@@ -454,11 +460,11 @@
 
 			<!-- Right: SVG animation -->
 			<div
-				class="overflow-hidden rounded-sm border border-foreground/10 bg-card"
+				class="overflow-hidden rounded-sm border border-foreground/10 bg-card shadow-md ring-1 shadow-foreground/5 ring-foreground/[0.03]"
 			>
 				<!-- Status strip -->
 				<div
-					class="flex items-center gap-2 border-b border-foreground/10 px-4 py-2"
+					class="flex items-center gap-2 border-b border-foreground/10 bg-foreground/[0.02] px-4 py-2"
 				>
 					{#if phase === 'optimizing'}
 						<span class="relative flex h-2 w-2">

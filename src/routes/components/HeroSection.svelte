@@ -105,9 +105,13 @@
 				href={resolve('/demo')}
 				variant="outline"
 				size="lg"
-				class="h-11 rounded-sm px-7 text-sm font-medium tracking-wide"
+				class="h-11 gap-2 rounded-sm px-7 text-sm font-medium tracking-wide"
 			>
-				See how it works
+				Explore demo
+				<span
+					class="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium tracking-wide text-muted-foreground"
+					>soon</span
+				>
 			</Button>
 		</div>
 	</div>
