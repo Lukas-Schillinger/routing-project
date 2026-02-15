@@ -1,12 +1,13 @@
 import { AsyncLocalStorage } from 'async_hooks';
+import 'dotenv/config';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from './schema';
-import { env } from '$env/dynamic/private';
 
-if (!env.DATABASE_URL) throw new Error('DATABASE_URL is not set');
+/* We're using process.env instead of svelte's $env in order to use the DB in playwright tests.  */
+if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is not set');
 
-const client = postgres(env.DATABASE_URL);
+const client = postgres(process.env.DATABASE_URL);
 const realDb = drizzle(client, { schema });
 
 /**
