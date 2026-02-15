@@ -1001,37 +1001,63 @@ export const mockStripeClient = {
 // Mail Service Mock
 // ============================================================================
 
+type MailServiceCall = {
+	method:
+		| 'sendRouteShareEmail'
+		| 'sendLoginEmail'
+		| 'sendInvitationEmail'
+		| 'sendPasswordResetEmail';
+	args: unknown[];
+};
+
 /**
- * Mock for the mail service (ResendClient).
+ * Mock for the MailService.
  * Captures calls without sending emails or doing DB operations.
  *
  * @example
  * ```ts
- * import { createMockMailService } from '$lib/testing/mocks';
- *
  * const mockMail = createMockMailService();
  *
  * vi.mock('$lib/services/external/mail', () => ({
  *   mailService: mockMail
  * }));
  *
- * // After calling service methods:
- * expect(mockMail.sendRouteShareEmail).toHaveBeenCalledWith(
- *   expect.objectContaining({ route_id: 'some-id' }),
- *   'recipient@example.com',
- *   expect.any(String),
- *   expect.any(String),
- *   expect.any(String),
- *   expect.any(String)
- * );
+ * // vi.fn() assertions still work:
+ * expect(mockMail.sendRouteShareEmail).toHaveBeenCalledOnce();
+ *
+ * // Or use structured call tracking:
+ * expect(mockMail.getCalls()).toHaveLength(1);
+ * expect(mockMail.getCallsByMethod('sendRouteShareEmail')).toHaveLength(1);
  * ```
  */
 export function createMockMailService() {
+	const calls: MailServiceCall[] = [];
+
+	const track = (method: MailServiceCall['method']) =>
+		vi.fn().mockImplementation((...args: unknown[]) => {
+			calls.push({ method, args });
+			return Promise.resolve();
+		});
+
 	return {
-		sendRouteShareEmail: vi.fn(),
-		sendLoginEmail: vi.fn(),
-		sendInvitationEmail: vi.fn(),
-		sendPasswordResetEmail: vi.fn()
+		sendRouteShareEmail: track('sendRouteShareEmail'),
+		sendLoginEmail: track('sendLoginEmail'),
+		sendInvitationEmail: track('sendInvitationEmail'),
+		sendPasswordResetEmail: track('sendPasswordResetEmail'),
+
+		// ========== Test Utilities ==========
+
+		/** Get all recorded calls for assertions */
+		getCalls: () => [...calls],
+
+		/** Get calls filtered by method name */
+		getCallsByMethod: (method: MailServiceCall['method']) =>
+			calls.filter((c) => c.method === method),
+
+		/** Clear recorded calls (also resets vi.fn() state) */
+		clearCalls: () => {
+			calls.length = 0;
+		}
 	};
 }
 

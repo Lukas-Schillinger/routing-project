@@ -1,2 +1,2 @@
-// Resend exports
-export { resendClient as mailService } from './resend.js';
+export { mailService } from './mail.service.js';
+export type { EmailRenderer, EmailSender } from './mail.service.js';

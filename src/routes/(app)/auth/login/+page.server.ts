@@ -5,7 +5,7 @@ import * as table from '$lib/server/db/schema';
 import * as auth from '$lib/services/server/auth';
 import { ServiceError } from '$lib/services/server/errors';
 import { loginTokenService } from '$lib/services/server/login-token.service';
-import { resendClient } from '$lib/services/external/mail/resend';
+import { mailService } from '$lib/services/external/mail';
 import { verify } from '@node-rs/argon2';
 import { fail, redirect } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
@@ -96,7 +96,7 @@ export const actions: Actions = {
 			});
 
 			// Send welcome email
-			await resendClient.sendLoginEmail(
+			await mailService.sendLoginEmail(
 				loginToken,
 				email,
 				token,

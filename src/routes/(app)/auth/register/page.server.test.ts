@@ -8,7 +8,7 @@ import { db } from '$lib/server/db';
 import * as auth from '$lib/services/server/auth';
 import { userService } from '$lib/services/server/user.service.js';
 import { loginTokenService } from '$lib/services/server/login-token.service.js';
-import { resendClient } from '$lib/services/external/mail/resend';
+import { mailService } from '$lib/services/external/mail';
 
 // Mock dependencies
 vi.mock('$lib/server/db', () => ({
@@ -47,8 +47,8 @@ vi.mock('@node-rs/argon2', () => ({
 	verify: vi.fn()
 }));
 
-vi.mock('$lib/services/external/mail/resend', () => ({
-	resendClient: {
+vi.mock('$lib/services/external/mail', () => ({
+	mailService: {
 		sendLoginEmail: vi.fn().mockResolvedValue(undefined)
 	}
 }));
@@ -194,8 +194,8 @@ describe('Registration Server Actions', () => {
 					token: '123456'
 				} as never);
 
-				// Mock resendClient
-				vi.mocked(resendClient.sendLoginEmail).mockResolvedValue(
+				// Mock mailService
+				vi.mocked(mailService.sendLoginEmail).mockResolvedValue(
 					undefined as never
 				);
 

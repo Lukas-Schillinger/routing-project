@@ -11,42 +11,71 @@ import { loginTokenService } from '$lib/services/server/login-token.service.js';
 import { mailRecordService } from '$lib/services/server/mail-record.service.js';
 import { routeShareService } from '$lib/services/server/route-share.service.js';
 import { Resend } from 'resend';
-import { renderClient } from './render.js';
+import {
+	type RenderClient,
+	renderClient as defaultRenderer
+} from './render.js';
+import type { RenderedEmail } from './types.js';
 
-const log = logger.child({ service: 'resend' });
+const log = logger.child({ service: 'mail' });
 
-interface SendEmailParams {
+// EmailSender and EmailRenderer are pulled out of the MailService to facilitate testing.
+
+export type EmailSender = {
+	emails: {
+		send(params: {
+			from: string;
+			to: string;
+			subject: string;
+			html: string;
+			text: string;
+		}): Promise<{
+			data: { id: string } | null;
+			error: { message: string } | null;
+		}>;
+	};
+};
+
+export type EmailRenderer = Omit<RenderClient, never>;
+
+type SendEmailParams = {
 	organizationId: string;
 	type: MailRecordType;
 	to: string;
 	subject: string;
 	html: string;
 	text: string;
-}
+};
 
-export class ResendClient {
-	private resend: Resend;
+export class MailService {
+	private emailSender: EmailSender;
+	private renderer: EmailRenderer;
 
-	constructor(apiKey?: string) {
-		const key = apiKey || env.RESEND_API_KEY;
-		if (!key) {
-			throw new Error(
-				'Resend API key is required. Set RESEND_API_KEY environment variable.'
-			);
+	constructor(deps?: {
+		emailSender?: EmailSender;
+		renderer?: EmailRenderer;
+		apiKey?: string;
+	}) {
+		if (deps?.emailSender) {
+			this.emailSender = deps.emailSender;
+		} else {
+			const key = deps?.apiKey || env.RESEND_API_KEY;
+			if (!key) {
+				throw new Error(
+					'Resend API key is required. Set RESEND_API_KEY environment variable.'
+				);
+			}
+			this.emailSender = new Resend(key);
 		}
-		this.resend = new Resend(key);
+		this.renderer = deps?.renderer ?? defaultRenderer;
 	}
 
-	/**
-	 * Private method to send email and create mail record
-	 * All email sending should go through this method
-	 */
 	private async sendEmail(params: SendEmailParams): Promise<string> {
 		const { organizationId, type, to, subject, html, text } = params;
 
 		log.info({ type, to, organizationId }, 'Sending email');
 
-		const res = await this.resend.emails.send({
+		const res = await this.emailSender.emails.send({
 			from: env.EMAIL_FROM,
 			to,
 			subject,
@@ -64,7 +93,6 @@ export class ResendClient {
 			throw ServiceError.internal('Resend did not return an email ID');
 		}
 
-		// Create mail record
 		const mailRecord = await mailRecordService.createMailRecord({
 			organization_id: organizationId,
 			resend_id: res.data.id,
@@ -92,7 +120,7 @@ export class ResendClient {
 		if (!invitation.created_by)
 			throw ServiceError.internal('Invitation missing created_by attribution');
 
-		const { html, text } = await renderClient.renderMagicInvite({
+		const { html, text } = await this.renderer.renderMagicInvite({
 			invite_url: `${origin}/auth/redeem/invitation?token=${token}&email=${encodeURIComponent(invitation.email)}`,
 			inviter_name: user.name,
 			inviter_email: user.email,
@@ -108,7 +136,6 @@ export class ResendClient {
 			text
 		});
 
-		// Link mail record to invitation
 		await invitationService.setMailRecordId(invitation.id, mailRecordId);
 	}
 
@@ -116,11 +143,11 @@ export class ResendClient {
 		login_url: string,
 		token: string,
 		isWelcome?: boolean
-	) {
+	): Promise<RenderedEmail> {
 		if (isWelcome) {
-			return renderClient.renderConfirmEmail({ login_url, token });
+			return this.renderer.renderConfirmEmail({ login_url, token });
 		}
-		return renderClient.renderMagicLink({
+		return this.renderer.renderMagicLink({
 			login_url,
 			token
 		});
@@ -134,7 +161,7 @@ export class ResendClient {
 	): Promise<void> {
 		const login_url = `${origin}/auth/redeem/password-reset?token=${token}&email=${encodeURIComponent(email)}`;
 
-		const { html, text } = await renderClient.renderPasswordReset({
+		const { html, text } = await this.renderer.renderPasswordReset({
 			login_url
 		});
 
@@ -159,7 +186,11 @@ export class ResendClient {
 	): Promise<void> {
 		const login_url = `${origin}/auth/redeem/login-token?token=${token}&email=${encodeURIComponent(email)}`;
 
-		const { html, text } = await this.renderLoginEmail(login_url, token);
+		const { html, text } = await this.renderLoginEmail(
+			login_url,
+			token,
+			isWelcome
+		);
 
 		const mailRecordId = await this.sendEmail({
 			organizationId: loginToken.organization_id,
@@ -170,7 +201,6 @@ export class ResendClient {
 			text
 		});
 
-		// Link mail record to login token
 		await loginTokenService.setMailRecordId(loginToken.id, mailRecordId);
 	}
 
@@ -184,7 +214,7 @@ export class ResendClient {
 	): Promise<void> {
 		const routeUrl = `${origin}/routes/${share.route_id}?token=${token}`;
 
-		const { html, text } = await renderClient.renderRouteShare({
+		const { html, text } = await this.renderer.renderRouteShare({
 			route_url: routeUrl,
 			route_title: routeTitle,
 			driver_name: driverName
@@ -199,10 +229,8 @@ export class ResendClient {
 			text
 		});
 
-		// Link mail record to share
 		await routeShareService.setMailRecordId(share.id, mailRecordId);
 	}
 }
 
-// Export singleton instance
-export const resendClient = new ResendClient();
+export const mailService = new MailService();

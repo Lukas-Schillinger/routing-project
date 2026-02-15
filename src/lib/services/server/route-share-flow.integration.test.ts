@@ -23,34 +23,43 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { routeShareService } from './route-share.service';
 import { TokenUtils } from './token.utils';
 
-// Mock the mail service to avoid actual email sending
-vi.mock('$lib/services/external/mail', () => ({
-	mailService: {
-		sendRouteShareEmail: vi.fn().mockImplementation(async (share) => {
-			// Simulate creating a mail record
-			const [mailRecord] = await db
-				.insert(mailRecords)
-				.values({
-					organization_id: share.organization_id,
-					type: 'route_share',
-					to_email: 'test@example.com',
-					from_email: 'noreply@test.com',
-					subject: 'Route shared',
-					resend_id: `mock-resend-${Date.now()}`
-				})
-				.returning();
+// Mock mail service - uses DB-aware implementation for integration tests
+// that verify the full create → send → link flow.
+// Shape matches createMockMailService() from $lib/testing/mocks.
+const mockMailService = vi.hoisted(() => ({
+	sendRouteShareEmail: vi.fn(),
+	sendLoginEmail: vi.fn(),
+	sendInvitationEmail: vi.fn(),
+	sendPasswordResetEmail: vi.fn()
+}));
 
-			// Link the mail record to the share
-			await db
-				.update(routeShares)
-				.set({ mail_record_id: mailRecord.id, updated_at: new Date() })
-				.where(eq(routeShares.id, share.id));
-		})
-	}
+vi.mock('$lib/services/external/mail', () => ({
+	mailService: mockMailService
 }));
 
 beforeEach(() => {
 	vi.clearAllMocks();
+
+	// DB-aware implementation: simulates the real mail service creating
+	// a mail record and linking it to the share
+	mockMailService.sendRouteShareEmail.mockImplementation(async (share) => {
+		const [mailRecord] = await db
+			.insert(mailRecords)
+			.values({
+				organization_id: share.organization_id,
+				type: 'route_share',
+				to_email: 'test@example.com',
+				from_email: 'noreply@test.com',
+				subject: 'Route shared',
+				resend_id: `mock-resend-${Date.now()}`
+			})
+			.returning();
+
+		await db
+			.update(routeShares)
+			.set({ mail_record_id: mailRecord.id, updated_at: new Date() })
+			.where(eq(routeShares.id, share.id));
+	});
 });
 
 /** Helper to create full test environment with Pro plan for fleet_management feature */
