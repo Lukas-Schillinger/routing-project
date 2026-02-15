@@ -245,6 +245,31 @@ export class SubscriptionService {
 	}
 
 	/**
+	 * Create a Stripe Billing Portal session for managing payment methods.
+	 */
+	async createPortalSession(
+		organizationId: string,
+		origin: string,
+		flow?: 'payment_method_update'
+	): Promise<string> {
+		const org = await this.getOrg(organizationId);
+
+		if (!org.stripe_customer_id) {
+			throw ServiceError.badRequest(
+				'No Stripe customer — upgrade to Pro first or contact support'
+			);
+		}
+
+		const session = await this.stripe.createPortalSession({
+			customer: org.stripe_customer_id,
+			return_url: `${origin}/auth/account`,
+			...(flow && { flow_data: { type: flow } })
+		});
+
+		return session.url;
+	}
+
+	/**
 	 * Get an organization by ID, or throw.
 	 */
 	private async getOrg(organizationId: string) {

@@ -3,9 +3,11 @@
 	import { goto, invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/stores';
+	import DebugToolbar from '$lib/components/DebugToolbar.svelte';
 	import { ConfirmDeleteDialog } from '$lib/components/ConfirmDeleteDialog';
 	import { Button } from '$lib/components/ui/button';
 	import { Separator } from '$lib/components/ui/separator';
+	import type { SubscriptionStatus } from '$lib/server/db/schema';
 	import { usersApi } from '$lib/services/api/auth';
 	import { Settings, Trash2 } from 'lucide-svelte';
 	import { onMount } from 'svelte';
@@ -19,6 +21,23 @@
 	let { data }: { data: PageData } = $props();
 
 	const canDeleteAccount = $derived(data.permissions.includes('users:delete'));
+
+	// Debug state overrides for billing
+	let debugSubscriptionStatus = $state<SubscriptionStatus | null | undefined>(
+		undefined
+	);
+	let debugCancelAtPeriodEnd = $state<boolean | undefined>(undefined);
+
+	const effectiveSubscriptionStatus = $derived(
+		debugSubscriptionStatus !== undefined
+			? debugSubscriptionStatus
+			: (data.billing?.subscriptionStatus ?? null)
+	);
+	const effectiveCancelAtPeriodEnd = $derived(
+		debugCancelAtPeriodEnd !== undefined
+			? debugCancelAtPeriodEnd
+			: (data.billing?.cancelAtPeriodEnd ?? false)
+	);
 
 	onMount(() => {
 		if ($page.url.searchParams.has('upgraded')) {
@@ -67,7 +86,8 @@
 					plan={data.billing.plan}
 					monthlyCredits={data.billing.monthlyCredits}
 					periodEndsAt={data.billing.periodEndsAt}
-					cancelAtPeriodEnd={data.billing.cancelAtPeriodEnd}
+					cancelAtPeriodEnd={effectiveCancelAtPeriodEnd}
+					subscriptionStatus={effectiveSubscriptionStatus}
 					credits={data.billing.credits}
 					transactions={data.billing.transactions}
 					canManageBilling={data.permissions.includes('billing:update')}
@@ -123,3 +143,71 @@
 		</div>
 	</div>
 </div>
+
+{#if data.billing}
+	<DebugToolbar title="Billing States">
+		<div class="flex flex-col gap-3">
+			<div class="flex flex-col gap-1.5">
+				<span class="text-xs font-medium text-muted-foreground"
+					>Subscription Status</span
+				>
+				<div class="flex flex-wrap gap-1">
+					{#each [{ value: null, label: 'None' }, { value: 'active', label: 'Active' }, { value: 'past_due', label: 'Past Due' }, { value: 'canceled', label: 'Canceled' }] as { value, label } (label)}
+						{@const isActive = debugSubscriptionStatus === value}
+						<Button
+							variant={isActive ? 'default' : 'outline'}
+							size="sm"
+							class="h-7 text-xs"
+							onclick={() =>
+								(debugSubscriptionStatus = value as SubscriptionStatus | null)}
+						>
+							{label}
+						</Button>
+					{/each}
+				</div>
+			</div>
+
+			<div class="flex flex-col gap-1.5">
+				<span class="text-xs font-medium text-muted-foreground"
+					>Cancel at Period End</span
+				>
+				<div class="flex gap-1">
+					{#each [{ value: false, label: 'No' }, { value: true, label: 'Yes' }] as { value, label } (label)}
+						{@const isActive = debugCancelAtPeriodEnd === value}
+						<Button
+							variant={isActive ? 'default' : 'outline'}
+							size="sm"
+							class="h-7 flex-1 text-xs"
+							onclick={() => (debugCancelAtPeriodEnd = value)}
+						>
+							{label}
+						</Button>
+					{/each}
+				</div>
+			</div>
+
+			{#if debugSubscriptionStatus !== undefined || debugCancelAtPeriodEnd !== undefined}
+				<div class="border-t border-border pt-2">
+					<Button
+						variant="ghost"
+						size="sm"
+						class="h-6 w-full text-xs text-muted-foreground"
+						onclick={() => {
+							debugSubscriptionStatus = undefined;
+							debugCancelAtPeriodEnd = undefined;
+						}}
+					>
+						Reset to actual
+					</Button>
+				</div>
+			{/if}
+
+			<div class="border-t border-border pt-2 text-xs text-muted-foreground">
+				<div>Actual status: {data.billing.subscriptionStatus ?? 'none'}</div>
+				<div>
+					Actual cancel: {data.billing.cancelAtPeriodEnd ? 'yes' : 'no'}
+				</div>
+			</div>
+		</div>
+	</DebugToolbar>
+{/if}

@@ -49,6 +49,7 @@ export const load: PageServerLoad = async () => {
 					monthlyCredits: billingInfo.monthlyCredits,
 					periodEndsAt: billingInfo.periodEndsAt,
 					cancelAtPeriodEnd: billingInfo.organization.cancel_at_period_end,
+					subscriptionStatus: billingInfo.organization.subscription_status,
 					credits: credits!,
 					transactions: transactions!
 				}

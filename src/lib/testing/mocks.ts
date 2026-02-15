@@ -770,6 +770,8 @@ type CancelSubscriptionCall = {
 	subscriptionId: string;
 };
 
+type CreatePortalSessionCall = Stripe.BillingPortal.SessionCreateParams;
+
 type ConstructWebhookEventCall = {
 	payload: string;
 	signature: string;
@@ -830,6 +832,7 @@ export const mockStripeState = {
 	calls: {
 		createCustomer: [] as CreateCustomerCall[],
 		createCheckoutSession: [] as CreateCheckoutSessionCall[],
+		createPortalSession: [] as CreatePortalSessionCall[],
 		getSubscription: [] as GetSubscriptionCall[],
 		cancelSubscription: [] as CancelSubscriptionCall[],
 		constructWebhookEvent: [] as ConstructWebhookEventCall[]
@@ -845,6 +848,7 @@ export const mockStripeState = {
 		this.checkoutSessions = [];
 		this.calls.createCustomer = [];
 		this.calls.createCheckoutSession = [];
+		this.calls.createPortalSession = [];
 		this.calls.getSubscription = [];
 		this.calls.cancelSubscription = [];
 		this.calls.constructWebhookEvent = [];
@@ -884,6 +888,18 @@ export const mockStripeClient = {
 		};
 		mockStripeState.checkoutSessions.push(session);
 		return session;
+	},
+
+	createPortalSession: async (
+		params: Stripe.BillingPortal.SessionCreateParams
+	) => {
+		mockStripeState.calls.createPortalSession.push(params);
+		return {
+			id: `bps_mock_${Date.now()}`,
+			url: `https://billing.stripe.com/session/mock_${Date.now()}`,
+			customer: params.customer,
+			return_url: params.return_url
+		};
 	},
 
 	getSubscription: async (subscriptionId: string) => {
@@ -980,6 +996,44 @@ export const mockStripeClient = {
 		} as Stripe.Event;
 	}
 };
+
+// ============================================================================
+// Mail Service Mock
+// ============================================================================
+
+/**
+ * Mock for the mail service (ResendClient).
+ * Captures calls without sending emails or doing DB operations.
+ *
+ * @example
+ * ```ts
+ * import { createMockMailService } from '$lib/testing/mocks';
+ *
+ * const mockMail = createMockMailService();
+ *
+ * vi.mock('$lib/services/external/mail', () => ({
+ *   mailService: mockMail
+ * }));
+ *
+ * // After calling service methods:
+ * expect(mockMail.sendRouteShareEmail).toHaveBeenCalledWith(
+ *   expect.objectContaining({ route_id: 'some-id' }),
+ *   'recipient@example.com',
+ *   expect.any(String),
+ *   expect.any(String),
+ *   expect.any(String),
+ *   expect.any(String)
+ * );
+ * ```
+ */
+export function createMockMailService() {
+	return {
+		sendRouteShareEmail: vi.fn(),
+		sendLoginEmail: vi.fn(),
+		sendInvitationEmail: vi.fn(),
+		sendPasswordResetEmail: vi.fn()
+	};
+}
 
 // ============================================================================
 // SQS Service Mock

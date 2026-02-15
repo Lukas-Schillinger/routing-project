@@ -73,6 +73,16 @@ class StripeClient {
 	}
 
 	/**
+	 * Create a Billing Portal session for managing subscriptions/payment methods.
+	 */
+	async createPortalSession(
+		params: Stripe.BillingPortal.SessionCreateParams
+	): Promise<Stripe.BillingPortal.Session> {
+		log.info('Creating Stripe Billing Portal session');
+		return this.stripe.billingPortal.sessions.create(params);
+	}
+
+	/**
 	 * Construct and verify a webhook event from the raw body and signature.
 	 */
 	constructWebhookEvent(

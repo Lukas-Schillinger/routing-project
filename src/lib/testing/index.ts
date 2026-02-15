@@ -101,6 +101,7 @@ export {
 	createMockDistanceMatrixService,
 	createMockNavigationService,
 	createMockR2Service,
+	createMockMailService,
 	createMockSqsService,
 	// Stripe
 	mockStripeClient,

@@ -452,6 +452,57 @@ describe('SubscriptionService', () => {
 		});
 	});
 
+	describe('createPortalSession()', () => {
+		it('creates portal session with correct customer ID and return URL', async () => {
+			await withTestTransaction(async () => {
+				const { organization } = await createBillingTestEnvironment();
+
+				await makeProOrg(organization.id);
+
+				const url = await service.createPortalSession(
+					organization.id,
+					'https://example.com'
+				);
+
+				expect(url).toContain('https://billing.stripe.com');
+
+				expect(mockStripeState.calls.createPortalSession).toHaveLength(1);
+				const call = mockStripeState.calls.createPortalSession[0];
+				expect(call.customer).toBe('cus_test');
+				expect(call.return_url).toBe('https://example.com/auth/account');
+				expect(call.flow_data).toBeUndefined();
+			});
+		});
+
+		it('passes flow_data when flow parameter provided', async () => {
+			await withTestTransaction(async () => {
+				const { organization } = await createBillingTestEnvironment();
+
+				await makeProOrg(organization.id);
+
+				await service.createPortalSession(
+					organization.id,
+					'https://example.com',
+					'payment_method_update'
+				);
+
+				const call = mockStripeState.calls.createPortalSession[0];
+				expect(call.flow_data).toEqual({ type: 'payment_method_update' });
+			});
+		});
+
+		it('throws if org has no stripe_customer_id', async () => {
+			await withTestTransaction(async () => {
+				const { organization } = await createBillingTestEnvironment();
+
+				// org has no stripe_customer_id by default
+				await expect(
+					service.createPortalSession(organization.id, 'https://example.com')
+				).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+			});
+		});
+	});
+
 	describe('getPendingCancellation()', () => {
 		it('returns effectiveDate when cancel_at_period_end is true', async () => {
 			await withTestTransaction(async () => {

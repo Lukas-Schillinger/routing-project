@@ -11,7 +11,8 @@
 	import type { CreditBalance } from '$lib/schemas/billing';
 	import type {
 		creditTransactions,
-		CreditTransactionType
+		CreditTransactionType,
+		SubscriptionStatus
 	} from '$lib/server/db/schema';
 	import { billingApi } from '$lib/services/api/billing';
 	import { formatDate } from '$lib/utils';
@@ -26,6 +27,7 @@
 		credits: CreditBalance;
 		transactions: (typeof creditTransactions.$inferSelect)[];
 		canManageBilling: boolean;
+		subscriptionStatus: SubscriptionStatus | null;
 	};
 
 	let {
@@ -35,41 +37,45 @@
 		cancelAtPeriodEnd,
 		credits,
 		transactions,
-		canManageBilling
+		canManageBilling,
+		subscriptionStatus
 	}: Props = $props();
 
 	// Billing modal state
 	let billingModalOpen = $state(false);
 
-	// Downgrade action state
-	let downgradeLoading = $state(false);
-	let downgradeError = $state<string | null>(null);
-
-	async function handleDowngrade() {
-		downgradeLoading = true;
-		downgradeError = null;
-		try {
-			await billingApi.scheduleDowngrade();
-			await invalidateAll();
-		} catch (e) {
-			downgradeError =
-				e instanceof Error ? e.message : 'Failed to schedule downgrade';
-		} finally {
-			downgradeLoading = false;
-		}
-	}
+	// Action state
+	let actionLoading = $state(false);
+	let actionError = $state<string | null>(null);
 
 	async function handleCancelDowngrade() {
-		downgradeLoading = true;
-		downgradeError = null;
+		actionLoading = true;
+		actionError = null;
 		try {
 			await billingApi.cancelScheduledDowngrade();
 			await invalidateAll();
 		} catch (e) {
-			downgradeError =
+			actionError =
 				e instanceof Error ? e.message : 'Failed to cancel downgrade';
 		} finally {
-			downgradeLoading = false;
+			actionLoading = false;
+		}
+	}
+
+	// Portal session state
+	let portalLoading = $state(false);
+
+	async function handleOpenPortal(flow?: 'payment_method_update') {
+		portalLoading = true;
+		actionError = null;
+		try {
+			const result = await billingApi.createPortalSession(flow);
+			window.location.href = result.url;
+		} catch (e) {
+			actionError =
+				e instanceof Error ? e.message : 'Failed to open billing portal';
+		} finally {
+			portalLoading = false;
 		}
 	}
 
@@ -123,6 +129,11 @@
 		>
 			<div class="shrink-0 md:w-48">
 				<p class="text-sm font-medium">Current Plan</p>
+				{#if subscriptionStatus === 'past_due'}
+					<p class="text-sm text-red-600">
+						Payment failed — update via Manage subscription
+					</p>
+				{/if}
 			</div>
 			<div class="flex items-center gap-3">
 				<Badge variant="secondary">{plan === 'pro' ? 'Pro' : 'Free'}</Badge>
@@ -135,26 +146,25 @@
 						Upgrade
 					</Button>
 				{/if}
-				{#if canManageBilling && plan === 'pro' && !cancelAtPeriodEnd}
+				{#if canManageBilling && subscriptionStatus}
 					<Button
-						variant="ghost"
+						variant="outline"
 						size="sm"
-						class="text-muted-foreground"
-						onclick={handleDowngrade}
-						disabled={downgradeLoading}
+						onclick={() => handleOpenPortal()}
+						disabled={portalLoading}
 					>
-						{#if downgradeLoading}
+						{#if portalLoading}
 							<Spinner class="mr-2" />
 						{/if}
-						Downgrade
+						Manage subscription
 					</Button>
 				{/if}
 			</div>
 		</div>
 
-		<!-- Downgrade error -->
-		{#if downgradeError}
-			<p class="text-sm text-destructive">{downgradeError}</p>
+		<!-- Action error -->
+		{#if actionError}
+			<p class="text-sm text-destructive">{actionError}</p>
 		{/if}
 
 		<!-- Downgrade Notice -->
@@ -174,9 +184,9 @@
 							variant="outline"
 							size="sm"
 							onclick={handleCancelDowngrade}
-							disabled={downgradeLoading}
+							disabled={actionLoading}
 						>
-							{#if downgradeLoading}
+							{#if actionLoading}
 								<Spinner class="mr-2" />
 							{/if}
 							Keep Pro

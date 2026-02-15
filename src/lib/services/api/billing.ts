@@ -26,6 +26,18 @@ class BillingApiService {
 	}
 
 	/**
+	 * Create Stripe Billing Portal session for managing payment methods
+	 */
+	async createPortalSession(
+		flow?: 'payment_method_update'
+	): Promise<CheckoutResponse> {
+		return apiClient.post<CheckoutResponse>(
+			'/billing/portal',
+			flow ? { flow } : {}
+		);
+	}
+
+	/**
 	 * Create Stripe Checkout session for purchasing credits
 	 * @param data.amount - Number of credits to purchase
 	 * @param data.returnUrl - Optional URL to redirect to after checkout (defaults to /maps)
