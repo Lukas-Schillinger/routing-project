@@ -18,7 +18,7 @@ export const load: PageServerLoad = async () => {
 		organization,
 		invitationsWithMailRecord,
 		organizationUsers,
-		subscriptionData,
+		billingInfo,
 		credits,
 		transactions
 	] = await Promise.all([
@@ -28,7 +28,7 @@ export const load: PageServerLoad = async () => {
 			: null,
 		userService.getPublicUsers(user.organization_id),
 		hasBillingPermission
-			? billingService.getSubscription(user.organization_id)
+			? billingService.getBillingInfo(user.organization_id)
 			: null,
 		hasBillingPermission
 			? billingService.getCreditBalance(user.organization_id)
@@ -43,10 +43,12 @@ export const load: PageServerLoad = async () => {
 		user,
 		invitationsWithMailRecord,
 		organizationUsers,
-		billing: subscriptionData
+		billing: billingInfo
 			? {
-					subscription: subscriptionData.subscription,
-					plan: subscriptionData.plan,
+					plan: billingInfo.plan,
+					monthlyCredits: billingInfo.monthlyCredits,
+					periodEndsAt: billingInfo.periodEndsAt,
+					cancelAtPeriodEnd: billingInfo.organization.cancel_at_period_end,
 					credits: credits!,
 					transactions: transactions!
 				}

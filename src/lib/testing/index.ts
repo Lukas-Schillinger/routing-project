@@ -41,8 +41,6 @@ export {
 	createMockMatrix,
 	createMockOptimizationJob,
 	// Billing
-	createMockPlan,
-	createMockSubscription,
 	createMockCreditTransaction
 } from './factories';
 
@@ -64,8 +62,6 @@ export {
 	createMatrix,
 	createOptimizationJob,
 	// Billing
-	createPlan,
-	createSubscription,
 	createCreditTransaction
 } from './factories';
 
@@ -94,8 +90,6 @@ export type {
 	MockMatrix,
 	MockOptimizationJob,
 	// Billing
-	MockPlan,
-	MockSubscription,
 	MockCreditTransaction
 } from './factories';
 

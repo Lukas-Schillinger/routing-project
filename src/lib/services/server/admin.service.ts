@@ -2,15 +2,13 @@ import type { PublicUser } from '$lib/schemas';
 import { db } from '$lib/server/db';
 import {
 	creditTransactions,
+	getOrgPlan,
 	organizations,
-	plans,
-	subscriptions,
-	users,
-	type Plan
+	users
 } from '$lib/server/db/schema';
 import { logger } from '$lib/server/logger';
 import { stripeClient } from '$lib/services/external/stripe/client';
-import { count, desc, eq, sql } from 'drizzle-orm';
+import { count, desc, eq, isNotNull, sql } from 'drizzle-orm';
 import type Stripe from 'stripe';
 import { createSession, generateSessionToken } from './auth';
 import { ServiceError } from './errors';
@@ -23,7 +21,6 @@ import {
 
 const log = logger.child({ service: 'admin' });
 
-type Subscription = typeof subscriptions.$inferSelect;
 type Organization = typeof organizations.$inferSelect;
 type CreditTransaction = typeof creditTransactions.$inferSelect;
 
@@ -31,22 +28,8 @@ type OrganizationWithUserCount = Organization & {
 	userCount: number;
 };
 
-type SubscriptionWithOrgAndPlan = {
-	subscription: Subscription;
-	organization: Organization;
-	plan: Plan;
-};
-
-type SubscriptionComparison = {
-	local: {
-		subscription: Subscription;
-		plan: Plan;
-	};
-	stripe: {
-		subscription: Stripe.Subscription;
-		customer: Stripe.Customer | Stripe.DeletedCustomer | null;
-	} | null;
-	mismatches: string[];
+type OrganizationWithBilling = Organization & {
+	plan: 'free' | 'pro';
 };
 
 type CreditTransactionWithOrg = CreditTransaction & {
@@ -58,7 +41,7 @@ export class AdminService {
 	 * Get all organizations with user counts.
 	 */
 	async getAllOrganizations(): Promise<OrganizationWithUserCount[]> {
-		return db
+		const rows = await db
 			.select({
 				id: organizations.id,
 				created_at: organizations.created_at,
@@ -66,38 +49,36 @@ export class AdminService {
 				updated_at: organizations.updated_at,
 				updated_by: organizations.updated_by,
 				name: organizations.name,
+				stripe_customer_id: organizations.stripe_customer_id,
+				stripe_subscription_id: organizations.stripe_subscription_id,
+				subscription_status: organizations.subscription_status,
+				billing_period_starts_at: organizations.billing_period_starts_at,
+				billing_period_ends_at: organizations.billing_period_ends_at,
+				cancel_at_period_end: organizations.cancel_at_period_end,
 				userCount: count(users.id)
 			})
 			.from(organizations)
 			.leftJoin(users, eq(organizations.id, users.organization_id))
 			.groupBy(organizations.id)
 			.orderBy(desc(organizations.created_at));
+
+		return rows;
 	}
 
 	/**
-	 * Get all subscriptions with organization and plan details.
+	 * Get all organizations that have an active subscription (Pro orgs).
 	 */
-	async getAllSubscriptions(): Promise<SubscriptionWithOrgAndPlan[]> {
-		return db
-			.select({
-				subscription: subscriptions,
-				organization: organizations,
-				plan: plans
-			})
-			.from(subscriptions)
-			.innerJoin(
-				organizations,
-				eq(subscriptions.organization_id, organizations.id)
-			)
-			.innerJoin(plans, eq(subscriptions.plan_id, plans.id))
-			.orderBy(desc(subscriptions.created_at));
-	}
+	async getAllProOrganizations(): Promise<OrganizationWithBilling[]> {
+		const rows = await db
+			.select()
+			.from(organizations)
+			.where(isNotNull(organizations.stripe_subscription_id))
+			.orderBy(desc(organizations.updated_at));
 
-	/**
-	 * Get all plans.
-	 */
-	async getAllPlans(): Promise<Plan[]> {
-		return db.select().from(plans).orderBy(plans.name);
+		return rows.map((org) => ({
+			...org,
+			plan: getOrgPlan(org)
+		}));
 	}
 
 	/**
@@ -114,45 +95,35 @@ export class AdminService {
 			throw ServiceError.notFound('Organization not found');
 		}
 
-		const [orgUsers, subscription, creditBalance, transactions] =
-			await Promise.all([
-				db
-					.select({
-						id: users.id,
-						name: users.name,
-						email: users.email,
-						role: users.role,
-						created_at: users.created_at
-					})
-					.from(users)
-					.where(eq(users.organization_id, organizationId)),
-				db
-					.select({
-						subscription: subscriptions,
-						plan: plans
-					})
-					.from(subscriptions)
-					.innerJoin(plans, eq(subscriptions.plan_id, plans.id))
-					.where(eq(subscriptions.organization_id, organizationId))
-					.limit(1),
-				db
-					.select({
-						total: sql<number>`COALESCE(SUM(${creditTransactions.amount}), 0)::int`
-					})
-					.from(creditTransactions)
-					.where(eq(creditTransactions.organization_id, organizationId)),
-				db
-					.select()
-					.from(creditTransactions)
-					.where(eq(creditTransactions.organization_id, organizationId))
-					.orderBy(desc(creditTransactions.created_at))
-					.limit(50)
-			]);
+		const [orgUsers, creditBalance, transactions] = await Promise.all([
+			db
+				.select({
+					id: users.id,
+					name: users.name,
+					email: users.email,
+					role: users.role,
+					created_at: users.created_at
+				})
+				.from(users)
+				.where(eq(users.organization_id, organizationId)),
+			db
+				.select({
+					total: sql<number>`COALESCE(SUM(${creditTransactions.amount}), 0)::int`
+				})
+				.from(creditTransactions)
+				.where(eq(creditTransactions.organization_id, organizationId)),
+			db
+				.select()
+				.from(creditTransactions)
+				.where(eq(creditTransactions.organization_id, organizationId))
+				.orderBy(desc(creditTransactions.created_at))
+				.limit(50)
+		]);
 
 		return {
 			organization: org,
+			plan: getOrgPlan(org),
 			users: orgUsers,
-			subscription: subscription[0] ?? null,
 			creditBalance: creditBalance[0]?.total ?? 0,
 			transactions
 		};
@@ -161,81 +132,65 @@ export class AdminService {
 	/**
 	 * Get subscription comparison between local DB and Stripe.
 	 */
-	async getSubscriptionWithStripeData(
-		organizationId: string
-	): Promise<SubscriptionComparison> {
-		// Get local subscription
-		const [localData] = await db
-			.select({
-				subscription: subscriptions,
-				plan: plans
-			})
-			.from(subscriptions)
-			.innerJoin(plans, eq(subscriptions.plan_id, plans.id))
-			.where(eq(subscriptions.organization_id, organizationId))
+	async getSubscriptionWithStripeData(organizationId: string) {
+		const [org] = await db
+			.select()
+			.from(organizations)
+			.where(eq(organizations.id, organizationId))
 			.limit(1);
 
-		if (!localData) {
-			throw ServiceError.notFound('Subscription not found');
+		if (!org || !org.stripe_subscription_id) {
+			return null;
 		}
 
 		const mismatches: string[] = [];
-		let stripeData: SubscriptionComparison['stripe'] = null;
+		let stripeData: {
+			subscription: Stripe.Subscription;
+			customer: Stripe.Customer | Stripe.DeletedCustomer | null;
+		} | null = null;
 
 		try {
-			const [stripeSubscription, stripeCustomer] = await Promise.all([
-				stripeClient.getSubscription(
-					localData.subscription.stripe_subscription_id
-				),
-				stripeClient.getCustomer(localData.subscription.stripe_customer_id)
-			]);
+			const stripeSubscription = await stripeClient.getSubscription(
+				org.stripe_subscription_id
+			);
 
 			stripeData = {
 				subscription: stripeSubscription,
-				customer: stripeCustomer
+				customer: null
 			};
 
 			// Check for mismatches
-			if (stripeSubscription.status !== localData.subscription.status) {
+			if (stripeSubscription.status !== org.subscription_status) {
 				mismatches.push(
-					`Status: local=${localData.subscription.status}, stripe=${stripeSubscription.status}`
+					`Status: local=${org.subscription_status}, stripe=${stripeSubscription.status}`
 				);
 			}
 
 			const stripeItem = stripeSubscription.items.data[0];
 			if (stripeItem) {
-				const stripePriceId =
-					typeof stripeItem.price === 'string'
-						? stripeItem.price
-						: stripeItem.price.id;
-				if (stripePriceId !== localData.plan.stripe_price_id) {
-					mismatches.push(
-						`Price ID: local=${localData.plan.stripe_price_id}, stripe=${stripePriceId}`
-					);
-				}
-
 				const stripePeriodStart = new Date(
 					stripeItem.current_period_start * 1000
 				);
 				const stripePeriodEnd = new Date(stripeItem.current_period_end * 1000);
-				const localPeriodStart = new Date(
-					localData.subscription.period_starts_at
-				);
-				const localPeriodEnd = new Date(localData.subscription.period_ends_at);
 
 				if (
-					Math.abs(stripePeriodStart.getTime() - localPeriodStart.getTime()) >
-					60000
+					org.billing_period_starts_at &&
+					Math.abs(
+						stripePeriodStart.getTime() - org.billing_period_starts_at.getTime()
+					) > 60000
 				) {
 					mismatches.push(
-						`Period start: local=${localPeriodStart.toISOString()}, stripe=${stripePeriodStart.toISOString()}`
+						`Period start: local=${org.billing_period_starts_at.toISOString()}, stripe=${stripePeriodStart.toISOString()}`
 					);
 				}
 				if (
-					Math.abs(stripePeriodEnd.getTime() - localPeriodEnd.getTime()) > 60000
+					org.billing_period_ends_at &&
+					Math.abs(
+						stripePeriodEnd.getTime() - org.billing_period_ends_at.getTime()
+					) > 60000
 				) {
 					mismatches.push(
-						`Period end: local=${localPeriodEnd.toISOString()}, stripe=${stripePeriodEnd.toISOString()}`
+						`Period end: local=${org.billing_period_ends_at.toISOString()}, stripe=${stripePeriodEnd.toISOString()}`
 					);
 				}
 			}
@@ -246,7 +201,14 @@ export class AdminService {
 		}
 
 		return {
-			local: localData,
+			local: {
+				subscriptionId: org.stripe_subscription_id,
+				status: org.subscription_status,
+				plan: getOrgPlan(org),
+				periodStart: org.billing_period_starts_at,
+				periodEnd: org.billing_period_ends_at,
+				cancelAtPeriodEnd: org.cancel_at_period_end
+			},
 			stripe: stripeData,
 			mismatches
 		};
@@ -285,18 +247,18 @@ export class AdminService {
 	 * Force sync subscription from Stripe.
 	 */
 	async syncSubscriptionFromStripe(organizationId: string): Promise<void> {
-		const [subscription] = await db
+		const [org] = await db
 			.select()
-			.from(subscriptions)
-			.where(eq(subscriptions.organization_id, organizationId))
+			.from(organizations)
+			.where(eq(organizations.id, organizationId))
 			.limit(1);
 
-		if (!subscription) {
-			throw ServiceError.notFound('Subscription not found');
+		if (!org?.stripe_subscription_id) {
+			throw ServiceError.notFound('Organization has no subscription');
 		}
 
 		const stripeSubscription = await stripeClient.getSubscription(
-			subscription.stripe_subscription_id
+			org.stripe_subscription_id
 		);
 
 		await subscriptionService.syncSubscription(stripeSubscription);
@@ -332,62 +294,28 @@ export class AdminService {
 	}
 
 	/**
-	 * Update a plan's monthly credits or features.
-	 */
-	async updatePlan(
-		planId: string,
-		data: { monthly_credits?: number; features?: Plan['features'] }
-	): Promise<Plan> {
-		const [existingPlan] = await db
-			.select()
-			.from(plans)
-			.where(eq(plans.id, planId))
-			.limit(1);
-
-		if (!existingPlan) {
-			throw ServiceError.notFound('Plan not found');
-		}
-
-		const [updatedPlan] = await db
-			.update(plans)
-			.set({
-				monthly_credits: data.monthly_credits ?? existingPlan.monthly_credits,
-				features: data.features ?? existingPlan.features,
-				updated_at: new Date()
-			})
-			.where(eq(plans.id, planId))
-			.returning();
-
-		return updatedPlan;
-	}
-
-	/**
 	 * Get dashboard statistics.
 	 */
 	async getDashboardStats() {
-		const [orgCount, subsByPlan, recentTransactions] = await Promise.all([
+		const [orgCount, proCount, recentTransactions] = await Promise.all([
 			db.select({ count: count() }).from(organizations),
 			db
-				.select({
-					planName: plans.name,
-					count: count()
-				})
-				.from(subscriptions)
-				.innerJoin(plans, eq(subscriptions.plan_id, plans.id))
-				.groupBy(plans.name),
+				.select({ count: count() })
+				.from(organizations)
+				.where(eq(organizations.subscription_status, 'active')),
 			this.getAllCreditTransactions(10)
 		]);
 
 		return {
 			totalOrganizations: orgCount[0]?.count ?? 0,
-			subscriptionsByPlan: subsByPlan,
+			proOrganizations: proCount[0]?.count ?? 0,
 			recentTransactions
 		};
 	}
 
 	/**
-	 * Create a test account with organization, user, and Stripe subscription.
-	 * Matches the normal registration flow - always starts on Free plan.
+	 * Create a test account with organization and user.
+	 * Starts on Free plan (no Stripe interaction).
 	 */
 	async createTestAccount(params: {
 		email: string;
@@ -396,7 +324,6 @@ export class AdminService {
 	}): Promise<{
 		organization: Organization;
 		user: PublicUser;
-		subscription: Subscription;
 	}> {
 		// Check if email is already in use
 		const existingUser = await userService.findAnyUserByEmail(params.email);
@@ -404,8 +331,7 @@ export class AdminService {
 			throw ServiceError.conflict('Email already in use');
 		}
 
-		// Create user with admin role (same as normal registration)
-		// This auto-creates org + Stripe customer + Free subscription
+		// Create user with admin role (auto-creates org on Free tier)
 		const user = await userService.createUser({
 			email: params.email,
 			name: params.name ?? null,
@@ -421,17 +347,6 @@ export class AdminService {
 				)
 			: await organizationService.getOrganization(user.organization_id);
 
-		// Get the subscription
-		const [subscription] = await db
-			.select()
-			.from(subscriptions)
-			.where(eq(subscriptions.organization_id, user.organization_id))
-			.limit(1);
-
-		if (!subscription) {
-			throw ServiceError.internal('Subscription not created');
-		}
-
 		log.info(
 			{ userId: user.id, organizationId: organization.id },
 			'Test account created'
@@ -439,14 +354,13 @@ export class AdminService {
 
 		return {
 			organization,
-			user: userService.toPublicUser(user),
-			subscription
+			user: userService.toPublicUser(user)
 		};
 	}
 
 	/**
 	 * Delete an organization and all related data.
-	 * Cancels Stripe subscription first, then deletes organization (cascades to users, subscriptions, etc).
+	 * Cancels Stripe subscription first if active.
 	 */
 	async deleteOrganization(organizationId: string): Promise<void> {
 		const [org] = await db
@@ -459,16 +373,12 @@ export class AdminService {
 			throw ServiceError.notFound('Organization not found');
 		}
 
-		const [subscription] = await db
-			.select()
-			.from(subscriptions)
-			.where(eq(subscriptions.organization_id, organizationId))
-			.limit(1);
-
-		if (subscription) {
-			await stripeClient.cancelSubscription(
-				subscription.stripe_subscription_id
-			);
+		if (org.stripe_subscription_id) {
+			try {
+				await stripeClient.cancelSubscription(org.stripe_subscription_id);
+			} catch {
+				// If Stripe cancellation fails, still proceed with deletion
+			}
 		}
 
 		await db.delete(organizations).where(eq(organizations.id, organizationId));

@@ -6,16 +6,18 @@
  * Uses withTestTransaction for automatic rollback - no manual cleanup needed.
  */
 
+import { billingConfig } from '$lib/config/billing';
 import { db } from '$lib/server/db';
-import { creditTransactions, subscriptions } from '$lib/server/db/schema';
+import { creditTransactions, organizations } from '$lib/server/db/schema';
 import {
-	createBillingTestEnvironment,
 	createDepot,
 	createLocation,
 	createMap,
 	createMatrix,
 	createMockStripeSubscription,
 	createOptimizationJob,
+	createOrganization,
+	createTestEnvironment,
 	mockStripeClient,
 	mockStripeState,
 	withTestTransaction
@@ -41,7 +43,7 @@ describe('Stripe Webhook - Checkout Events', () => {
 	describe('checkout.session.completed (credits)', () => {
 		it('grants purchased credits when checkout completes', async () => {
 			await withTestTransaction(async () => {
-				const { organization, freePlan } = await createBillingTestEnvironment();
+				const { organization } = await createTestEnvironment();
 				const creditAmount = 100;
 				const paymentIntentId = `pi_test_${Date.now()}`;
 
@@ -57,7 +59,7 @@ describe('Stripe Webhook - Checkout Events', () => {
 				const balance = await billingService.getAvailableCredits(
 					organization.id
 				);
-				expect(balance).toBe(freePlan.monthly_credits + creditAmount);
+				expect(balance).toBe(billingConfig.freeMonthlyCredits + creditAmount);
 
 				// Verify transaction record
 				const transactions = await db
@@ -74,7 +76,7 @@ describe('Stripe Webhook - Checkout Events', () => {
 
 		it('is idempotent - does not double grant on retry', async () => {
 			await withTestTransaction(async () => {
-				const { organization, freePlan } = await createBillingTestEnvironment();
+				const { organization } = await createTestEnvironment();
 				const paymentIntentId = `pi_test_idempotent_${Date.now()}`;
 
 				// Simulate webhook called twice (retry)
@@ -93,7 +95,7 @@ describe('Stripe Webhook - Checkout Events', () => {
 				const balance = await billingService.getAvailableCredits(
 					organization.id
 				);
-				expect(balance).toBe(freePlan.monthly_credits + 100);
+				expect(balance).toBe(billingConfig.freeMonthlyCredits + 100);
 
 				const transactions = await db
 					.select()
@@ -109,15 +111,22 @@ describe('Stripe Webhook - Subscription Events', () => {
 	describe('customer.subscription.updated', () => {
 		it('syncs subscription data from Stripe', async () => {
 			await withTestTransaction(async () => {
-				const { organization, subscription, proPlan } =
-					await createBillingTestEnvironment();
+				const organization = await createOrganization({
+					stripe_customer_id: 'cus_test',
+					stripe_subscription_id: 'sub_test',
+					subscription_status: 'active',
+					billing_period_starts_at: new Date(),
+					billing_period_ends_at: new Date(
+						Date.now() + 30 * 24 * 60 * 60 * 1000
+					)
+				});
 
 				const now = Math.floor(Date.now() / 1000);
 				const stripeSubscription = createMockStripeSubscription({
 					id: 'sub_sync_test',
-					customer: subscription.stripe_customer_id,
+					customer: 'cus_test',
 					organizationId: organization.id,
-					priceId: proPlan.stripe_price_id,
+					priceId: billingConfig.proPlanPriceId,
 					status: 'active',
 					periodStart: now,
 					periodEnd: now + 30 * 24 * 60 * 60
@@ -127,61 +136,32 @@ describe('Stripe Webhook - Subscription Events', () => {
 
 				const [updated] = await db
 					.select()
-					.from(subscriptions)
-					.where(eq(subscriptions.organization_id, organization.id));
+					.from(organizations)
+					.where(eq(organizations.id, organization.id));
 
 				expect(updated.stripe_subscription_id).toBe('sub_sync_test');
-				expect(updated.status).toBe('active');
-				expect(updated.plan_id).toBe(proPlan.id);
-			});
-		});
-
-		it('updates plan when subscription changes', async () => {
-			await withTestTransaction(async () => {
-				const { organization, subscription, proPlan, freePlan } =
-					await createBillingTestEnvironment();
-
-				// First set to Pro
-				await db
-					.update(subscriptions)
-					.set({ plan_id: proPlan.id })
-					.where(eq(subscriptions.organization_id, organization.id));
-
-				const now = Math.floor(Date.now() / 1000);
-
-				// Create subscription changing to Free
-				const stripeSubscription = createMockStripeSubscription({
-					id: 'sub_downgrade_test',
-					customer: subscription.stripe_customer_id,
-					organizationId: organization.id,
-					priceId: freePlan.stripe_price_id,
-					status: 'active',
-					periodStart: now,
-					periodEnd: now + 30 * 24 * 60 * 60
-				});
-
-				await subscriptionService.syncSubscription(stripeSubscription);
-
-				const [updated] = await db
-					.select()
-					.from(subscriptions)
-					.where(eq(subscriptions.organization_id, organization.id));
-
-				expect(updated.plan_id).toBe(freePlan.id);
+				expect(updated.subscription_status).toBe('active');
 			});
 		});
 
 		it('syncs cancel_at_period_end from Stripe', async () => {
 			await withTestTransaction(async () => {
-				const { organization, subscription, proPlan } =
-					await createBillingTestEnvironment();
+				const organization = await createOrganization({
+					stripe_customer_id: 'cus_test',
+					stripe_subscription_id: 'sub_test',
+					subscription_status: 'active',
+					billing_period_starts_at: new Date(),
+					billing_period_ends_at: new Date(
+						Date.now() + 30 * 24 * 60 * 60 * 1000
+					)
+				});
 
 				const now = Math.floor(Date.now() / 1000);
 				const stripeSubscription = createMockStripeSubscription({
 					id: 'sub_cancel_test',
-					customer: subscription.stripe_customer_id,
+					customer: 'cus_test',
 					organizationId: organization.id,
-					priceId: proPlan.stripe_price_id,
+					priceId: billingConfig.proPlanPriceId,
 					status: 'active',
 					periodStart: now,
 					periodEnd: now + 30 * 24 * 60 * 60,
@@ -192,8 +172,8 @@ describe('Stripe Webhook - Subscription Events', () => {
 
 				const [updated] = await db
 					.select()
-					.from(subscriptions)
-					.where(eq(subscriptions.organization_id, organization.id));
+					.from(organizations)
+					.where(eq(organizations.id, organization.id));
 
 				expect(updated.cancel_at_period_end).toBe(true);
 			});
@@ -201,15 +181,22 @@ describe('Stripe Webhook - Subscription Events', () => {
 
 		it('handles status changes (past_due, canceled, etc)', async () => {
 			await withTestTransaction(async () => {
-				const { organization, subscription, proPlan } =
-					await createBillingTestEnvironment();
+				const organization = await createOrganization({
+					stripe_customer_id: 'cus_test',
+					stripe_subscription_id: 'sub_status_test',
+					subscription_status: 'active',
+					billing_period_starts_at: new Date(),
+					billing_period_ends_at: new Date(
+						Date.now() + 30 * 24 * 60 * 60 * 1000
+					)
+				});
 
 				const now = Math.floor(Date.now() / 1000);
 				const stripeSubscription = createMockStripeSubscription({
-					id: subscription.stripe_subscription_id,
-					customer: subscription.stripe_customer_id,
+					id: 'sub_status_test',
+					customer: 'cus_test',
 					organizationId: organization.id,
-					priceId: proPlan.stripe_price_id,
+					priceId: billingConfig.proPlanPriceId,
 					status: 'past_due',
 					periodStart: now,
 					periodEnd: now + 30 * 24 * 60 * 60
@@ -219,10 +206,10 @@ describe('Stripe Webhook - Subscription Events', () => {
 
 				const [updated] = await db
 					.select()
-					.from(subscriptions)
-					.where(eq(subscriptions.organization_id, organization.id));
+					.from(organizations)
+					.where(eq(organizations.id, organization.id));
 
-				expect(updated.status).toBe('past_due');
+				expect(updated.subscription_status).toBe('past_due');
 			});
 		});
 	});
@@ -242,29 +229,12 @@ describe('Stripe Webhook - Error Handling', () => {
 			subscriptionService.syncSubscription(stripeSubscription)
 		).rejects.toThrow('organization_id');
 	});
-
-	it('throws on unknown price ID', async () => {
-		await withTestTransaction(async () => {
-			const { organization } = await createBillingTestEnvironment();
-
-			const stripeSubscription = createMockStripeSubscription({
-				id: 'sub_unknown_price',
-				organizationId: organization.id,
-				priceId: 'price_unknown_xyz'
-			});
-
-			await expect(
-				subscriptionService.syncSubscription(stripeSubscription)
-			).rejects.toThrow('Plan not found');
-		});
-	});
 });
 
 describe('Stripe Webhook - Credit Balance Verification', () => {
 	it('correctly calculates derived balance with purchased credits and usage', async () => {
 		await withTestTransaction(async () => {
-			const { organization, user, freePlan } =
-				await createBillingTestEnvironment();
+			const { organization, user } = await createTestEnvironment();
 
 			// Grant purchased credits
 			await billingService.grantPurchasedCredits(
@@ -301,32 +271,37 @@ describe('Stripe Webhook - Credit Balance Verification', () => {
 
 			// Verify derived balance: plan.monthly_credits + 100 purchased - 50 usage
 			const balance = await billingService.getAvailableCredits(organization.id);
-			expect(balance).toBe(freePlan.monthly_credits + 100 - 50);
+			expect(balance).toBe(billingConfig.freeMonthlyCredits + 100 - 50);
 		});
 	});
 
 	it('derives subscription credits from plan without ledger entries', async () => {
 		await withTestTransaction(async () => {
-			const { organization, freePlan } = await createBillingTestEnvironment();
+			const { organization } = await createTestEnvironment();
 
 			// No transactions at all - credits should come from plan
 			const balance = await billingService.getAvailableCredits(organization.id);
-			expect(balance).toBe(freePlan.monthly_credits);
+			expect(balance).toBe(billingConfig.freeMonthlyCredits);
 		});
 	});
 
 	it('reflects new plan credits immediately after subscription sync', async () => {
 		await withTestTransaction(async () => {
-			const { organization, subscription, proPlan } =
-				await createBillingTestEnvironment();
+			const organization = await createOrganization({
+				stripe_customer_id: 'cus_test',
+				stripe_subscription_id: 'sub_test',
+				subscription_status: 'active',
+				billing_period_starts_at: new Date(),
+				billing_period_ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+			});
 
 			// Sync to Pro plan
 			const now = Math.floor(Date.now() / 1000);
 			const stripeSubscription = createMockStripeSubscription({
 				id: 'sub_upgrade_credits',
-				customer: subscription.stripe_customer_id,
+				customer: 'cus_test',
 				organizationId: organization.id,
-				priceId: proPlan.stripe_price_id,
+				priceId: billingConfig.proPlanPriceId,
 				status: 'active',
 				periodStart: now,
 				periodEnd: now + 30 * 24 * 60 * 60
@@ -336,7 +311,7 @@ describe('Stripe Webhook - Credit Balance Verification', () => {
 
 			// Credits should immediately reflect Pro plan allowance
 			const balance = await billingService.getAvailableCredits(organization.id);
-			expect(balance).toBe(proPlan.monthly_credits);
+			expect(balance).toBe(billingConfig.proMonthlyCredits);
 		});
 	});
 });

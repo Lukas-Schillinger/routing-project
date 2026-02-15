@@ -6,29 +6,28 @@
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { billingApi } from '$lib/services/api/billing';
 	import type { CreditBalance } from '$lib/schemas/billing';
-	import type { Plan } from '$lib/server/db/schema';
-	import { goto } from '$app/navigation';
-	import { resolve } from '$app/paths';
 	import { Check, RocketLaunch } from 'phosphor-svelte';
 	import { page } from '$app/stores';
 
 	type Props = {
 		open: boolean;
-		plan: Plan;
+		planSlug: 'free' | 'pro';
 		credits: CreditBalance;
+		monthlyCredits: number;
 		onUpgrade?: () => void;
 		onSuccess?: () => void;
 	};
 
 	let {
 		open = $bindable(false),
-		plan,
+		planSlug,
 		credits,
+		monthlyCredits,
 		onUpgrade,
 		onSuccess
 	}: Props = $props();
 
-	const isFreePlan = $derived(plan.name === 'free');
+	const isFreePlan = $derived(planSlug === 'free');
 	let showPurchaseCredits = $state(false);
 
 	// Reset state when modal closes
@@ -38,8 +37,8 @@
 
 	// Credit remaining calculations
 	const remainingPercentage = $derived(
-		plan.monthly_credits > 0
-			? Math.round((credits.available / plan.monthly_credits) * 100)
+		monthlyCredits > 0
+			? Math.round((credits.available / monthlyCredits) * 100)
 			: 0
 	);
 
@@ -78,12 +77,19 @@
 		'Email support'
 	];
 
-	function handleUpgrade() {
+	async function handleUpgrade() {
 		if (onUpgrade) {
 			onUpgrade();
 			return;
 		}
-		goto(resolve('/auth/account/upgrade'));
+		isLoading = true;
+		try {
+			const response = await billingApi.createUpgradeCheckout();
+			window.location.href = response.url;
+		} catch (e) {
+			error = e instanceof Error ? e.message : 'Failed to start upgrade';
+			isLoading = false;
+		}
 	}
 
 	async function handlePurchase() {
@@ -115,7 +121,7 @@
 		<div class="flex items-center justify-between text-sm">
 			<span class="font-medium">Credits</span>
 			<span class={statusColorClass}>
-				{credits.available.toLocaleString()} / {plan.monthly_credits.toLocaleString()}
+				{credits.available.toLocaleString()} / {monthlyCredits.toLocaleString()}
 			</span>
 		</div>
 		<Progress

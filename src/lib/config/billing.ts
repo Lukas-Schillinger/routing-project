@@ -42,7 +42,7 @@ export const billingConfig = {
 } as const;
 
 /**
- * Plan slugs - these match the `name` column in the plans table
+ * Plan slugs
  */
 export const PlanSlug = {
 	FREE: 'free',
@@ -50,3 +50,19 @@ export const PlanSlug = {
 } as const;
 
 export type PlanSlug = (typeof PlanSlug)[keyof typeof PlanSlug];
+
+/**
+ * Plan features (derived from plan slug, not stored in DB).
+ */
+export type PlanFeatures = {
+	fleet_management: boolean;
+};
+
+const planFeatures: Record<PlanSlug, PlanFeatures> = {
+	free: { fleet_management: false },
+	pro: { fleet_management: true }
+};
+
+export function getPlanFeatures(plan: PlanSlug): PlanFeatures {
+	return planFeatures[plan];
+}

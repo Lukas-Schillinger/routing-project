@@ -9,7 +9,7 @@
  * 5. getDepots (with location JOIN)
  * 6. getRoutesByMap
  * 7. getActiveJobForMap
- * 8. getSubscription (with plan JOIN)
+ * 8. getOrganization (billing fields)
  * 9. getCreditBalance (2 parallel aggregations)
  */
 import type { BenchDb } from '../connections';
@@ -22,8 +22,7 @@ import {
 	depots,
 	routes,
 	optimizationJobs,
-	subscriptions,
-	plans,
+	organizations,
 	creditTransactions
 } from '$lib/server/db/schema';
 import { and, eq, gt, inArray, isNull, or, sql, sum } from 'drizzle-orm';
@@ -120,15 +119,11 @@ export async function loadMapDetailCurrent(
 			.limit(1)
 			.then((r) => r[0] ?? null),
 
-		// 8. getSubscription (with plan JOIN)
+		// 8. getOrganization (billing fields live on org now)
 		db
-			.select({
-				subscription: subscriptions,
-				plan: plans
-			})
-			.from(subscriptions)
-			.innerJoin(plans, eq(subscriptions.plan_id, plans.id))
-			.where(eq(subscriptions.organization_id, organizationId))
+			.select()
+			.from(organizations)
+			.where(eq(organizations.id, organizationId))
 			.limit(1)
 			.then((r) => r[0]),
 
@@ -178,7 +173,7 @@ export async function loadMapDetailCurrent(
 		depots: orgDepots,
 		routes: mapRoutes,
 		activeJob,
-		subscription: subscriptionData,
+		organization: subscriptionData,
 		credits
 	};
 }

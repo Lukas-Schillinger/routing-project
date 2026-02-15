@@ -1,5 +1,5 @@
 import { db } from '$lib/server/db';
-import { mailRecords, routeShares, subscriptions } from '$lib/server/db/schema';
+import { mailRecords, organizations, routeShares } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 import { routeShareService } from './route-share.service';
@@ -138,14 +138,13 @@ describe('RouteShareService - Feature Gating', () => {
 
 		it('allows share creation for Pro plan users', async () => {
 			await withTestTransaction(async () => {
-				const { organization, user, subscription, proPlan } =
-					await createBillingTestEnvironment();
+				const { organization, user } = await createBillingTestEnvironment();
 
 				// Upgrade to Pro plan
 				await db
-					.update(subscriptions)
-					.set({ plan_id: proPlan.id })
-					.where(eq(subscriptions.id, subscription.id));
+					.update(organizations)
+					.set({ subscription_status: 'active' })
+					.where(eq(organizations.id, organization.id));
 
 				const location = await createLocation({
 					organization_id: organization.id

@@ -235,46 +235,44 @@
 				<Card.Title>Subscription</Card.Title>
 			</Card.Header>
 			<Card.Content class="space-y-4">
-				{#if data.subscription}
-					<div class="flex justify-between">
-						<span class="text-sm text-muted-foreground">Plan</span>
-						<Badge variant="secondary"
-							>{data.subscription.plan.display_name}</Badge
-						>
-					</div>
-					<div class="flex justify-between">
-						<span class="text-sm text-muted-foreground">Status</span>
-						<Badge
-							variant={getStatusBadgeVariant(
-								data.subscription.subscription.status
-							)}
-						>
-							{formatStatus(data.subscription.subscription.status)}
-						</Badge>
-					</div>
-					<div class="flex justify-between">
-						<span class="text-sm text-muted-foreground">Period Start</span>
-						<span class="text-sm"
-							>{formatDateLong(
-								data.subscription.subscription.period_starts_at
-							)}</span
-						>
-					</div>
-					<div class="flex justify-between">
-						<span class="text-sm text-muted-foreground">Period End</span>
-						<span class="text-sm"
-							>{formatDateLong(
-								data.subscription.subscription.period_ends_at
-							)}</span
-						>
-					</div>
-					<div class="flex justify-between">
-						<span class="text-sm text-muted-foreground">Credit Balance</span>
-						<span class="text-sm font-medium">{data.creditBalance}</span>
-					</div>
-				{:else}
-					<p class="text-sm text-muted-foreground">No subscription</p>
-				{/if}
+				<div class="flex justify-between">
+					<span class="text-sm text-muted-foreground">Plan</span>
+					<Badge variant="secondary">
+						{data.plan === 'pro' ? 'Pro' : 'Free'}
+					</Badge>
+				</div>
+				<div class="flex justify-between">
+					<span class="text-sm text-muted-foreground">Status</span>
+					<Badge
+						variant={getStatusBadgeVariant(
+							data.organization.subscription_status || 'free'
+						)}
+					>
+						{data.organization.subscription_status
+							? formatStatus(data.organization.subscription_status)
+							: 'Free'}
+					</Badge>
+				</div>
+				<div class="flex justify-between">
+					<span class="text-sm text-muted-foreground">Period Start</span>
+					<span class="text-sm">
+						{data.organization.billing_period_starts_at
+							? formatDateLong(data.organization.billing_period_starts_at)
+							: 'N/A'}
+					</span>
+				</div>
+				<div class="flex justify-between">
+					<span class="text-sm text-muted-foreground">Period End</span>
+					<span class="text-sm">
+						{data.organization.billing_period_ends_at
+							? formatDateLong(data.organization.billing_period_ends_at)
+							: 'N/A'}
+					</span>
+				</div>
+				<div class="flex justify-between">
+					<span class="text-sm text-muted-foreground">Credit Balance</span>
+					<span class="text-sm font-medium">{data.creditBalance}</span>
+				</div>
 			</Card.Content>
 		</Card.Root>
 	</div>
@@ -376,55 +374,46 @@
 					<!-- Local Data -->
 					<div class="space-y-2">
 						<h4 class="text-sm font-semibold">Local Data</h4>
-						{#if data.stripeComparison.local.subscription}
-							<div class="rounded-md border p-3 text-sm">
-								<p>
-									<span class="text-muted-foreground">Status:</span>
-									{data.stripeComparison.local.subscription.status}
-								</p>
-								<p>
-									<span class="text-muted-foreground">Plan:</span>
-									{data.stripeComparison.local.plan?.name || 'N/A'}
-								</p>
-								<p>
-									<span class="text-muted-foreground">Stripe Sub ID:</span>
-									<span class="font-mono text-xs">
-										{data.stripeComparison.local.subscription
-											.stripe_subscription_id || 'N/A'}
-									</span>
-								</p>
-							</div>
-						{:else}
-							<p class="text-sm text-muted-foreground">No local subscription</p>
-						{/if}
+						<div class="rounded-md border p-3 text-sm">
+							<p>
+								<span class="text-muted-foreground">Status:</span>
+								{data.stripeComparison.local.status || 'N/A'}
+							</p>
+							<p>
+								<span class="text-muted-foreground">Plan:</span>
+								{data.stripeComparison.local.plan === 'pro' ? 'Pro' : 'Free'}
+							</p>
+							<p>
+								<span class="text-muted-foreground">Stripe Sub ID:</span>
+								<span class="font-mono text-xs">
+									{data.stripeComparison.local.subscriptionId || 'N/A'}
+								</span>
+							</p>
+						</div>
 					</div>
 
 					<!-- Stripe Data -->
 					<div class="space-y-2">
 						<h4 class="text-sm font-semibold">Stripe Data</h4>
-						{#if data.stripeComparison.stripe}
-							<div class="rounded-md border p-3 text-sm">
-								<p>
-									<span class="text-muted-foreground">Status:</span>
-									{data.stripeComparison.stripe.subscription?.status || 'N/A'}
-								</p>
-								<p>
-									<span class="text-muted-foreground">Customer:</span>
-									<span class="font-mono text-xs">
-										{data.stripeComparison.stripe.customer?.id || 'N/A'}
-									</span>
-								</p>
-								<p>
-									<span class="text-muted-foreground">Email:</span>
-									{data.stripeComparison.stripe.customer &&
-									'email' in data.stripeComparison.stripe.customer
-										? data.stripeComparison.stripe.customer.email || 'N/A'
-										: 'N/A'}
-								</p>
-							</div>
-						{:else}
-							<p class="text-sm text-muted-foreground">No Stripe data found</p>
-						{/if}
+						<div class="rounded-md border p-3 text-sm">
+							<p>
+								<span class="text-muted-foreground">Status:</span>
+								{data.stripeComparison.stripe?.subscription?.status || 'N/A'}
+							</p>
+							<p>
+								<span class="text-muted-foreground">Customer:</span>
+								<span class="font-mono text-xs">
+									{data.stripeComparison.stripe?.customer?.id || 'N/A'}
+								</span>
+							</p>
+							<p>
+								<span class="text-muted-foreground">Email:</span>
+								{data.stripeComparison.stripe?.customer &&
+								'email' in data.stripeComparison.stripe.customer
+									? data.stripeComparison.stripe.customer.email || 'N/A'
+									: 'N/A'}
+							</p>
+						</div>
 					</div>
 				</div>
 			</Card.Content>

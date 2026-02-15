@@ -15,15 +15,19 @@ import {
 	varchar
 } from 'drizzle-orm/pg-core';
 
+// Helper to derive plan from org subscription status
+export function getOrgPlan(org: {
+	subscription_status: SubscriptionStatus | null;
+}): 'free' | 'pro' {
+	return org.subscription_status === 'active' ? 'pro' : 'free';
+}
+
 const id = uuid('id').defaultRandom().primaryKey();
 const orgId = uuid('organization_id').defaultRandom().notNull();
 const ts = (c: string) =>
 	timestamp(c, { withTimezone: true }).defaultNow().notNull();
 
 // Billing types
-export type PlanFeatures = {
-	fleet_management: boolean;
-};
 
 // Matches Stripe subscription statuses
 export type SubscriptionStatus =
@@ -41,67 +45,6 @@ export type CreditTransactionType =
 	| 'usage'
 	| 'adjustment'
 	| 'refund';
-
-export const plans = pgTable(
-	'plans',
-	{
-		id,
-		created_at: ts('created_at'),
-		updated_at: ts('updated_at'),
-
-		name: varchar('name', { length: 50 })
-			.notNull()
-			.$type<'free' | 'pro'>()
-			.unique(),
-		display_name: varchar('display_name', { length: 100 }).notNull(),
-		stripe_price_id: text('stripe_price_id').notNull(),
-		monthly_credits: integer('monthly_credits').notNull(),
-		features: jsonb('features').$type<PlanFeatures>().notNull()
-	},
-	(t) => [uniqueIndex('plans_name_uidx').on(t.name)]
-);
-
-export type Plan = typeof plans.$inferSelect;
-
-export const subscriptions = pgTable(
-	'subscriptions',
-	{
-		id,
-		organization_id: uuid('organization_id')
-			.notNull()
-			.unique()
-			.references(() => organizations.id, { onDelete: 'cascade' }),
-		plan_id: uuid('plan_id')
-			.notNull()
-			.references(() => plans.id),
-		created_at: ts('created_at'),
-		updated_at: ts('updated_at'),
-
-		stripe_customer_id: text('stripe_customer_id').notNull(),
-		stripe_subscription_id: text('stripe_subscription_id').notNull(),
-		status: varchar('status', { length: 20 })
-			.notNull()
-			.$type<SubscriptionStatus>()
-			.default('active'),
-		period_starts_at: timestamp('current_period_start', {
-			withTimezone: true
-		}).notNull(),
-		period_ends_at: timestamp('current_period_end', {
-			withTimezone: true
-		}).notNull(),
-
-		// Whether the subscription will cancel at the end of the current period (downgrade to Free)
-		cancel_at_period_end: boolean('cancel_at_period_end')
-			.default(false)
-			.notNull()
-	},
-	(t) => [
-		uniqueIndex('subscriptions_org_uidx').on(t.organization_id),
-		index('subscriptions_plan_idx').on(t.plan_id),
-		index('subscriptions_stripe_customer_idx').on(t.stripe_customer_id),
-		index('subscriptions_stripe_subscription_idx').on(t.stripe_subscription_id)
-	]
-);
 
 export const creditTransactions = pgTable(
 	'credit_transactions',
@@ -147,7 +90,21 @@ export const organizations = pgTable('organizations', {
 	updated_at: ts('updated_at'),
 	updated_by: uuid('updated_by'),
 
-	name: varchar('name', { length: 200 }).notNull()
+	name: varchar('name', { length: 200 }).notNull(),
+
+	// Billing fields (no subscription = Free tier)
+	stripe_customer_id: text('stripe_customer_id'),
+	stripe_subscription_id: text('stripe_subscription_id'),
+	subscription_status: varchar('subscription_status', {
+		length: 20
+	}).$type<SubscriptionStatus>(),
+	billing_period_starts_at: timestamp('billing_period_starts_at', {
+		withTimezone: true
+	}),
+	billing_period_ends_at: timestamp('billing_period_ends_at', {
+		withTimezone: true
+	}),
+	cancel_at_period_end: boolean('cancel_at_period_end').default(false).notNull()
 });
 
 export const users = pgTable(
@@ -636,43 +593,21 @@ export const mailRecords = pgTable(
  *
  **************************************************************************************/
 
-export const organizationsRelations = relations(
-	organizations,
-	({ one, many }) => ({
-		users: many(users),
-		drivers: many(drivers),
-		maps: many(maps),
-		locations: many(locations),
-		stops: many(stops),
-		driverMapMemberships: many(driverMapMemberships),
-		depots: many(depots),
-		routes: many(routes),
-		routeShares: many(routeShares),
-		matrices: many(matrices),
-		files: many(files),
-		optimizationJobs: many(optimizationJobs),
-		mailRecords: many(mailRecords),
-		subscription: one(subscriptions, {
-			fields: [organizations.id],
-			references: [subscriptions.organization_id]
-		}),
-		creditTransactions: many(creditTransactions)
-	})
-);
-
-export const plansRelations = relations(plans, ({ many }) => ({
-	subscriptions: many(subscriptions)
-}));
-
-export const subscriptionsRelations = relations(subscriptions, ({ one }) => ({
-	organization: one(organizations, {
-		fields: [subscriptions.organization_id],
-		references: [organizations.id]
-	}),
-	plan: one(plans, {
-		fields: [subscriptions.plan_id],
-		references: [plans.id]
-	})
+export const organizationsRelations = relations(organizations, ({ many }) => ({
+	users: many(users),
+	drivers: many(drivers),
+	maps: many(maps),
+	locations: many(locations),
+	stops: many(stops),
+	driverMapMemberships: many(driverMapMemberships),
+	depots: many(depots),
+	routes: many(routes),
+	routeShares: many(routeShares),
+	matrices: many(matrices),
+	files: many(files),
+	optimizationJobs: many(optimizationJobs),
+	mailRecords: many(mailRecords),
+	creditTransactions: many(creditTransactions)
 }));
 
 export const creditTransactionsRelations = relations(

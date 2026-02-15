@@ -8,6 +8,7 @@ import { db } from '$lib/server/db';
 import { mailRecords, routeShares, routes } from '$lib/server/db/schema';
 import { mailService } from '$lib/services/external/mail';
 import { and, eq, isNull } from 'drizzle-orm';
+import { getPlanFeatures } from '$lib/config/billing';
 import { billingService } from './billing.service';
 import { ServiceError } from './errors';
 import { routeService } from './route.service';
@@ -19,9 +20,10 @@ export class RouteShareService {
 	 * Throws ServiceError.forbidden if feature is not available.
 	 */
 	private async requireFleetManagement(organizationId: string): Promise<void> {
-		const { plan } = await billingService.getSubscription(organizationId);
+		const { plan } = await billingService.getBillingInfo(organizationId);
+		const features = getPlanFeatures(plan);
 
-		if (!plan.features.fleet_management) {
+		if (!features.fleet_management) {
 			throw ServiceError.forbidden(
 				'Route sharing requires a Pro subscription. Please upgrade to share routes with drivers.'
 			);

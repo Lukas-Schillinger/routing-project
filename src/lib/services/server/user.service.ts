@@ -1,4 +1,3 @@
-import { PlanSlug } from '$lib/config/billing';
 import type {
 	CreateUser,
 	Organization,
@@ -9,14 +8,7 @@ import type {
 	User
 } from '$lib/schemas';
 import { db } from '$lib/server/db';
-import {
-	invitations,
-	organizations,
-	plans,
-	subscriptions,
-	users
-} from '$lib/server/db/schema';
-import { stripeClient } from '$lib/services/external/stripe/client';
+import { invitations, organizations, users } from '$lib/server/db/schema';
 import { and, eq } from 'drizzle-orm';
 import { ServiceError } from './errors';
 
@@ -188,81 +180,26 @@ export class UserService {
 	}
 
 	/**
-	 * Creates a new organization with Stripe customer and Free plan subscription.
-	 * If Stripe setup fails, the organization is rolled back.
+	 * Creates a new organization. No Stripe interaction at signup — orgs start on Free tier.
 	 */
-	private async generateOrganization(adminEmail: string): Promise<string> {
+	private async generateOrganization(): Promise<string> {
 		const timestamp = Date.now();
 		const randomSuffix = Math.random().toString(36).substring(2, 8);
 		const orgName = `Organization-${timestamp}-${randomSuffix}`;
 
-		// Create a new organization
 		const [org] = await db
 			.insert(organizations)
 			.values({ name: orgName })
 			.returning({ id: organizations.id });
 
-		const orgId = org.id;
-
-		try {
-			// Create Stripe customer with admin's email for checkout prefill.
-			// TODO: When "change email" feature is added, also update Stripe customer email.
-			// TODO: Consider adding a dedicated "billing email" field to organizations
-			// if the founding admin leaving becomes an issue (their email would persist
-			// on the Stripe customer even after they're removed from the org).
-			const stripeCustomer = await stripeClient.createCustomer(
-				orgId,
-				adminEmail
-			);
-
-			// Get Free plan from database
-			const [freePlan] = await db
-				.select()
-				.from(plans)
-				.where(eq(plans.name, PlanSlug.FREE))
-				.limit(1);
-
-			if (!freePlan) {
-				throw new Error('Free plan not found in database');
-			}
-
-			// Create Stripe subscription for Free plan ($0/month)
-			const stripeSubscription = await stripeClient.createSubscription({
-				customerId: stripeCustomer.id,
-				priceId: freePlan.stripe_price_id,
-				organizationId: orgId
-			});
-
-			// Create local subscription record
-			// Note: In Stripe API 2025-03-31+, billing periods are on subscription items
-			const subscriptionItem = stripeSubscription.items.data[0];
-			await db.insert(subscriptions).values({
-				organization_id: orgId,
-				plan_id: freePlan.id,
-				stripe_customer_id: stripeCustomer.id,
-				stripe_subscription_id: stripeSubscription.id,
-				status: 'active',
-				period_starts_at: new Date(
-					subscriptionItem.current_period_start * 1000
-				),
-				period_ends_at: new Date(subscriptionItem.current_period_end * 1000)
-			});
-
-			return orgId;
-		} catch (error) {
-			// Rollback: delete the organization if Stripe setup fails
-			await db.delete(organizations).where(eq(organizations.id, orgId));
-			throw ServiceError.internal(
-				`Failed to set up billing for new organization: ${error instanceof Error ? error.message : 'Unknown error'}`
-			);
-		}
+		return org.id;
 	}
 
 	async createUser(data: CreateUser): Promise<User> {
-		// If no organization ID provided, create a new organization with Stripe billing
+		// If no organization ID provided, create a new organization (starts on Free tier)
 		const orgId = data.organization_id
 			? data.organization_id
-			: await this.generateOrganization(data.email);
+			: await this.generateOrganization();
 
 		// Create the user with the organization ID
 		const [result] = await db

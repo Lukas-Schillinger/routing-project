@@ -13,7 +13,7 @@ import {
 	type LocationCreate
 } from './schemas/location';
 import type { GeocodingFeature } from './services/external/mapbox/types';
-import type { PlanFeatures } from './server/db/schema';
+import type { PlanFeatures } from './config/billing';
 import type { Permission } from './services/server/permissions';
 
 TimeAgo.addLocale(en);

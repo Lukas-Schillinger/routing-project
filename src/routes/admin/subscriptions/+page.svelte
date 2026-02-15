@@ -41,21 +41,21 @@
 </script>
 
 <svelte:head>
-	<title>Subscriptions | Admin</title>
+	<title>Pro Subscriptions | Admin</title>
 </svelte:head>
 
 <div class="space-y-6">
-	<h1 class="text-2xl font-bold">Subscriptions</h1>
+	<h1 class="text-2xl font-bold">Pro Subscriptions</h1>
 
 	<Card.Root>
 		<Card.Header>
-			<Card.Title>All Subscriptions</Card.Title>
+			<Card.Title>Pro Subscriptions</Card.Title>
 			<Card.Description>
-				View and manage all subscription records
+				View and manage all organizations with active subscriptions
 			</Card.Description>
 		</Card.Header>
 		<Card.Content>
-			{#if data.subscriptions.length > 0}
+			{#if data.organizations.length > 0}
 				<Table.Root>
 					<Table.Header>
 						<Table.Row>
@@ -68,34 +68,44 @@
 						</Table.Row>
 					</Table.Header>
 					<Table.Body>
-						{#each data.subscriptions as { subscription, organization, plan } (subscription.id)}
+						{#each data.organizations as org (org.id)}
 							<Table.Row>
 								<Table.Cell class="font-medium">
 									<a
-										href={resolve(`/admin/organizations/${organization.id}`)}
+										href={resolve(`/admin/organizations/${org.id}`)}
 										class="text-primary hover:underline"
 									>
-										{organization.name}
+										{org.name}
 									</a>
 								</Table.Cell>
 								<Table.Cell>
 									<Badge variant="secondary">
-										{plan.display_name}
+										{org.plan === 'pro' ? 'Pro' : 'Free'}
 									</Badge>
 								</Table.Cell>
 								<Table.Cell>
-									<Badge variant={getStatusBadgeVariant(subscription.status)}>
-										{formatStatus(subscription.status)}
+									<Badge
+										variant={getStatusBadgeVariant(
+											org.subscription_status || 'inactive'
+										)}
+									>
+										{formatStatus(org.subscription_status || 'Inactive')}
 									</Badge>
 								</Table.Cell>
 								<Table.Cell class="font-mono text-sm text-muted-foreground">
-									{truncateStripeId(subscription.stripe_subscription_id)}
+									{org.stripe_subscription_id
+										? truncateStripeId(org.stripe_subscription_id)
+										: '—'}
 								</Table.Cell>
 								<Table.Cell class="text-muted-foreground">
-									{formatDate(subscription.period_starts_at)}
+									{org.billing_period_starts_at
+										? formatDate(org.billing_period_starts_at)
+										: '—'}
 								</Table.Cell>
 								<Table.Cell class="text-muted-foreground">
-									{formatDate(subscription.period_ends_at)}
+									{org.billing_period_ends_at
+										? formatDate(org.billing_period_ends_at)
+										: '—'}
 								</Table.Cell>
 							</Table.Row>
 						{/each}
@@ -103,7 +113,7 @@
 				</Table.Root>
 			{:else}
 				<p class="py-8 text-center text-sm text-muted-foreground">
-					No subscriptions found
+					No organizations found
 				</p>
 			{/if}
 		</Card.Content>

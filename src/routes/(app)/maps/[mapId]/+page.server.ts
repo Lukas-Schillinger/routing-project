@@ -31,7 +31,7 @@ export const load: PageServerLoad = async ({ params }) => {
 			depots,
 			routes,
 			activeJob,
-			subscriptionData,
+			billingInfo,
 			credits
 		] = await Promise.all([
 			mapService.getMapById(mapId, user.organization_id),
@@ -41,7 +41,7 @@ export const load: PageServerLoad = async ({ params }) => {
 			depotService.getDepots(user.organization_id),
 			routeService.getRoutesByMap(mapId, user.organization_id),
 			optimizationService.getActiveJobForMap(mapId, user.organization_id),
-			billingService.getSubscription(user.organization_id),
+			billingService.getBillingInfo(user.organization_id),
 			billingService.getCreditBalance(user.organization_id)
 		]);
 
@@ -55,7 +55,8 @@ export const load: PageServerLoad = async ({ params }) => {
 			depots,
 			routes,
 			activeJob,
-			plan: subscriptionData.plan,
+			planSlug: billingInfo.plan,
+			monthlyCredits: billingInfo.monthlyCredits,
 			credits
 		};
 	} catch (err) {

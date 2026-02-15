@@ -2,13 +2,7 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/stores';
 	import * as Sidebar from '$lib/components/ui/sidebar';
-	import {
-		Building2,
-		Coins,
-		CreditCard,
-		LayoutDashboard,
-		Package
-	} from 'lucide-svelte';
+	import { Building2, Coins, CreditCard, LayoutDashboard } from 'lucide-svelte';
 	import type { Snippet } from 'svelte';
 	import type { LayoutData } from './$types';
 
@@ -18,7 +12,6 @@
 		{ href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
 		{ href: '/admin/organizations', label: 'Organizations', icon: Building2 },
 		{ href: '/admin/subscriptions', label: 'Subscriptions', icon: CreditCard },
-		{ href: '/admin/plans', label: 'Plans', icon: Package },
 		{ href: '/admin/credits', label: 'Credits', icon: Coins }
 	] as const;
 

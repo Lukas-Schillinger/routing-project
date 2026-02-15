@@ -1,10 +1,6 @@
-import { billingConfig, PlanSlug } from '$lib/config/billing';
+import { billingConfig } from '$lib/config/billing';
 import { db } from '$lib/server/db';
-import {
-	plans,
-	subscriptions,
-	type SubscriptionStatus
-} from '$lib/server/db/schema';
+import { organizations, type SubscriptionStatus } from '$lib/server/db/schema';
 import { stripeClient } from '$lib/services/external/stripe/client';
 import { eq } from 'drizzle-orm';
 import type Stripe from 'stripe';
@@ -20,93 +16,55 @@ export class SubscriptionService {
 	}
 
 	/**
-	 * Create a Setup Intent for collecting a payment method before upgrading.
-	 * Returns the clientSecret for the Payment Element on the client.
+	 * Create a Stripe Checkout session to upgrade to Pro.
+	 * Creates a Stripe customer lazily if one doesn't exist.
 	 */
-	async createUpgradeSetupIntent(
-		organizationId: string
-	): Promise<{ clientSecret: string }> {
-		const subscription = await this.requireUpgradeEligible(organizationId);
+	async createUpgradeCheckout(
+		organizationId: string,
+		adminEmail: string,
+		origin: string
+	): Promise<string> {
+		const org = await this.getOrg(organizationId);
 
-		const setupIntent = await this.stripe.createSetupIntent({
-			customer: subscription.stripe_customer_id,
-			metadata: { organization_id: organizationId }
+		if (org.subscription_status === 'active') {
+			throw ServiceError.conflict('Already on Pro');
+		}
+
+		// Create Stripe customer lazily on first upgrade
+		let customerId = org.stripe_customer_id;
+		if (!customerId) {
+			const customer = await this.stripe.createCustomer(
+				organizationId,
+				adminEmail
+			);
+			customerId = customer.id;
+			await db
+				.update(organizations)
+				.set({ stripe_customer_id: customerId, updated_at: new Date() })
+				.where(eq(organizations.id, organizationId));
+		}
+
+		const session = await this.stripe.createCheckoutSession({
+			customer: customerId,
+			mode: 'subscription',
+			payment_method_types: ['card'],
+			line_items: [{ price: billingConfig.proPlanPriceId, quantity: 1 }],
+			success_url: `${origin}/auth/account?upgraded=true`,
+			cancel_url: `${origin}/auth/account`,
+			subscription_data: {
+				metadata: { organization_id: organizationId }
+			},
+			metadata: {
+				organization_id: organizationId,
+				checkout_type: 'upgrade'
+			}
 		});
 
-		if (!setupIntent.client_secret) {
-			throw ServiceError.internal('Failed to create Setup Intent');
+		if (!session.url) {
+			throw ServiceError.internal('Failed to create checkout session URL');
 		}
 
-		return { clientSecret: setupIntent.client_secret };
-	}
-
-	/**
-	 * Complete the upgrade to Pro after a Setup Intent succeeds.
-	 * Sets the payment method as customer default, then updates the subscription in-place.
-	 */
-	async completeUpgrade(
-		organizationId: string,
-		setupIntentId: string
-	): Promise<void> {
-		const setupIntent = await this.stripe.retrieveSetupIntent(setupIntentId);
-
-		if (setupIntent.status !== 'succeeded') {
-			throw ServiceError.badRequest(
-				`Setup Intent status is '${setupIntent.status}', expected 'succeeded'`
-			);
-		}
-
-		if (setupIntent.metadata?.organization_id !== organizationId) {
-			throw ServiceError.forbidden(
-				'Setup Intent does not belong to this organization'
-			);
-		}
-
-		const subscription = await this.requireUpgradeEligible(organizationId);
-
-		const paymentMethodId =
-			typeof setupIntent.payment_method === 'string'
-				? setupIntent.payment_method
-				: setupIntent.payment_method?.id;
-
-		if (!paymentMethodId) {
-			throw ServiceError.badRequest(
-				'Setup Intent has no payment method attached'
-			);
-		}
-
-		// Set as customer default so future invoices charge this card
-		await this.stripe.setCustomerDefaultPaymentMethod(
-			subscription.stripe_customer_id,
-			paymentMethodId
-		);
-
-		// Fetch the current Stripe subscription to get its item ID
-		const stripeSubscription = await this.stripe.getSubscription(
-			subscription.stripe_subscription_id
-		);
-		const subscriptionItemId = stripeSubscription.items.data[0]?.id;
-
-		if (!subscriptionItemId) {
-			throw ServiceError.internal('Could not find subscription item to update');
-		}
-
-		// Update the existing subscription in-place to the Pro price
-		const updatedSubscription = await this.stripe.updateSubscription(
-			subscription.stripe_subscription_id,
-			{
-				items: [
-					{
-						id: subscriptionItemId,
-						price: billingConfig.proPlanPriceId
-					}
-				],
-				proration_behavior: 'create_prorations',
-				metadata: { organization_id: organizationId }
-			}
-		);
-
-		await this.syncSubscription(updatedSubscription);
+		return session.url;
 	}
 
 	/**
@@ -124,17 +82,22 @@ export class SubscriptionService {
 			);
 		}
 
-		const subscription = await this.getSubscriptionByOrgId(organizationId);
+		const org = await this.getOrg(organizationId);
 
-		if (!subscription) {
-			throw ServiceError.notFound('Subscription not found');
+		// Create Stripe customer lazily if needed
+		const customerId = org.stripe_customer_id;
+		if (!customerId) {
+			throw ServiceError.badRequest(
+				'No Stripe customer — upgrade to Pro first or contact support'
+			);
 		}
 
 		const redirectUrl = `${origin}${returnUrl ?? '/maps'}`;
 
 		const session = await this.stripe.createCheckoutSession({
-			customer: subscription.stripe_customer_id,
+			customer: customerId,
 			mode: 'payment',
+			payment_method_types: ['card'],
 			line_items: [
 				{
 					price: billingConfig.creditPriceId,
@@ -158,31 +121,7 @@ export class SubscriptionService {
 	}
 
 	/**
-	 * Create a Stripe billing portal session for self-service management.
-	 */
-	async createBillingPortalSession(
-		organizationId: string,
-		origin: string,
-		returnUrl?: string
-	): Promise<string> {
-		const subscription = await this.getSubscriptionByOrgId(organizationId);
-
-		if (!subscription) {
-			throw ServiceError.notFound('Subscription not found');
-		}
-
-		const redirectUrl = `${origin}${returnUrl ?? '/maps'}`;
-
-		const session = await this.stripe.createBillingPortalSession({
-			customer: subscription.stripe_customer_id,
-			return_url: redirectUrl
-		});
-
-		return session.url;
-	}
-
-	/**
-	 * Update local subscription record from Stripe subscription data.
+	 * Sync organization billing fields from a Stripe subscription object.
 	 */
 	async syncSubscription(
 		stripeSubscription: Stripe.Subscription
@@ -200,179 +139,94 @@ export class SubscriptionService {
 			throw ServiceError.badRequest('Subscription has no items');
 		}
 
-		const plan = await this.getPlanByPriceId(subscriptionItem.price.id);
-
-		if (!plan) {
-			throw ServiceError.notFound(
-				`Plan not found for price ID: ${subscriptionItem.price.id}`
-			);
-		}
+		const customerId =
+			typeof stripeSubscription.customer === 'string'
+				? stripeSubscription.customer
+				: stripeSubscription.customer?.id;
 
 		await db
-			.update(subscriptions)
+			.update(organizations)
 			.set({
-				plan_id: plan.id,
+				stripe_customer_id: customerId ?? undefined,
 				stripe_subscription_id: stripeSubscription.id,
-				status: stripeSubscription.status as SubscriptionStatus,
-				period_starts_at: new Date(
+				subscription_status: stripeSubscription.status as SubscriptionStatus,
+				billing_period_starts_at: new Date(
 					subscriptionItem.current_period_start * 1000
 				),
-				period_ends_at: new Date(subscriptionItem.current_period_end * 1000),
+				billing_period_ends_at: new Date(
+					subscriptionItem.current_period_end * 1000
+				),
 				cancel_at_period_end: stripeSubscription.cancel_at_period_end ?? false,
 				updated_at: new Date()
 			})
-			.where(eq(subscriptions.organization_id, organizationId));
+			.where(eq(organizations.id, organizationId));
 	}
 
 	/**
-	 * Get subscription by organization ID.
+	 * Clear subscription fields on an organization (org becomes Free).
 	 */
-	private async getSubscriptionByOrgId(organizationId: string) {
-		const result = await db
-			.select()
-			.from(subscriptions)
-			.where(eq(subscriptions.organization_id, organizationId))
-			.limit(1);
-
-		return result[0] ?? null;
-	}
-
-	/**
-	 * Get subscription with plan and verify it is eligible for upgrade to Pro.
-	 * Throws if no subscription exists or already on Pro.
-	 */
-	private async requireUpgradeEligible(organizationId: string) {
-		const subscription = await this.getSubscriptionWithPlan(organizationId);
-
-		if (!subscription) {
-			throw ServiceError.notFound('Subscription not found');
-		}
-
-		if (subscription.planName === PlanSlug.PRO) {
-			throw ServiceError.conflict('Organization is already on Pro plan');
-		}
-
-		return subscription;
-	}
-
-	/**
-	 * Get subscription with plan name by organization ID.
-	 */
-	private async getSubscriptionWithPlan(organizationId: string) {
-		const result = await db
-			.select({
-				subscription: subscriptions,
-				planName: plans.name
-			})
-			.from(subscriptions)
-			.innerJoin(plans, eq(subscriptions.plan_id, plans.id))
-			.where(eq(subscriptions.organization_id, organizationId))
-			.limit(1);
-
-		if (!result[0]) return null;
-
-		return { ...result[0].subscription, planName: result[0].planName };
-	}
-
-	/**
-	 * Get plan by Stripe price ID.
-	 */
-	async getPlanByPriceId(priceId: string) {
-		const result = await db
-			.select()
-			.from(plans)
-			.where(eq(plans.stripe_price_id, priceId))
-			.limit(1);
-
-		return result[0] ?? null;
-	}
-
-	/**
-	 * Get plan from a Stripe subscription.
-	 */
-	async getPlanFromStripeSubscription(subscription: Stripe.Subscription) {
-		const priceId = subscription.items.data[0]?.price.id;
-		if (!priceId) {
-			return null;
-		}
-		return this.getPlanByPriceId(priceId);
-	}
-
-	/**
-	 * Get plan by ID.
-	 */
-	async getPlanById(planId: string) {
-		const result = await db
-			.select()
-			.from(plans)
-			.where(eq(plans.id, planId))
-			.limit(1);
-
-		return result[0] ?? null;
-	}
-
-	/**
-	 * Schedule a downgrade to Free plan at the end of the current billing period.
-	 * Sets cancel_at_period_end on the Stripe subscription. When the subscription
-	 * cancels, the webhook will auto-create a new Free subscription.
-	 *
-	 * @returns The date when the downgrade will take effect
-	 */
-	async scheduleDowngrade(organizationId: string): Promise<Date> {
-		const subscription = await this.getSubscriptionWithPlan(organizationId);
-
-		if (!subscription) {
-			throw ServiceError.notFound('Subscription not found');
-		}
-
-		if (subscription.planName === PlanSlug.FREE) {
-			throw ServiceError.conflict('Organization is already on Free plan');
-		}
-
-		if (subscription.cancel_at_period_end) {
-			throw ServiceError.conflict('A plan change is already scheduled');
-		}
-
-		await this.stripe.updateSubscription(subscription.stripe_subscription_id, {
-			cancel_at_period_end: true
-		});
-
+	async clearSubscription(organizationId: string): Promise<void> {
 		await db
-			.update(subscriptions)
+			.update(organizations)
 			.set({
-				cancel_at_period_end: true,
-				updated_at: new Date()
-			})
-			.where(eq(subscriptions.organization_id, organizationId));
-
-		return subscription.period_ends_at;
-	}
-
-	/**
-	 * Cancel a scheduled downgrade, keeping the current plan.
-	 */
-	async cancelScheduledDowngrade(organizationId: string): Promise<void> {
-		const subscription = await this.getSubscriptionByOrgId(organizationId);
-
-		if (!subscription) {
-			throw ServiceError.notFound('Subscription not found');
-		}
-
-		if (!subscription.cancel_at_period_end) {
-			throw ServiceError.conflict('No plan change is scheduled');
-		}
-
-		await this.stripe.updateSubscription(subscription.stripe_subscription_id, {
-			cancel_at_period_end: false
-		});
-
-		await db
-			.update(subscriptions)
-			.set({
+				stripe_subscription_id: null,
+				subscription_status: null,
+				billing_period_starts_at: null,
+				billing_period_ends_at: null,
 				cancel_at_period_end: false,
 				updated_at: new Date()
 			})
-			.where(eq(subscriptions.organization_id, organizationId));
+			.where(eq(organizations.id, organizationId));
+	}
+
+	/**
+	 * Schedule a downgrade to Free at the end of the current billing period.
+	 */
+	async scheduleDowngrade(organizationId: string): Promise<Date> {
+		const org = await this.getOrg(organizationId);
+
+		if (org.subscription_status !== 'active') {
+			throw ServiceError.conflict('Organization is already on Free plan');
+		}
+
+		if (org.cancel_at_period_end) {
+			throw ServiceError.conflict('A plan change is already scheduled');
+		}
+
+		if (!org.stripe_subscription_id) {
+			throw ServiceError.internal('Organization has no Stripe subscription');
+		}
+
+		const updated = await this.stripe.updateSubscription(
+			org.stripe_subscription_id,
+			{ cancel_at_period_end: true }
+		);
+
+		await this.syncSubscription(updated);
+
+		return org.billing_period_ends_at!;
+	}
+
+	/**
+	 * Cancel a scheduled downgrade, keeping Pro.
+	 */
+	async cancelScheduledDowngrade(organizationId: string): Promise<void> {
+		const org = await this.getOrg(organizationId);
+
+		if (!org.cancel_at_period_end) {
+			throw ServiceError.conflict('No plan change is scheduled');
+		}
+
+		if (!org.stripe_subscription_id) {
+			throw ServiceError.internal('Organization has no Stripe subscription');
+		}
+
+		const updated = await this.stripe.updateSubscription(
+			org.stripe_subscription_id,
+			{ cancel_at_period_end: false }
+		);
+
+		await this.syncSubscription(updated);
 	}
 
 	/**
@@ -381,28 +235,30 @@ export class SubscriptionService {
 	async getPendingCancellation(organizationId: string): Promise<{
 		effectiveDate: Date;
 	} | null> {
-		const subscription = await this.getSubscriptionByOrgId(organizationId);
+		const org = await this.getOrg(organizationId);
 
-		if (!subscription?.cancel_at_period_end) {
+		if (!org.cancel_at_period_end || !org.billing_period_ends_at) {
 			return null;
 		}
 
-		return {
-			effectiveDate: subscription.period_ends_at
-		};
+		return { effectiveDate: org.billing_period_ends_at };
 	}
 
 	/**
-	 * Get plan by slug (name).
+	 * Get an organization by ID, or throw.
 	 */
-	async getPlanBySlug(slug: PlanSlug) {
-		const result = await db
+	private async getOrg(organizationId: string) {
+		const [org] = await db
 			.select()
-			.from(plans)
-			.where(eq(plans.name, slug))
+			.from(organizations)
+			.where(eq(organizations.id, organizationId))
 			.limit(1);
 
-		return result[0] ?? null;
+		if (!org) {
+			throw ServiceError.notFound('Organization not found');
+		}
+
+		return org;
 	}
 }
 

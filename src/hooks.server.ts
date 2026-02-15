@@ -4,6 +4,7 @@ import '$lib/server/env';
 import { createRequestLogger, logger } from '$lib/server/logger';
 import { getLimiterForPath } from '$lib/server/rate-limit';
 import * as auth from '$lib/services/server/auth';
+import { getPlanFeatures } from '$lib/config/billing';
 import { billingService } from '$lib/services/server/billing.service';
 import { rolePermissions } from '$lib/services/server/permissions';
 import * as Sentry from '@sentry/sveltekit';
@@ -101,8 +102,8 @@ const handleAuth: Handle = async ({ event, resolve }) => {
 	event.locals.session = session;
 	if (user) {
 		event.locals.permissions = rolePermissions[user.role];
-		const { plan } = await billingService.getSubscription(user.organization_id);
-		event.locals.features = plan.features;
+		const { plan } = await billingService.getBillingInfo(user.organization_id);
+		event.locals.features = getPlanFeatures(plan);
 	} else {
 		event.locals.features = null;
 	}

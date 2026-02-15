@@ -1,5 +1,6 @@
+import { billingConfig } from '$lib/config/billing';
 import { db } from '$lib/server/db';
-import { creditTransactions } from '$lib/server/db/schema';
+import { creditTransactions, organizations } from '$lib/server/db/schema';
 import {
 	createBillingTestEnvironment,
 	createDepot,
@@ -25,20 +26,20 @@ describe('BillingService', () => {
 	describe('getAvailableCredits()', () => {
 		it('returns plan monthly credits for org with no transactions', async () => {
 			await withTestTransaction(async () => {
-				const { organization, freePlan } = await createBillingTestEnvironment();
+				const { organization } = await createBillingTestEnvironment();
 
 				const credits = await billingService.getAvailableCredits(
 					organization.id
 				);
 
-				// With derived credits, available = plan.monthly_credits - 0 usage + 0 purchased
-				expect(credits).toBe(freePlan.monthly_credits);
+				// With derived credits, available = monthlyCredits - 0 usage + 0 purchased
+				expect(credits).toBe(billingConfig.freeMonthlyCredits);
 			});
 		});
 
 		it('adds purchased credits to plan allowance', async () => {
 			await withTestTransaction(async () => {
-				const { organization, freePlan } = await createBillingTestEnvironment();
+				const { organization } = await createBillingTestEnvironment();
 
 				await db.insert(creditTransactions).values({
 					organization_id: organization.id,
@@ -51,15 +52,14 @@ describe('BillingService', () => {
 					organization.id
 				);
 
-				// plan.monthly_credits + 100 purchased
-				expect(credits).toBe(freePlan.monthly_credits + 100);
+				// monthlyCredits + 100 purchased
+				expect(credits).toBe(billingConfig.freeMonthlyCredits + 100);
 			});
 		});
 
 		it('subtracts usage from balance', async () => {
 			await withTestTransaction(async () => {
-				const { organization, user, freePlan } =
-					await createBillingTestEnvironment();
+				const { organization, user } = await createBillingTestEnvironment();
 
 				const map = await createMap({
 					organization_id: organization.id,
@@ -91,15 +91,14 @@ describe('BillingService', () => {
 					organization.id
 				);
 
-				// plan.monthly_credits - 50 usage
-				expect(credits).toBe(freePlan.monthly_credits - 50);
+				// monthlyCredits - 50 usage
+				expect(credits).toBe(billingConfig.freeMonthlyCredits - 50);
 			});
 		});
 
 		it('combines purchased credits and usage correctly', async () => {
 			await withTestTransaction(async () => {
-				const { organization, user, freePlan } =
-					await createBillingTestEnvironment();
+				const { organization, user } = await createBillingTestEnvironment();
 
 				// Purchase credits
 				await db.insert(creditTransactions).values({
@@ -140,8 +139,8 @@ describe('BillingService', () => {
 					organization.id
 				);
 
-				// plan.monthly_credits - 30 usage + 100 purchased
-				expect(credits).toBe(freePlan.monthly_credits - 30 + 100);
+				// monthlyCredits - 30 usage + 100 purchased
+				expect(credits).toBe(billingConfig.freeMonthlyCredits - 30 + 100);
 			});
 		});
 	});
@@ -171,11 +170,11 @@ describe('BillingService', () => {
 
 		it('returns true when credits exactly match required', async () => {
 			await withTestTransaction(async () => {
-				const { organization, freePlan } = await createBillingTestEnvironment();
+				const { organization } = await createBillingTestEnvironment();
 
 				const hasEnough = await billingService.hasCredits(
 					organization.id,
-					freePlan.monthly_credits
+					billingConfig.freeMonthlyCredits
 				);
 
 				expect(hasEnough).toBe(true);
@@ -479,17 +478,17 @@ describe('BillingService', () => {
 	describe('getCreditBalance()', () => {
 		it('returns derived balance from plan', async () => {
 			await withTestTransaction(async () => {
-				const { organization, freePlan } = await createBillingTestEnvironment();
+				const { organization } = await createBillingTestEnvironment();
 
 				const balance = await billingService.getCreditBalance(organization.id);
 
-				expect(balance.available).toBe(freePlan.monthly_credits);
+				expect(balance.available).toBe(billingConfig.freeMonthlyCredits);
 			});
 		});
 
 		it('includes purchased credits in balance', async () => {
 			await withTestTransaction(async () => {
-				const { organization, freePlan } = await createBillingTestEnvironment();
+				const { organization } = await createBillingTestEnvironment();
 
 				await db.insert(creditTransactions).values({
 					organization_id: organization.id,
@@ -500,29 +499,53 @@ describe('BillingService', () => {
 
 				const balance = await billingService.getCreditBalance(organization.id);
 
-				expect(balance.available).toBe(freePlan.monthly_credits + 100);
+				expect(balance.available).toBe(billingConfig.freeMonthlyCredits + 100);
 			});
 		});
 	});
 
-	describe('getSubscription()', () => {
-		it('returns subscription with plan details', async () => {
+	describe('getBillingInfo()', () => {
+		it('returns billing info for a free org', async () => {
 			await withTestTransaction(async () => {
 				const { organization } = await createBillingTestEnvironment();
 
-				const result = await billingService.getSubscription(organization.id);
+				const result = await billingService.getBillingInfo(organization.id);
 
-				expect(result.subscription).toBeDefined();
-				expect(result.plan).toBeDefined();
-				expect(result.subscription.organization_id).toBe(organization.id);
+				expect(result.plan).toBe('free');
+				expect(result.monthlyCredits).toBe(billingConfig.freeMonthlyCredits);
+				expect(result.organization.id).toBe(organization.id);
+				expect(result.periodStartsAt).toBeInstanceOf(Date);
+				expect(result.periodEndsAt).toBeInstanceOf(Date);
 			});
 		});
 
-		it('throws not found for non-existent subscription', async () => {
+		it('returns billing info for a pro org', async () => {
+			await withTestTransaction(async () => {
+				const { organization } = await createBillingTestEnvironment();
+
+				// Set org to pro by adding an active subscription
+				await db
+					.update(organizations)
+					.set({
+						stripe_subscription_id: 'sub_test_123',
+						subscription_status: 'active',
+						billing_period_starts_at: new Date('2026-02-01T00:00:00Z'),
+						billing_period_ends_at: new Date('2026-03-01T00:00:00Z')
+					})
+					.where(eq(organizations.id, organization.id));
+
+				const result = await billingService.getBillingInfo(organization.id);
+
+				expect(result.plan).toBe('pro');
+				expect(result.monthlyCredits).toBe(billingConfig.proMonthlyCredits);
+			});
+		});
+
+		it('throws not found for non-existent org', async () => {
 			await withTestTransaction(async () => {
 				await expect(
-					billingService.getSubscription('00000000-0000-0000-0000-000000000000')
-				).rejects.toThrow('Subscription not found');
+					billingService.getBillingInfo('00000000-0000-0000-0000-000000000000')
+				).rejects.toThrow('Organization not found');
 			});
 		});
 	});

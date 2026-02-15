@@ -1,27 +1,25 @@
 <script lang="ts">
 	import { Badge } from '$lib/components/ui/badge';
 	import type { CreditBalance } from '$lib/schemas/billing';
-	import type { Plan } from '$lib/server/db/schema';
 	import { CoinVertical } from 'phosphor-svelte';
 	import BillingModal from './BillingModal.svelte';
 
 	type Props = {
-		plan: Plan;
+		planSlug: 'free' | 'pro';
 		credits: CreditBalance;
+		monthlyCredits: number;
 		onUpgrade?: () => void;
 		onSuccess?: () => void;
 	};
 
-	let { plan, credits, onUpgrade, onSuccess }: Props = $props();
+	let { planSlug, credits, monthlyCredits, onUpgrade, onSuccess }: Props =
+		$props();
 
 	let modalOpen = $state(false);
 
 	const remainingPercentage = $derived(
-		plan.monthly_credits > 0
-			? Math.min(
-					100,
-					Math.round((credits.available / plan.monthly_credits) * 100)
-				)
+		monthlyCredits > 0
+			? Math.min(100, Math.round((credits.available / monthlyCredits) * 100))
 			: 0
 	);
 
@@ -53,4 +51,11 @@
 	</div>
 </button>
 
-<BillingModal bind:open={modalOpen} {plan} {credits} {onUpgrade} {onSuccess} />
+<BillingModal
+	bind:open={modalOpen}
+	{planSlug}
+	{credits}
+	{monthlyCredits}
+	{onUpgrade}
+	{onSuccess}
+/>

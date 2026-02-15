@@ -64,8 +64,10 @@
 			<!-- Billing Section -->
 			{#if data.billing}
 				<BillingCard
-					subscription={data.billing.subscription}
 					plan={data.billing.plan}
+					monthlyCredits={data.billing.monthlyCredits}
+					periodEndsAt={data.billing.periodEndsAt}
+					cancelAtPeriodEnd={data.billing.cancelAtPeriodEnd}
 					credits={data.billing.credits}
 					transactions={data.billing.transactions}
 					canManageBilling={data.permissions.includes('billing:update')}

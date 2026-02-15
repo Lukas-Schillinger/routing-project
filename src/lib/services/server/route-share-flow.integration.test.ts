@@ -6,7 +6,7 @@
  * Uses withTestTransaction for automatic rollback - no manual cleanup needed.
  */
 import { db } from '$lib/server/db';
-import { mailRecords, routeShares, subscriptions } from '$lib/server/db/schema';
+import { mailRecords, organizations, routeShares } from '$lib/server/db/schema';
 import {
 	createBillingTestEnvironment,
 	createDepot,
@@ -56,13 +56,13 @@ beforeEach(() => {
 /** Helper to create full test environment with Pro plan for fleet_management feature */
 async function createProTestEnvironment() {
 	const billingEnv = await createBillingTestEnvironment();
-	const { organization, user, subscription, proPlan } = billingEnv;
+	const { organization, user } = billingEnv;
 
 	// Upgrade to Pro plan for fleet_management feature
 	await db
-		.update(subscriptions)
-		.set({ plan_id: proPlan.id })
-		.where(eq(subscriptions.id, subscription.id));
+		.update(organizations)
+		.set({ subscription_status: 'active' })
+		.where(eq(organizations.id, organization.id));
 
 	const location = await createLocation({ organization_id: organization.id });
 	const depot = await createDepot({

@@ -18,7 +18,25 @@ export const organizationSchema = z.object({
 	created_at: timestampSchema,
 	created_by: uuidSchema.nullable(),
 	updated_at: timestampSchema,
-	updated_by: uuidSchema.nullable()
+	updated_by: uuidSchema.nullable(),
+	// Billing fields (no subscription = Free tier)
+	stripe_customer_id: z.string().nullable(),
+	stripe_subscription_id: z.string().nullable(),
+	subscription_status: z
+		.enum([
+			'active',
+			'canceled',
+			'incomplete',
+			'incomplete_expired',
+			'past_due',
+			'paused',
+			'trialing',
+			'unpaid'
+		])
+		.nullable(),
+	billing_period_starts_at: timestampSchema.nullable(),
+	billing_period_ends_at: timestampSchema.nullable(),
+	cancel_at_period_end: z.boolean()
 });
 
 // Type exports

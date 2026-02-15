@@ -10,7 +10,7 @@ declare global {
 			user: import('$lib/services/server/auth').SessionValidationResult['user'];
 			session: import('$lib/services/server/auth').SessionValidationResult['session'];
 			permissions: import('$lib/services/server/permissions').Permission[];
-			features: import('$lib/server/db/schema').PlanFeatures | null;
+			features: import('$lib/config/billing').PlanFeatures | null;
 			isImpersonating: boolean;
 			requestId: string;
 			log: import('pino').Logger;

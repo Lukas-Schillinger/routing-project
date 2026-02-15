@@ -1,8 +1,7 @@
 <script lang="ts">
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { Button } from '$lib/components/ui/button';
-	import { goto } from '$app/navigation';
-	import { resolve } from '$app/paths';
+	import { billingApi } from '$lib/services/api/billing';
 	import type { PlanSlug } from '$lib/config/billing';
 	import { Check, RocketLaunch } from 'phosphor-svelte';
 
@@ -22,6 +21,8 @@
 		onUpgrade
 	}: Props = $props();
 
+	let isUpgrading = $state(false);
+
 	const isFreePlan = $derived(planSlug === 'free');
 
 	const proFeatures = [
@@ -31,12 +32,18 @@
 		'Email support'
 	];
 
-	function handleUpgrade() {
+	async function handleUpgrade() {
 		if (onUpgrade) {
 			onUpgrade();
 			return;
 		}
-		goto(resolve('/auth/account/upgrade'));
+		isUpgrading = true;
+		try {
+			const response = await billingApi.createUpgradeCheckout();
+			window.location.href = response.url;
+		} catch {
+			isUpgrading = false;
+		}
 	}
 </script>
 
@@ -71,7 +78,11 @@
 						<span class="text-muted-foreground">/ month</span>
 					</div>
 
-					<Button class="mt-4 w-full" onclick={handleUpgrade}>
+					<Button
+						class="mt-4 w-full"
+						onclick={handleUpgrade}
+						disabled={isUpgrading}
+					>
 						Upgrade to Pro
 					</Button>
 

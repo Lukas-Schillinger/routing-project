@@ -27,8 +27,7 @@ export const POST: RequestHandler = async ({ request }) => {
 		return json({
 			success: true,
 			organization: result.organization,
-			user: result.user,
-			subscription: result.subscription
+			user: result.user
 		});
 	} catch (err) {
 		handleApiError(err, 'Failed to create test account');

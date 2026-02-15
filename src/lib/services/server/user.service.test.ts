@@ -5,14 +5,7 @@ import {
 	createUser,
 	withTestTransaction
 } from '$lib/testing';
-import { mockStripeClient, mockStripeState } from '$lib/testing/mocks';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-
-// Mock Stripe client for unit tests
-vi.mock('$lib/services/external/stripe/client', () => ({
-	stripeClient: mockStripeClient
-}));
-
+import { describe, expect, it } from 'vitest';
 import { organizationService, userService } from './user.service';
 
 /**
@@ -22,10 +15,6 @@ import { organizationService, userService } from './user.service';
  */
 
 const NON_EXISTENT_UUID = '00000000-0000-0000-0000-000000000000';
-
-beforeEach(() => {
-	mockStripeState.clear();
-});
 
 describe('UserService', () => {
 	describe('getUser()', () => {
@@ -424,15 +413,10 @@ describe('UserService', () => {
 				);
 				expect(org.id).toBe(result.organization_id);
 
-				// Verify Stripe was called (mocked)
-				expect(mockStripeState.calls.createCustomer).toHaveLength(1);
-				expect(mockStripeState.calls.createCustomer[0].organizationId).toBe(
-					result.organization_id
-				);
-				expect(mockStripeState.calls.createSubscription).toHaveLength(1);
-				expect(mockStripeState.calls.createSubscription[0].organizationId).toBe(
-					result.organization_id
-				);
+				// Verify no Stripe interaction at signup (lazy customer creation)
+				expect(org.stripe_customer_id).toBeNull();
+				expect(org.stripe_subscription_id).toBeNull();
+				expect(org.subscription_status).toBeNull();
 			});
 		});
 

@@ -760,35 +760,10 @@ type CreateCustomerCall = {
 	email: string;
 };
 
-type CreateSubscriptionCall = {
-	customerId: string;
-	priceId: string;
-	organizationId: string;
-};
-
 type CreateCheckoutSessionCall = Stripe.Checkout.SessionCreateParams;
-
-type CreateBillingPortalSessionCall = {
-	customer: string;
-	return_url: string;
-};
 
 type GetSubscriptionCall = {
 	subscriptionId: string;
-};
-
-type CreateSetupIntentCall = {
-	customer: string;
-	metadata?: Record<string, string>;
-};
-
-type RetrieveSetupIntentCall = {
-	id: string;
-};
-
-type SetDefaultPaymentMethodCall = {
-	customerId: string;
-	paymentMethodId: string;
 };
 
 type CancelSubscriptionCall = {
@@ -808,22 +783,6 @@ type MockCheckoutSession = {
 	customer: unknown;
 	metadata: Record<string, string> | undefined;
 	payment_intent: string | null;
-};
-
-type MockBillingPortalSession = {
-	id: string;
-	url: string;
-	customer: string;
-	return_url: string;
-};
-
-type MockSetupIntent = {
-	id: string;
-	client_secret: string;
-	customer: string;
-	status: string;
-	payment_method: string | null;
-	metadata: Record<string, string>;
 };
 
 /**
@@ -868,46 +827,30 @@ export const mockStripeState = {
 		metadata: Record<string, string>;
 	}>,
 	checkoutSessions: [] as MockCheckoutSession[],
-	billingPortalSessions: [] as MockBillingPortalSession[],
-	setupIntents: [] as MockSetupIntent[],
 	calls: {
 		createCustomer: [] as CreateCustomerCall[],
-		createSubscription: [] as CreateSubscriptionCall[],
 		createCheckoutSession: [] as CreateCheckoutSessionCall[],
-		createBillingPortalSession: [] as CreateBillingPortalSessionCall[],
 		getSubscription: [] as GetSubscriptionCall[],
-		createSetupIntent: [] as CreateSetupIntentCall[],
-		retrieveSetupIntent: [] as RetrieveSetupIntentCall[],
-		setCustomerDefaultPaymentMethod: [] as SetDefaultPaymentMethodCall[],
 		cancelSubscription: [] as CancelSubscriptionCall[],
 		constructWebhookEvent: [] as ConstructWebhookEventCall[]
 	},
 	customerIdCounter: 0,
 	subscriptionIdCounter: 0,
 	checkoutSessionIdCounter: 0,
-	setupIntentIdCounter: 0,
 
 	/** Reset all state (call in beforeEach) */
 	clear() {
 		this.customers = [];
 		this.subscriptions = [];
 		this.checkoutSessions = [];
-		this.billingPortalSessions = [];
-		this.setupIntents = [];
 		this.calls.createCustomer = [];
-		this.calls.createSubscription = [];
 		this.calls.createCheckoutSession = [];
-		this.calls.createBillingPortalSession = [];
 		this.calls.getSubscription = [];
-		this.calls.createSetupIntent = [];
-		this.calls.retrieveSetupIntent = [];
-		this.calls.setCustomerDefaultPaymentMethod = [];
 		this.calls.cancelSubscription = [];
 		this.calls.constructWebhookEvent = [];
 		this.customerIdCounter = 0;
 		this.subscriptionIdCounter = 0;
 		this.checkoutSessionIdCounter = 0;
-		this.setupIntentIdCounter = 0;
 	}
 };
 
@@ -927,31 +870,6 @@ export const mockStripeClient = {
 		return customer;
 	},
 
-	createSubscription: async (params: CreateSubscriptionCall) => {
-		mockStripeState.calls.createSubscription.push(params);
-		const now = Math.floor(Date.now() / 1000);
-		const oneMonthFromNow = now + 30 * 24 * 60 * 60;
-		const subscription = {
-			id: `sub_mock_${++mockStripeState.subscriptionIdCounter}`,
-			customer: params.customerId,
-			status: 'active',
-			schedule: null,
-			items: {
-				data: [
-					{
-						id: `si_mock_${mockStripeState.subscriptionIdCounter}`,
-						price: { id: params.priceId },
-						current_period_start: now,
-						current_period_end: oneMonthFromNow
-					}
-				]
-			},
-			metadata: { organization_id: params.organizationId }
-		};
-		mockStripeState.subscriptions.push(subscription);
-		return subscription;
-	},
-
 	createCheckoutSession: async (
 		params: Stripe.Checkout.SessionCreateParams
 	) => {
@@ -968,20 +886,6 @@ export const mockStripeClient = {
 		return session;
 	},
 
-	createBillingPortalSession: async (
-		params: CreateBillingPortalSessionCall
-	) => {
-		mockStripeState.calls.createBillingPortalSession.push(params);
-		const session: MockBillingPortalSession = {
-			id: `bps_mock_${Date.now()}`,
-			url: `https://billing.stripe.com/mock/${params.customer}`,
-			customer: params.customer,
-			return_url: params.return_url
-		};
-		mockStripeState.billingPortalSessions.push(session);
-		return session;
-	},
-
 	getSubscription: async (subscriptionId: string) => {
 		mockStripeState.calls.getSubscription.push({ subscriptionId });
 		const sub = mockStripeState.subscriptions.find(
@@ -991,34 +895,6 @@ export const mockStripeClient = {
 			throw new Error(`Mock: Subscription ${subscriptionId} not found`);
 		}
 		return sub;
-	},
-
-	getCustomer: async (customerId: string) => {
-		const customer = mockStripeState.customers.find((c) => c.id === customerId);
-		if (!customer) {
-			throw new Error(`Mock: Customer ${customerId} not found`);
-		}
-		return customer;
-	},
-
-	updateCustomer: async (
-		customerId: string,
-		params: { email?: string; metadata?: Record<string, string> }
-	) => {
-		let customer = mockStripeState.customers.find((c) => c.id === customerId);
-		// If customer doesn't exist in mock state (e.g., created via test factory),
-		// create it in the mock state to allow the update to proceed
-		if (!customer) {
-			customer = {
-				id: customerId,
-				metadata: {}
-			};
-			mockStripeState.customers.push(customer);
-		}
-		if (params.metadata) {
-			customer.metadata = { ...customer.metadata, ...params.metadata };
-		}
-		return customer;
 	},
 
 	updateSubscription: async (
@@ -1070,47 +946,6 @@ export const mockStripeClient = {
 			} as unknown as Stripe.Subscription;
 		}
 		return sub;
-	},
-
-	createSetupIntent: async (params: {
-		customer: string;
-		metadata?: Record<string, string>;
-	}) => {
-		mockStripeState.calls.createSetupIntent.push(params);
-		const setupIntent: MockSetupIntent = {
-			id: `seti_mock_${++mockStripeState.setupIntentIdCounter}`,
-			client_secret: `seti_mock_${mockStripeState.setupIntentIdCounter}_secret_mock`,
-			customer: params.customer,
-			status: 'requires_payment_method',
-			payment_method: null,
-			metadata: params.metadata ?? {}
-		};
-		mockStripeState.setupIntents.push(setupIntent);
-		return setupIntent;
-	},
-
-	retrieveSetupIntent: async (id: string) => {
-		mockStripeState.calls.retrieveSetupIntent.push({ id });
-		const si = mockStripeState.setupIntents.find((s) => s.id === id);
-		if (!si) {
-			throw new Error(`Mock: SetupIntent ${id} not found`);
-		}
-		return si;
-	},
-
-	setCustomerDefaultPaymentMethod: async (
-		customerId: string,
-		paymentMethodId: string
-	) => {
-		mockStripeState.calls.setCustomerDefaultPaymentMethod.push({
-			customerId,
-			paymentMethodId
-		});
-		const customer = mockStripeState.customers.find((c) => c.id === customerId);
-		if (!customer) {
-			throw new Error(`Mock: Customer ${customerId} not found`);
-		}
-		return customer;
 	},
 
 	cancelSubscription: async (subscriptionId: string) => {

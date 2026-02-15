@@ -124,8 +124,7 @@
 				<Dialog.Header>
 					<Dialog.Title>Create Test Account</Dialog.Title>
 					<Dialog.Description>
-						Create a new organization with admin user and Free plan
-						subscription.
+						Create a new organization with admin user on Free tier.
 					</Dialog.Description>
 				</Dialog.Header>
 				<form onsubmit={handleCreateAccount} class="space-y-4">
@@ -208,30 +207,18 @@
 									{organization.userCount}
 								</Table.Cell>
 								<Table.Cell>
-									{#if organization.subscription}
-										<Badge
-											variant={getPlanBadgeVariant(
-												organization.subscription.plan.name
-											)}
-										>
-											{organization.subscription.plan.display_name}
-										</Badge>
-									{:else}
-										<span class="text-muted-foreground">No subscription</span>
-									{/if}
+									<Badge variant={getPlanBadgeVariant(organization.plan)}>
+										{organization.plan === 'pro' ? 'Pro' : 'Free'}
+									</Badge>
 								</Table.Cell>
 								<Table.Cell>
-									{#if organization.subscription}
-										<Badge
-											variant={getStatusBadgeVariant(
-												organization.subscription.status
-											)}
-										>
-											{formatStatus(organization.subscription.status)}
-										</Badge>
-									{:else}
-										<span class="text-muted-foreground">-</span>
-									{/if}
+									<Badge
+										variant={getStatusBadgeVariant(
+											organization.subscription_status ?? 'free'
+										)}
+									>
+										{formatStatus(organization.subscription_status ?? 'free')}
+									</Badge>
 								</Table.Cell>
 								<Table.Cell class="text-muted-foreground">
 									{formatDate(organization.created_at)}

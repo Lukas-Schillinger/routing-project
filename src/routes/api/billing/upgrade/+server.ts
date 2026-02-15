@@ -1,4 +1,4 @@
-// POST /api/billing/portal - Create Stripe billing portal session
+// POST /api/billing/upgrade - Create Stripe Checkout session for Pro upgrade
 
 import { handleApiError } from '$lib/errors';
 import { requirePermissionApi } from '$lib/services/server/permissions';
@@ -10,14 +10,14 @@ export const POST: RequestHandler = async ({ url }) => {
 	const user = requirePermissionApi('billing:update');
 
 	try {
-		const portalUrl = await subscriptionService.createBillingPortalSession(
+		const checkoutUrl = await subscriptionService.createUpgradeCheckout(
 			user.organization_id,
-			url.origin,
-			'/auth/account'
+			user.email,
+			url.origin
 		);
 
-		return json({ url: portalUrl });
+		return json({ url: checkoutUrl });
 	} catch (err) {
-		handleApiError(err, 'Failed to create billing portal session');
+		handleApiError(err, 'Failed to create upgrade checkout session');
 	}
 };

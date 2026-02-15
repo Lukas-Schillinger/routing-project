@@ -54,27 +54,35 @@
 			</Card.Content>
 		</Card.Root>
 
-		<!-- Subscriptions by Plan -->
-		{#each data.stats.subscriptionsByPlan as plan (plan.planName)}
-			<Card.Root>
-				<Card.Header
-					class="flex flex-row items-center justify-between space-y-0 pb-2"
-				>
-					<Card.Title class="text-sm font-medium capitalize"
-						>{plan.planName} Plan</Card.Title
-					>
-					{#if plan.planName === 'pro'}
-						<TrendingUp class="h-4 w-4 text-muted-foreground" />
-					{:else}
-						<CreditCard class="h-4 w-4 text-muted-foreground" />
-					{/if}
-				</Card.Header>
-				<Card.Content>
-					<div class="text-2xl font-bold">{plan.count}</div>
-					<p class="text-xs text-muted-foreground">Active subscriptions</p>
-				</Card.Content>
-			</Card.Root>
-		{/each}
+		<!-- Pro Plan -->
+		<Card.Root>
+			<Card.Header
+				class="flex flex-row items-center justify-between space-y-0 pb-2"
+			>
+				<Card.Title class="text-sm font-medium">Pro Plan</Card.Title>
+				<TrendingUp class="h-4 w-4 text-muted-foreground" />
+			</Card.Header>
+			<Card.Content>
+				<div class="text-2xl font-bold">{data.stats.proOrganizations}</div>
+				<p class="text-xs text-muted-foreground">Active subscriptions</p>
+			</Card.Content>
+		</Card.Root>
+
+		<!-- Free Plan -->
+		<Card.Root>
+			<Card.Header
+				class="flex flex-row items-center justify-between space-y-0 pb-2"
+			>
+				<Card.Title class="text-sm font-medium">Free Plan</Card.Title>
+				<CreditCard class="h-4 w-4 text-muted-foreground" />
+			</Card.Header>
+			<Card.Content>
+				<div class="text-2xl font-bold">
+					{data.stats.totalOrganizations - data.stats.proOrganizations}
+				</div>
+				<p class="text-xs text-muted-foreground">Active subscriptions</p>
+			</Card.Content>
+		</Card.Root>
 	</div>
 
 	<!-- Recent Transactions -->

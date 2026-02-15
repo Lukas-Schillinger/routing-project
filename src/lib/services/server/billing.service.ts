@@ -1,21 +1,15 @@
+import { billingConfig } from '$lib/config/billing';
 import { db } from '$lib/server/db';
 import {
 	creditTransactions,
-	plans,
-	subscriptions,
-	type Plan
+	getOrgPlan,
+	organizations
 } from '$lib/server/db/schema';
 import type { CreditBalance } from '$lib/schemas/billing';
 import { and, eq, gte, inArray, sql } from 'drizzle-orm';
 import { ServiceError } from './errors';
 
 type CreditTransaction = typeof creditTransactions.$inferSelect;
-type Subscription = typeof subscriptions.$inferSelect;
-
-type SubscriptionWithPlan = {
-	subscription: Subscription;
-	plan: Plan;
-};
 
 type IdempotencyColumn =
 	| typeof creditTransactions.stripe_payment_intent_id
@@ -36,6 +30,22 @@ async function transactionExists(
 		.limit(1);
 
 	return existing.length > 0;
+}
+
+/**
+ * Get the start of the current calendar month (UTC).
+ */
+function getCalendarMonthStart(): Date {
+	const now = new Date();
+	return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+}
+
+/**
+ * Get the start of the next calendar month (UTC).
+ */
+function getCalendarMonthEnd(): Date {
+	const now = new Date();
+	return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
 }
 
 export class BillingService {
@@ -82,18 +92,57 @@ export class BillingService {
 	}
 
 	/**
+	 * Get billing info for an organization (plan, credits, period).
+	 * No subscription = Free tier with calendar month periods.
+	 */
+	async getBillingInfo(organizationId: string) {
+		const [org] = await db
+			.select()
+			.from(organizations)
+			.where(eq(organizations.id, organizationId))
+			.limit(1);
+
+		if (!org) {
+			throw ServiceError.notFound('Organization not found');
+		}
+
+		const plan = getOrgPlan(org);
+		const monthlyCredits =
+			plan === 'pro'
+				? billingConfig.proMonthlyCredits
+				: billingConfig.freeMonthlyCredits;
+
+		// Pro: use billing period from Stripe. Free: use calendar month.
+		const periodStartsAt =
+			plan === 'pro' && org.billing_period_starts_at
+				? org.billing_period_starts_at
+				: getCalendarMonthStart();
+		const periodEndsAt =
+			plan === 'pro' && org.billing_period_ends_at
+				? org.billing_period_ends_at
+				: getCalendarMonthEnd();
+
+		return {
+			organization: org,
+			plan,
+			monthlyCredits,
+			periodStartsAt,
+			periodEndsAt
+		};
+	}
+
+	/**
 	 * Get available credit balance for an organization.
-	 * Derives subscription credits from the plan instead of tracking them in a ledger.
-	 *
-	 * Formula: plan.monthly_credits - usage_this_period + purchased_balance
+	 * Formula: monthlyCredits - usage_this_period + purchased_balance
 	 */
 	async getAvailableCredits(organizationId: string): Promise<number> {
-		const { subscription, plan } = await this.getSubscription(organizationId);
+		const { monthlyCredits, periodStartsAt } =
+			await this.getBillingInfo(organizationId);
 		const [usageThisPeriod, purchasedBalance] = await Promise.all([
-			this.getUsageInPeriod(organizationId, subscription.period_starts_at),
+			this.getUsageInPeriod(organizationId, periodStartsAt),
 			this.getPurchasedBalance(organizationId)
 		]);
-		return plan.monthly_credits - usageThisPeriod + purchasedBalance;
+		return monthlyCredits - usageThisPeriod + purchasedBalance;
 	}
 
 	/**
@@ -184,27 +233,6 @@ export class BillingService {
 			.where(eq(creditTransactions.organization_id, organizationId))
 			.orderBy(sql`${creditTransactions.created_at} DESC`)
 			.limit(limit);
-	}
-
-	/**
-	 * Get the organization's current subscription with plan details.
-	 */
-	async getSubscription(organizationId: string): Promise<SubscriptionWithPlan> {
-		const [subscription] = await db
-			.select({
-				subscription: subscriptions,
-				plan: plans
-			})
-			.from(subscriptions)
-			.innerJoin(plans, eq(subscriptions.plan_id, plans.id))
-			.where(eq(subscriptions.organization_id, organizationId))
-			.limit(1);
-
-		if (!subscription) {
-			throw ServiceError.notFound('Subscription not found');
-		}
-
-		return subscription;
 	}
 
 	/**

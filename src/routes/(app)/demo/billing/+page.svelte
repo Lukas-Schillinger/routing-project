@@ -2,30 +2,6 @@
 	import { BillingModal, CreditBadge, PlanCard } from '$lib/components/billing';
 	import { Button } from '$lib/components/ui/button';
 	import type { CreditBalance } from '$lib/schemas/billing';
-	import type { Plan } from '$lib/server/db/schema';
-
-	// Mock plan data for demo purposes
-	const freePlan: Plan = {
-		id: 'demo-free',
-		created_at: new Date(),
-		updated_at: new Date(),
-		name: 'free',
-		display_name: 'Free',
-		stripe_price_id: 'price_free',
-		monthly_credits: 200,
-		features: { fleet_management: false }
-	};
-
-	const proPlan: Plan = {
-		id: 'demo-pro',
-		created_at: new Date(),
-		updated_at: new Date(),
-		name: 'pro',
-		display_name: 'Pro',
-		stripe_price_id: 'price_pro',
-		monthly_credits: 2000,
-		features: { fleet_management: true }
-	};
 
 	// Mock credit balances for different states
 	const creditsGreen: CreditBalance = { available: 150 };
@@ -69,8 +45,9 @@
 				<p class="text-sm font-medium text-green-600">Green State (25% used)</p>
 				<div class="flex items-center gap-2">
 					<CreditBadge
-						plan={freePlan}
+						planSlug="free"
 						credits={creditsGreen}
+						monthlyCredits={200}
 						onUpgrade={handleUpgrade}
 					/>
 					<span class="text-sm text-muted-foreground">150/200 credits</span>
@@ -83,8 +60,9 @@
 				</p>
 				<div class="flex items-center gap-2">
 					<CreditBadge
-						plan={freePlan}
+						planSlug="free"
 						credits={creditsYellow}
+						monthlyCredits={200}
 						onUpgrade={handleUpgrade}
 					/>
 					<span class="text-sm text-muted-foreground">40/200 credits</span>
@@ -95,8 +73,9 @@
 				<p class="text-sm font-medium text-red-600">Red State (100% used)</p>
 				<div class="flex items-center gap-2">
 					<CreditBadge
-						plan={freePlan}
+						planSlug="free"
 						credits={creditsRed}
+						monthlyCredits={200}
 						onUpgrade={handleUpgrade}
 					/>
 					<span class="text-sm text-muted-foreground">0/200 credits</span>
@@ -106,7 +85,11 @@
 			<div class="space-y-2 rounded-lg border p-4">
 				<p class="text-sm font-medium">Pro Plan</p>
 				<div class="flex items-center gap-2">
-					<CreditBadge plan={proPlan} credits={creditsPro} />
+					<CreditBadge
+						planSlug="pro"
+						credits={creditsPro}
+						monthlyCredits={2000}
+					/>
 					<span class="text-sm text-muted-foreground">1,800/2,000 credits</span>
 				</div>
 			</div>
@@ -172,13 +155,15 @@
 
 <BillingModal
 	bind:open={billingModalFreeOpen}
-	plan={freePlan}
+	planSlug="free"
 	credits={creditsYellow}
+	monthlyCredits={200}
 	onUpgrade={handleUpgrade}
 />
 
 <BillingModal
 	bind:open={billingModalProOpen}
-	plan={proPlan}
+	planSlug="pro"
 	credits={creditsPro}
+	monthlyCredits={2000}
 />

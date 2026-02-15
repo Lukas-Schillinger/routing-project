@@ -1,17 +1,17 @@
 <!-- @component Billing Card for account page - displays subscription, credits, and transaction history -->
 <script lang="ts">
+	import { invalidateAll } from '$app/navigation';
 	import { BillingModal } from '$lib/components/billing';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Progress } from '$lib/components/ui/progress';
+	import { Spinner } from '$lib/components/ui/spinner';
 	import * as Table from '$lib/components/ui/table';
 	import type { CreditBalance } from '$lib/schemas/billing';
 	import type {
 		creditTransactions,
-		CreditTransactionType,
-		plans,
-		subscriptions
+		CreditTransactionType
 	} from '$lib/server/db/schema';
 	import { billingApi } from '$lib/services/api/billing';
 	import { formatDate } from '$lib/utils';
@@ -19,26 +19,67 @@
 	import { slide } from 'svelte/transition';
 
 	type Props = {
-		subscription: typeof subscriptions.$inferSelect;
-		plan: typeof plans.$inferSelect;
+		plan: 'free' | 'pro';
+		monthlyCredits: number;
+		periodEndsAt: Date;
+		cancelAtPeriodEnd: boolean;
 		credits: CreditBalance;
 		transactions: (typeof creditTransactions.$inferSelect)[];
 		canManageBilling: boolean;
 	};
 
-	let { subscription, plan, credits, transactions, canManageBilling }: Props =
-		$props();
+	let {
+		plan,
+		monthlyCredits,
+		periodEndsAt,
+		cancelAtPeriodEnd,
+		credits,
+		transactions,
+		canManageBilling
+	}: Props = $props();
 
 	// Billing modal state
 	let billingModalOpen = $state(false);
+
+	// Downgrade action state
+	let downgradeLoading = $state(false);
+	let downgradeError = $state<string | null>(null);
+
+	async function handleDowngrade() {
+		downgradeLoading = true;
+		downgradeError = null;
+		try {
+			await billingApi.scheduleDowngrade();
+			await invalidateAll();
+		} catch (e) {
+			downgradeError =
+				e instanceof Error ? e.message : 'Failed to schedule downgrade';
+		} finally {
+			downgradeLoading = false;
+		}
+	}
+
+	async function handleCancelDowngrade() {
+		downgradeLoading = true;
+		downgradeError = null;
+		try {
+			await billingApi.cancelScheduledDowngrade();
+			await invalidateAll();
+		} catch (e) {
+			downgradeError =
+				e instanceof Error ? e.message : 'Failed to cancel downgrade';
+		} finally {
+			downgradeLoading = false;
+		}
+	}
 
 	// Collapsible state
 	let historyOpen = $state(false);
 
 	// Credit remaining calculations
 	const remainingPercentage = $derived(
-		plan.monthly_credits > 0
-			? Math.round((credits.available / plan.monthly_credits) * 100)
+		monthlyCredits > 0
+			? Math.round((credits.available / monthlyCredits) * 100)
 			: 0
 	);
 
@@ -68,12 +109,6 @@
 		if (type === 'purchase' || type === 'refund') return 'default';
 		return 'secondary';
 	}
-
-	// Handle manage subscription button
-	async function handleManageSubscription() {
-		const response = await billingApi.createPortalSession();
-		window.location.href = response.url;
-	}
 </script>
 
 <Card.Root>
@@ -90,28 +125,66 @@
 				<p class="text-sm font-medium">Current Plan</p>
 			</div>
 			<div class="flex items-center gap-3">
-				<Badge variant="secondary">{plan.display_name}</Badge>
-				{#if canManageBilling}
-					{#if plan.name === 'free'}
-						<Button
-							variant="outline"
-							size="sm"
-							onclick={() => (billingModalOpen = true)}
-						>
-							Upgrade
-						</Button>
-					{:else}
-						<Button
-							variant="outline"
-							size="sm"
-							onclick={handleManageSubscription}
-						>
-							Manage Subscription
-						</Button>
-					{/if}
+				<Badge variant="secondary">{plan === 'pro' ? 'Pro' : 'Free'}</Badge>
+				{#if canManageBilling && plan === 'free'}
+					<Button
+						variant="outline"
+						size="sm"
+						onclick={() => (billingModalOpen = true)}
+					>
+						Upgrade
+					</Button>
+				{/if}
+				{#if canManageBilling && plan === 'pro' && !cancelAtPeriodEnd}
+					<Button
+						variant="ghost"
+						size="sm"
+						class="text-muted-foreground"
+						onclick={handleDowngrade}
+						disabled={downgradeLoading}
+					>
+						{#if downgradeLoading}
+							<Spinner class="mr-2" />
+						{/if}
+						Downgrade
+					</Button>
 				{/if}
 			</div>
 		</div>
+
+		<!-- Downgrade error -->
+		{#if downgradeError}
+			<p class="text-sm text-destructive">{downgradeError}</p>
+		{/if}
+
+		<!-- Downgrade Notice -->
+		{#if cancelAtPeriodEnd}
+			<div
+				class="flex flex-col gap-1 border-b py-4 md:flex-row md:items-center md:justify-between md:gap-4"
+			>
+				<div class="shrink-0 md:w-48">
+					<p class="text-sm font-medium text-yellow-600">Downgrade Scheduled</p>
+				</div>
+				<div class="flex items-center gap-3">
+					<p class="text-sm text-yellow-600">
+						Your plan will be downgraded on {formatDate(periodEndsAt)}
+					</p>
+					{#if canManageBilling}
+						<Button
+							variant="outline"
+							size="sm"
+							onclick={handleCancelDowngrade}
+							disabled={downgradeLoading}
+						>
+							{#if downgradeLoading}
+								<Spinner class="mr-2" />
+							{/if}
+							Keep Pro
+						</Button>
+					{/if}
+				</div>
+			</div>
+		{/if}
 
 		<!-- Credits Row -->
 		<div
@@ -127,7 +200,7 @@
 					class={progressColorClass}
 				/>
 				<p class="text-sm text-muted-foreground">
-					{credits.available.toLocaleString()} / {plan.monthly_credits.toLocaleString()}
+					{credits.available.toLocaleString()} / {monthlyCredits.toLocaleString()}
 				</p>
 			</div>
 		</div>
@@ -140,7 +213,7 @@
 				<p class="text-sm font-medium">Credits Reset</p>
 			</div>
 			<p class="text-sm text-muted-foreground">
-				{formatDate(subscription.period_ends_at)}
+				{formatDate(periodEndsAt)}
 			</p>
 		</div>
 
@@ -210,4 +283,9 @@
 	</Card.Content>
 </Card.Root>
 
-<BillingModal bind:open={billingModalOpen} {plan} {credits} />
+<BillingModal
+	bind:open={billingModalOpen}
+	planSlug={plan}
+	{credits}
+	{monthlyCredits}
+/>

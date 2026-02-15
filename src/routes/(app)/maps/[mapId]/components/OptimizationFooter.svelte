@@ -17,7 +17,6 @@
 		Route,
 		StopWithLocation
 	} from '$lib/schemas';
-	import type { Plan } from '$lib/server/db/schema';
 	import { mapApi } from '$lib/services/api';
 	import {
 		AlertCircle,
@@ -40,8 +39,9 @@
 		assignedDrivers,
 		routes,
 		pageState,
-		plan,
+		planSlug,
 		credits,
+		monthlyCredits,
 		onDepotChange,
 		onOptimize,
 		onCancel,
@@ -53,8 +53,9 @@
 		assignedDrivers: Driver[];
 		routes: Route[];
 		pageState: PageState;
-		plan?: Plan;
+		planSlug?: 'free' | 'pro';
 		credits?: CreditBalance;
+		monthlyCredits?: number;
 		onDepotChange: (depotId: string) => Promise<void>;
 		onOptimize: () => void;
 		onCancel: () => void;
@@ -305,8 +306,8 @@
 
 			<!-- Reset and Optimize Buttons with validation info -->
 			<div class="flex grow gap-2 @2xl:max-w-52">
-				{#if plan && credits}
-					<CreditBadge {plan} {credits} {onUpgrade} />
+				{#if planSlug && credits && monthlyCredits}
+					<CreditBadge {planSlug} {credits} {monthlyCredits} {onUpgrade} />
 				{/if}
 				<ConfirmDeleteDialog
 					title="Reset Routes"
