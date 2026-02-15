@@ -11,6 +11,10 @@
 			"Bash(tree:*)",
 
 			"Bash(git status:*)",
+			"Bash(git diff:*)",
+			"Bash(git log:*)",
+			"Bash(git show:*)",
+			"Bash(git branch:*)",
 			"Bash(npm run check:*)",
 			"Bash(npm run lint:*)",
 			"Bash(npm run test:*)",
