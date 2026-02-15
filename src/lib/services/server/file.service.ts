@@ -3,39 +3,76 @@ import type { File as FileSchema } from '$lib/schemas/file';
 import type { User } from '$lib/schemas/user';
 import { db } from '$lib/server/db';
 import { files } from '$lib/server/db/schema';
-import { r2Service } from '$lib/services/external/cloudflare/r2';
+import { r2Service as defaultStorageProvider } from '$lib/services/external/cloudflare/r2';
 import { and, eq } from 'drizzle-orm';
 import { ServiceError } from './errors';
 
+export type FileStorageProvider = {
+	uploadFile(
+		key: string,
+		file: Buffer | Uint8Array,
+		contentType: string,
+		metadata?: Record<string, string>
+	): Promise<void>;
+	deleteFile(key: string): Promise<void>;
+	getSignedDownloadUrl(key: string, expiresIn?: number): Promise<string>;
+	generateFileKey(
+		organizationId: string,
+		userId: string,
+		originalFilename: string
+	): string;
+};
+
 export class FileService {
+	private storage: FileStorageProvider;
+
+	constructor(storage: FileStorageProvider = defaultStorageProvider) {
+		this.storage = storage;
+	}
+
+	private async findFileByIdAndOrg(
+		fileId: string,
+		organizationId: string
+	): Promise<FileSchema> {
+		const [fileRecord] = await db
+			.select()
+			.from(files)
+			.where(
+				and(eq(files.id, fileId), eq(files.organization_id, organizationId))
+			)
+			.limit(1);
+
+		if (!fileRecord) {
+			throw ServiceError.notFound('File not found');
+		}
+
+		return fileRecord;
+	}
+
 	async uploadFile(
 		file: File,
 		user: User,
 		metadata?: Record<string, string>
 	): Promise<FileSchema> {
-		try {
-			// Validate file
-			if (file.size > FILE_LIMITS.MAX_SIZE_BYTES) {
-				throw ServiceError.badRequest('File size exceeds 10MB limit');
-			}
+		if (file.size > FILE_LIMITS.MAX_SIZE_BYTES) {
+			throw ServiceError.badRequest('File size exceeds 10MB limit');
+		}
 
-			// Generate R2 key
-			const r2Key = r2Service.generateFileKey(
+		try {
+			const r2Key = this.storage.generateFileKey(
 				user.organization_id!,
 				user.id,
 				file.name
 			);
 
-			// Upload to R2
 			const fileBuffer = await file.arrayBuffer();
-			await r2Service.uploadFile(
+			await this.storage.uploadFile(
 				r2Key,
 				new Uint8Array(fileBuffer),
 				file.type,
 				metadata
 			);
 
-			// Save to database
 			const [savedFile] = await db
 				.insert(files)
 				.values({
@@ -57,26 +94,13 @@ export class FileService {
 	}
 
 	async deleteFile(fileId: string, user: User): Promise<void> {
-		const fileRecord = await db
-			.select()
-			.from(files)
-			.where(
-				and(
-					eq(files.id, fileId),
-					eq(files.organization_id, user.organization_id!)
-				)
-			)
-			.limit(1);
-
-		if (!fileRecord.length) {
-			throw ServiceError.notFound('File not found');
-		}
+		const fileRecord = await this.findFileByIdAndOrg(
+			fileId,
+			user.organization_id!
+		);
 
 		try {
-			// Delete from R2
-			await r2Service.deleteFile(fileRecord[0].r2_key);
-
-			// Delete from database
+			await this.storage.deleteFile(fileRecord.r2_key);
 			await db.delete(files).where(eq(files.id, fileId));
 		} catch (error) {
 			throw ServiceError.internal('Failed to delete file', { cause: error });
@@ -84,46 +108,20 @@ export class FileService {
 	}
 
 	async getFileUrl(fileId: string, user: User): Promise<string> {
-		const fileRecord = await db
-			.select()
-			.from(files)
-			.where(
-				and(
-					eq(files.id, fileId),
-					eq(files.organization_id, user.organization_id!)
-				)
-			)
-			.limit(1);
+		const fileRecord = await this.findFileByIdAndOrg(
+			fileId,
+			user.organization_id!
+		);
 
-		if (!fileRecord.length) {
-			throw ServiceError.notFound('File not found');
-		}
-
-		// All files are private, return signed URL
-		return await r2Service.getSignedDownloadUrl(fileRecord[0].r2_key);
+		return this.storage.getSignedDownloadUrl(fileRecord.r2_key);
 	}
 
 	async getFileById(fileId: string, user: User): Promise<FileSchema> {
-		const [fileRecord] = await db
-			.select()
-			.from(files)
-			.where(
-				and(
-					eq(files.id, fileId),
-					eq(files.organization_id, user.organization_id!)
-				)
-			)
-			.limit(1);
-
-		if (!fileRecord) {
-			throw ServiceError.notFound('File not found');
-		}
-
-		return fileRecord;
+		return this.findFileByIdAndOrg(fileId, user.organization_id!);
 	}
 
 	async getFilesByOrganization(user: User): Promise<FileSchema[]> {
-		return await db
+		return db
 			.select()
 			.from(files)
 			.where(eq(files.organization_id, user.organization_id!))
