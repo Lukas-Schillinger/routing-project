@@ -213,7 +213,10 @@ export async function createStripeTestClock(
 		},
 
 		async listInvoices(customerId: string) {
-			const { data } = await stripe.invoices.list({ customer: customerId, limit: 100 });
+			const { data } = await stripe.invoices.list({
+				customer: customerId,
+				limit: 100
+			});
 			return data;
 		},
 

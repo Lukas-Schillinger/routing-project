@@ -107,8 +107,8 @@
 	/* Landing page theme */
 	--landing-primary: var(--color-forest-600);
 	--landing-primary-hover: var(--color-forest-700);
-	--landing-secondary: #fbbf24; /* amber-400 */
-	--landing-secondary-hover: #f59e0b; /* amber-500 */
+	--landing-secondary: oklch(76.9% 0.188 70.08); /* brand amber */
+	--landing-secondary-hover: oklch(82.8% 0.189 84.429); /* brand amber hover */
 	--landing-primary-foreground: var(--color-sand-50);
 	--landing-secondary-foreground: var(--color-forest-950);
 }

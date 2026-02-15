@@ -2,7 +2,11 @@
 	import { browser } from '$app/environment';
 	import { resolve } from '$app/paths';
 	import { Button } from '$lib/components/ui/button';
-	import { ditheringFragmentShader, DitheringShapes, DitheringTypes } from '@paper-design/shaders';
+	import {
+		ditheringFragmentShader,
+		DitheringShapes,
+		DitheringTypes
+	} from '@paper-design/shaders';
 	import { ArrowRight } from 'lucide-svelte';
 	import { inView } from 'motion';
 	import ShaderCanvas from './ShaderCanvas.svelte';
@@ -40,7 +44,11 @@
 </script>
 
 <section class="relative overflow-hidden py-28 md:py-36">
-	<ShaderCanvas fragmentShader={ditheringFragmentShader} uniforms={shaderUniforms} speed={0.15} />
+	<ShaderCanvas
+		fragmentShader={ditheringFragmentShader}
+		uniforms={shaderUniforms}
+		speed={0.15}
+	/>
 	<div class="absolute inset-0 bg-forest-900/85"></div>
 
 	<div
@@ -48,23 +56,30 @@
 		class="relative mx-auto max-w-3xl px-2 text-center transition-all duration-700 ease-out sm:px-6 lg:px-8"
 		style="opacity: 0; transform: translateY(20px)"
 	>
-		<p class="mb-4 text-xs font-medium tracking-[0.25em] text-landing-primary uppercase">
+		<p
+			class="mb-4 text-xs font-medium tracking-[0.25em] text-landing-secondary uppercase dark:text-landing-primary"
+		>
 			Get started today
 		</p>
 
-		<h2 class="font-serif text-4xl leading-tight tracking-tight text-sand-50 md:text-6xl">
+		<h2
+			class="font-serif text-4xl leading-tight tracking-tight text-sand-50 md:text-6xl"
+		>
 			Ready to optimize?
 		</h2>
 
 		<p class="mx-auto mt-5 max-w-md text-base leading-relaxed text-sand-300">
-			Join delivery teams saving hours every day with intelligent route planning.
+			Join delivery teams saving hours every day with intelligent route
+			planning.
 		</p>
 
-		<div class="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
+		<div
+			class="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row"
+		>
 			<Button
 				href={resolve('/auth/register')}
 				size="lg"
-				class="h-11 gap-2 rounded-sm bg-landing-primary px-8 text-sm font-medium tracking-wide text-landing-primary-foreground hover:bg-landing-primary-hover"
+				class="h-11 gap-2 rounded-sm bg-landing-secondary px-8 text-sm font-medium tracking-wide text-landing-secondary-foreground hover:bg-landing-secondary-hover dark:bg-landing-primary dark:text-landing-primary-foreground dark:hover:bg-landing-primary-hover"
 			>
 				Start for free
 				<ArrowRight class="h-4 w-4" />

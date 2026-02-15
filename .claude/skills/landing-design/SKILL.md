@@ -27,13 +27,13 @@ Use Instrument Serif sparingly for impact. Geist carries the majority of the pag
 
 Forest green dominant, soft cream base, light amber accent. Use CSS variables for consistency.
 
-| Role | Color | Usage |
-|---|---|---|
+| Role                       | Color      | Usage                                                |
+| -------------------------- | ---------- | ---------------------------------------------------- |
 | **Primary / Forest Green** | `~#2D5A3D` | CTAs, headings, key UI elements, section backgrounds |
-| **Background / Cream** | `~#F5F0E8` | Page base, card backgrounds, breathing room |
-| **Accent / Light Amber** | `~#D4A853` | Highlights, hover states, badges, secondary CTAs |
-| **Text / Charcoal** | `~#1A1A1A` | Body text, primary readable content |
-| **Muted / Warm Gray** | `~#8A8578` | Secondary text, captions, dividers |
+| **Background / Cream**     | `~#F5F0E8` | Page base, card backgrounds, breathing room          |
+| **Accent / Light Amber**   | `~#D4A853` | Highlights, hover states, badges, secondary CTAs     |
+| **Text / Charcoal**        | `~#1A1A1A` | Body text, primary readable content                  |
+| **Muted / Warm Gray**      | `~#8A8578` | Secondary text, captions, dividers                   |
 
 The palette should feel earthy but technical — like field equipment markings. Forest green is the dominant brand color; amber is used as a sharp accent, not spread evenly. Cream provides warmth without feeling soft.
 

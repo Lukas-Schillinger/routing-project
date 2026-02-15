@@ -91,7 +91,9 @@
 	<div class="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
 		<!-- Section Header -->
 		<div class="mb-10 text-center">
-			<p class="mb-3 text-xs font-medium tracking-[0.25em] text-landing-primary uppercase">
+			<p
+				class="mb-3 text-xs font-medium tracking-[0.25em] text-landing-primary uppercase"
+			>
 				Pricing
 			</p>
 			<h2 class="font-serif text-4xl leading-tight tracking-tight md:text-5xl">
@@ -104,12 +106,14 @@
 
 		<!-- Billing Toggle -->
 		<div class="mb-10 flex items-center justify-center">
-			<div class="inline-flex items-center gap-0 overflow-hidden rounded-sm border border-foreground/10">
+			<div
+				class="inline-flex items-center gap-0 overflow-hidden rounded-sm border border-foreground/10"
+			>
 				<button
 					class="px-5 py-2.5 text-sm font-medium transition-colors duration-150
 						{billingPeriod === 'monthly'
-							? 'bg-foreground text-background'
-							: 'bg-card text-muted-foreground hover:text-foreground'}"
+						? 'bg-foreground text-background'
+						: 'bg-card text-muted-foreground hover:text-foreground'}"
 					onclick={() => (billingPeriod = 'monthly')}
 				>
 					Monthly
@@ -117,12 +121,14 @@
 				<button
 					class="flex items-center gap-2 px-5 py-2.5 text-sm font-medium transition-colors duration-150
 						{billingPeriod === 'annual'
-							? 'bg-foreground text-background'
-							: 'bg-card text-muted-foreground hover:text-foreground'}"
+						? 'bg-foreground text-background'
+						: 'bg-card text-muted-foreground hover:text-foreground'}"
 					onclick={() => (billingPeriod = 'annual')}
 				>
 					Annual
-					<span class="rounded-sm bg-landing-primary px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-landing-primary-foreground">
+					<span
+						class="rounded-sm bg-landing-primary px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-landing-primary-foreground"
+					>
 						-25%
 					</span>
 				</button>
@@ -136,12 +142,14 @@
 					data-plan
 					class="relative flex flex-col rounded-sm border p-7 transition-all duration-500 ease-out
 						{plan.highlighted
-							? 'border-landing-primary bg-card shadow-lg shadow-landing-primary/5'
-							: 'border-foreground/10 bg-card'}"
+						? 'border-landing-primary bg-card shadow-lg shadow-landing-primary/5'
+						: 'border-foreground/10 bg-card'}"
 					style="opacity: 0; transform: translateY(20px)"
 				>
 					{#if plan.highlighted}
-						<div class="absolute -top-px right-5 rounded-b-sm bg-landing-primary px-3 py-1 text-[10px] font-bold tracking-wide text-landing-primary-foreground uppercase">
+						<div
+							class="absolute -top-px right-5 rounded-b-sm bg-landing-primary px-3 py-1 text-[10px] font-bold tracking-wide text-landing-primary-foreground uppercase"
+						>
 							Popular
 						</div>
 					{/if}
@@ -152,7 +160,9 @@
 					</div>
 
 					<div class="mb-5">
-						<span class="font-mono text-4xl font-extralight tracking-tight">${getPrice(plan)}</span>
+						<span class="font-mono text-4xl font-extralight tracking-tight"
+							>${getPrice(plan)}</span
+						>
 						<span class="ml-1 text-sm text-muted-foreground">{plan.unit}</span>
 					</div>
 
@@ -160,8 +170,8 @@
 						href={plan.href}
 						class="mb-6 w-full rounded-sm
 							{plan.highlighted
-								? 'bg-landing-primary text-landing-primary-foreground hover:bg-landing-primary-hover'
-								: 'bg-foreground/5 text-foreground hover:bg-foreground/10'}"
+							? 'bg-landing-primary text-landing-primary-foreground hover:bg-landing-primary-hover'
+							: 'bg-foreground/5 text-foreground hover:bg-foreground/10'}"
 					>
 						{plan.cta}
 					</Button>
@@ -169,7 +179,9 @@
 					<ul class="mt-auto space-y-2.5">
 						{#each plan.features as feature (feature)}
 							<li class="flex items-start gap-2.5 text-sm">
-								<Check class="mt-0.5 h-3.5 w-3.5 shrink-0 text-landing-primary" />
+								<Check
+									class="mt-0.5 h-3.5 w-3.5 shrink-0 text-landing-primary"
+								/>
 								<span class="text-muted-foreground">{feature}</span>
 							</li>
 						{/each}
