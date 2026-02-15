@@ -110,7 +110,7 @@ export class MailRecordService {
 				if (data.failed) {
 					updates.error = data.failed.reason;
 				} else {
-					updates.error = 'No reason given for failure';
+					updates.error = 'No reason found for failure';
 				}
 				break;
 			case 'email.sent':

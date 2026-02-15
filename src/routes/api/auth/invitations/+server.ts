@@ -1,6 +1,6 @@
 import { handleApiError } from '$lib/errors';
 import { createInvitationSchema } from '$lib/schemas';
-import { mailService } from '$lib/services/external/mail';
+import { mailService } from '$lib/services/server/mail.service.js';
 import { invitationService } from '$lib/services/server/invitation.service';
 import { requirePermissionApi } from '$lib/services/server/permissions';
 import { organizationService } from '$lib/services/server/user.service';

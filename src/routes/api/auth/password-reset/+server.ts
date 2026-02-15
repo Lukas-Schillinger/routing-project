@@ -1,6 +1,6 @@
 import { handleApiError, ServiceError } from '$lib/errors';
 import { requestPasswordResetSchema } from '$lib/schemas';
-import { mailService } from '$lib/services/external/mail';
+import { mailService } from '$lib/services/server/mail.service.js';
 import { loginTokenService } from '$lib/services/server/login-token.service';
 import type { RequestHandler } from './$types';
 

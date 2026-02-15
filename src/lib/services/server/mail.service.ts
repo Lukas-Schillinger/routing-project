@@ -14,8 +14,8 @@ import { Resend } from 'resend';
 import {
 	type RenderClient,
 	renderClient as defaultRenderer
-} from './render.js';
-import type { RenderedEmail } from './types.js';
+} from '$lib/services/external/mail/render.js';
+import type { RenderedEmail } from '$lib/services/external/mail/types.js';
 
 const log = logger.child({ service: 'mail' });
 

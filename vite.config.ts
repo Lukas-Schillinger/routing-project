@@ -29,7 +29,7 @@ export default defineConfig(({ mode }) => {
 			poolOptions: {
 				// Included because tests we're filling up all available RAM
 				forks: {
-					maxForks: 4,
+					maxForks: 8,
 					minForks: 1
 				}
 			},
@@ -63,17 +63,12 @@ export default defineConfig(({ mode }) => {
 						exclude: [
 							'src/**/*.svelte.{test,spec}.{js,ts}',
 							'src/lib/benchmarks/**',
-							'src/lib/services/external/**/*.spec.{js,ts}'
+							'src/lib/services/external/**/*.test.{js,ts}'
 						],
 						coverage: {
 							provider: 'v8',
 							include: ['src/lib/services/server/**/*.ts'],
-							exclude: [
-								'**/*.test.ts',
-								'**/*.spec.ts',
-								'**/index.ts',
-								'**/errors.ts'
-							],
+							exclude: ['**/*.test.ts', '**/index.ts', '**/errors.ts'],
 							thresholds: {
 								statements: 70,
 								branches: 70,
@@ -88,11 +83,12 @@ export default defineConfig(({ mode }) => {
 				{
 					extends: './vite.config.ts',
 					test: {
+						// External services like mail, R2, and mapbox.
 						name: 'external',
 						environment: 'node',
 						includeTaskLocation: true,
 						testTimeout: 120_000,
-						include: ['src/lib/services/external/**/*.spec.{js,ts}'],
+						include: ['src/lib/services/external/**/*.test.{js,ts}'],
 						exclude: []
 					}
 				},

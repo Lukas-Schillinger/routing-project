@@ -33,7 +33,7 @@ const mockMailService = vi.hoisted(() => ({
 	sendPasswordResetEmail: vi.fn()
 }));
 
-vi.mock('$lib/services/external/mail', () => ({
+vi.mock('$lib/services/server/mail.service', () => ({
 	mailService: mockMailService
 }));
 

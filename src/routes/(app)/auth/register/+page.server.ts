@@ -1,7 +1,7 @@
 import { TOKEN_EXPIRY } from '$lib/config';
 import { ServiceError } from '$lib/errors';
 import { registerSchema } from '$lib/schemas/auth';
-import { mailService } from '$lib/services/external/mail';
+import { mailService } from '$lib/services/server/mail.service.js';
 import { loginTokenService } from '$lib/services/server/login-token.service';
 import { userService } from '$lib/services/server/user.service';
 import { hash } from '@node-rs/argon2';

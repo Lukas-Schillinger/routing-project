@@ -6,7 +6,7 @@ import type {
 } from '$lib/schemas';
 import { db } from '$lib/server/db';
 import { mailRecords, routeShares, routes } from '$lib/server/db/schema';
-import { mailService } from '$lib/services/external/mail';
+import { mailService } from '$lib/services/server/mail.service.js';
 import { and, eq, isNull } from 'drizzle-orm';
 import { getPlanFeatures } from '$lib/config/billing';
 import { billingService } from './billing.service';

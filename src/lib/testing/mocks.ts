@@ -1018,7 +1018,7 @@ type MailServiceCall = {
  * ```ts
  * const mockMail = createMockMailService();
  *
- * vi.mock('$lib/services/external/mail', () => ({
+ * vi.mock('$lib/services/server/mail.service', () => ({
  *   mailService: mockMail
  * }));
  *

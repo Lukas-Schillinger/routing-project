@@ -1,3 +1,16 @@
+## Commands
+
+```bash
+npm run dev          # Start dev server (port 5173)
+npm run build        # Production build
+npm run check        # Type checking (svelte-kit sync + svelte-check)
+npm run lint         # Prettier + ESLint
+npm run test:unit    # Unit tests (vitest)
+npm run test:external # External API tests (Stripe, R2, Mapbox)
+npm run db:generate  # Generate Drizzle migration
+npm run db:migrate   # Apply Drizzle migration
+```
+
 ## Workflow
 
 - Always use the code-simplifier agent after modifying service files to ensure clarity and consistency.
@@ -14,9 +27,11 @@
 - Code should be functional and avoid functions with side effects where possible.
 - Ensure all pages are mobile compatible.
 - Prefer type over interface. Use string literals instead of enums.
-- All URLs must use the `resolve()` function from `$app/paths`. This is enforced by the linter.
-  - Import: `import { resolve } from '$app/paths'`
-  - Usage: `href={resolve('/dashboard')}`, `goto(resolve('/settings'))`
+- All URLs must use `resolve()` from `$app/paths`. Enforced by the linter.
+  - `href={resolve('/dashboard')}`, `goto(resolve('/settings'))`
+- Prefer rendering errors inline in the UI. Use `toast` from `svelte-sonner` only for transient confirmations (e.g. "Saved").
+- Server-side logging: `event.locals.log` (Pino logger with request context, userId, orgId).
+- Env vars are validated at startup via `src/lib/server/env.ts` — missing vars crash immediately.
 
 ## Architecture Overview
 
@@ -25,7 +40,7 @@ The codebase follows a three-layer pattern:
 ```
 API Routes (src/routes/api)
 ↓
-API Service Layer (src/routes/services/api)
+API Service Layer (src/lib/services/api)
 ↓
 Server Services (src/lib/services/server)
 ↓
@@ -50,69 +65,32 @@ Key Principle: The database should never be called outside of server services. T
 
 ## Server Services
 
-`src/lib/services/server`
+`src/lib/services/server` — Reference: `driver.service.ts`
 
-Reference: `src/lib/services/server/driver.service.ts`
-
-- These handle all DB transactions
-- The db should never be called outside of services
-- Tenancy is handled at the service layer using organizationId
-
-Patterns:
-
-- Services are classes with async methods
-- Every query filters by `organization_id` (multi-tenancy)
-- Every record includes `created_by` and `updated_by` for audit trails
-- Single instances are exported at module bottom
-- Use `ServiceError` for consistent error handling
-
-Tenancy rules:
-
-- Every service method that accesses tenant data must receive `organizationId` parameter
-- Always use `.where(and(eq(resource.id, id), eq(resource.organization_id, organizationId)))` to prevent cross-tenant access
-- Never trust incoming organizationId - always verify from authenticated user (`user.organization_id`)
+- All DB access goes through services. Every query filters by `organization_id`.
+- Every record includes `created_by` and `updated_by` for audit trails.
+- Never trust incoming organizationId — always use `user.organization_id` from the authenticated user.
 
 ## Error Handling
 
-`src/lib/services/server/errors.ts`
+`src/lib/errors.ts`
 
-Static factory methods:
-
-- `ServiceError.notFound()` - 404
-- `ServiceError.forbidden()` - 403
-- `ServiceError.conflict()` - 409
-- `ServiceError.validation()` - 400
-- `ServiceError.unauthorized()` - 401
-- `ServiceError.badRequest()` - 400
-- `ServiceError.internal()` - 500
+- Use `ServiceError` static factory methods (e.g. `ServiceError.notFound()`) in services.
+- Use `handleApiError(err, 'fallback message')` in API routes — handles `ServiceError`, `ZodError`, and Sentry reporting.
 
 ## API Routes
 
-`src/routes/api`
+`src/routes/api` — Reference: `drivers/+server.ts`
 
-Reference: `src/routes/api/drivers/+server.ts`
-
-- These are used to make client side calls
-- API routes should be fairly minimal and not do more than validate requests and send them to a service.
-- API routes should never be called using fetch!
-- Every API route needs to have permissions assigned
-
-Rules:
-
-- Always call `requirePermissionApi(permission)` first - it returns the authenticated user with their `organization_id`
-- Pass `user.organization_id` to all service calls
-- Never trust any organizationId from request body - always use the authenticated user's org
-- Use Zod schemas to validate request bodies
-- Handle `ServiceError` and `ZodError` separately
-- Minimal logic - delegate to services
+- Minimal: validate with Zod, call `requirePermissionApi(permission)`, delegate to service, handle errors with `handleApiError`.
+- Never call API routes using fetch — use API service clients instead.
+- Always use `user.organization_id` from the authenticated user, never from the request body.
 
 ## API Service (Client)
 
-`src/routes/services/api`
+`src/lib/services/api`
 
-- Routers for making client side requests
-- These are super minimal and just subclass an API client with the relevant request types.
-- Just passthroughs from client side to API routes
+- Thin wrappers that compose `apiClient` (from `base.ts`) with typed methods. Just passthroughs from client to API routes.
 
 ## Webhooks
 
@@ -129,7 +107,7 @@ Pattern:
 
 `src/lib/services/external`
 
-Reference: `src/lib/services/external/mail/resend.ts`
+Reference: `mail/render.ts` (email rendering client)
 
 For complex services (e.g., `src/lib/services/server/optimization.service.ts`):
 
@@ -146,7 +124,7 @@ For complex services (e.g., `src/lib/services/server/optimization.service.ts`):
 - Every page route needs to have a `+page.server.ts` to handle permissions.
 - `requirePermissionApi` will return an HTTP error for API routes
 - `requirePermission` will redirect to the login page if there isn't a user isn't logged in and return a 403 error if their permissions are insufficient.
-- Permissions are available on the client through the root `+layout.svelte`. Use `checkPermissions` from `$lib/utils.ts` to check permissions client side.
+- Permissions are available on the client through the root `+layout.svelte`. Use `checkPermission` from `$lib/utils.ts` to check permissions client side.
 - Only admins can modify organizations, set permissions, and invite users.
 - Drivers are a special class of user that only have access to routes that have been assigned to them.
 

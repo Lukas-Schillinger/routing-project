@@ -8,7 +8,7 @@ import { db } from '$lib/server/db';
 import * as auth from '$lib/services/server/auth';
 import { userService } from '$lib/services/server/user.service.js';
 import { loginTokenService } from '$lib/services/server/login-token.service.js';
-import { mailService } from '$lib/services/external/mail';
+import { mailService } from '$lib/services/server/mail.service';
 
 // Mock dependencies
 vi.mock('$lib/server/db', () => ({
@@ -47,7 +47,7 @@ vi.mock('@node-rs/argon2', () => ({
 	verify: vi.fn()
 }));
 
-vi.mock('$lib/services/external/mail', () => ({
+vi.mock('$lib/services/server/mail.service', () => ({
 	mailService: {
 		sendLoginEmail: vi.fn().mockResolvedValue(undefined)
 	}
