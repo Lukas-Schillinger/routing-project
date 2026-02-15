@@ -54,7 +54,7 @@
 
 <section
 	bind:this={sectionEl}
-	class="relative -mt-14 overflow-hidden pt-36 pb-36 md:pt-48 md:pb-48"
+	class="relative -mt-14 overflow-hidden pt-44 pb-44 md:pt-60 md:pb-60"
 >
 	<ShaderCanvas
 		fragmentShader={ditheringFragmentShader}
@@ -73,7 +73,7 @@
 
 		<h1
 			data-animate
-			class="max-w-4xl font-serif text-5xl leading-[1.08] tracking-tight text-foreground transition-all duration-600 ease-out md:text-7xl lg:text-8xl"
+			class="max-w-5xl font-serif text-6xl leading-[1.05] tracking-tight text-foreground transition-all duration-600 ease-out md:text-8xl lg:text-9xl"
 			style="opacity: 0; transform: translateY(20px)"
 		>
 			Effortless routing<br />from start to finish
@@ -102,9 +102,9 @@
 				<ArrowRight class="h-4 w-4" />
 			</Button>
 			<Button
-				href={resolve('/demo')}
 				variant="outline"
 				size="lg"
+				disabled
 				class="h-11 gap-2 rounded-sm px-7 text-sm font-medium tracking-wide"
 			>
 				Explore demo
