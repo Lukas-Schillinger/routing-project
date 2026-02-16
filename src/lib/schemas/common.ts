@@ -56,5 +56,5 @@ export const phoneSchema = z
 export const notesSchema = z
 	.string()
 	.max(1000, 'Notes must be less than 1000 characters')
-	.optional()
+	.transform((val) => (val?.trim() === '' ? null : val))
 	.nullable();

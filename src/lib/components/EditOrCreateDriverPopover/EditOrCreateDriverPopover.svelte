@@ -4,11 +4,10 @@
 	import * as Popover from '$lib/components/ui/popover';
 	import type { Driver } from '$lib/schemas/driver';
 	import { Pencil, Truck } from 'lucide-svelte';
+	import { IsMobile } from '$lib/hooks/is-mobile.svelte';
 	import type { Snippet } from 'svelte';
-	import { MediaQuery } from 'svelte/reactivity';
 	import Form from './Form.svelte';
 
-	// Props
 	let {
 		mode = 'create',
 		driver = undefined,
@@ -27,81 +26,72 @@
 		onSuccess?: (driver: Driver) => void;
 	} = $props();
 
-	// Validation
 	$effect(() => {
 		if (mode === 'edit' && !driver) {
 			throw new Error('driver prop is required when mode is "edit"');
 		}
 	});
 
-	// State
-	const isDesktop = new MediaQuery('(min-width: 768px)');
+	const isMobile = new IsMobile();
 	let open = $state(false);
+
+	function handleSuccess(driver: Driver) {
+		open = false;
+		onSuccess(driver);
+	}
+
+	function handleCancel() {
+		open = false;
+	}
 </script>
 
-{#if isDesktop.current}
+{#snippet trigger({ props }: { props: Record<string, unknown> })}
+	{#if children}
+		{@render children({ props })}
+	{:else if mode === 'create'}
+		<Button {...props} size="sm" variant="secondary">
+			<Truck class="mr-2 h-4 w-4" />
+			Create Driver
+		</Button>
+	{:else}
+		<Button {...props} variant="ghost" size="icon">
+			<Pencil class="h-4 w-4" />
+		</Button>
+	{/if}
+{/snippet}
+
+{#snippet formContent()}
+	<Form
+		{driver}
+		{mode}
+		{mapId}
+		{temporaryDriver}
+		onSuccess={handleSuccess}
+		onCancel={handleCancel}
+	/>
+{/snippet}
+
+{#if !isMobile.current}
 	<Popover.Root bind:open>
 		<Popover.Trigger class={triggerClass}>
 			{#snippet child({ props })}
-				{#if children}
-					{@render children({ props })}
-				{:else if mode === 'create'}
-					<Button {...props} size="sm" variant="secondary">
-						<Truck class="mr-2 h-4 w-4" />
-						Create Driver
-					</Button>
-				{:else}
-					<Button {...props} variant="ghost" size="icon">
-						<Pencil class="h-4 w-4" />
-					</Button>
-				{/if}
+				{@render trigger({ props })}
 			{/snippet}
 		</Popover.Trigger>
 		<Popover.Content class="w-96">
-			<Form
-				bind:open
-				{driver}
-				{mode}
-				{mapId}
-				{temporaryDriver}
-				onSuccess={(driver) => {
-					open = false;
-					onSuccess(driver);
-				}}
-			/>
+			{@render formContent()}
 		</Popover.Content>
 	</Popover.Root>
 {:else}
 	<Drawer.Root bind:open>
 		<Drawer.Trigger class={triggerClass}>
 			{#snippet child({ props })}
-				{#if children}
-					{@render children({ props })}
-				{:else if mode === 'create'}
-					<Button {...props} size="sm" variant="secondary">
-						<Truck class="mr-2 h-4 w-4" />
-						Create Driver
-					</Button>
-				{:else}
-					<Button {...props} variant="ghost" size="icon">
-						<Pencil class="h-4 w-4" />
-					</Button>
-				{/if}
+				{@render trigger({ props })}
 			{/snippet}
 		</Drawer.Trigger>
 		<Drawer.Content>
 			<div class="p-4">
-				<Form
-					bind:open
-					{driver}
-					{mode}
-					{mapId}
-					{temporaryDriver}
-					onSuccess={(driver) => {
-						open = false;
-						onSuccess(driver);
-					}}
-				/>
+				{@render formContent()}
 			</div>
 		</Drawer.Content>
 	</Drawer.Root>

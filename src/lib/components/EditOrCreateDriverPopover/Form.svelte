@@ -1,7 +1,7 @@
 <script lang="ts">
 	import PhoneInput from '$lib/components/PhoneInput.svelte';
 	import { Button } from '$lib/components/ui/button';
-	import * as Field from '$lib/components/ui/field';
+	import * as Form from '$lib/components/ui/form';
 	import { Input } from '$lib/components/ui/input';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { ServiceError } from '$lib/errors';
@@ -10,23 +10,29 @@
 	import { mapApi } from '$lib/services/api/maps';
 	import { generateRandomColor } from '$lib/utils';
 	import { Check, Loader2, RefreshCw } from 'lucide-svelte';
-	import { defaults, superForm } from 'sveltekit-superforms';
-	import { zod4 } from 'sveltekit-superforms/adapters';
+	import { untrack } from 'svelte';
+	import {
+		defaults,
+		setError,
+		setMessage,
+		superForm
+	} from 'sveltekit-superforms';
+	import { zod4, zod4Client } from 'sveltekit-superforms/adapters';
 
 	let {
 		mode = 'create',
 		driver,
 		mapId,
 		temporaryDriver = false,
-		open = $bindable(false),
-		onSuccess = () => {}
+		onSuccess,
+		onCancel
 	}: {
 		mode?: 'create' | 'edit';
 		driver?: Driver;
 		mapId?: string;
 		temporaryDriver?: boolean;
-		open: boolean;
-		onSuccess?: (driver: Driver) => void;
+		onSuccess: (driver: Driver) => void;
+		onCancel: () => void;
 	} = $props();
 
 	const generateDriverName = () =>
@@ -34,82 +40,75 @@
 			.toString()
 			.padStart(5, '0')}`;
 
-	// Use empty strings for form inputs - schema transforms to null on submit
-	const getInitialData = () => ({
-		name:
-			mode === 'edit' && driver
-				? driver.name
-				: temporaryDriver
-					? generateDriverName()
-					: '',
-		phone: mode === 'edit' && driver ? (driver.phone ?? '') : '',
-		notes: mode === 'edit' && driver ? (driver.notes ?? '') : '',
-		color: mode === 'edit' && driver ? driver.color : generateRandomColor(),
-		active: mode === 'edit' && driver ? driver.active : true,
-		temporary: mode === 'edit' && driver ? driver.temporary : temporaryDriver
-	});
+	// Avoid state_referenced_locally warnings
+	const initialData = untrack(() =>
+		mode === 'edit' && driver
+			? {
+					name: driver.name,
+					phone: driver.phone ?? '',
+					notes: driver.notes ?? '',
+					color: driver.color,
+					active: driver.active,
+					temporary: driver.temporary
+				}
+			: {
+					name: temporaryDriver ? generateDriverName() : '',
+					phone: '',
+					notes: '',
+					color: generateRandomColor(),
+					active: true,
+					temporary: temporaryDriver
+				}
+	);
 
-	const form = superForm(defaults(getInitialData(), zod4(driverCreateSchema)), {
+	const form = superForm(defaults(initialData, zod4(driverCreateSchema)), {
 		SPA: true,
-		validators: zod4(driverCreateSchema),
+		validators: zod4Client(driverCreateSchema),
 		onUpdate: async ({ form }) => {
 			if (!form.valid) return;
 
 			try {
-				// Convert empty strings to null for API
-				const payload = {
-					...form.data,
-					phone: form.data.phone || null,
-					notes: form.data.notes || null
-				};
-
 				const result =
 					mode === 'create'
-						? await driverApi.create(payload)
-						: await driverApi.update(driver!.id, payload);
+						? await driverApi.create(form.data)
+						: await driverApi.update(driver!.id, form.data);
 
 				if (mode === 'create' && mapId) {
 					await mapApi.addDriver(mapId, result.id);
 				}
 
 				onSuccess(result);
-				open = false;
 			} catch (err) {
-				if (err instanceof ServiceError) {
-					if (err.statusCode === 409)
-						form.errors.name = ['A driver with this name already exists'];
-					else
-						form.message =
-							err.statusCode === 403
-								? `You do not have permission to ${mode} drivers`
-								: err.message;
+				const message =
+					err instanceof ServiceError
+						? err.message
+						: 'An unexpected error occurred';
+				if (err instanceof ServiceError && err.statusCode === 409) {
+					setError(form, 'name', message);
 				} else {
-					form.message = 'An unexpected error occurred';
+					setMessage(form, message);
 				}
 			}
 		}
 	});
 
-	const { form: formData, errors, message, enhance, submitting } = form;
+	const { form: formData, message, enhance, submitting } = form;
 
-	// Reset form when dialog closes
 	$effect(() => {
-		if (!open) {
-			Object.assign($formData, getInitialData());
-		}
+		form.reset({ data: initialData });
 	});
 </script>
 
 <form method="POST" use:enhance class="space-y-4">
-	<Field.Set>
-		<Field.Legend
-			>{mode === 'create' ? 'Create New Driver' : 'Edit Driver'}</Field.Legend
-		>
-		<Field.Description>
+	<fieldset class="space-y-4">
+		<legend class="text-sm leading-none font-medium">
+			{mode === 'create' ? 'Create New Driver' : 'Edit Driver'}
+		</legend>
+		<p class="text-sm text-muted-foreground">
 			{mode === 'create'
 				? 'Add a new driver for your organization'
 				: 'Update driver details'}
-		</Field.Description>
+		</p>
 
 		{#if $message}
 			<div class="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
@@ -117,84 +116,100 @@
 			</div>
 		{/if}
 
-		<Field.Group>
-			<Field.Field data-invalid={$errors.name ? true : undefined}>
-				<Field.Label for="driver-name">Name</Field.Label>
-				<Input
-					id="driver-name"
-					bind:value={$formData.name}
-					placeholder="e.g., John Smith"
-					disabled={$submitting || temporaryDriver}
-					aria-invalid={$errors.name ? true : undefined}
-					required
-				/>
+		<div class="space-y-3">
+			<Form.Field {form} name="name">
+				<Form.Control>
+					{#snippet children({ props })}
+						<Form.Label>Name</Form.Label>
+						<Input
+							{...props}
+							bind:value={$formData.name}
+							placeholder="e.g., John Smith"
+							disabled={$submitting || temporaryDriver}
+						/>
+					{/snippet}
+				</Form.Control>
 				{#if temporaryDriver}
-					<Field.Description
-						>Name is auto-generated for temporary drivers</Field.Description
+					<Form.Description
+						>Name is auto-generated for temporary drivers</Form.Description
 					>
 				{/if}
-				{#if $errors.name}<Field.Error>{$errors.name[0]}</Field.Error>{/if}
-			</Field.Field>
+				<Form.FieldErrors />
+			</Form.Field>
+
 			<div class="flex gap-2">
-				<Field.Field data-invalid={$errors.phone ? true : undefined}>
-					<Field.Label for="driver-phone">Phone Number</Field.Label>
-					<PhoneInput
-						id="driver-phone"
-						bind:value={$formData.phone}
-						disabled={$submitting || temporaryDriver}
-					/>
-					{#if $errors.phone}<Field.Error>{$errors.phone[0]}</Field.Error>{/if}
-				</Field.Field>
-				<Field.Field data-invalid={$errors.color ? true : undefined}>
-					<Field.Label for="driver-color">Color</Field.Label>
-					<div class="flex gap-2">
-						<Input
-							type="color"
-							id="driver-color"
-							bind:value={$formData.color}
-							disabled={$submitting}
-							class="h-9 w-full cursor-pointer p-1"
-						/>
-						<Button
-							type="button"
-							onclick={() => ($formData.color = generateRandomColor())}
-							variant="ghost"
-							size="icon"
-							disabled={$submitting}
-						>
-							<RefreshCw class="h-4 w-4" />
-						</Button>
-					</div>
-					{#if $errors.color}<Field.Error>{$errors.color[0]}</Field.Error>{/if}
-				</Field.Field>
+				<Form.Field {form} name="phone">
+					<Form.Control>
+						{#snippet children({ props })}
+							<Form.Label>Phone Number</Form.Label>
+							<PhoneInput
+								{...props}
+								bind:value={$formData.phone}
+								disabled={$submitting || temporaryDriver}
+							/>
+						{/snippet}
+					</Form.Control>
+					<Form.FieldErrors />
+				</Form.Field>
+
+				<Form.Field {form} name="color">
+					<Form.Control>
+						{#snippet children({ props })}
+							<Form.Label>Color</Form.Label>
+							<div class="flex gap-2">
+								<Input
+									{...props}
+									type="color"
+									bind:value={$formData.color}
+									disabled={$submitting}
+									class="h-9 w-full cursor-pointer p-1"
+								/>
+								<Button
+									type="button"
+									onclick={() => ($formData.color = generateRandomColor())}
+									variant="ghost"
+									size="icon"
+									disabled={$submitting}
+								>
+									<RefreshCw class="h-4 w-4" />
+								</Button>
+							</div>
+						{/snippet}
+					</Form.Control>
+					<Form.FieldErrors />
+				</Form.Field>
 			</div>
 
-			<Field.Field data-invalid={$errors.notes ? true : undefined}>
-				<Field.Label for="driver-notes">Notes</Field.Label>
-				<Textarea
-					id="driver-notes"
-					bind:value={$formData.notes}
-					placeholder="Additional information..."
-					disabled={$submitting}
-					rows={3}
-					class="resize-none"
-				/>
-				{#if $errors.notes}<Field.Error>{$errors.notes[0]}</Field.Error>{/if}
-			</Field.Field>
-		</Field.Group>
-	</Field.Set>
+			<Form.Field {form} name="notes">
+				<Form.Control>
+					{#snippet children({ props })}
+						<Form.Label>Notes</Form.Label>
+						<Textarea
+							{...props}
+							bind:value={$formData.notes}
+							placeholder="Additional information..."
+							disabled={$submitting}
+							rows={3}
+							class="resize-none"
+						/>
+					{/snippet}
+				</Form.Control>
+				<Form.FieldErrors />
+			</Form.Field>
+		</div>
+	</fieldset>
 
-	<Field.Field orientation="horizontal">
+	<div class="flex gap-2">
 		<Button
 			type="button"
 			variant="outline"
 			class="flex-1"
-			onclick={() => (open = false)}
+			onclick={onCancel}
 			disabled={$submitting}
 		>
 			Cancel
 		</Button>
-		<Button type="submit" class="flex-1" disabled={$submitting}>
+		<Form.Button class="flex-1" disabled={$submitting}>
 			{#if $submitting}
 				<Loader2 class="mr-2 h-4 w-4 animate-spin" />
 				{mode === 'create' ? 'Creating...' : 'Updating...'}
@@ -202,6 +217,6 @@
 				<Check class="mr-2 h-4 w-4" />
 				{mode === 'create' ? 'Create Driver' : 'Update Driver'}
 			{/if}
-		</Button>
-	</Field.Field>
+		</Form.Button>
+	</div>
 </form>

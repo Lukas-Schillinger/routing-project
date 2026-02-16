@@ -1,32 +1,27 @@
 <!-- @component PhoneInput - US phone number input with as-you-type formatting -->
 <script lang="ts">
 	import * as InputGroup from '$lib/components/ui/input-group';
-	import { cn } from '$lib/utils';
+	import { type WithElementRef } from '$lib/utils';
 	import { AsYouType, isValidPhoneNumber } from 'libphonenumber-js';
 	import { Phone } from 'lucide-svelte';
 	import { tick } from 'svelte';
+	import type { HTMLInputAttributes } from 'svelte/elements';
 
-	interface Props {
+	type Props = WithElementRef<HTMLInputAttributes, HTMLInputElement> & {
 		value?: string | null;
 		valid?: boolean;
-		placeholder?: string;
-		class?: string;
-		disabled?: boolean;
-		id?: string;
-		name?: string;
-	}
+	};
 
 	let {
+		ref = $bindable(null),
 		value = $bindable(''),
 		valid = $bindable(false),
 		placeholder = '(555) 555-5555',
 		class: className,
 		disabled = false,
-		id,
-		name
+		...restProps
 	}: Props = $props();
 
-	let inputEl: HTMLInputElement | undefined = $state();
 	let displayValue = $state('');
 
 	// Format initial value if provided
@@ -88,24 +83,23 @@
 
 		// Wait for DOM update then restore cursor
 		await tick();
-		inputEl?.setSelectionRange(newCursorPosition, newCursorPosition);
+		ref?.setSelectionRange(newCursorPosition, newCursorPosition);
 	}
 </script>
 
-<InputGroup.Root class={cn(className)}>
+<InputGroup.Root class={className}>
 	<InputGroup.Addon>
 		<Phone class="size-4" />
 	</InputGroup.Addon>
 	<input
-		bind:this={inputEl}
+		bind:this={ref}
 		data-slot="input-group-control"
 		type="tel"
-		{id}
-		{name}
 		{disabled}
 		{placeholder}
 		class="flex w-full min-w-0 bg-transparent px-3 py-1 text-base outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
 		value={displayValue}
 		oninput={handleInput}
+		{...restProps}
 	/>
 </InputGroup.Root>
