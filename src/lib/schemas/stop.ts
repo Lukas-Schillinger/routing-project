@@ -67,10 +67,21 @@ export const stopSchema = z.object({
 	updated_by: z.uuid().nullable()
 });
 
+export const reorderStopsSchema = z.object({
+	updates: z.array(
+		z.object({
+			stop_id: z.uuid(),
+			driver_id: z.uuid().nullable(),
+			delivery_index: z.number().int().nullable()
+		})
+	)
+});
+
 export type CreateStop = z.infer<typeof createStopSchema>;
 export type BulkCreateStops = z.infer<typeof bulkCreateStopsSchema>;
 export type UpdateStop = z.infer<typeof updateStopSchema>;
 export type Stop = z.infer<typeof stopSchema>;
+export type ReorderStops = z.infer<typeof reorderStopsSchema>;
 
 export type StopWithLocation = {
 	stop: Stop;

@@ -1,5 +1,6 @@
 import type {
 	CreateStop,
+	ReorderStops,
 	Stop,
 	StopWithLocation,
 	UpdateStop
@@ -308,6 +309,77 @@ export class StopService {
 		}
 
 		return { success: true };
+	}
+
+	/**
+	 * Bulk reorder stops - update driver assignments and delivery indices
+	 * Recalculates routes for all affected drivers
+	 */
+	async reorderStops(
+		mapId: string,
+		updates: ReorderStops['updates'],
+		organizationId: string,
+		userId: string
+	): Promise<StopWithLocation[]> {
+		if (updates.length === 0) {
+			return [];
+		}
+
+		// Verify all stops belong to this map and organization
+		const stopIds = updates.map((u) => u.stop_id);
+		const existingStops = await db
+			.select()
+			.from(stops)
+			.where(
+				and(eq(stops.map_id, mapId), eq(stops.organization_id, organizationId))
+			);
+
+		const existingStopIds = new Set(existingStops.map((s) => s.id));
+		const invalidStops = stopIds.filter((id) => !existingStopIds.has(id));
+
+		if (invalidStops.length > 0) {
+			throw ServiceError.validation(
+				`Stops not found in map: ${invalidStops.join(', ')}`
+			);
+		}
+
+		// Track affected drivers (before and after changes)
+		const stopMap = new Map(existingStops.map((s) => [s.id, s]));
+		const affectedDriverIds = new Set<string>(
+			[
+				...updates.map((u) => u.driver_id),
+				...updates.map((u) => stopMap.get(u.stop_id)?.driver_id)
+			].filter((id): id is string => id !== null && id !== undefined)
+		);
+
+		// Perform updates in transaction with consistent timestamp
+		const now = new Date();
+		await db.transaction(async (tx) => {
+			for (const update of updates) {
+				await tx
+					.update(stops)
+					.set({
+						driver_id: update.driver_id,
+						delivery_index: update.delivery_index,
+						updated_at: now,
+						updated_by: userId
+					})
+					.where(eq(stops.id, update.stop_id));
+			}
+		});
+
+		// Recalculate routes for all affected drivers
+		for (const driverId of affectedDriverIds) {
+			await routeService.recalculateRouteForDriver(
+				mapId,
+				driverId,
+				organizationId,
+				userId
+			);
+		}
+
+		// Return updated stops
+		return this.getStopsByMap(mapId, organizationId);
 	}
 
 	/**

@@ -1,6 +1,7 @@
 import type {
 	BulkCreateStops,
 	CreateStop,
+	ReorderStops,
 	StopWithLocation,
 	UpdateStop
 } from '$lib/schemas/stop';
@@ -45,6 +46,19 @@ class StopApiService {
 		return apiClient.post<{ stops: StopWithLocation[] }>(
 			`/maps/${mapId}/stops`,
 			data
+		);
+	}
+
+	/**
+	 * Reorder stops - update driver assignments and delivery indices
+	 */
+	async reorder(
+		mapId: string,
+		updates: ReorderStops['updates']
+	): Promise<{ stops: StopWithLocation[] }> {
+		return apiClient.post<{ stops: StopWithLocation[] }>(
+			`/maps/${mapId}/stops/reorder`,
+			{ updates }
 		);
 	}
 }
