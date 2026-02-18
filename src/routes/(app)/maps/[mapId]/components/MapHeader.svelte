@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { ConfirmDeleteDialog } from '$lib/components/ConfirmDeleteDialog';
 	import EditOrCreateMapPopover from '$lib/components/EditOrCreateMapPopover';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
@@ -17,7 +18,7 @@
 	}: {
 		map: Map;
 		pageState: PageState;
-		onDelete?: () => void;
+		onDelete?: () => void | Promise<void>;
 		onUpdate?: (map: Map) => void;
 	} = $props();
 
@@ -77,10 +78,20 @@
 			</DropdownMenu.Item>
 			{#if onDelete}
 				<DropdownMenu.Separator />
-				<DropdownMenu.Item class="text-destructive" onclick={onDelete}>
-					<Trash2 class="mr-2 h-4 w-4" />
-					Delete Map
-				</DropdownMenu.Item>
+				<ConfirmDeleteDialog
+					description="Are you sure you want to delete this map? This action cannot be undone."
+					onConfirm={onDelete}
+				>
+					{#snippet trigger({ props })}
+						<button
+							{...props}
+							class="relative flex w-full cursor-default items-center rounded-sm px-2 py-1.5 text-sm text-destructive outline-none select-none hover:bg-accent hover:text-destructive"
+						>
+							<Trash2 class="mr-2 h-4 w-4" />
+							Delete
+						</button>
+					{/snippet}
+				</ConfirmDeleteDialog>
 			{/if}
 		</DropdownMenu.Content>
 	</DropdownMenu.Root>

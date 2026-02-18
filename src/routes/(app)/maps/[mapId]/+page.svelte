@@ -146,10 +146,6 @@
 			return;
 		}
 
-		if (!confirm('Are you sure you want to remove this driver from the map?')) {
-			return;
-		}
-
 		isLoading = true;
 
 		try {
@@ -166,25 +162,9 @@
 	}
 
 	async function handleDeleteMap() {
-		if (
-			!confirm(
-				'Are you sure you want to delete this map? This action cannot be undone.'
-			)
-		) {
-			return;
-		}
-
-		try {
-			await mapApi.delete(data.map.id);
-			toast.success('Map deleted');
-			window.location.href = '/maps';
-		} catch (err) {
-			if (err instanceof ServiceError) {
-				toast.error(err.message);
-			} else {
-				toast.error('An unknonwn error occurred');
-			}
-		}
+		await mapApi.delete(data.map.id);
+		toast.success('Map deleted');
+		window.location.href = '/maps';
 	}
 </script>
 

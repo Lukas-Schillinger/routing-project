@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import { ConfirmDeleteDialog } from '$lib/components/ConfirmDeleteDialog';
 	import EditOrCreateMapPopover from '$lib/components/EditOrCreateMapPopover';
 	import MapBoxStaticMap from '$lib/components/MapBoxStaticMap.svelte';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-	import { ServiceError } from '$lib/errors';
 	import type {
 		Driver,
 		Map as MapType,
@@ -72,21 +72,10 @@
 		toast.success('Map ID copied to clipboard');
 	}
 
-	async function handleDelete(e: Event) {
-		e.preventDefault();
-		e.stopPropagation();
-		if (!confirm('Are you sure you want to delete this map?')) return;
-		try {
-			await mapApi.delete(map.id);
-			toast.success('Map deleted');
-			await invalidateAll();
-		} catch (err) {
-			if (err instanceof ServiceError) {
-				toast.error(err.message);
-			} else {
-				toast.error('Failed to delete depot');
-			}
-		}
+	async function handleDelete() {
+		await mapApi.delete(map.id);
+		toast.success('Map deleted');
+		await invalidateAll();
 	}
 </script>
 
@@ -219,10 +208,20 @@
 						<div class="text-muted-foreground">Copy ID</div>
 					</DropdownMenu.Item>
 					<DropdownMenu.Separator />
-					<DropdownMenu.Item class="text-destructive" onclick={handleDelete}>
-						<Trash2 class="mr-2 h-4 w-4" />
-						Delete
-					</DropdownMenu.Item>
+					<ConfirmDeleteDialog
+						description="Are you sure you want to delete this map? This action cannot be undone."
+						onConfirm={handleDelete}
+					>
+						{#snippet trigger({ props })}
+							<button
+								{...props}
+								class="relative flex w-full cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-destructive outline-none select-none hover:bg-accent hover:text-destructive"
+							>
+								<Trash2 class="h-4 w-4" />
+								Delete
+							</button>
+						{/snippet}
+					</ConfirmDeleteDialog>
 				</DropdownMenu.Content>
 			</DropdownMenu.Root>
 			<ChevronRight

@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
+	import { ConfirmDeleteDialog } from '$lib/components/ConfirmDeleteDialog';
 	import EditOrCreateDriverPopover from '$lib/components/EditOrCreateDriverPopover';
 	import * as Avatar from '$lib/components/ui/avatar/index.js';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-	import { ServiceError } from '$lib/errors';
 	import type { Driver } from '$lib/schemas/driver';
 	import { driverApi } from '$lib/services/api/drivers';
 	import { formatPhoneNumber, getIdenticon } from '$lib/utils';
@@ -28,18 +28,9 @@
 	}
 
 	async function handleDelete(driver: Driver) {
-		if (!confirm(`Are you sure you want to delete "${driver.name}"?`)) return;
-		try {
-			await driverApi.delete(driver.id);
-			drivers = drivers.filter((d) => d.id !== driver.id);
-			toast.success('Driver deleted');
-		} catch (err) {
-			if (err instanceof ServiceError) {
-				toast.error(err.message);
-			} else {
-				toast.error('An unknown error occurred');
-			}
-		}
+		await driverApi.delete(driver.id);
+		drivers = drivers.filter((d) => d.id !== driver.id);
+		toast.success('Driver deleted');
 	}
 
 	function handleCopyId(id: string) {
@@ -152,13 +143,20 @@
 												Copy ID
 											</DropdownMenu.Item>
 											<DropdownMenu.Separator />
-											<DropdownMenu.Item
-												class="text-destructive"
-												onclick={() => handleDelete(driver)}
+											<ConfirmDeleteDialog
+												description={`Are you sure you want to delete "${driver.name}"?`}
+												onConfirm={() => handleDelete(driver)}
 											>
-												<Trash2 class="mr-2 h-4 w-4" />
-												Delete
-											</DropdownMenu.Item>
+												{#snippet trigger({ props })}
+													<button
+														{...props}
+														class="relative flex w-full cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-destructive outline-none select-none hover:bg-accent hover:text-destructive"
+													>
+														<Trash2 class="h-4 w-4" />
+														Delete
+													</button>
+												{/snippet}
+											</ConfirmDeleteDialog>
 										</DropdownMenu.Content>
 									</DropdownMenu.Root>
 								</div>

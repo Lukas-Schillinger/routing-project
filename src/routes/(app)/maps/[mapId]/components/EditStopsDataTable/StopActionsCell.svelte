@@ -1,12 +1,12 @@
 <script lang="ts">
+	import { ConfirmDeleteDialog } from '$lib/components/ConfirmDeleteDialog';
 	import EditOrCreateStopPopover from '$lib/components/EditOrCreateStopPopover';
 	import * as Actions from '$lib/components/TableActionsDropdown.Items';
 	import TableActionsDropdown from '$lib/components/TableActionsDropdown.svelte';
 	import DropdownMenuItem from '$lib/components/ui/dropdown-menu/dropdown-menu-item.svelte';
 	import type { StopWithLocation } from '$lib/schemas/stop';
-	import { ServiceError } from '$lib/errors';
 	import { stopApi } from '$lib/services/api';
-	import { Pencil } from 'lucide-svelte';
+	import { Pencil, Trash2 } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
 	interface Props {
@@ -23,25 +23,9 @@
 	};
 
 	const handleDelete = async () => {
-		if (
-			!confirm(
-				`Are you sure you want to delete the stop for ${stop.stop.contact_name || 'this address'}?`
-			)
-		) {
-			return;
-		}
-
-		try {
-			await stopApi.delete(stop.stop.id);
-			await onDelete?.(stop.stop.id);
-			toast.success(`Stop Deleted`);
-		} catch (err) {
-			if (err instanceof ServiceError) {
-				toast.error(err.message);
-			} else {
-				toast.error('An unknown error occurred');
-			}
-		}
+		await stopApi.delete(stop.stop.id);
+		await onDelete?.(stop.stop.id);
+		toast.success(`Stop Deleted`);
 	};
 
 	const handleStopUpdate = (updatedStop: StopWithLocation) => {
@@ -66,6 +50,20 @@
 		onclick={() => (onZoomToStop ? onZoomToStop(stop.stop.id) : '')}
 		label="Zoom to"
 	/>
-	<Actions.Delete onclick={handleDelete} />
+	<ConfirmDeleteDialog
+		description="Are you sure you want to delete the stop for {stop.stop
+			.contact_name || 'this address'}?"
+		onConfirm={handleDelete}
+	>
+		{#snippet trigger({ props })}
+			<button
+				{...props}
+				class="relative flex w-full cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-destructive outline-none select-none hover:bg-accent hover:text-destructive"
+			>
+				<Trash2 class="h-4 w-4" />
+				Delete
+			</button>
+		{/snippet}
+	</ConfirmDeleteDialog>
 	<Actions.MetadataLabel item={stop.stop} />
 </TableActionsDropdown>

@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import { ConfirmDeleteDialog } from '$lib/components/ConfirmDeleteDialog';
 	import EditOrCreateDriverPopover from '$lib/components/EditOrCreateDriverPopover';
 	import {
 		Copy,
 		DropdownMenu,
-		Remove,
 		View
 	} from '$lib/components/TableActionsDropdown.Items';
 	import * as Avatar from '$lib/components/ui/avatar';
@@ -31,6 +31,7 @@
 		Printer,
 		Route,
 		Truck,
+		UserMinus,
 		UserPlus
 	} from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
@@ -436,10 +437,22 @@
 									{/if}
 								</DropdownMenu.Item>
 
-								<Remove
-									label="Remove from map"
-									onclick={() => onRemoveDriver(driver.id)}
-								/>
+								<ConfirmDeleteDialog
+									variant="remove"
+									title="Remove Driver"
+									description="Are you sure you want to remove this driver from the map?"
+									onConfirm={() => onRemoveDriver(driver.id)}
+								>
+									{#snippet trigger({ props })}
+										<button
+											{...props}
+											class="relative flex w-full cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none select-none hover:bg-accent hover:text-accent-foreground"
+										>
+											<UserMinus class="h-4 w-4" />
+											Remove from map
+										</button>
+									{/snippet}
+								</ConfirmDeleteDialog>
 							</DropdownMenu.Content>
 						</DropdownMenu.Root>
 					</div>
