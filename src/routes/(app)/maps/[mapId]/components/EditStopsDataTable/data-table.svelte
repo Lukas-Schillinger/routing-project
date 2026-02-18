@@ -11,6 +11,7 @@
 	import { goto, invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import EditOrCreateStopPopover from '$lib/components/EditOrCreateStopPopover';
+	import DriverPicker from '$lib/components/map/DriverPicker.svelte';
 	import { Button, buttonVariants } from '$lib/components/ui/button';
 	import * as ButtonGroup from '$lib/components/ui/button-group/index.js';
 	import {
@@ -24,6 +25,7 @@
 	import { Input } from '$lib/components/ui/input';
 	import { SortButton, type SortOption } from '$lib/components/ui/sort-button';
 	import * as Table from '$lib/components/ui/table';
+	import type { Driver } from '$lib/schemas/driver';
 	import type { StopWithLocation } from '$lib/schemas/stop';
 	import { pendingImport } from '$lib/stores/pending-import';
 	import { parseCsvFile } from '$lib/utils';
@@ -41,8 +43,6 @@
 	} from '@tanstack/table-core';
 	import { Check, ChevronDown, MapPin, Plus, Search } from 'lucide-svelte';
 	import { MediaQuery } from 'svelte/reactivity';
-	import DriverPicker from '$lib/components/map/DriverPicker.svelte';
-	import type { Driver } from '$lib/schemas/driver';
 	import AddressCell from './AddressCell.svelte';
 	import DateCell from './DateCell.svelte';
 	import NotesCell from './NotesCell.svelte';
@@ -383,16 +383,6 @@
 
 {#if stops.length === 0}
 	<Empty.Root>
-		<Empty.Header>
-			<Empty.Media variant="icon">
-				<MapPin />
-			</Empty.Media>
-			<Empty.Title>No stops yet</Empty.Title>
-			<Empty.Description
-				>Upload a CSV file or create stops manually.</Empty.Description
-			>
-		</Empty.Header>
-
 		<div
 			class="flex w-full flex-row items-center justify-center lg:flex-col lg:gap-6"
 		>
