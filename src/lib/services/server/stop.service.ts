@@ -368,15 +368,17 @@ export class StopService {
 			}
 		});
 
-		// Recalculate routes for all affected drivers
-		for (const driverId of affectedDriverIds) {
-			await routeService.recalculateRouteForDriver(
-				mapId,
-				driverId,
-				organizationId,
-				userId
-			);
-		}
+		// Recalculate routes for all affected drivers in parallel
+		await Promise.all(
+			[...affectedDriverIds].map((driverId) =>
+				routeService.recalculateRouteForDriver(
+					mapId,
+					driverId,
+					organizationId,
+					userId
+				)
+			)
+		);
 
 		// Return updated stops
 		return this.getStopsByMap(mapId, organizationId);
