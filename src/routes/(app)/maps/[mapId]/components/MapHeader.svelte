@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { ConfirmDeleteDialog } from '$lib/components/ConfirmDeleteDialog';
+	import DropdownMetadataLabel from '$lib/components/DropdownMetadataLabel.svelte';
 	import EditOrCreateMapPopover from '$lib/components/EditOrCreateMapPopover';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
@@ -63,13 +64,10 @@
 				triggerClass="w-full"
 			>
 				{#snippet children({ props })}
-					<button
-						{...props}
-						class="relative flex w-full cursor-default items-center rounded-sm px-2 py-1.5 text-sm text-muted-foreground outline-none select-none hover:bg-accent hover:text-accent-foreground"
-					>
-						<Pencil class="mr-4 h-4 w-4" />
+					<DropdownMenu.ActionButton {...props}>
+						<Pencil />
 						Edit
-					</button>
+					</DropdownMenu.ActionButton>
 				{/snippet}
 			</EditOrCreateMapPopover>
 			<DropdownMenu.Item onclick={handleCopyId}>
@@ -83,16 +81,14 @@
 					onConfirm={onDelete}
 				>
 					{#snippet trigger({ props })}
-						<button
-							{...props}
-							class="relative flex w-full cursor-default items-center rounded-sm px-2 py-1.5 text-sm text-destructive outline-none select-none hover:bg-accent hover:text-destructive"
-						>
-							<Trash2 class="mr-2 h-4 w-4" />
+						<DropdownMenu.ActionButton {...props} variant="destructive">
+							<Trash2 />
 							Delete
-						</button>
+						</DropdownMenu.ActionButton>
 					{/snippet}
 				</ConfirmDeleteDialog>
 			{/if}
+			<DropdownMetadataLabel item={map} />
 		</DropdownMenu.Content>
 	</DropdownMenu.Root>
 </div>

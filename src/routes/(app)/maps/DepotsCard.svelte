@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
 	import { ConfirmDeleteDialog } from '$lib/components/ConfirmDeleteDialog';
+	import DropdownMetadataLabel from '$lib/components/DropdownMetadataLabel.svelte';
 	import EditOrCreateDepotPopover from '$lib/components/EditOrCreateDepotPopover';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
@@ -149,15 +150,16 @@
 											onConfirm={() => handleDelete(depot)}
 										>
 											{#snippet trigger({ props })}
-												<button
+												<DropdownMenu.ActionButton
 													{...props}
-													class="relative flex w-full cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-destructive outline-none select-none hover:bg-accent hover:text-destructive"
+													variant="destructive"
 												>
-													<Trash2 class="h-4 w-4" />
+													<Trash2 />
 													Delete
-												</button>
+												</DropdownMenu.ActionButton>
 											{/snippet}
 										</ConfirmDeleteDialog>
+										<DropdownMetadataLabel item={depot.depot} />
 									</DropdownMenu.Content>
 								</DropdownMenu.Root>
 							</div>

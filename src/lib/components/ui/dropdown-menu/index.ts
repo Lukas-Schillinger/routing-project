@@ -1,4 +1,5 @@
 import { DropdownMenu as DropdownMenuPrimitive } from "bits-ui";
+import ActionButton from "./dropdown-menu-action-button.svelte";
 import CheckboxItem from "./dropdown-menu-checkbox-item.svelte";
 import Content from "./dropdown-menu-content.svelte";
 import Group from "./dropdown-menu-group.svelte";
@@ -16,9 +17,11 @@ const Sub = DropdownMenuPrimitive.Sub;
 const Root = DropdownMenuPrimitive.Root;
 
 export {
+	ActionButton,
 	CheckboxItem,
 	Content,
 	Root as DropdownMenu,
+	ActionButton as DropdownMenuActionButton,
 	CheckboxItem as DropdownMenuCheckboxItem,
 	Content as DropdownMenuContent,
 	Group as DropdownMenuGroup,

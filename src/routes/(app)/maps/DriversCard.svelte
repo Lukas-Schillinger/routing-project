@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
 	import { ConfirmDeleteDialog } from '$lib/components/ConfirmDeleteDialog';
+	import DropdownMetadataLabel from '$lib/components/DropdownMetadataLabel.svelte';
 	import EditOrCreateDriverPopover from '$lib/components/EditOrCreateDriverPopover';
 	import * as Avatar from '$lib/components/ui/avatar/index.js';
 	import { Badge } from '$lib/components/ui/badge';
@@ -148,15 +149,16 @@
 												onConfirm={() => handleDelete(driver)}
 											>
 												{#snippet trigger({ props })}
-													<button
+													<DropdownMenu.ActionButton
 														{...props}
-														class="relative flex w-full cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-destructive outline-none select-none hover:bg-accent hover:text-destructive"
+														variant="destructive"
 													>
-														<Trash2 class="h-4 w-4" />
+														<Trash2 />
 														Delete
-													</button>
+													</DropdownMenu.ActionButton>
 												{/snippet}
 											</ConfirmDeleteDialog>
+											<DropdownMetadataLabel item={driver} />
 										</DropdownMenu.Content>
 									</DropdownMenu.Root>
 								</div>

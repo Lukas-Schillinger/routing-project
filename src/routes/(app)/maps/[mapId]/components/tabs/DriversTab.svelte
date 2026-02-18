@@ -2,15 +2,12 @@
 	import { invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { ConfirmDeleteDialog } from '$lib/components/ConfirmDeleteDialog';
+	import DropdownMetadataLabel from '$lib/components/DropdownMetadataLabel.svelte';
 	import EditOrCreateDriverPopover from '$lib/components/EditOrCreateDriverPopover';
-	import {
-		Copy,
-		DropdownMenu,
-		View
-	} from '$lib/components/TableActionsDropdown.Items';
 	import * as Avatar from '$lib/components/ui/avatar';
 	import { Button } from '$lib/components/ui/button';
 	import * as Command from '$lib/components/ui/command';
+	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import * as Empty from '$lib/components/ui/empty';
 	import * as Popover from '$lib/components/ui/popover';
 	import { ServiceError } from '$lib/errors';
@@ -22,6 +19,7 @@
 	import {
 		ChevronDown,
 		Clock,
+		Copy,
 		Ellipsis,
 		Eye,
 		EyeOff,
@@ -182,6 +180,7 @@
 
 	function handleCopyId(id: string) {
 		navigator.clipboard.writeText(id);
+		toast.success('Copied to clipboard');
 	}
 
 	function handleDriverCreated() {
@@ -396,28 +395,32 @@
 									onSuccess={() => invalidateAll()}
 								>
 									{#snippet children({ props })}
-										<button
-											{...props}
-											type="button"
-											class="relative flex w-full cursor-pointer items-center rounded-sm px-2 py-1.5 text-sm outline-none select-none hover:bg-accent hover:text-accent-foreground"
-										>
-											<Pencil class="mr-2 h-4 w-4" />
+										<DropdownMenu.ActionButton {...props}>
+											<Pencil />
 											Edit driver
-										</button>
+										</DropdownMenu.ActionButton>
 									{/snippet}
 								</EditOrCreateDriverPopover>
 
-								<Copy label="Copy ID" onclick={() => handleCopyId(driver.id)} />
+								<DropdownMenu.Item onclick={() => handleCopyId(driver.id)}>
+									<Copy />
+									Copy ID
+								</DropdownMenu.Item>
 
 								{#if route}
 									<DropdownMenu.Separator />
-									<View href="/routes/{route.id}" label="View route" />
+									<a href={resolve(`/routes/${route.id}`)}>
+										<DropdownMenu.Item>
+											<Eye />
+											View route
+										</DropdownMenu.Item>
+									</a>
 									<a
 										href={resolve(`/routes/${route.id}/printable`)}
 										target="_blank"
 									>
 										<DropdownMenu.Item>
-											<Printer class="h-4 w-4" />
+											<Printer />
 											Print route
 										</DropdownMenu.Item>
 									</a>
@@ -429,10 +432,10 @@
 									onclick={() => toggleDriverVisibility(driver)}
 								>
 									{#if isHidden}
-										<Eye class="h-4 w-4" />
+										<Eye />
 										Show on map
 									{:else}
-										<EyeOff class="h-4 w-4" />
+										<EyeOff />
 										Hide on map
 									{/if}
 								</DropdownMenu.Item>
@@ -444,15 +447,13 @@
 									onConfirm={() => onRemoveDriver(driver.id)}
 								>
 									{#snippet trigger({ props })}
-										<button
-											{...props}
-											class="relative flex w-full cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none select-none hover:bg-accent hover:text-accent-foreground"
-										>
-											<UserMinus class="h-4 w-4" />
+										<DropdownMenu.ActionButton {...props}>
+											<UserMinus />
 											Remove from map
-										</button>
+										</DropdownMenu.ActionButton>
 									{/snippet}
 								</ConfirmDeleteDialog>
+								<DropdownMetadataLabel item={driver} />
 							</DropdownMenu.Content>
 						</DropdownMenu.Root>
 					</div>

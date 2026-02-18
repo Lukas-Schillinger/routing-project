@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { ConfirmDeleteDialog } from '$lib/components/ConfirmDeleteDialog';
 	import EditOrCreateStopPopover from '$lib/components/EditOrCreateStopPopover';
-	import * as Actions from '$lib/components/TableActionsDropdown.Items';
+	import DropdownMetadataLabel from '$lib/components/DropdownMetadataLabel.svelte';
 	import TableActionsDropdown from '$lib/components/TableActionsDropdown.svelte';
-	import DropdownMenuItem from '$lib/components/ui/dropdown-menu/dropdown-menu-item.svelte';
+	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import type { StopWithLocation } from '$lib/schemas/stop';
 	import { stopApi } from '$lib/services/api';
-	import { Pencil, Trash2 } from 'lucide-svelte';
+	import { Copy, Eye, Pencil, Trash2 } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
 	interface Props {
@@ -20,6 +20,7 @@
 
 	const handleCopyId = () => {
 		navigator.clipboard.writeText(stop.stop.id);
+		toast.success('Copied to clipboard');
 	};
 
 	const handleDelete = async () => {
@@ -40,30 +41,32 @@
 		{stop}
 		onSuccess={handleStopUpdate}
 	>
-		<DropdownMenuItem onSelect={(e) => e.preventDefault()} class="w-full">
+		<DropdownMenu.Item onSelect={(e) => e.preventDefault()} class="w-full">
 			<Pencil />
 			Edit
-		</DropdownMenuItem>
+		</DropdownMenu.Item>
 	</EditOrCreateStopPopover>
-	<Actions.Copy onclick={handleCopyId} label="Copy ID" />
-	<Actions.Zoom
+	<DropdownMenu.Item onclick={handleCopyId}>
+		<Copy />
+		Copy ID
+	</DropdownMenu.Item>
+	<DropdownMenu.Item
 		onclick={() => (onZoomToStop ? onZoomToStop(stop.stop.id) : '')}
-		label="Zoom to"
-	/>
+	>
+		<Eye />
+		Zoom to
+	</DropdownMenu.Item>
 	<ConfirmDeleteDialog
 		description="Are you sure you want to delete the stop for {stop.stop
 			.contact_name || 'this address'}?"
 		onConfirm={handleDelete}
 	>
 		{#snippet trigger({ props })}
-			<button
-				{...props}
-				class="relative flex w-full cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-destructive outline-none select-none hover:bg-accent hover:text-destructive"
-			>
-				<Trash2 class="h-4 w-4" />
+			<DropdownMenu.ActionButton {...props} variant="destructive">
+				<Trash2 />
 				Delete
-			</button>
+			</DropdownMenu.ActionButton>
 		{/snippet}
 	</ConfirmDeleteDialog>
-	<Actions.MetadataLabel item={stop.stop} />
+	<DropdownMetadataLabel item={stop.stop} />
 </TableActionsDropdown>
