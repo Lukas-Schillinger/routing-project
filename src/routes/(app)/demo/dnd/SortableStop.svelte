@@ -1,11 +1,6 @@
-<!--
-	Tailwind classes like bg-white, shadow, rounded-md on this element will be
-	stripped during drag if dnd-kit uses adoptedStyleSheets for Document roots.
-	See +page.svelte comment for the full explanation of the CSS cascade bug.
--->
-
 <script lang="ts">
 	import type { StopWithLocation } from '$lib/schemas/stop';
+	import { addressDisplay } from '$lib/utils';
 	import { createSortable } from '@dnd-kit/svelte/sortable';
 
 	let {
@@ -23,15 +18,29 @@
 		index,
 		group: driverId
 	});
+
+	const addr = $derived(addressDisplay(stop.location));
 </script>
 
 <div
 	{@attach sortable.attach}
-	class="mb-2 flex min-h-[50px] cursor-grab items-center rounded-md bg-white px-5 text-sm text-gray-600 shadow
-		data-[dnd-dragging]:cursor-grabbing data-[dnd-dragging]:bg-white/90 data-[dnd-dragging]:shadow-xl data-[dnd-dragging]:scale-[1.03]
-		data-[dnd-placeholder=hidden]:opacity-40 data-[dnd-placeholder=hidden]:shadow-none
-		data-[dnd-placeholder=clone]:opacity-50 data-[dnd-placeholder=clone]:shadow-sm
-		data-[dnd-dropping]:shadow-lg"
+	class="flex items-start gap-3 rounded-md bg-card text-card-foreground py-2 px-3 outline-none cursor-grab shadow-sm"
 >
-	{index + 1}. {stop.stop.contact_name || stop.stop.id.slice(0, 8)}
+	<div
+		class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary"
+	>
+		{index + 1}
+	</div>
+	<div class="min-w-0 flex-1">
+		<p class="truncate text-sm">
+			{stop.stop.contact_name || addr.topLine}
+		</p>
+		<p class="truncate text-xs text-muted-foreground">
+			{#if stop.stop.contact_name}
+				{addr.topLine}
+			{:else}
+				{addr.bottomLine}
+			{/if}
+		</p>
+	</div>
 </div>

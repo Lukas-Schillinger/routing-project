@@ -1,88 +1,115 @@
-<!--
-	DnD Kit + Tailwind v4 CSS Cascade Issue
-	========================================
-
-	Tailwind styling breaks on dragged elements (e.g. bg-white, shadow, rounded
-	all disappear) due to a CSS cascade conflict between dnd-kit and Tailwind v4.
-
-	Root cause:
-	- dnd-kit injects its CSS via adoptedStyleSheets (in StyleSheetManager.ts)
-	- adoptedStyleSheets are ordered AFTER all regular stylesheets in the cascade
-	- dnd-kit's CSS includes `@layer { :where([data-dnd-dragging][popover]) { background: unset; ... } }`
-	- Tailwind v4 uses real CSS @layer declarations (`@layer utilities { ... }`)
-	- Layer priority = declaration order. Later layers beat earlier layers.
-	- Since adoptedStyleSheets come last, dnd-kit's @layer is declared after
-	  Tailwind's @layer utilities, giving it HIGHER priority
-	- Result: dnd-kit's `background: unset` nukes Tailwind's `bg-white`
-
-	This is NOT framework-specific. The bug is in @dnd-kit/dom's StyleSheetManager,
-	which is shared by both @dnd-kit/react and @dnd-kit/svelte. Any project using
-	dnd-kit with a CSS framework that uses real @layer declarations (like Tailwind v4)
-	will hit this. Projects using Tailwind v3 are unaffected because v3's @layer
-	directives are build-time only (PostCSS) — the browser never sees real @layer
-	declarations, so Tailwind's output is unlayered CSS which always beats layered CSS.
-
-	Fix (applied to our fork):
-	- In StyleSheetManager.ts#inject, use a <style> element prepended to <head>
-	  for Document roots instead of adoptedStyleSheets
-	- This makes dnd-kit's @layer the FIRST declared layer (lowest priority)
-	- Keep adoptedStyleSheets for ShadowRoot where encapsulation is needed
-
-	This demo page works correctly because [the fix is/isn't yet applied] —
-	check SortableStop.svelte for Tailwind classes on dragged elements.
--->
-
 <script lang="ts">
-	import type { StopWithLocation } from '$lib/schemas/stop';
-	import { DragDropProvider } from '@dnd-kit/svelte';
+	import { dndzone, TRIGGERS } from 'svelte-dnd-action';
+	import { flip } from 'svelte/animate';
+	import { stopApi } from '$lib/services/api';
+	import { addressDisplay } from '$lib/utils';
 	import type { PageData } from './$types';
-	import SortableStop from './SortableStop.svelte';
 
 	let { data }: { data: PageData } = $props();
 
-	let stopsByDriver = $state<Map<string, StopWithLocation[]>>(new Map());
+	type DndStop = {
+		id: string;
+		stop: PageData['stops'][number];
+		addr: ReturnType<typeof addressDisplay>;
+	};
 
-	$effect(() => {
-		const grouped = new Map<string, StopWithLocation[]>();
-		data.assignedDrivers.forEach((driver) => {
-			grouped.set(driver.id, []);
-		});
-		data.stops.forEach((stop) => {
-			if (stop.stop.driver_id) {
-				const driverStops = grouped.get(stop.stop.driver_id) || [];
-				driverStops.push(stop);
-				grouped.set(stop.stop.driver_id, driverStops);
+	let columns = $state(buildColumns(data));
+
+	function buildColumns(d: PageData) {
+		const map: Record<
+			string,
+			{ driver: (typeof d.assignedDrivers)[number]; items: DndStop[] }
+		> = {};
+		for (const driver of d.assignedDrivers) {
+			map[driver.id] = {
+				driver,
+				items: d.stops
+					.filter((s) => s.stop.driver_id === driver.id)
+					.sort(
+						(a, b) =>
+							(a.stop.delivery_index ?? Infinity) -
+							(b.stop.delivery_index ?? Infinity)
+					)
+					.map((s) => ({
+						id: s.stop.id,
+						stop: s,
+						addr: addressDisplay(s.location)
+					}))
+			};
+		}
+		return map;
+	}
+
+	function handleConsider(driverId: string, e: CustomEvent) {
+		columns[driverId].items = e.detail.items;
+	}
+
+	function handleFinalize(driverId: string, e: CustomEvent) {
+		columns[driverId].items = e.detail.items;
+
+		const { trigger, id } = e.detail.info;
+
+		// Cross-column moves fire finalize on both zones: target first, then origin.
+		// Skip the target's event — the dragged item's original driver differs from this column.
+		if (trigger === TRIGGERS.DROPPED_INTO_ZONE) {
+			const draggedItem = columns[driverId].items.find((item: DndStop) => item.id === id);
+			if (draggedItem && draggedItem.stop.stop.driver_id !== driverId) return;
+		}
+
+		const updates: { stop_id: string; driver_id: string; delivery_index: number }[] = [];
+		for (const [did, col] of Object.entries(columns)) {
+			for (let i = 0; i < col.items.length; i++) {
+				const item = col.items[i];
+				if (item.stop.stop.driver_id !== did || item.stop.stop.delivery_index !== i) {
+					updates.push({ stop_id: item.id, driver_id: did, delivery_index: i });
+				}
 			}
-		});
-		grouped.forEach((stops) => {
-			stops.sort(
-				(a, b) =>
-					(a.stop.delivery_index ?? Infinity) -
-					(b.stop.delivery_index ?? Infinity)
-			);
-		});
-		stopsByDriver = grouped;
-	});
+		}
 
-	function handleDragEnd(event: any) {
-		console.log('dragEnd', event);
+		if (updates.length === 0) return;
+		stopApi.reorder(data.mapId, updates).catch(console.error);
 	}
 </script>
 
 <div class="p-8">
-	<h1 class="mb-4 text-2xl font-bold">DnD Kit Demo</h1>
+	<h1 class="mb-4 text-2xl font-bold">DnD Demo</h1>
 
-	<DragDropProvider onDragEnd={handleDragEnd}>
-		<div class="flex gap-4">
-			{#each data.assignedDrivers as driver (driver.id)}
-				{@const driverStops = stopsByDriver.get(driver.id) || []}
-				<div class="w-64 border p-4">
-					<h2 class="mb-2 font-bold">{driver.name}</h2>
-					{#each driverStops as stop, index (stop.stop.id)}
-						<SortableStop {stop} {index} driverId={driver.id} />
+	<div class="flex gap-4">
+		{#each Object.entries(columns) as [driverId, col] (driverId)}
+			<div class="w-64 border p-4">
+				<h2 class="mb-2 font-bold">{col.driver.name}</h2>
+				<div
+					class="flex min-h-[48px] flex-col gap-2"
+					use:dndzone={{ items: col.items, flipDurationMs: 200, type: 'stops' }}
+					onconsider={(e) => handleConsider(driverId, e)}
+					onfinalize={(e) => handleFinalize(driverId, e)}
+				>
+					{#each col.items as item (item.id)}
+						<div
+							animate:flip={{ duration: 200 }}
+							class="flex cursor-grab items-start gap-3 rounded-md border bg-card p-2 text-card-foreground shadow-sm"
+						>
+							<div
+								class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary"
+							>
+								{col.items.indexOf(item) + 1}
+							</div>
+							<div class="min-w-0 flex-1">
+								<p class="truncate text-sm">
+									{item.stop.stop.contact_name || item.addr.topLine}
+								</p>
+								<p class="truncate text-xs text-muted-foreground">
+									{#if item.stop.stop.contact_name}
+										{item.addr.topLine}
+									{:else}
+										{item.addr.bottomLine}
+									{/if}
+								</p>
+							</div>
+						</div>
 					{/each}
 				</div>
-			{/each}
-		</div>
-	</DragDropProvider>
+			</div>
+		{/each}
+	</div>
 </div>

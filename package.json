@@ -93,8 +93,6 @@
 		"@dicebear/identicon": "^9.2.4",
 		"@dicebear/rings": "^9.2.4",
 		"@dicebear/thumbs": "^9.2.4",
-		"@dnd-kit/helpers": "^0.3.0",
-		"@dnd-kit/svelte": "^0.3.0",
 		"@fontsource-variable/geist": "^5.2.8",
 		"@fontsource/geist-sans": "^5.2.5",
 		"@fontsource/instrument-serif": "^5.2.8",
@@ -118,6 +116,7 @@
 		"resend": "^6.5.2",
 		"runed": "^0.37.1",
 		"stripe": "^20.2.0",
+		"svelte-dnd-action": "^0.9.69",
 		"svelte-maplibre": "^1.2.4",
 		"svelte-stripe": "^2.0.0",
 		"zod": "^4.3.5"

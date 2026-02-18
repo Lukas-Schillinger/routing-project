@@ -1,8 +1,8 @@
-import { stopService, driverService, mapService } from '$lib/services/server';
+import { driverService, mapService, stopService } from '$lib/services/server';
 import { requirePermission } from '$lib/services/server/permissions';
 import type { PageServerLoad } from './$types';
 
-const DEFAULT_MAP_ID = '96082a8c-5767-40e2-aa92-051857854263';
+const DEFAULT_MAP_ID = '4dcb008e-0fdc-439c-8a4d-f9085121dd77';
 
 export const load: PageServerLoad = async ({ url }) => {
 	const user = requirePermission('resources:read');
