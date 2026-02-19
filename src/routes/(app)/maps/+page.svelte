@@ -98,7 +98,7 @@
 	);
 	const isMobile = new MediaQuery('(max-width: 640px)');
 
-	// Sync state to URL params (without triggering navigation)
+	// TODO: Migrate to runed's useSearchParams for automatic bidirectional URL sync
 	function updateUrlParams() {
 		const params = new SvelteURLSearchParams();
 		if (searchQuery) params.set('q', searchQuery);
