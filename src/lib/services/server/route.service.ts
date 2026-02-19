@@ -258,19 +258,17 @@ export class RouteService {
 	 */
 	async getRoutesForUser(user: PublicUser): Promise<Route[]> {
 		if (user.role === 'driver') {
-			const driver = await this.getDriverForUser(user.id, user.organization_id);
-			if (!driver) {
-				return []; // Driver user with no linked driver record
-			}
 			return (await db
-				.select()
+				.select({ routes })
 				.from(routes)
+				.innerJoin(drivers, eq(routes.driver_id, drivers.id))
 				.where(
 					and(
 						eq(routes.organization_id, user.organization_id),
-						eq(routes.driver_id, driver.id)
+						eq(drivers.user_id, user.id)
 					)
-				)) as Route[];
+				)
+				.then((rows) => rows.map((r) => r.routes))) as Route[];
 		}
 
 		// Non-driver roles see all org routes

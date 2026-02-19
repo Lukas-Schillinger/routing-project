@@ -14,7 +14,7 @@ export const load: PageServerLoad = async ({ url }) => {
 	// Parse URL params for persisted state
 	const searchQuery = url.searchParams.get('q') ?? '';
 	const viewMode =
-		(url.searchParams.get('view') as 'list' | 'compact') || 'list';
+		(url.searchParams.get('view') as 'list' | 'compact') || 'compact';
 	const sortColumn =
 		(url.searchParams.get('sort') as 'created_at' | 'title' | 'stops') ||
 		'created_at';

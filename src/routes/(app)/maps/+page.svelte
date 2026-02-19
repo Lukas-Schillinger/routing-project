@@ -102,7 +102,7 @@
 	function updateUrlParams() {
 		const params = new SvelteURLSearchParams();
 		if (searchQuery) params.set('q', searchQuery);
-		if (viewMode !== 'list') params.set('view', viewMode);
+		if (viewMode !== 'compact') params.set('view', viewMode);
 		if (sortColumn !== 'created_at') params.set('sort', sortColumn);
 		if (sortDirection !== 'desc') params.set('dir', sortDirection);
 		if (currentPage > 1) params.set('page', currentPage.toString());
@@ -126,7 +126,7 @@
 
 	// Responsive page size
 	const pageSize = $derived(
-		isMobile.current ? 5 : viewMode === 'compact' ? 12 : 8
+		isMobile.current ? 10 : viewMode === 'compact' ? 12 : 20
 	);
 
 	// Filter and sort maps
@@ -293,13 +293,13 @@
 				<!-- View Mode Tabs -->
 				<Tabs.Root bind:value={viewMode} class="w-auto">
 					<Tabs.List class="h-8 bg-card">
-						<Tabs.Trigger value="list" class="gap-1.5 px-3">
-							<List class="h-4 w-4" />
-							<span class="hidden sm:inline">List</span>
-						</Tabs.Trigger>
 						<Tabs.Trigger value="compact" class="gap-1.5 px-3">
 							<Grid3x3 class="h-4 w-4" />
 							<span class="hidden sm:inline">Grid</span>
+						</Tabs.Trigger>
+						<Tabs.Trigger value="list" class="gap-1.5 px-3">
+							<List class="h-4 w-4" />
+							<span class="hidden sm:inline">List</span>
 						</Tabs.Trigger>
 					</Tabs.List>
 				</Tabs.Root>
@@ -376,7 +376,7 @@
 				<div
 					class={viewMode === 'compact'
 						? 'grid grid-cols-1 gap-2 sm:grid-cols-2'
-						: 'space-y-3'}
+						: 'divide-y divide-border/50 rounded-lg border border-border/50'}
 				>
 					{#each paginatedMaps as map (map.id)}
 						{@const mapStops = getMapStops(map.id)}
