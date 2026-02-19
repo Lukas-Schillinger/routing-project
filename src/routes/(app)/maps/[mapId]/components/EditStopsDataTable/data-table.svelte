@@ -419,7 +419,7 @@
 			</div>
 
 			<EditOrCreateStopPopover mode="create" {mapId} onSuccess={invalidateAll}>
-				<Button variant="secondary"><Plus /> Add stop</Button>
+				<Button variant="outline"><Plus />Add Stop</Button>
 			</EditOrCreateStopPopover>
 		</div>
 	</Empty.Root>
