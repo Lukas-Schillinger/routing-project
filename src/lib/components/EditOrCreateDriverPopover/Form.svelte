@@ -201,7 +201,7 @@
 	</fieldset>
 
 	{#if mode === 'edit' && driver}
-		<div class="flex items-end justify-between">
+		<div class="flex items-center justify-between">
 			<div class="text-[11px] leading-relaxed text-muted-foreground">
 				<div>Created {formatDate(driver.created_at)}</div>
 				<div>Updated {formatDate(driver.updated_at)}</div>
