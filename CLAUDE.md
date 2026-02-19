@@ -19,6 +19,7 @@ npm run db:migrate   # Apply Drizzle migration
 - Never run interactive CLI commands — Claude cannot handle interactive terminal prompts. Always pass flags to skip prompts:
   - Drizzle: prefer `npm run db:generate` then `npm run db:migrate` for schema changes. `drizzle-kit push --force` skips most prompts but may still hang on create-vs-rename column disambiguation — if it hangs, kill it and use the generate+migrate workflow instead. Avoid `drizzle-kit studio`.
   - shadcn-svelte: always pass component names directly and use `--yes` to skip confirmation (e.g., `npx shadcn-svelte@latest add button card --yes`).
+- Never use `git -C` — the working directory is already the project root.
 
 ## Conventions
 
