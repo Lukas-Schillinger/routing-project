@@ -398,16 +398,17 @@ export class StopService {
 			}
 		});
 
-		await Promise.all(
-			[...affectedDriverIds].map((driverId) =>
-				routeService.recalculateRouteForDriver(
-					mapId,
-					driverId,
-					organizationId,
-					userId
-				)
-			)
-		);
+		// TODO: Re-enable route recalculation after DnD testing
+		// await Promise.all(
+		// 	[...affectedDriverIds].map((driverId) =>
+		// 		routeService.recalculateRouteForDriver(
+		// 			mapId,
+		// 			driverId,
+		// 			organizationId,
+		// 			userId
+		// 		)
+		// 	)
+		// );
 
 		return this.getStopsByMap(mapId, organizationId);
 	}
