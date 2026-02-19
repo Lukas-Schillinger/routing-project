@@ -60,6 +60,7 @@
 		"formsnap": "^2.0.1",
 		"globals": "^16.0.0",
 		"husky": "^9.1.7",
+		"lint-staged": "^16.2.7",
 		"mdsvex": "^0.12.3",
 		"paneforge": "^1.0.2",
 		"phosphor-svelte": "^3.0.1",
@@ -121,5 +122,9 @@
 		"svelte-maplibre": "^1.2.4",
 		"svelte-stripe": "^2.0.0",
 		"zod": "^4.3.5"
+	},
+	"lint-staged": {
+		"*.{js,ts,svelte,css,html,json,md}": "prettier --write",
+		"*.{js,ts,svelte}": "eslint --fix"
 	}
 }
