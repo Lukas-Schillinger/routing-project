@@ -5,9 +5,9 @@
 	import DropdownMetadataLabel from '$lib/components/DropdownMetadataLabel.svelte';
 	import EditOrCreateMapPopover from '$lib/components/EditOrCreateMapPopover';
 	import MapBoxStaticMap from '$lib/components/MapBoxStaticMap.svelte';
-	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
+	import * as Tooltip from '$lib/components/ui/tooltip';
 	import type {
 		Driver,
 		Map as MapType,
@@ -25,10 +25,10 @@
 		MapPin,
 		MoreHorizontal,
 		Pencil,
-		Route as RouteIcon,
 		Trash2,
 		Truck
 	} from 'lucide-svelte';
+	import { CheckCircle, CircleDashed, WarningCircle } from 'phosphor-svelte';
 	import { toast } from 'svelte-sonner';
 
 	let {
@@ -47,11 +47,25 @@
 		showThumbnail?: boolean;
 	} = $props();
 
-	const isRouted = $derived(
-		stops.length > 0 &&
-			stops.every(
-				(s) => s.stop.driver_id !== null && s.stop.delivery_index !== null
-			)
+	type RoutingStatus = 'none' | 'unrouted' | 'partial' | 'routed';
+	const routingStatus: RoutingStatus = $derived.by(() => {
+		if (stops.length === 0) return 'none';
+		const routedCount = stops.filter(
+			(s) => s.stop.driver_id !== null && s.stop.delivery_index !== null
+		).length;
+		if (routedCount === 0) return 'unrouted';
+		if (routedCount === stops.length) return 'routed';
+		return 'partial';
+	});
+
+	const routingTooltip = $derived(
+		routingStatus === 'routed'
+			? 'All stops routed'
+			: routingStatus === 'partial'
+				? 'Some stops not yet routed'
+				: routingStatus === 'unrouted'
+					? 'No stops routed'
+					: ''
 	);
 
 	const totalDuration = $derived(() => {
@@ -96,56 +110,45 @@
 					<Map class="h-8 w-8 text-muted-foreground/50" />
 				</div>
 			{/if}
-			<!-- Status overlay -->
-			<div class="absolute top-2 left-2 sm:hidden">
-				{#if isRouted}
-					<Badge variant="default" class="bg-primary text-primary-foreground"
-						>Routed</Badge
-					>
-				{/if}
-			</div>
 		</div>
 	{/if}
 
 	<!-- Content -->
 	<div class="flex min-w-0 flex-1 items-center justify-between gap-4 p-4">
 		<div class="flex min-w-0 flex-1 items-center gap-4">
-			<!-- Status indicator (desktop) -->
-			{#if !showThumbnail}
-				<div class="hidden sm:block">
-					{#if isRouted}
-						<div
-							class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10"
-						>
-							<RouteIcon class="h-5 w-5 text-primary" />
-						</div>
-					{:else}
-						<div
-							class="flex h-10 w-10 items-center justify-center rounded-lg bg-muted"
-						>
-							<MapPin class="h-5 w-5 text-muted-foreground" />
-						</div>
-					{/if}
-				</div>
-			{/if}
-
 			<!-- Map info -->
 			<div class="min-w-0 flex-1">
-				<div class="flex flex-wrap items-center gap-2">
+				<div class="flex items-center gap-2">
+					<Tooltip.Provider>
+						<Tooltip.Root>
+							<Tooltip.Trigger>
+								{#if routingStatus === 'routed'}
+									<CheckCircle
+										size={16}
+										weight="fill"
+										class="shrink-0 text-muted-foreground"
+									/>
+								{:else if routingStatus === 'partial'}
+									<WarningCircle
+										size={16}
+										weight="fill"
+										class="shrink-0 text-muted-foreground"
+									/>
+								{:else}
+									<CircleDashed
+										size={16}
+										class="shrink-0 text-muted-foreground"
+									/>
+								{/if}
+							</Tooltip.Trigger>
+							{#if routingTooltip}
+								<Tooltip.Content>{routingTooltip}</Tooltip.Content>
+							{/if}
+						</Tooltip.Root>
+					</Tooltip.Provider>
 					<h3 class="truncate font-medium group-hover:text-primary">
 						{map.title}
 					</h3>
-					{#if isRouted && showThumbnail}
-						<Badge
-							variant="default"
-							class="hidden shrink-0 bg-primary text-primary-foreground sm:inline-flex"
-							>Routed</Badge
-						>
-					{:else if isRouted}
-						<Badge variant="default" class="hidden shrink-0 lg:inline-flex"
-							>Routed</Badge
-						>
-					{/if}
 				</div>
 				<div
 					class="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground"
@@ -181,7 +184,7 @@
 					<Button
 						variant="ghost"
 						size="icon"
-						class="h-8 w-8 "
+						class="h-8 w-8"
 						onclick={(e) => e.preventDefault()}
 					>
 						<MoreHorizontal class="h-4 w-4" />
