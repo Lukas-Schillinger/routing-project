@@ -27,7 +27,18 @@
 			"mcp__plugin_svelte_svelte__svelte-autofixer",
 
 			"Skill(frontend-design)",
-			"Skill(linear-skills)"
+			"Skill(linear-skills)",
+
+			"WebFetch(domain:docs.stripe.com)",
+			"WebFetch(domain:shadcn-svelte.com)",
+			"WebFetch(domain:bits-ui.com)",
+			"WebFetch(domain:www.npmjs.com)",
+			"WebFetch(domain:raw.githubusercontent.com)",
+			"WebFetch(domain:runed.dev)",
+			"WebFetch(domain:superforms.rocks)",
+			"WebFetch(domain:formsnap.dev)",
+			"WebFetch(domain:vitest.dev)",
+			"WebFetch(domain:shaders.paper.design)"
 		]
 	},
 	"enabledPlugins": {

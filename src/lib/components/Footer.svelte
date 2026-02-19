@@ -82,7 +82,11 @@
 					class="gap-4"
 					aria-label="Toggle theme"
 				>
-					{mode.current}
+					{#if mode.current}
+						{mode.current.charAt(0).toUpperCase() + mode.current.slice(1)}
+					{:else}
+						no mode??
+					{/if}
 					{#if mode.current === 'light'}
 						<Sun class="h-4 w-4" />
 					{:else}
