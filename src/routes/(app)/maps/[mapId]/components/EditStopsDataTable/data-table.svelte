@@ -23,7 +23,6 @@
 	import * as Empty from '$lib/components/ui/empty';
 	import { FileUpload } from '$lib/components/ui/file-upload';
 	import { Input } from '$lib/components/ui/input';
-	import { SortButton, type SortOption } from '$lib/components/ui/sort-button';
 	import * as Table from '$lib/components/ui/table';
 	import type { Driver } from '$lib/schemas/driver';
 	import type { StopWithLocation } from '$lib/schemas/stop';
@@ -41,7 +40,14 @@
 		type SortingState,
 		type VisibilityState
 	} from '@tanstack/table-core';
-	import { Check, ChevronDown, MapPin, Plus, Search } from 'lucide-svelte';
+	import {
+		ArrowDown,
+		Check,
+		ChevronDown,
+		MapPin,
+		Plus,
+		Search
+	} from 'lucide-svelte';
 	import { MediaQuery } from 'svelte/reactivity';
 	import AddressCell from './AddressCell.svelte';
 	import DateCell from './DateCell.svelte';
@@ -140,17 +146,6 @@
 		return () => observer.disconnect();
 	});
 
-	// Sort options for the SortButton
-	const sortOptions: SortOption<string>[] = [
-		{ value: 'contact', label: 'Contact' },
-		{ value: 'updated_at', label: 'Updated' },
-		{ value: 'notes', label: 'Notes' }
-	];
-
-	// Sort state for SortButton
-	let sortColumn = $state<string>('updated_at');
-	let sortDirection = $state<'asc' | 'desc'>('desc');
-
 	// Table state
 	let sorting = $state<SortingState>([{ id: 'updated_at', desc: true }]);
 	let columnFilters = $state<ColumnFiltersState>([]);
@@ -159,11 +154,6 @@
 	let globalFilter = $state('');
 	let searchField = $state<string>('contact');
 	let searchValue = $state('');
-
-	// Sync SortButton state to TanStack Table sorting
-	$effect(() => {
-		sorting = [{ id: sortColumn, desc: sortDirection === 'desc' }];
-	});
 
 	// Update column filter when search field or value changes
 	$effect(() => {
@@ -240,19 +230,28 @@
 		}),
 
 		// Driver column
-		columnHelper.accessor((row) => row.stop.driver_id, {
-			id: 'driver',
-			header: 'Driver',
-			cell: ({ row }) =>
-				renderComponent(DriverPicker, {
-					stop: row.original,
-					stops,
-					drivers,
-					onDriverChange: onUpdate
-				}),
-			enableSorting: false,
-			enableHiding: true
-		}),
+		columnHelper.accessor(
+			(row) => {
+				const driverId = row.stop.driver_id;
+				if (!driverId) return null;
+				return drivers.find((d) => d.id === driverId)?.name ?? null;
+			},
+			{
+				id: 'driver',
+				header: 'Driver',
+				sortingFn: 'text',
+				sortUndefined: 'first',
+				cell: ({ row }) =>
+					renderComponent(DriverPicker, {
+						stop: row.original,
+						stops,
+						drivers,
+						onDriverChange: onUpdate
+					}),
+				enableSorting: true,
+				enableHiding: true
+			}
+		),
 
 		// Address column
 		columnHelper.accessor((row) => row.location, {
@@ -427,7 +426,7 @@
 	<div class="@container flex h-full flex-col">
 		<!-- Toolbar -->
 		<div
-			class="flex flex-col justify-between gap-2 pb-4 @lg:flex-row @lg:items-center"
+			class="flex flex-col justify-between gap-2 pb-1 @lg:flex-row @lg:items-center"
 		>
 			<!-- Search input with field selector -->
 			<ButtonGroup.Root class="w-full flex-1">
@@ -471,16 +470,9 @@
 					</DropdownMenu.Content>
 				</DropdownMenu.Root>
 			</ButtonGroup.Root>
-			<!-- Sort and columns -->
+			<!-- Columns -->
 			<div class="flex flex-col gap-2 @sm:flex-row">
 				<div class="flex gap-2">
-					<SortButton
-						options={sortOptions}
-						bind:value={sortColumn}
-						bind:direction={sortDirection}
-						size="sm"
-					/>
-
 					<!-- Column visibility dropdown -->
 					<DropdownMenu.Root>
 						<DropdownMenu.Trigger
@@ -530,14 +522,45 @@
 			<Table.Root>
 				<Table.Header>
 					{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
-						<Table.Row>
+						<Table.Row
+							class="hover:[&,&>svelte-css-wrapper]:[&>th]:!bg-transparent"
+						>
 							{#each headerGroup.headers as header (header.id)}
 								<Table.Head>
 									{#if !header.isPlaceholder}
-										<FlexRender
-											content={header.column.columnDef.header}
-											context={header.getContext()}
-										/>
+										{#if header.column.getCanSort()}
+											<button
+												type="button"
+												class="relative -mx-2 -my-2.5 flex w-full items-center gap-1 rounded-lg px-2 py-2.5 hover:bg-muted/50 hover:text-foreground"
+												onclick={() => {
+													const current = header.column.getIsSorted();
+													if (current === 'desc') {
+														sorting = [{ id: header.column.id, desc: false }];
+													} else {
+														sorting = [{ id: header.column.id, desc: true }];
+													}
+												}}
+											>
+												<FlexRender
+													content={header.column.columnDef.header}
+													context={header.getContext()}
+												/>
+												{#if header.column.getIsSorted()}
+													<ArrowDown
+														class="h-3.5 w-3.5 shrink-0 transition-transform duration-200"
+														style="transform: rotate({header.column.getIsSorted() ===
+														'asc'
+															? '180deg'
+															: '0deg'})"
+													/>
+												{/if}
+											</button>
+										{:else}
+											<FlexRender
+												content={header.column.columnDef.header}
+												context={header.getContext()}
+											/>
+										{/if}
 									{/if}
 								</Table.Head>
 							{/each}
