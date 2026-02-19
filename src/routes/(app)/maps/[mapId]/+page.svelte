@@ -8,6 +8,8 @@
 	import { mapApi } from '$lib/services/api';
 	import { onDestroy } from 'svelte';
 	import { toast } from 'svelte-sonner';
+	import { useSearchParams } from 'runed/kit';
+	import { z } from 'zod';
 	import type { PageData } from './$types';
 	import MapDetailLayout from './components/MapDetailLayout.svelte';
 	import MapHeader from './components/MapHeader.svelte';
@@ -18,6 +20,20 @@
 	import StopsTab from './components/tabs/StopsTab.svelte';
 
 	let { data }: { data: PageData } = $props();
+
+	// URL-persisted UI state
+	const paramsSchema = z.object({
+		tab: z.enum(['stops', 'drivers']).catch('stops'),
+		sort: z.string().catch('updated_at'),
+		dir: z.enum(['asc', 'desc']).catch('desc'),
+		expanded: z.string().array().catch([]),
+		pane: z.coerce.number().catch(50)
+	});
+
+	const params = useSearchParams(paramsSchema, {
+		pushHistory: false,
+		noScroll: true
+	});
 
 	// Page state
 	let isLoading = $state(false);
@@ -180,7 +196,7 @@
 		onUpdate={() => invalidateAll()}
 	/>
 
-	<MapDetailLayout>
+	<MapDetailLayout bind:paneSize={params.pane}>
 		{#snippet children(layoutControls)}
 			<div class="relative h-full">
 				<MapView
@@ -208,6 +224,7 @@
 		{#snippet sidebar()}
 			<SidebarPanel
 				{pageState}
+				bind:activeTab={params.tab}
 				stopsCount={data.stops.length}
 				driversCount={data.assignedDrivers.length}
 			>
@@ -216,6 +233,8 @@
 						stops={data.stops}
 						drivers={data.assignedDrivers}
 						mapId={data.map.id}
+						bind:sortColumn={params.sort}
+						bind:sortDirection={params.dir}
 						onUpdate={() => invalidateAll()}
 						onCreate={() => invalidateAll()}
 						onDelete={() => invalidateAll()}
@@ -231,6 +250,7 @@
 						routes={data.routes}
 						mapId={data.map.id}
 						bind:hiddenDrivers
+						bind:expandedDrivers={params.expanded}
 						onRemoveDriver={removeDriver}
 						onZoomToStop={(stopId) => (focusedStopId = stopId)}
 					/>

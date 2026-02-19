@@ -58,6 +58,8 @@
 		stops: StopWithLocation[];
 		drivers: Driver[];
 		mapId: string;
+		sortColumn?: string;
+		sortDirection?: 'asc' | 'desc';
 		onDelete?: () => Promise<void>;
 		onUpdate?: (stop: StopWithLocation) => void;
 		onCreate?: (stop: StopWithLocation) => void;
@@ -68,6 +70,8 @@
 		stops,
 		drivers,
 		mapId,
+		sortColumn = $bindable('updated_at'),
+		sortDirection = $bindable('desc'),
 		onDelete,
 		onUpdate,
 		onCreate,
@@ -146,8 +150,10 @@
 		return () => observer.disconnect();
 	});
 
-	// Table state
-	let sorting = $state<SortingState>([{ id: 'updated_at', desc: true }]);
+	// Table state — initialized from bindable props
+	let sorting = $state<SortingState>([
+		{ id: sortColumn, desc: sortDirection === 'desc' }
+	]);
 	let columnFilters = $state<ColumnFiltersState>([]);
 	let columnVisibility = $state<VisibilityState>({});
 	let rowSelection = $state({});
@@ -321,6 +327,11 @@
 				} else {
 					sorting = updater;
 				}
+				// Sync back to bindable props
+				if (sorting.length > 0) {
+					sortColumn = sorting[0].id;
+					sortDirection = sorting[0].desc ? 'desc' : 'asc';
+				}
 			},
 			onPaginationChange: (updater) => {
 				if (typeof updater === 'function') {
@@ -371,8 +382,8 @@
 			initialState: {
 				sorting: [
 					{
-						id: 'updated_at',
-						desc: true
+						id: sortColumn,
+						desc: sortDirection === 'desc'
 					}
 				]
 			}
@@ -534,11 +545,7 @@
 												class="relative -mx-2 -my-2.5 flex w-full items-center gap-1 rounded-lg px-2 py-2.5 hover:bg-muted/50 hover:text-foreground"
 												onclick={() => {
 													const current = header.column.getIsSorted();
-													if (current === 'desc') {
-														sorting = [{ id: header.column.id, desc: false }];
-													} else {
-														sorting = [{ id: header.column.id, desc: true }];
-													}
+													header.column.toggleSorting(current !== 'desc');
 												}}
 											>
 												<FlexRender

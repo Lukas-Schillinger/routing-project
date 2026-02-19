@@ -6,19 +6,19 @@
 
 	let {
 		pageState,
+		activeTab = $bindable('stops'),
 		stopsCount = 0,
 		driversCount = 0,
 		stopsTab,
 		driversTab
 	}: {
 		pageState: PageState;
+		activeTab?: string;
 		stopsCount?: number;
 		driversCount?: number;
 		stopsTab: import('svelte').Snippet;
 		driversTab: import('svelte').Snippet;
 	} = $props();
-
-	let activeTab = $state('stops');
 </script>
 
 <div class="flex h-full flex-col">

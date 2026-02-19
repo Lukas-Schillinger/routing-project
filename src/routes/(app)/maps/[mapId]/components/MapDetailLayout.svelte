@@ -6,7 +6,6 @@
 	import { type Pane } from 'paneforge';
 	import type { Snippet } from 'svelte';
 
-	const LAYOUT_STORAGE_KEY = 'map-detail-pane-layout';
 	const SIDEBAR_MIN_PX = 360;
 	const MAP_MIN_PX = 100;
 	const LAYOUT_MIN_HEIGHT_PX = 800;
@@ -19,11 +18,13 @@
 	let {
 		children,
 		sidebar,
-		footer
+		footer,
+		paneSize = $bindable(SIDEBAR_DEFAULT)
 	}: {
 		children: Snippet<[Snippet?]>;
 		sidebar: Snippet;
 		footer?: Snippet;
+		paneSize?: number;
 	} = $props();
 
 	const isMobile = new IsMobile(1024);
@@ -41,8 +42,18 @@
 	// Pane component reference
 	let sidebarPane = $state<Pane | null>(null);
 
-	// Track current layout state
-	let currentLayout = $state<'collapsed' | 'default' | 'expanded'>('default');
+	// Derive current layout from paneSize
+	const currentLayout = $derived.by(() => {
+		const distances = {
+			collapsed: Math.abs(paneSize - SIDEBAR_COLLAPSED),
+			default: Math.abs(paneSize - SIDEBAR_DEFAULT),
+			expanded: Math.abs(paneSize - SIDEBAR_EXPANDED)
+		};
+		const closest = Object.entries(distances).reduce((min, [key, dist]) =>
+			dist < min[1] ? [key, dist] : min
+		);
+		return closest[0] as 'collapsed' | 'default' | 'expanded';
+	});
 
 	// Update container width on resize
 	function updateContainerWidth() {
@@ -50,31 +61,6 @@
 			containerWidth = containerRef.offsetWidth;
 		}
 	}
-
-	// Load saved layout from localStorage
-	function getSavedLayout(): number[] | undefined {
-		if (!browser) return undefined;
-		const saved = localStorage.getItem(LAYOUT_STORAGE_KEY);
-		if (saved) {
-			try {
-				const parsed = JSON.parse(saved);
-				if (Array.isArray(parsed) && parsed.length === 2) {
-					return parsed;
-				}
-			} catch {
-				// Invalid JSON, ignore
-			}
-		}
-		return undefined;
-	}
-
-	// Save layout to localStorage
-	function saveLayout(sizes: number[]) {
-		if (!browser) return;
-		localStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify(sizes));
-	}
-
-	const savedLayout = getSavedLayout();
 
 	// Initialize container width on mount
 	$effect(() => {
@@ -94,26 +80,18 @@
 					: SIDEBAR_DEFAULT;
 
 		sidebarPane.resize(size);
-		currentLayout = layout;
+		paneSize = size;
 	}
 
+	// Debounce paneSize updates during drag to avoid URL churn
+	let debounceTimer: ReturnType<typeof setTimeout> | undefined;
+
 	function handleLayoutChange(sizes: number[]) {
-		saveLayout(sizes);
-		// Detect current layout based on sidebar size - find closest preset
 		const sidebarSize = sizes[1];
-
-		const distances = {
-			collapsed: Math.abs(sidebarSize - SIDEBAR_COLLAPSED),
-			default: Math.abs(sidebarSize - SIDEBAR_DEFAULT),
-			expanded: Math.abs(sidebarSize - SIDEBAR_EXPANDED)
-		};
-
-		// Find the preset with minimum distance
-		const closest = Object.entries(distances).reduce((min, [key, dist]) =>
-			dist < min[1] ? [key, dist] : min
-		);
-
-		currentLayout = closest[0] as 'collapsed' | 'default' | 'expanded';
+		clearTimeout(debounceTimer);
+		debounceTimer = setTimeout(() => {
+			paneSize = Math.round(sidebarSize);
+		}, 300);
 	}
 </script>
 
@@ -248,10 +226,7 @@
 			class="h-full"
 			onLayoutChange={handleLayoutChange}
 		>
-			<Resizable.Pane
-				defaultSize={savedLayout?.[0] ?? 100 - SIDEBAR_DEFAULT}
-				minSize={mapMinSize}
-			>
+			<Resizable.Pane defaultSize={100 - paneSize} minSize={mapMinSize}>
 				<div class="@container relative h-full">
 					{@render children(layoutControlsSnippet)}
 				</div>
@@ -261,7 +236,7 @@
 
 			<Resizable.Pane
 				bind:this={sidebarPane}
-				defaultSize={savedLayout?.[1] ?? SIDEBAR_DEFAULT}
+				defaultSize={paneSize}
 				minSize={sidebarMinSize}
 			>
 				<div class="flex h-full flex-col overflow-hidden pl-2">

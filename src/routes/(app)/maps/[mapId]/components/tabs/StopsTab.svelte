@@ -7,6 +7,8 @@
 		stops,
 		drivers,
 		mapId,
+		sortColumn = $bindable('updated_at'),
+		sortDirection = $bindable('desc'),
 		onUpdate,
 		onCreate,
 		onDelete,
@@ -15,6 +17,8 @@
 		stops: StopWithLocation[];
 		drivers: Driver[];
 		mapId: string;
+		sortColumn?: string;
+		sortDirection?: 'asc' | 'desc';
 		onUpdate?: () => void;
 		onCreate?: () => void;
 		onDelete?: () => Promise<void>;
@@ -27,6 +31,8 @@
 		{stops}
 		{drivers}
 		{mapId}
+		bind:sortColumn
+		bind:sortDirection
 		{onUpdate}
 		{onCreate}
 		{onDelete}

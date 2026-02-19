@@ -14,7 +14,7 @@
 	import type { Route as RouteType } from '$lib/schemas';
 	import type { Driver } from '$lib/schemas/driver';
 	import type { StopWithLocation } from '$lib/schemas/stop';
-	import { mapApi } from '$lib/services/api';
+	import { mapApi, stopApi } from '$lib/services/api';
 	import { addressDisplay, getIdenticon } from '$lib/utils';
 	import {
 		ChevronDown,
@@ -23,6 +23,7 @@
 		Ellipsis,
 		Eye,
 		EyeOff,
+		GripVertical,
 		MapPin,
 		Pencil,
 		Plus,
@@ -32,8 +33,10 @@
 		UserMinus,
 		UserPlus
 	} from 'lucide-svelte';
+	import { untrack } from 'svelte';
+	import { dragHandle, dragHandleZone, type DndEvent } from 'svelte-dnd-action';
 	import { toast } from 'svelte-sonner';
-	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
+	import { flip } from 'svelte/animate';
 	import { slide } from 'svelte/transition';
 
 	let {
@@ -43,6 +46,7 @@
 		routes,
 		mapId,
 		hiddenDrivers = $bindable([]),
+		expandedDrivers = $bindable<string[]>([]),
 		onRemoveDriver,
 		onZoomToStop
 	}: {
@@ -52,18 +56,82 @@
 		routes: RouteType[];
 		mapId: string;
 		hiddenDrivers?: Driver[];
+		expandedDrivers?: string[];
 		onRemoveDriver: (driverId: string) => void;
 		onZoomToStop: (stopId: string) => void;
 	} = $props();
 
-	// Add driver popover state
 	let addPopoverOpen = $state(false);
 	let localIsLoading = $state(false);
 
-	// Track which routes are expanded
-	let expandedRoutes = $state<Set<string>>(new Set());
+	const UNASSIGNED = 'unassigned';
 
-	// Get available drivers (non-temporary, not already assigned)
+	type DndStop = {
+		id: string;
+		stop: StopWithLocation;
+		addr: ReturnType<typeof addressDisplay>;
+	};
+
+	type Column = {
+		label: string;
+		driver?: Driver;
+		items: DndStop[];
+	};
+
+	function toDndStop(s: StopWithLocation): DndStop {
+		return { id: s.stop.id, stop: s, addr: addressDisplay(s.location) };
+	}
+
+	function buildColumns(): Record<string, Column> {
+		const stopsByDriver = Object.groupBy(
+			stops,
+			(s) => s.stop.driver_id ?? UNASSIGNED
+		);
+		const driverColumns = Object.fromEntries(
+			assignedDrivers.map((driver) => [
+				driver.id,
+				{
+					label: driver.name,
+					driver,
+					items: (stopsByDriver[driver.id] ?? [])
+						.sort(
+							(a, b) =>
+								(a.stop.delivery_index ?? Infinity) -
+								(b.stop.delivery_index ?? Infinity)
+						)
+						.map(toDndStop)
+				}
+			])
+		);
+		return {
+			...driverColumns,
+			[UNASSIGNED]: {
+				label: 'Unassigned',
+				items: (stopsByDriver[UNASSIGNED] ?? []).map(toDndStop)
+			}
+		};
+	}
+
+	type StopPosition = { driver_id: string | null; delivery_index: number };
+
+	function snapshotPositions(
+		cols: Record<string, Column>
+	): Map<string, StopPosition> {
+		// eslint-disable-next-line svelte/prefer-svelte-reactivity -- not reactive state, just a lookup table
+		const positions = new Map<string, StopPosition>();
+		for (const [colId, col] of Object.entries(cols)) {
+			const driverId = colId === UNASSIGNED ? null : colId;
+			col.items.forEach((item, index) => {
+				positions.set(item.id, { driver_id: driverId, delivery_index: index });
+			});
+		}
+		return positions;
+	}
+
+	let columns: Record<string, Column> = $state(untrack(() => buildColumns()));
+	let original = snapshotPositions(columns);
+	let pendingSaves = $state(0);
+
 	const availableDrivers = $derived.by(() => {
 		const assignedDriverIds = new Set(assignedDrivers.map((d) => d.id));
 		return allDrivers.filter(
@@ -71,66 +139,45 @@
 		);
 	});
 
-	// Group stops by driver
-	const routesByDriver = $derived.by(() => {
-		const grouped = new SvelteMap<string, StopWithLocation[]>();
+	function formatDuration(seconds: number): {
+		text: string;
+		hasValue: boolean;
+	} {
+		const totalMinutes = Math.floor(seconds / 60);
+		const hours = Math.floor(totalMinutes / 60);
+		const minutes = totalMinutes % 60;
+		return {
+			text: hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`,
+			hasValue: totalMinutes > 0
+		};
+	}
 
-		assignedDrivers.forEach((driver) => {
-			grouped.set(driver.id, []);
-		});
-
-		stops.forEach((stop) => {
-			if (stop.stop.driver_id) {
-				const driverStops = grouped.get(stop.stop.driver_id) || [];
-				driverStops.push(stop);
-				grouped.set(stop.stop.driver_id, driverStops);
-			}
-		});
-
-		// Sort stops by delivery_index
-		grouped.forEach((driverStops) => {
-			driverStops.sort((a, b) => {
-				const aIndex = a.stop.delivery_index ?? Number.MAX_SAFE_INTEGER;
-				const bIndex = b.stop.delivery_index ?? Number.MAX_SAFE_INTEGER;
-				return aIndex - bIndex;
-			});
-		});
-
-		return grouped;
-	});
-
-	// Calculate totals
 	const totals = $derived.by(() => {
-		const totalStops = stops.length;
-		const totalDuration = routes.reduce(
+		const totalSeconds = routes.reduce(
 			(acc, r) => acc + (Number(r.duration) || 0),
 			0
 		);
-		const durationMinutes = Math.floor(totalDuration / 60);
-		const hours = Math.floor(durationMinutes / 60);
-		const minutes = durationMinutes % 60;
+		const duration = formatDuration(totalSeconds);
 
 		return {
 			drivers: assignedDrivers.length,
-			stops: totalStops,
+			stops: stops.length,
 			routes: routes.length,
-			duration: hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`,
-			hasDuration: totalDuration > 0
+			duration: duration.text,
+			hasDuration: duration.hasValue
 		};
 	});
 
-	function getRouteStats(driverStops: StopWithLocation[], driverId: string) {
+	function getRouteStats(stopCount: number, driverId: string) {
 		const driverRoute = routes.find((r) => r.driver_id === driverId);
-		const durationMinutes = driverRoute?.duration
-			? Math.floor(Number(driverRoute.duration) / 60)
-			: 0;
-		const hours = Math.floor(durationMinutes / 60);
-		const minutes = durationMinutes % 60;
+		const duration = formatDuration(
+			driverRoute?.duration ? Number(driverRoute.duration) : 0
+		);
 
 		return {
-			totalStops: driverStops.length,
-			duration: hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`,
-			hasDuration: durationMinutes > 0
+			totalStops: stopCount,
+			duration: duration.text,
+			hasDuration: duration.hasValue
 		};
 	}
 
@@ -138,29 +185,79 @@
 		return routes.find((r) => r.driver_id === driverId);
 	}
 
-	function toggleExpanded(driverId: string) {
-		if (expandedRoutes.has(driverId)) {
-			expandedRoutes.delete(driverId);
+	function toggleExpanded(columnId: string): void {
+		if (expandedDrivers.includes(columnId)) {
+			expandedDrivers = expandedDrivers.filter((id) => id !== columnId);
 		} else {
-			expandedRoutes.add(driverId);
+			expandedDrivers = [...expandedDrivers, columnId];
 		}
-		expandedRoutes = new SvelteSet(expandedRoutes);
 	}
 
-	function toggleDriverVisibility(driver: Driver) {
-		const index = hiddenDrivers.findIndex((d) => d.id === driver.id);
-		if (index >= 0) {
+	const hiddenDriverIds = $derived(new Set(hiddenDrivers.map((d) => d.id)));
+
+	function toggleDriverVisibility(driver: Driver): void {
+		if (hiddenDriverIds.has(driver.id)) {
 			hiddenDrivers = hiddenDrivers.filter((d) => d.id !== driver.id);
 		} else {
 			hiddenDrivers = [...hiddenDrivers, driver];
 		}
 	}
 
-	function isDriverHidden(driverId: string): boolean {
-		return hiddenDrivers.some((d) => d.id === driverId);
+	function handleConsider(
+		columnId: string,
+		e: CustomEvent<DndEvent<DndStop>>
+	): void {
+		columns[columnId].items = e.detail.items;
+		columns = { ...columns };
 	}
 
-	async function addExistingDriver(driverId: string) {
+	function handleFinalize(
+		columnId: string,
+		e: CustomEvent<DndEvent<DndStop>>
+	): void {
+		columns[columnId].items = e.detail.items;
+		columns = { ...columns };
+		saveColumn(columnId);
+	}
+
+	// Each finalize saves its own column independently. For cross-zone moves,
+	// the target and source columns update non-overlapping sets of stops,
+	// so both API calls are safe to run concurrently. We reconcile state
+	// with the server only after the last pending save completes.
+	async function saveColumn(columnId: string): Promise<void> {
+		const driverId = columnId === UNASSIGNED ? null : columnId;
+		const updates = columns[columnId].items
+			.map((item, index) => ({
+				stop_id: item.id,
+				driver_id: driverId,
+				delivery_index: index
+			}))
+			.filter((u) => {
+				const orig = original.get(u.stop_id);
+				return (
+					!orig ||
+					orig.driver_id !== u.driver_id ||
+					orig.delivery_index !== u.delivery_index
+				);
+			});
+		if (updates.length === 0) return;
+
+		pendingSaves++;
+		try {
+			await stopApi.reorder(mapId, updates);
+		} catch {
+			toast.error('Failed to reorder stops');
+		} finally {
+			pendingSaves--;
+			if (pendingSaves === 0) {
+				await invalidateAll();
+				columns = buildColumns();
+				original = snapshotPositions(columns);
+			}
+		}
+	}
+
+	async function addExistingDriver(driverId: string): Promise<void> {
 		if (localIsLoading) return;
 
 		localIsLoading = true;
@@ -168,6 +265,8 @@
 		try {
 			await mapApi.addDriver(mapId, driverId);
 			await invalidateAll();
+			columns = buildColumns();
+			original = snapshotPositions(columns);
 			addPopoverOpen = false;
 		} catch (err) {
 			const message =
@@ -178,14 +277,28 @@
 		}
 	}
 
-	function handleCopyId(id: string) {
+	function handleCopyId(id: string): void {
 		navigator.clipboard.writeText(id);
 		toast.success('Copied to clipboard');
 	}
 
-	function handleDriverCreated() {
+	async function handleDriverCreated(): Promise<void> {
 		addPopoverOpen = false;
-		invalidateAll();
+		await invalidateAll();
+		columns = buildColumns();
+		original = snapshotPositions(columns);
+	}
+
+	async function handleDriverEdited(): Promise<void> {
+		await invalidateAll();
+		columns = buildColumns();
+		original = snapshotPositions(columns);
+	}
+
+	async function handleRemoveDriver(driverId: string): Promise<void> {
+		await onRemoveDriver(driverId);
+		columns = buildColumns();
+		original = snapshotPositions(columns);
 	}
 </script>
 
@@ -323,34 +436,44 @@
 				</Empty.Header>
 			</Empty.Root>
 		{:else}
-			{#each assignedDrivers as driver (driver.id)}
-				{@const driverStops = routesByDriver.get(driver.id) || []}
-				{@const stats = getRouteStats(driverStops, driver.id)}
-				{@const route = getRouteForDriver(driver.id)}
-				{@const isHidden = isDriverHidden(driver.id)}
-				{@const isExpanded = expandedRoutes.has(driver.id)}
+			{#each Object.entries(columns) as [columnId, col] (columnId)}
+				{@const stats = getRouteStats(col.items.length, columnId)}
+				{@const route = getRouteForDriver(columnId)}
+				{@const isHidden = col.driver
+					? hiddenDriverIds.has(col.driver.id)
+					: false}
+				{@const isExpanded = expandedDrivers.includes(columnId)}
 
 				<div
 					class="rounded-lg border border-border/50 transition-colors"
 					class:opacity-50={isHidden}
 				>
-					<!-- Driver Card Header -->
+					<!-- Column Header -->
 					<div class="flex items-center gap-3 p-3">
 						<!-- Clickable expand area -->
 						<button
 							type="button"
 							class="-m-1 flex flex-1 items-center gap-3 rounded-md p-1 text-left hover:bg-accent/30"
-							onclick={() => toggleExpanded(driver.id)}
+							onclick={() => toggleExpanded(columnId)}
 						>
-							<Avatar.Root class="h-9 w-9 border border-border/50">
-								<Avatar.Image src={getIdenticon(driver)} alt={driver.name} />
-								<Avatar.Fallback class="text-xs">
-									{driver.name.slice(0, 2).toUpperCase()}
-								</Avatar.Fallback>
-							</Avatar.Root>
+							{#if col.driver}
+								<Avatar.Root class="h-9 w-9 border border-border/50">
+									<Avatar.Image
+										src={getIdenticon(col.driver)}
+										alt={col.driver.name}
+									/>
+									<Avatar.Fallback class="text-xs">
+										{col.driver.name.slice(0, 2).toUpperCase()}
+									</Avatar.Fallback>
+								</Avatar.Root>
+							{:else}
+								<div
+									class="flex h-8 w-8 items-center justify-center rounded-full border border-dashed border-muted-foreground/40 text-muted-foreground/60 transition-colors hover:border-muted-foreground/60 hover:text-muted-foreground"
+								></div>
+							{/if}
 
 							<div class="min-w-0 flex-1">
-								<p class="truncate text-sm font-medium">{driver.name}</p>
+								<p class="truncate text-sm font-medium">{col.label}</p>
 								<div
 									class="flex items-center gap-3 text-xs text-muted-foreground"
 								>
@@ -372,90 +495,94 @@
 							/>
 						</button>
 
-						<!-- Dropdown Menu -->
-						<DropdownMenu.Root>
-							<DropdownMenu.Trigger>
-								{#snippet child({ props })}
-									<Button
-										{...props}
-										variant="ghost"
-										size="icon"
-										class="h-7 w-7"
-									>
-										<Ellipsis class="h-4 w-4" />
-									</Button>
-								{/snippet}
-							</DropdownMenu.Trigger>
-							<DropdownMenu.Content align="end">
-								<EditOrCreateDriverPopover
-									triggerClass="block w-full"
-									mode="edit"
-									{driver}
-									{mapId}
-									onSuccess={() => invalidateAll()}
-								>
-									{#snippet children({ props })}
-										<DropdownMenu.ActionButton {...props}>
-											<Pencil />
-											Edit driver
-										</DropdownMenu.ActionButton>
+						{#if col.driver}
+							<!-- Dropdown Menu -->
+							<DropdownMenu.Root>
+								<DropdownMenu.Trigger>
+									{#snippet child({ props })}
+										<Button
+											{...props}
+											variant="ghost"
+											size="icon"
+											class="h-7 w-7"
+										>
+											<Ellipsis class="h-4 w-4" />
+										</Button>
 									{/snippet}
-								</EditOrCreateDriverPopover>
-
-								<DropdownMenu.Item onclick={() => handleCopyId(driver.id)}>
-									<Copy />
-									Copy ID
-								</DropdownMenu.Item>
-
-								{#if route}
-									<DropdownMenu.Separator />
-									<a href={resolve(`/routes/${route.id}`)}>
-										<DropdownMenu.Item>
-											<Eye />
-											View route
-										</DropdownMenu.Item>
-									</a>
-									<a
-										href={resolve(`/routes/${route.id}/printable`)}
-										target="_blank"
+								</DropdownMenu.Trigger>
+								<DropdownMenu.Content align="end">
+									<EditOrCreateDriverPopover
+										triggerClass="w-full"
+										mode="edit"
+										driver={col.driver}
+										{mapId}
+										onSuccess={handleDriverEdited}
 									>
-										<DropdownMenu.Item>
-											<Printer />
-											Print route
-										</DropdownMenu.Item>
-									</a>
-								{/if}
+										{#snippet children({ props })}
+											<DropdownMenu.ActionButton {...props}>
+												<Pencil />
+												Edit driver
+											</DropdownMenu.ActionButton>
+										{/snippet}
+									</EditOrCreateDriverPopover>
 
-								<DropdownMenu.Separator />
+									<DropdownMenu.Item
+										onclick={() => handleCopyId(col.driver!.id)}
+									>
+										<Copy />
+										Copy ID
+									</DropdownMenu.Item>
 
-								<DropdownMenu.Item
-									onclick={() => toggleDriverVisibility(driver)}
-								>
-									{#if isHidden}
-										<Eye />
-										Show on map
-									{:else}
-										<EyeOff />
-										Hide on map
+									{#if route}
+										<DropdownMenu.Separator />
+										<a href={resolve(`/routes/${route.id}`)}>
+											<DropdownMenu.Item>
+												<Eye />
+												View route
+											</DropdownMenu.Item>
+										</a>
+										<a
+											href={resolve(`/routes/${route.id}/printable`)}
+											target="_blank"
+										>
+											<DropdownMenu.Item>
+												<Printer />
+												Print route
+											</DropdownMenu.Item>
+										</a>
 									{/if}
-								</DropdownMenu.Item>
 
-								<ConfirmDeleteDialog
-									variant="remove"
-									title="Remove Driver"
-									description="Are you sure you want to remove this driver from the map?"
-									onConfirm={() => onRemoveDriver(driver.id)}
-								>
-									{#snippet trigger({ props })}
-										<DropdownMenu.ActionButton {...props}>
-											<UserMinus />
-											Remove from map
-										</DropdownMenu.ActionButton>
-									{/snippet}
-								</ConfirmDeleteDialog>
-								<DropdownMetadataLabel item={driver} />
-							</DropdownMenu.Content>
-						</DropdownMenu.Root>
+									<DropdownMenu.Separator />
+
+									<DropdownMenu.Item
+										onclick={() => toggleDriverVisibility(col.driver!)}
+									>
+										{#if isHidden}
+											<Eye />
+											Show on map
+										{:else}
+											<EyeOff />
+											Hide on map
+										{/if}
+									</DropdownMenu.Item>
+
+									<ConfirmDeleteDialog
+										variant="remove"
+										title="Remove Driver"
+										description="Are you sure you want to remove this driver from the map?"
+										onConfirm={() => handleRemoveDriver(col.driver!.id)}
+									>
+										{#snippet trigger({ props })}
+											<DropdownMenu.ActionButton {...props}>
+												<UserMinus />
+												Remove from map
+											</DropdownMenu.ActionButton>
+										{/snippet}
+									</ConfirmDeleteDialog>
+									<DropdownMetadataLabel item={col.driver!} />
+								</DropdownMenu.Content>
+							</DropdownMenu.Root>
+						{/if}
 					</div>
 
 					<!-- Stops List (Collapsible) -->
@@ -464,34 +591,57 @@
 							class="border-t border-border/50 px-3 py-2"
 							transition:slide={{ duration: 200 }}
 						>
-							{#each driverStops as stop, index (stop.stop.id)}
-								{@const addr = addressDisplay(stop.location)}
-								<button
-									type="button"
-									class="flex w-full items-start gap-3 rounded-md p-2 text-left transition-colors hover:bg-accent/50"
-									onclick={() => onZoomToStop(stop.stop.id)}
-								>
+							<div
+								class="flex min-h-10 flex-col"
+								use:dragHandleZone={{
+									items: col.items,
+									flipDurationMs: 200,
+									type: 'stops'
+								}}
+								onconsider={(e) => handleConsider(columnId, e)}
+								onfinalize={(e) => handleFinalize(columnId, e)}
+							>
+								{#each col.items as item, index (item.id)}
 									<div
-										class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary"
+										animate:flip={{ duration: 200 }}
+										class="flex items-start gap-3 rounded-md p-2 transition-colors hover:bg-accent/50"
 									>
-										{index + 1}
+										<button
+											use:dragHandle
+											disabled={pendingSaves > 0}
+											aria-label="Drag to reorder"
+											class="shrink-0 cursor-grab self-center text-muted-foreground hover:text-foreground disabled:cursor-default disabled:opacity-50"
+										>
+											<GripVertical class="h-4 w-4" />
+										</button>
+										<button
+											type="button"
+											class="flex min-w-0 flex-1 items-center gap-3 text-left"
+											onclick={() => onZoomToStop(item.id)}
+										>
+											<div
+												class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary tabular-nums"
+											>
+												{index + 1}
+											</div>
+											<div class="min-w-0 flex-1">
+												<p class="truncate text-sm">
+													{item.stop.stop.contact_name || item.addr.topLine}
+												</p>
+												<p class="truncate text-xs text-muted-foreground">
+													{#if item.stop.stop.contact_name}
+														{item.addr.topLine}
+													{:else}
+														{item.addr.bottomLine}
+													{/if}
+												</p>
+											</div>
+										</button>
 									</div>
-									<div class="min-w-0 flex-1">
-										<p class="truncate text-sm">
-											{stop.stop.contact_name || addr.topLine}
-										</p>
-										<p class="truncate text-xs text-muted-foreground">
-											{#if stop.stop.contact_name}
-												{addr.topLine}
-											{:else}
-												{addr.bottomLine}
-											{/if}
-										</p>
-									</div>
-								</button>
-							{/each}
+								{/each}
+							</div>
 
-							{#if driverStops.length === 0}
+							{#if col.items.length === 0}
 								<p class="py-4 text-center text-sm text-muted-foreground">
 									No stops assigned
 								</p>
