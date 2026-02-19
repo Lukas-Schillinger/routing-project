@@ -1,25 +1,13 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
-	import { ConfirmDeleteDialog } from '$lib/components/ConfirmDeleteDialog';
-	import DropdownMetadataLabel from '$lib/components/DropdownMetadataLabel.svelte';
 	import EditOrCreateDriverPopover from '$lib/components/EditOrCreateDriverPopover';
 	import * as Avatar from '$lib/components/ui/avatar/index.js';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
-	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import type { Driver } from '$lib/schemas/driver';
 	import { driverApi } from '$lib/services/api/drivers';
 	import { formatPhoneNumber, getIdenticon } from '$lib/utils';
-	import {
-		ChevronRight,
-		Copy,
-		MoreHorizontal,
-		Phone,
-		Plus,
-		Trash2,
-		Truck,
-		Users
-	} from 'lucide-svelte';
+	import { ChevronRight, Phone, Plus, Truck, Users } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
 	let { drivers = $bindable([]) }: { drivers: Driver[] } = $props();
@@ -32,11 +20,6 @@
 		await driverApi.delete(driver.id);
 		drivers = drivers.filter((d) => d.id !== driver.id);
 		toast.success('Driver deleted');
-	}
-
-	function handleCopyId(id: string) {
-		navigator.clipboard.writeText(id);
-		toast.success('Driver ID copied');
 	}
 </script>
 
@@ -98,69 +81,30 @@
 						mode="edit"
 						{driver}
 						onSuccess={handleDriverSuccess}
+						onDelete={() => handleDelete(driver)}
 					>
 						{#snippet children({ props })}
 							<button
 								{...props}
 								type="button"
-								class="group flex w-full max-w-full cursor-pointer items-center justify-between overflow-hidden rounded-md px-2 py-2 text-left transition-colors hover:bg-accent/50"
+								class="group flex w-full max-w-full cursor-pointer items-center gap-3 overflow-hidden rounded-md px-2 py-2 text-left transition-colors hover:bg-accent/50"
 							>
-								<div class="flex min-w-0 flex-1 items-center gap-3">
-									<Avatar.Root class="h-8 w-8 shrink-0 border border-border/50">
-										<Avatar.Image
-											src={getIdenticon(driver)}
-											alt={driver.name}
-										/>
-										<Avatar.Fallback class="text-xs">
-											{driver.name.slice(0, 2).toUpperCase()}
-										</Avatar.Fallback>
-									</Avatar.Root>
-									<div class="min-w-0 flex-1">
-										<p class="truncate text-sm font-medium">{driver.name}</p>
-										{#if driver.phone}
-											<p
-												class="flex items-center gap-1 text-xs text-muted-foreground"
-											>
-												<Phone class="h-3 w-3 shrink-0" />
-												{formatPhoneNumber(driver.phone)}
-											</p>
-										{/if}
-									</div>
-								</div>
-
-								<div class="flex shrink-0 items-center gap-1">
-									<DropdownMenu.Root>
-										<DropdownMenu.Trigger
-											onclick={(e: MouseEvent) => e.stopPropagation()}
-											class="inline-flex h-7 w-7 items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+								<Avatar.Root class="h-8 w-8 shrink-0 border border-border/50">
+									<Avatar.Image src={getIdenticon(driver)} alt={driver.name} />
+									<Avatar.Fallback class="text-xs">
+										{driver.name.slice(0, 2).toUpperCase()}
+									</Avatar.Fallback>
+								</Avatar.Root>
+								<div class="min-w-0 flex-1">
+									<p class="truncate text-sm font-medium">{driver.name}</p>
+									{#if driver.phone}
+										<p
+											class="flex items-center gap-1 text-xs text-muted-foreground"
 										>
-											<MoreHorizontal class="h-3.5 w-3.5" />
-										</DropdownMenu.Trigger>
-										<DropdownMenu.Content align="end">
-											<DropdownMenu.Item
-												onclick={() => handleCopyId(driver.id)}
-											>
-												<Copy class="mr-2 h-4 w-4" />
-												Copy ID
-											</DropdownMenu.Item>
-											<DropdownMenu.Separator />
-											<ConfirmDeleteDialog
-												description={`Are you sure you want to delete "${driver.name}"?`}
-												onConfirm={() => handleDelete(driver)}
-											>
-												{#snippet trigger({ props })}
-													<DropdownMenu.ActionButton
-														{...props}
-														variant="destructive"
-													>
-														<Trash2 />
-														Delete
-													</DropdownMenu.ActionButton>
-												{/snippet}
-											</ConfirmDeleteDialog>
-											<DropdownMetadataLabel item={driver} />
-										</DropdownMenu.Content>
-									</DropdownMenu.Root>
+											<Phone class="h-3 w-3 shrink-0" />
+											{formatPhoneNumber(driver.phone)}
+										</p>
+									{/if}
 								</div>
 							</button>
 						{/snippet}

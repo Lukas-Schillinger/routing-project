@@ -15,7 +15,8 @@
 		temporaryDriver = false,
 		triggerClass = '',
 		children,
-		onSuccess = () => {}
+		onSuccess = () => {},
+		onDelete
 	}: {
 		mode?: 'create' | 'edit';
 		driver?: Driver;
@@ -24,6 +25,7 @@
 		triggerClass?: string;
 		children?: Snippet<[{ props: Record<string, unknown> }]>;
 		onSuccess?: (driver: Driver) => void;
+		onDelete?: () => Promise<void>;
 	} = $props();
 
 	$effect(() => {
@@ -38,10 +40,6 @@
 	function handleSuccess(driver: Driver) {
 		open = false;
 		onSuccess(driver);
-	}
-
-	function handleCancel() {
-		open = false;
 	}
 </script>
 
@@ -66,8 +64,8 @@
 		{mode}
 		{mapId}
 		{temporaryDriver}
+		{onDelete}
 		onSuccess={handleSuccess}
-		onCancel={handleCancel}
 	/>
 {/snippet}
 

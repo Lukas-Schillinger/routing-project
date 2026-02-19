@@ -15,13 +15,15 @@
 		depot = undefined,
 		triggerClass = '',
 		children,
-		onSuccess = () => {}
+		onSuccess = () => {},
+		onDelete
 	}: {
 		mode?: 'create' | 'edit';
 		depot?: DepotWithLocationJoin;
-		triggerClass?: string; // annoying hack for making the slotted component able to fill the full length of a dropdown
+		triggerClass?: string;
 		children?: Snippet;
 		onSuccess?: (depot: DepotWithLocationJoin) => void;
+		onDelete?: () => Promise<void>;
 	} = $props();
 
 	// Validation
@@ -62,6 +64,7 @@
 				bind:open
 				{depot}
 				{mode}
+				{onDelete}
 				onSuccess={(depot) => {
 					open = false;
 					onSuccess(depot);
@@ -91,6 +94,7 @@
 					bind:open
 					{depot}
 					{mode}
+					{onDelete}
 					onSuccess={(depot) => {
 						open = false;
 						onSuccess(depot);

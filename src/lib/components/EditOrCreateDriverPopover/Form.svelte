@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { ConfirmDeleteDialog } from '$lib/components/ConfirmDeleteDialog';
 	import PhoneInput from '$lib/components/PhoneInput.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Form from '$lib/components/ui/form';
@@ -8,8 +9,8 @@
 	import { driverCreateSchema, type Driver } from '$lib/schemas/driver';
 	import { driverApi } from '$lib/services/api/drivers';
 	import { mapApi } from '$lib/services/api/maps';
-	import { generateRandomColor } from '$lib/utils';
-	import { Check, Loader2, RefreshCw } from 'lucide-svelte';
+	import { formatDate, generateRandomColor } from '$lib/utils';
+	import { Check, Loader2, RefreshCw, Trash2 } from 'lucide-svelte';
 	import { untrack } from 'svelte';
 	import {
 		defaults,
@@ -25,14 +26,14 @@
 		mapId,
 		temporaryDriver = false,
 		onSuccess,
-		onCancel
+		onDelete
 	}: {
 		mode?: 'create' | 'edit';
 		driver?: Driver;
 		mapId?: string;
 		temporaryDriver?: boolean;
 		onSuccess: (driver: Driver) => void;
-		onCancel: () => void;
+		onDelete?: () => Promise<void>;
 	} = $props();
 
 	const generateDriverName = () =>
@@ -199,24 +200,54 @@
 		</div>
 	</fieldset>
 
-	<div class="flex gap-2">
-		<Button
-			type="button"
-			variant="outline"
-			class="flex-1"
-			onclick={onCancel}
-			disabled={$submitting}
-		>
-			Cancel
-		</Button>
-		<Form.Button class="flex-1" disabled={$submitting}>
-			{#if $submitting}
-				<Loader2 class="mr-2 h-4 w-4 animate-spin" />
-				{mode === 'create' ? 'Creating...' : 'Updating...'}
-			{:else}
-				<Check class="mr-2 h-4 w-4" />
-				{mode === 'create' ? 'Create Driver' : 'Update Driver'}
-			{/if}
-		</Form.Button>
-	</div>
+	{#if mode === 'edit' && driver}
+		<div class="flex items-end justify-between">
+			<div class="text-[11px] leading-relaxed text-muted-foreground">
+				<div>Created {formatDate(driver.created_at)}</div>
+				<div>Updated {formatDate(driver.updated_at)}</div>
+			</div>
+			<div class="flex gap-2">
+				{#if onDelete}
+					<ConfirmDeleteDialog
+						description={`Are you sure you want to delete "${driver.name}"?`}
+						onConfirm={onDelete}
+					>
+						{#snippet trigger({ props })}
+							<Button
+								{...props}
+								type="button"
+								variant="ghost"
+								size="sm"
+								disabled={$submitting}
+							>
+								<Trash2 class="h-4 w-4" />
+								Delete
+							</Button>
+						{/snippet}
+					</ConfirmDeleteDialog>
+				{/if}
+				<Form.Button size="sm" disabled={$submitting}>
+					{#if $submitting}
+						<Loader2 class="mr-2 h-4 w-4 animate-spin" />
+						Updating...
+					{:else}
+						<Check class="mr-2 h-4 w-4" />
+						Update Driver
+					{/if}
+				</Form.Button>
+			</div>
+		</div>
+	{:else}
+		<div class="flex justify-end">
+			<Form.Button disabled={$submitting}>
+				{#if $submitting}
+					<Loader2 class="mr-2 h-4 w-4 animate-spin" />
+					Creating...
+				{:else}
+					<Check class="mr-2 h-4 w-4" />
+					Create Driver
+				{/if}
+			</Form.Button>
+		</div>
+	{/if}
 </form>

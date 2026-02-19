@@ -1,23 +1,11 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
-	import { ConfirmDeleteDialog } from '$lib/components/ConfirmDeleteDialog';
-	import DropdownMetadataLabel from '$lib/components/DropdownMetadataLabel.svelte';
 	import EditOrCreateDepotPopover from '$lib/components/EditOrCreateDepotPopover';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
-	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import type { DepotWithLocationJoin } from '$lib/schemas/depot';
 	import { depotApi } from '$lib/services/api/depots';
-	import {
-		Building2,
-		ChevronRight,
-		Copy,
-		MapPin,
-		MoreHorizontal,
-		Plus,
-		Star,
-		Trash2
-	} from 'lucide-svelte';
+	import { Building2, ChevronRight, MapPin, Plus, Star } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
 	let { depots = $bindable([]) }: { depots: DepotWithLocationJoin[] } =
@@ -31,11 +19,6 @@
 		await depotApi.delete(depot.depot.id);
 		depots = depots.filter((d) => d.depot.id !== depot.depot.id);
 		toast.success('Depot deleted');
-	}
-
-	function handleCopyId(id: string) {
-		navigator.clipboard.writeText(id);
-		toast.success('Depot ID copied');
 	}
 
 	function formatAddress(depot: DepotWithLocationJoin): string {
@@ -99,69 +82,33 @@
 						mode="edit"
 						{depot}
 						onSuccess={handleDepotSuccess}
+						onDelete={() => handleDelete(depot)}
 					>
 						<button
 							type="button"
-							class="group flex w-full cursor-pointer items-center justify-between overflow-hidden rounded-md px-2 py-2 text-left transition-colors hover:bg-accent/50"
+							class="group flex w-full cursor-pointer items-center gap-3 overflow-hidden rounded-md px-2 py-2 text-left transition-colors hover:bg-accent/50"
 						>
-							<div class="flex min-w-0 flex-1 items-center gap-3">
-								<div
-									class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted"
-								>
+							<div
+								class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted"
+							>
+								{#if depot.depot.default_depot}
+									<Star class="h-4 w-4 text-primary" />
+								{:else}
+									<MapPin class="h-4 w-4 text-muted-foreground" />
+								{/if}
+							</div>
+							<div class="min-w-0 flex-1">
+								<div class="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+									<p class="text-sm font-medium">{depot.depot.name}</p>
 									{#if depot.depot.default_depot}
-										<Star class="h-4 w-4 text-primary" />
-									{:else}
-										<MapPin class="h-4 w-4 text-muted-foreground" />
+										<Badge variant="secondary" class="h-4 px-1 text-[10px]"
+											>Default</Badge
+										>
 									{/if}
 								</div>
-								<div class="min-w-0 flex-1">
-									<div class="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-										<p class="text-sm font-medium">{depot.depot.name}</p>
-										{#if depot.depot.default_depot}
-											<Badge variant="secondary" class="h-4 px-1 text-[10px]"
-												>Default</Badge
-											>
-										{/if}
-									</div>
-									<p class="text-xs text-muted-foreground">
-										{formatAddress(depot)}
-									</p>
-								</div>
-							</div>
-
-							<div class="flex shrink-0 items-center gap-1">
-								<DropdownMenu.Root>
-									<DropdownMenu.Trigger
-										onclick={(e: MouseEvent) => e.stopPropagation()}
-										class="inline-flex h-7 w-7 items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
-									>
-										<MoreHorizontal class="h-3.5 w-3.5" />
-									</DropdownMenu.Trigger>
-									<DropdownMenu.Content align="end">
-										<DropdownMenu.Item
-											onclick={() => handleCopyId(depot.depot.id)}
-										>
-											<Copy class="mr-2 h-4 w-4" />
-											Copy ID
-										</DropdownMenu.Item>
-										<DropdownMenu.Separator />
-										<ConfirmDeleteDialog
-											description={`Are you sure you want to delete "${depot.depot.name}"?`}
-											onConfirm={() => handleDelete(depot)}
-										>
-											{#snippet trigger({ props })}
-												<DropdownMenu.ActionButton
-													{...props}
-													variant="destructive"
-												>
-													<Trash2 />
-													Delete
-												</DropdownMenu.ActionButton>
-											{/snippet}
-										</ConfirmDeleteDialog>
-										<DropdownMetadataLabel item={depot.depot} />
-									</DropdownMenu.Content>
-								</DropdownMenu.Root>
+								<p class="text-xs text-muted-foreground">
+									{formatAddress(depot)}
+								</p>
 							</div>
 						</button>
 					</EditOrCreateDepotPopover>
