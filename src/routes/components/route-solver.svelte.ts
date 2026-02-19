@@ -36,7 +36,9 @@ export class RouteSolver {
 	improvement = $derived(
 		this.initialDistance > 0
 			? Math.round(
-					((this.initialDistance - this.displayDistance) / this.initialDistance) * 100
+					((this.initialDistance - this.displayDistance) /
+						this.initialDistance) *
+						100
 				)
 			: 0
 	);
@@ -72,7 +74,9 @@ export class RouteSolver {
 	buildPath(route: number[]): string {
 		if (route.length === 0) return '';
 		const points = [this.depot, ...route.map((i) => this.stops[i]), this.depot];
-		return points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+		return points
+			.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`)
+			.join(' ');
 	}
 
 	// --- Private helpers ---
@@ -84,7 +88,10 @@ export class RouteSolver {
 			do {
 				x = 30 + rand() * 380;
 				y = 20 + rand() * 260;
-			} while (Math.abs(x - this.depot.x) < 30 && Math.abs(y - this.depot.y) < 30);
+			} while (
+				Math.abs(x - this.depot.x) < 30 &&
+				Math.abs(y - this.depot.y) < 30
+			);
 			pts.push({ x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10 });
 		}
 		return pts;
@@ -214,11 +221,7 @@ export class RouteSolver {
 		);
 	}
 
-	private insertionCost(
-		route: number[],
-		pos: number,
-		stopIdx: number
-	): number {
+	private insertionCost(route: number[], pos: number, stopIdx: number): number {
 		const prev = pos === 0 ? this.depot : this.stops[route[pos - 1]];
 		const next = pos === route.length ? this.depot : this.stops[route[pos]];
 		const point = this.stops[stopIdx];

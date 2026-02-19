@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { dndzone, TRIGGERS } from 'svelte-dnd-action';
-	import { flip } from 'svelte/animate';
 	import { stopApi } from '$lib/services/api';
 	import { addressDisplay } from '$lib/utils';
+	import { untrack } from 'svelte';
+	import { dndzone, TRIGGERS } from 'svelte-dnd-action';
+	import { flip } from 'svelte/animate';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -13,7 +14,7 @@
 		addr: ReturnType<typeof addressDisplay>;
 	};
 
-	let columns = $state(buildColumns(data));
+	let columns = untrack(() => buildColumns(data));
 
 	function buildColumns(d: PageData) {
 		const map: Record<
@@ -52,15 +53,24 @@
 		// Cross-column moves fire finalize on both zones: target first, then origin.
 		// Skip the target's event — the dragged item's original driver differs from this column.
 		if (trigger === TRIGGERS.DROPPED_INTO_ZONE) {
-			const draggedItem = columns[driverId].items.find((item: DndStop) => item.id === id);
+			const draggedItem = columns[driverId].items.find(
+				(item: DndStop) => item.id === id
+			);
 			if (draggedItem && draggedItem.stop.stop.driver_id !== driverId) return;
 		}
 
-		const updates: { stop_id: string; driver_id: string; delivery_index: number }[] = [];
+		const updates: {
+			stop_id: string;
+			driver_id: string;
+			delivery_index: number;
+		}[] = [];
 		for (const [did, col] of Object.entries(columns)) {
 			for (let i = 0; i < col.items.length; i++) {
 				const item = col.items[i];
-				if (item.stop.stop.driver_id !== did || item.stop.stop.delivery_index !== i) {
+				if (
+					item.stop.stop.driver_id !== did ||
+					item.stop.stop.delivery_index !== i
+				) {
 					updates.push({ stop_id: item.id, driver_id: did, delivery_index: i });
 				}
 			}
@@ -79,7 +89,7 @@
 			<div class="w-64 border p-4">
 				<h2 class="mb-2 font-bold">{col.driver.name}</h2>
 				<div
-					class="flex min-h-[48px] flex-col gap-2"
+					class="flex min-h-12 flex-col gap-2"
 					use:dndzone={{ items: col.items, flipDurationMs: 200, type: 'stops' }}
 					onconsider={(e) => handleConsider(driverId, e)}
 					onfinalize={(e) => handleFinalize(driverId, e)}

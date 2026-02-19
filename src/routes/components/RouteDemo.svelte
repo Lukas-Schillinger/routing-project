@@ -29,15 +29,13 @@
 			>
 				The problem
 			</p>
-			<h2
-				class="font-serif text-4xl leading-tight tracking-tight md:text-5xl"
-			>
+			<h2 class="font-serif text-4xl leading-tight tracking-tight md:text-5xl">
 				Manual routing breaks at scale
 			</h2>
 			<p class="mt-4 text-base leading-relaxed text-muted-foreground">
-				Twenty stops, three drivers, billions of possible combinations.
-				Finding the shortest set of routes is NP-hard — there is no shortcut,
-				only better heuristics.
+				Twenty stops, three drivers, billions of possible combinations. Finding
+				the shortest set of routes is NP-hard — there is no shortcut, only
+				better heuristics.
 			</p>
 		</div>
 	</div>

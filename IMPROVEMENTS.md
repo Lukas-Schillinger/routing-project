@@ -37,6 +37,7 @@ Similarly, `getRoutesForUser()` at line ~259 does an unnecessary extra query for
 ### 4. Fix the Routes list page
 
 `src/routes/(app)/routes/+page.svelte` is a broken placeholder:
+
 - Table caption says "A list of your recent invoices" (copy-paste from shadcn)
 - Columns show raw IDs and foreign keys instead of human-readable data
 - No filtering, sorting, or search
@@ -46,6 +47,7 @@ Needs: proper columns (Route | Driver Name | Map | Duration | Status | Updated),
 ### 5. Add skeleton loading states
 
 Pages currently pop in without loading feedback. Affected areas:
+
 - Maps list (`/maps`) — card grid appears all at once
 - Map detail sidebar (StopsTab, DriversTab) — tabs have no loading state
 - Route detail — timeline loads without skeleton
@@ -56,6 +58,7 @@ The app already has skeleton components available in the UI library but underuse
 ### 6. Keyboard shortcuts
 
 The app has zero keyboard shortcuts. Priority additions:
+
 - `Escape` to deselect/close panels
 - `Cmd+K` command palette for power users
 - Arrow keys for stop navigation in route view
@@ -70,6 +73,7 @@ Users stare at a spinner for up to 5 minutes during route optimization with no c
 Current: "Optimizing routes..." with a spinner and 2-second polling.
 
 Needs:
+
 - Step/phase indicator (matrix calculation → solving → completing)
 - Progress percentage or ETA
 - Completion summary (total duration, miles, driver count)
@@ -81,6 +85,7 @@ Location: `src/routes/(app)/maps/[mapId]/components/OptimizationFooter.svelte`
 ### 8. Field-level form validation
 
 Forms only validate on submit. No inline feedback on blur/change. Specific gaps:
+
 - No red border/highlight on invalid inputs (only error text below)
 - No "required field" visual indicators beyond text
 - Address autocomplete allows submission without confirming geocoded selection
@@ -102,6 +107,7 @@ Fix: batch insert stops in a single transaction with pre-validated location IDs.
 ### 10. Replace optimization polling with Server-Sent Events
 
 Client polls `GET /api/maps/[mapId]/optimize` every 2 seconds during optimization. SSE would:
+
 - Push updates from server instead of client asking repeatedly
 - Reduce network traffic ~80%
 - Feel more real-time
@@ -112,6 +118,7 @@ Location: `src/routes/api/maps/[mapId]/optimize/+server.ts`
 ### 11. Add stop completion tracking to the database
 
 `src/routes/(app)/routes/[routeId]/+page.svelte` — delivery completion status is stored in **localStorage only** (CurrentStopPanel, lines ~44-69). This means:
+
 - Data never syncs to server
 - No audit trail
 - No historical analytics
@@ -129,6 +136,7 @@ Fix: fetch only map-level aggregate stats (stop count, route count) instead of f
 ### 13. Accessibility gaps in map interface
 
 The maps section has minimal ARIA support despite heavy interactivity:
+
 - DriverPicker popover trigger has no aria-label
 - MapView toolbar buttons lack descriptive labels
 - Data table has no aria-live regions for dynamic updates

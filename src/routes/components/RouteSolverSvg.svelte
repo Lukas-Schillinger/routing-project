@@ -16,20 +16,15 @@
 			<span
 				class="absolute inline-flex h-full w-full animate-ping rounded-full bg-landing-primary opacity-75"
 			></span>
-			<span
-				class="relative inline-flex h-2 w-2 rounded-full bg-landing-primary"
+			<span class="relative inline-flex h-2 w-2 rounded-full bg-landing-primary"
 			></span>
 		</span>
 	{:else if solver.phase === 'done'}
-		<span class="inline-flex h-2 w-2 rounded-full bg-landing-primary"
-		></span>
+		<span class="inline-flex h-2 w-2 rounded-full bg-landing-primary"></span>
 	{:else if solver.phase === 'constructing'}
-		<span
-			class="inline-flex h-2 w-2 rounded-full bg-landing-primary/50"
-		></span>
+		<span class="inline-flex h-2 w-2 rounded-full bg-landing-primary/50"></span>
 	{:else}
-		<span
-			class="inline-flex h-2 w-2 rounded-full bg-muted-foreground/30"
+		<span class="inline-flex h-2 w-2 rounded-full bg-muted-foreground/30"
 		></span>
 	{/if}
 	<span class="font-mono text-[10px] text-muted-foreground">
@@ -80,7 +75,7 @@
 			rx="2"
 			class="fill-landing-primary"
 		/>
-{#each solver.stops as stop, idx (idx)}
+		{#each solver.stops as stop, idx (idx)}
 			<circle
 				cx={stop.x}
 				cy={stop.y}

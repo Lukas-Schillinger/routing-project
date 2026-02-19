@@ -109,9 +109,8 @@ describe('MailRecordService', () => {
 					resend_id: 'resend-lookup-test'
 				});
 
-				const result = await mailRecordService.getMailRecordByResendId(
-					'resend-lookup-test'
-				);
+				const result =
+					await mailRecordService.getMailRecordByResendId('resend-lookup-test');
 
 				expect(result).not.toBeNull();
 				expect(result!.id).toBe(record.id);
@@ -142,9 +141,8 @@ describe('MailRecordService', () => {
 					makeWebhookPayload('email.delivered', 'resend-delivered')
 				);
 
-				const updated = await mailRecordService.getMailRecordByResendId(
-					'resend-delivered'
-				);
+				const updated =
+					await mailRecordService.getMailRecordByResendId('resend-delivered');
 				expect(updated!.status).toBe('delivered');
 				expect(updated!.delivered_at).toBeInstanceOf(Date);
 			});
@@ -162,9 +160,8 @@ describe('MailRecordService', () => {
 					makeWebhookPayload('email.bounced', 'resend-bounced')
 				);
 
-				const updated = await mailRecordService.getMailRecordByResendId(
-					'resend-bounced'
-				);
+				const updated =
+					await mailRecordService.getMailRecordByResendId('resend-bounced');
 				expect(updated!.status).toBe('bounced');
 				expect(updated!.bounced_at).toBeInstanceOf(Date);
 			});
@@ -182,9 +179,8 @@ describe('MailRecordService', () => {
 					makeWebhookPayload('email.complained', 'resend-complained')
 				);
 
-				const updated = await mailRecordService.getMailRecordByResendId(
-					'resend-complained'
-				);
+				const updated =
+					await mailRecordService.getMailRecordByResendId('resend-complained');
 				expect(updated!.status).toBe('complained');
 			});
 		});
@@ -201,9 +197,8 @@ describe('MailRecordService', () => {
 					makeWebhookPayload('email.delivery_delayed', 'resend-delayed')
 				);
 
-				const updated = await mailRecordService.getMailRecordByResendId(
-					'resend-delayed'
-				);
+				const updated =
+					await mailRecordService.getMailRecordByResendId('resend-delayed');
 				expect(updated!.status).toBe('delivery_delayed');
 			});
 		});
@@ -222,9 +217,8 @@ describe('MailRecordService', () => {
 					})
 				);
 
-				const updated = await mailRecordService.getMailRecordByResendId(
-					'resend-failed'
-				);
+				const updated =
+					await mailRecordService.getMailRecordByResendId('resend-failed');
 				expect(updated!.status).toBe('failed');
 			});
 		});
@@ -241,9 +235,8 @@ describe('MailRecordService', () => {
 					makeWebhookPayload('email.sent', 'resend-sent')
 				);
 
-				const updated = await mailRecordService.getMailRecordByResendId(
-					'resend-sent'
-				);
+				const updated =
+					await mailRecordService.getMailRecordByResendId('resend-sent');
 				expect(updated!.status).toBe('sent');
 			});
 		});

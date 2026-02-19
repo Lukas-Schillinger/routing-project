@@ -73,9 +73,8 @@
 			Dispatch to drivers
 		</h3>
 		<p class="mt-3 text-base leading-relaxed text-muted-foreground">
-			Routes reach drivers instantly via SMS or email. Each gets a
-			personalized link with turn-by-turn navigation in their preferred
-			app.
+			Routes reach drivers instantly via SMS or email. Each gets a personalized
+			link with turn-by-turn navigation in their preferred app.
 		</p>
 	</div>
 	<!-- Vignette: Driver list -->
@@ -113,9 +112,7 @@
 			{#each driverData as driver (driver.initials)}
 				{@const isExpanded = expandedDrivers.has(driver.initials)}
 				<div
-					class="rounded-lg {isExpanded
-						? 'border border-foreground/10'
-						: ''}"
+					class="rounded-lg {isExpanded ? 'border border-foreground/10' : ''}"
 				>
 					<button
 						type="button"
@@ -146,9 +143,7 @@
 						/>
 					</button>
 					{#if isExpanded}
-						<div
-							class="border-t border-foreground/5 px-2.5 pt-1.5 pb-2.5"
-						>
+						<div class="border-t border-foreground/5 px-2.5 pt-1.5 pb-2.5">
 							<div class="space-y-1.5">
 								{#each driver.expandedStops as stop (stop.num)}
 									<div class="flex items-center gap-2.5">
