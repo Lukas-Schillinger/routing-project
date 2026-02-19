@@ -3,6 +3,7 @@
 	import PhoneInput from '$lib/components/PhoneInput.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Form from '$lib/components/ui/form';
+	import { ColorInput } from '$lib/components/ui/color-input';
 	import { Input } from '$lib/components/ui/input';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { ServiceError } from '$lib/errors';
@@ -158,12 +159,10 @@
 						{#snippet children({ props })}
 							<Form.Label>Color</Form.Label>
 							<div class="flex gap-2">
-								<Input
+								<ColorInput
 									{...props}
-									type="color"
 									bind:value={$formData.color}
 									disabled={$submitting}
-									class="h-9 w-full cursor-pointer p-1"
 								/>
 								<Button
 									type="button"
