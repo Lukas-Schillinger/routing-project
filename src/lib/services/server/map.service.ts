@@ -15,6 +15,13 @@ import { ServiceError } from './errors';
 import { locationService } from './location.service';
 import { stopService } from './stop.service';
 
+export type MapListStats = {
+	stop_count: number;
+	driver_count: number;
+	routed_count: number;
+	total_duration: number | null;
+};
+
 export class MapService {
 	/**
 	 * Resolve depot ID - validates provided depot or falls back to default
@@ -61,6 +68,50 @@ export class MapService {
 			.from(maps)
 			.where(eq(maps.organization_id, organizationId))
 			.orderBy(sql`${maps.created_at} DESC`);
+	}
+
+	/**
+	 * Get aggregated stats for all maps in an organization (stop counts, driver counts, routing status, duration).
+	 * Used by the map list page to avoid loading full stop/route records.
+	 */
+	async getMapListStats(
+		organizationId: string
+	): Promise<Record<string, MapListStats>> {
+		const [stopStats, routeDurations] = await Promise.all([
+			db
+				.select({
+					map_id: stops.map_id,
+					stop_count: sql<number>`count(*)::int`,
+					driver_count: sql<number>`count(distinct ${stops.driver_id}) filter (where ${stops.driver_id} is not null)::int`,
+					routed_count: sql<number>`count(*) filter (where ${stops.driver_id} is not null and ${stops.delivery_index} is not null)::int`
+				})
+				.from(stops)
+				.where(eq(stops.organization_id, organizationId))
+				.groupBy(stops.map_id),
+			db
+				.select({
+					map_id: routes.map_id,
+					total_duration: sql<number>`sum(${routes.duration})::float`
+				})
+				.from(routes)
+				.where(eq(routes.organization_id, organizationId))
+				.groupBy(routes.map_id)
+		]);
+
+		const durationByMap = new Map(
+			routeDurations.map((r) => [r.map_id, r.total_duration])
+		);
+
+		const result: Record<string, MapListStats> = {};
+		for (const row of stopStats) {
+			result[row.map_id] = {
+				stop_count: row.stop_count,
+				driver_count: row.driver_count,
+				routed_count: row.routed_count,
+				total_duration: durationByMap.get(row.map_id) ?? null
+			};
+		}
+		return result;
 	}
 
 	/**

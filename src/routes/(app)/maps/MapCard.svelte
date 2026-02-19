@@ -8,12 +8,9 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import * as Tooltip from '$lib/components/ui/tooltip';
-	import type {
-		Driver,
-		Map as MapType,
-		Route,
-		StopWithLocation
-	} from '$lib/schemas';
+	import type { Driver, Map as MapType } from '$lib/schemas';
+	import type { MapListStats } from '$lib/services/server/map.service';
+	import type { StopCoordinate } from '$lib/services/server/stop.service';
 	import { mapApi } from '$lib/services/api';
 	import { formatDate } from '$lib/utils';
 	import { Copy, Map, MoreHorizontal, Pencil, Trash2 } from 'lucide-svelte';
@@ -23,28 +20,27 @@
 
 	let {
 		map,
-		stops,
-		routes,
+		stats,
+		stopCoordinates = [],
 		drivers = [],
-		driverCount,
 		showThumbnail = true
 	}: {
 		map: MapType;
-		stops: StopWithLocation[];
-		routes: Route[];
+		stats: MapListStats | undefined;
+		stopCoordinates?: StopCoordinate[];
 		drivers?: Driver[];
-		driverCount: number;
 		showThumbnail?: boolean;
 	} = $props();
 
+	const stopCount = $derived(stats?.stop_count ?? 0);
+	const driverCount = $derived(stats?.driver_count ?? 0);
+
 	type RoutingStatus = 'none' | 'unrouted' | 'partial' | 'routed';
 	const routingStatus: RoutingStatus = $derived.by(() => {
-		if (stops.length === 0) return 'none';
-		const routedCount = stops.filter(
-			(s) => s.stop.driver_id !== null && s.stop.delivery_index !== null
-		).length;
+		if (stopCount === 0) return 'none';
+		const routedCount = stats?.routed_count ?? 0;
 		if (routedCount === 0) return 'unrouted';
-		if (routedCount === stops.length) return 'routed';
+		if (routedCount === stopCount) return 'routed';
 		return 'partial';
 	});
 
@@ -59,10 +55,7 @@
 	);
 
 	const totalDuration = $derived(() => {
-		const total = routes.reduce((acc, r) => {
-			const duration = r.duration ? parseFloat(r.duration) : 0;
-			return acc + duration;
-		}, 0);
+		const total = stats?.total_duration ?? 0;
 		if (total === 0) return null;
 		const hours = Math.floor(total / 3600);
 		const minutes = Math.floor((total % 3600) / 60);
@@ -72,7 +65,7 @@
 
 	// Build Mapbox static map URL for grid view (avoids nested <a> from MapBoxStaticMap)
 	const gridMapUrl = $derived.by(() => {
-		if (showThumbnail || stops.length === 0) return '';
+		if (showThumbnail || stopCoordinates.length === 0) return '';
 		const token = env.PUBLIC_MAPBOX_STATIC_MAP_TOKEN;
 		if (!token) return '';
 
@@ -82,14 +75,12 @@
 			minLat = Infinity,
 			maxLon = -Infinity,
 			maxLat = -Infinity;
-		for (const stop of stops) {
-			if (stop.location.lon && stop.location.lat) {
-				const lon = Number(stop.location.lon);
-				const lat = Number(stop.location.lat);
-				minLon = Math.min(minLon, lon);
-				minLat = Math.min(minLat, lat);
-				maxLon = Math.max(maxLon, lon);
-				maxLat = Math.max(maxLat, lat);
+		for (const coord of stopCoordinates) {
+			if (coord.lon && coord.lat) {
+				minLon = Math.min(minLon, coord.lon);
+				minLat = Math.min(minLat, coord.lat);
+				maxLon = Math.max(maxLon, coord.lon);
+				maxLat = Math.max(maxLat, coord.lat);
 			}
 		}
 		const lonPad = (maxLon - minLon) * 0.4 || 0.01;
@@ -101,13 +92,9 @@
 			return driver?.color ? driver.color.replace('#', '') : '000000';
 		}
 
-		const overlays = stops
-			.filter((s) => s.location.lon && s.location.lat)
-			.map((s) => {
-				const lon = Number(s.location.lon);
-				const lat = Number(s.location.lat);
-				return `pin-s+${getDriverColor(s.stop.driver_id)}(${lon},${lat})`;
-			})
+		const overlays = stopCoordinates
+			.filter((c) => c.lon && c.lat)
+			.map((c) => `pin-s+${getDriverColor(c.driver_id)}(${c.lon},${c.lat})`)
 			.join(',');
 
 		const params = new URLSearchParams({
@@ -183,7 +170,7 @@
 
 <!-- Grid view: frosted glass over full-bleed map -->
 {#if !showThumbnail}
-	{#if stops.length > 0}
+	{#if stopCount > 0}
 		<a
 			href={resolve(`/maps/${map.id}`)}
 			class="group relative flex h-48 flex-col overflow-hidden rounded-lg"
@@ -191,7 +178,7 @@
 			<!-- Full-bleed map image -->
 			<img
 				src={gridMapUrl}
-				alt="Map showing {stops.length} stops"
+				alt="Map showing {stopCount} stops"
 				class="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
 			/>
 
@@ -234,7 +221,7 @@
 				<div
 					class="mt-1 flex items-center overflow-hidden text-xs whitespace-nowrap text-muted-foreground"
 				>
-					<span>{stops.length} stop{stops.length !== 1 ? 's' : ''}</span>
+					<span>{stopCount} stop{stopCount !== 1 ? 's' : ''}</span>
 					{#if driverCount > 0}
 						<span class="before:mx-1.5 before:content-['·']"
 							>{driverCount} driver{driverCount !== 1 ? 's' : ''}</span
@@ -309,9 +296,9 @@
 		<div
 			class="ml-auto flex shrink-0 items-center gap-3 text-xs text-muted-foreground"
 		>
-			{#if stops.length > 0}
+			{#if stopCount > 0}
 				<span class="whitespace-nowrap">
-					{stops.length} stop{stops.length !== 1 ? 's' : ''}
+					{stopCount} stop{stopCount !== 1 ? 's' : ''}
 					{#if driverCount > 0}
 						<span class="mx-1">·</span>{driverCount} driver{driverCount !== 1
 							? 's'

@@ -121,7 +121,7 @@
 	];
 
 	function getMapStopCount(mapId: string) {
-		return data.stops.filter((s) => s.stop.map_id === mapId).length;
+		return data.mapStats[mapId]?.stop_count ?? 0;
 	}
 
 	// Responsive page size
@@ -184,21 +184,14 @@
 		updateUrlParams();
 	});
 
-	function getMapStops(mapId: string) {
-		return data.stops.filter((s) => s.stop.map_id === mapId);
-	}
-
-	function getMapRoutes(mapId: string) {
-		return data.routes.filter((r) => r.map_id === mapId);
-	}
-
-	function getMapDriverCount(mapId: string) {
-		const mapStops = getMapStops(mapId);
-		const uniqueDrivers = new Set(
-			mapStops.map((s) => s.stop.driver_id).filter((id) => id !== null)
-		);
-		return uniqueDrivers.size;
-	}
+	// Group stop coordinates by map_id for MapCard
+	const stopCoordinatesByMap = $derived(() => {
+		const grouped: Record<string, typeof data.stopCoordinates> = {};
+		for (const coord of data.stopCoordinates) {
+			(grouped[coord.map_id] ??= []).push(coord);
+		}
+		return grouped;
+	});
 
 	// Pagination helpers
 	function goToPage(page: number) {
@@ -379,15 +372,11 @@
 						: 'divide-y divide-border/50 rounded-lg border border-border/50'}
 				>
 					{#each paginatedMaps as map (map.id)}
-						{@const mapStops = getMapStops(map.id)}
-						{@const mapRoutes = getMapRoutes(map.id)}
-						{@const driverCount = getMapDriverCount(map.id)}
 						<MapCard
 							{map}
-							stops={mapStops}
-							routes={mapRoutes}
+							stats={data.mapStats[map.id]}
+							stopCoordinates={stopCoordinatesByMap()[map.id] ?? []}
 							drivers={data.drivers}
-							{driverCount}
 							showThumbnail={viewMode === 'list'}
 						/>
 					{/each}

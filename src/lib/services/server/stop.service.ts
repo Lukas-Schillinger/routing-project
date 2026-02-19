@@ -12,6 +12,13 @@ import { ServiceError } from './errors';
 import { locationService } from './location.service';
 import { routeService } from './route.service';
 
+export type StopCoordinate = {
+	map_id: string;
+	driver_id: string | null;
+	lat: number;
+	lon: number;
+};
+
 export class StopService {
 	/**
 	 * Verify stop ownership
@@ -55,6 +62,30 @@ export class StopService {
 			.where(eq(stops.organization_id, organizationId));
 
 		return results;
+	}
+
+	/**
+	 * Get lightweight coordinates for all stops in an organization.
+	 * Used by the map list page for Mapbox static map pins.
+	 */
+	async getStopCoordinates(organizationId: string): Promise<StopCoordinate[]> {
+		const results = await db
+			.select({
+				map_id: stops.map_id,
+				driver_id: stops.driver_id,
+				lat: locations.lat,
+				lon: locations.lon
+			})
+			.from(stops)
+			.innerJoin(locations, eq(stops.location_id, locations.id))
+			.where(eq(stops.organization_id, organizationId));
+
+		return results.map((r) => ({
+			map_id: r.map_id,
+			driver_id: r.driver_id,
+			lat: Number(r.lat),
+			lon: Number(r.lon)
+		}));
 	}
 
 	/**
@@ -312,8 +343,8 @@ export class StopService {
 	}
 
 	/**
-	 * Bulk reorder stops - update driver assignments and delivery indices
-	 * Recalculates routes for all affected drivers
+	 * Bulk reorder stops - update driver assignments and delivery indices.
+	 * Recalculates routes for all affected drivers.
 	 */
 	async reorderStops(
 		mapId: string,
@@ -325,8 +356,6 @@ export class StopService {
 			return [];
 		}
 
-		// Verify all stops belong to this map and organization
-		const stopIds = updates.map((u) => u.stop_id);
 		const existingStops = await db
 			.select()
 			.from(stops)
@@ -335,7 +364,9 @@ export class StopService {
 			);
 
 		const existingStopIds = new Set(existingStops.map((s) => s.id));
-		const invalidStops = stopIds.filter((id) => !existingStopIds.has(id));
+		const invalidStops = updates
+			.map((u) => u.stop_id)
+			.filter((id) => !existingStopIds.has(id));
 
 		if (invalidStops.length > 0) {
 			throw ServiceError.validation(
@@ -343,16 +374,15 @@ export class StopService {
 			);
 		}
 
-		// Track affected drivers (before and after changes)
-		const stopMap = new Map(existingStops.map((s) => [s.id, s]));
-		const affectedDriverIds = new Set<string>(
-			[
-				...updates.map((u) => u.driver_id),
-				...updates.map((u) => stopMap.get(u.stop_id)?.driver_id)
-			].filter((id): id is string => id !== null && id !== undefined)
-		);
+		// Collect driver IDs from both the current and new assignments
+		const stopById = new Map(existingStops.map((s) => [s.id, s]));
+		const affectedDriverIds = new Set<string>();
+		for (const update of updates) {
+			if (update.driver_id) affectedDriverIds.add(update.driver_id);
+			const currentDriverId = stopById.get(update.stop_id)?.driver_id;
+			if (currentDriverId) affectedDriverIds.add(currentDriverId);
+		}
 
-		// Perform updates in transaction with consistent timestamp
 		const now = new Date();
 		await db.transaction(async (tx) => {
 			for (const update of updates) {
@@ -368,7 +398,6 @@ export class StopService {
 			}
 		});
 
-		// Recalculate routes for all affected drivers in parallel
 		await Promise.all(
 			[...affectedDriverIds].map((driverId) =>
 				routeService.recalculateRouteForDriver(
@@ -380,7 +409,6 @@ export class StopService {
 			)
 		);
 
-		// Return updated stops
 		return this.getStopsByMap(mapId, organizationId);
 	}
 
