@@ -14,6 +14,7 @@ npm run db:migrate   # Apply Drizzle migration
 ## Workflow
 
 - Always use the code-simplifier agent after modifying service files to ensure clarity and consistency.
+- Always use vercel-frontend-review agent after modifying frontend files
 - Before committing, ensure checks pass: `npm run check` (types) and `npm run lint` (ESLint). CI will reject commits that fail.
 - Always prefer using test factories over manually creating test data.
 - Never run interactive CLI commands — Claude cannot handle interactive terminal prompts. Always pass flags to skip prompts:
