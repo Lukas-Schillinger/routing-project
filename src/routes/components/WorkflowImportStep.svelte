@@ -112,13 +112,6 @@
 	];
 
 	const importRows = allStops.slice(0, TABLE_ROWS);
-	const paperStops = allStops.slice(0, PAPER_ROWS);
-
-	// CSV text for the paper element (derived from full paper set)
-	const csvLines = [
-		'store_name,street_address,contact_phone',
-		...paperStops.map((r) => `${r.name},"${r.address}",${r.phone}`)
-	];
 
 	let animationEl = $state<HTMLElement | null>(null);
 	let textEl = $state<HTMLElement | null>(null);
@@ -126,22 +119,11 @@
 	// Scroll-driven animation state
 	let scrollProgress = $state(0);
 
-	// Paper feeds from above the card downward. Synchronized with row reveals.
-	// Wider range = animation progresses slower relative to scroll speed.
-	const FEED_START = 0;
+	const FEED_START = -0.15;
 	const FEED_END = 0.75;
 	const FEED_RANGE = FEED_END - FEED_START;
 
-	// Paper translation: starts above, travels downward behind the card.
-	// Each CSV line is ~18px tall; header + PAPER_ROWS data lines.
-	const paperHeight = (PAPER_ROWS + 1) * 18 + 20; // lines + padding
-	const paperT = $derived(
-		Math.min(Math.max((scrollProgress - FEED_START) / FEED_RANGE, 0), 1)
-	);
-	const paperTranslateY = $derived(paperT * paperHeight);
-
-	// Table row i appears when CSV data line i crosses the card edge.
-	// Line i crosses at fraction (i+1)/PAPER_ROWS of the total paper travel.
+	// Table row i appears when data line i crosses the threshold.
 	const rowOpacities = $derived(
 		importRows.map((_, i) => {
 			const threshold = FEED_START + ((i + 1) / PAPER_ROWS) * FEED_RANGE;
@@ -151,7 +133,7 @@
 
 	const visibleRowCount = $derived(rowOpacities.filter((o) => o >= 0.5).length);
 
-	// Total stops "loaded" from the paper (counts all PAPER_ROWS, not just TABLE_ROWS)
+	// Total stops "loaded" (counts all PAPER_ROWS, not just TABLE_ROWS)
 	const totalLoadedCount = $derived(
 		Array.from({ length: PAPER_ROWS }, (_, i) => {
 			const threshold = FEED_START + ((i + 1) / PAPER_ROWS) * FEED_RANGE;
@@ -161,11 +143,9 @@
 
 	const hasOverflow = $derived(totalLoadedCount > TABLE_ROWS);
 
-	// Mobile: Sonner-style toast stack animation
-	// Continuous float tracking how many stops have been consumed into the card.
-	// Uses same thresholds as rowOpacities so toast exits sync with row appearances.
+	// Sonner-style toast stack animation
 	const TOAST_MAX_VISIBLE = 3;
-	const TOAST_TRANSITION = 0.07; // scroll fraction per toast enter/exit
+	const TOAST_TRANSITION = 0.1; // scroll fraction per toast enter/exit
 	const consumedFloat = $derived(
 		Array.from({ length: PAPER_ROWS }, (_, i) => {
 			const threshold = FEED_START + ((i + 1) / PAPER_ROWS) * FEED_RANGE;
@@ -176,11 +156,11 @@
 		}).reduce((a: number, b: number) => a + b, 0)
 	);
 
-	const mobileToasts = $derived.by(() => {
+	const toasts = $derived.by(() => {
 		const base = Math.floor(consumedFloat);
 		const frac = consumedFloat - base;
 
-		const toasts: Array<{
+		const items: Array<{
 			idx: number;
 			stop: (typeof allStops)[0];
 			y: number;
@@ -212,7 +192,7 @@
 				opacity = pos > 2 ? 0 : 1 - pos * 0.15;
 			}
 
-			toasts.push({
+			items.push({
 				idx,
 				stop: allStops[idx],
 				y,
@@ -222,11 +202,9 @@
 			});
 		}
 
-		return toasts;
+		return items;
 	});
 
-	// Start tracking from the paper's position (above the card) through card exit.
-	// The negative offset extends tracking to where the paper sits visually.
 	$effect(() => {
 		if (!animationEl || !browser) return;
 		return scroll(
@@ -235,7 +213,7 @@
 			},
 			{
 				target: animationEl,
-				offset: [`-${paperHeight}px end`, 'end start']
+				offset: ['start end', 'end start']
 			}
 		);
 	});
@@ -268,26 +246,12 @@
 			and validation. Your data stays clean.
 		</p>
 	</div>
-	<!-- Vignette: Column mapping with paper-feed animation -->
+	<!-- Vignette: Column mapping with toast-feed animation -->
 	<div bind:this={animationEl} class="relative mt-14 md:mt-0">
-		<!-- Desktop: Paper element feeds downward behind card -->
-		<div
-			class="pointer-events-none absolute inset-x-4 bottom-full z-0 hidden rounded-md border border-amber-900/10 bg-[#fefcf7] px-3 py-2.5 shadow-lg md:block dark:border-amber-200/10 dark:bg-[#2a2520]"
-			style="transform: translateY({paperTranslateY}px)"
-		>
+		<!-- Sonner-style toast stack drops into the card -->
+		{#each toasts as toast (toast.idx)}
 			<div
-				class="space-y-0.5 font-mono text-[10px] leading-relaxed text-amber-900/70 dark:text-amber-200/60"
-			>
-				{#each csvLines as line, i (i)}
-					<p class:font-semibold={i === 0} class="truncate">{line}</p>
-				{/each}
-			</div>
-		</div>
-
-		<!-- Mobile: Sonner-style toast stack drops into the card -->
-		{#each mobileToasts as toast (toast.idx)}
-			<div
-				class="pointer-events-none absolute inset-x-2 bottom-full md:hidden"
+				class="pointer-events-none absolute inset-x-2 bottom-full"
 				style="transform: translateY({toast.y}px) scale({toast.scale}); opacity: {toast.opacity}; z-index: {toast.z}; transform-origin: bottom center"
 			>
 				<div
@@ -302,7 +266,7 @@
 			</div>
 		{/each}
 
-		<!-- Card: sits on top, paper slides behind it from above -->
+		<!-- Card: sits on top, toasts slide behind it from above -->
 		<div
 			class="relative z-10 overflow-hidden rounded-lg border border-foreground/10 bg-card"
 		>
