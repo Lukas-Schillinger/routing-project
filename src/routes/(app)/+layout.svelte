@@ -56,9 +56,19 @@
 	</div>
 {/if}
 
+<a
+	href="#main-content"
+	class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:rounded-md focus:bg-background focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:shadow-lg focus:ring-2 focus:ring-ring"
+>
+	Skip to content
+</a>
+
 <div class="min-h-screen">
 	<Header user={data.user} />
-	<main class="mx-auto max-w-7xl px-2 pt-9 pb-12 sm:px-6 lg:px-8">
+	<main
+		id="main-content"
+		class="mx-auto max-w-7xl scroll-mt-16 px-2 pt-9 pb-12 sm:px-6 lg:px-8"
+	>
 		{@render children?.()}
 	</main>
 	<Footer />
