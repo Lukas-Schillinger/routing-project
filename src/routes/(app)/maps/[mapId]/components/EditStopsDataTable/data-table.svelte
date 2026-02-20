@@ -456,6 +456,7 @@
 						class="{buttonVariants({
 							variant: 'outline'
 						})} shrink-0 rounded-l-none border-l-0 px-3"
+						aria-label="Search field"
 					>
 						<Search class="h-4 w-4" />
 						<ChevronDown class="ml-1 h-3 w-3" />

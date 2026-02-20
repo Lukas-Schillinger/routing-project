@@ -350,6 +350,7 @@
 					<Popover.Root>
 						<Popover.Trigger
 							class="inline-flex h-8 items-center justify-center rounded-md border border-warning bg-warning/15 px-2 text-warning-foreground transition-colors hover:bg-warning/25"
+							aria-label="Validation warning"
 						>
 							<TriangleAlert class="h-3.5 w-3.5" />
 						</Popover.Trigger>

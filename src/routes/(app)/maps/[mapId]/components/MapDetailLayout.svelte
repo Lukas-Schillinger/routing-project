@@ -107,7 +107,7 @@
 					? 'bg-accent text-accent-foreground'
 					: ''}"
 				onclick={() => setLayout('collapsed')}
-				title="Focus on map"
+				aria-label="Focus on map"
 			>
 				<svg class="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none">
 					<rect
@@ -138,7 +138,7 @@
 					? 'bg-accent text-accent-foreground'
 					: ''}"
 				onclick={() => setLayout('default')}
-				title="Balanced view"
+				aria-label="Balanced view"
 			>
 				<svg class="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none">
 					<rect
@@ -169,7 +169,7 @@
 					? 'bg-accent text-accent-foreground'
 					: ''}"
 				onclick={() => setLayout('expanded')}
-				title="Focus on sidebar"
+				aria-label="Focus on sidebar"
 			>
 				<svg class="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none">
 					<rect

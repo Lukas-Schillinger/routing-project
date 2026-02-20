@@ -307,7 +307,9 @@
 	<div
 		class="flex flex-col items-center justify-between gap-2 border-b border-border/50 py-3 @sm:flex-row @sm:gap-0"
 	>
-		<div class="flex w-full justify-around gap-3 text-sm @sm:w-max">
+		<div
+			class="flex w-full justify-around gap-3 text-sm tabular-nums @sm:w-max"
+		>
 			<span
 				class="flex items-center gap-1 whitespace-nowrap text-muted-foreground"
 			>
@@ -475,7 +477,7 @@
 							<div class="min-w-0 flex-1">
 								<p class="truncate text-sm font-medium">{col.label}</p>
 								<div
-									class="flex items-center gap-3 text-xs text-muted-foreground"
+									class="flex items-center gap-3 text-xs text-muted-foreground tabular-nums"
 								>
 									<span
 										>{stats.totalStops} stop{stats.totalStops !== 1

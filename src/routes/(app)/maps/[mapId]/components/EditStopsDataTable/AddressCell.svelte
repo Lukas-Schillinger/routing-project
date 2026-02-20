@@ -14,11 +14,11 @@
 	);
 </script>
 
-<div class="flex items-start">
-	<div class="text-sm">
-		<div class="font-medium">{location.address_line_1}</div>
+<div class="flex min-w-0 items-start">
+	<div class="min-w-0 text-sm">
+		<div class="truncate font-medium">{location.address_line_1}</div>
 		{#if addressLine2}
-			<div class="text-muted-foreground">{addressLine2}</div>
+			<div class="truncate text-muted-foreground">{addressLine2}</div>
 		{/if}
 	</div>
 </div>
