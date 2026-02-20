@@ -92,7 +92,7 @@
 	</Popover.Trigger>
 	<Popover.Content class="w-56 p-0" align="start">
 		<Command.Root>
-			<Command.Input placeholder="Search drivers..." disabled={isLoading} />
+			<Command.Input placeholder="Search drivers…" disabled={isLoading} />
 			<Command.Empty>No drivers found.</Command.Empty>
 			<Command.Group>
 				{#each drivers as driver (driver.id)}

@@ -483,7 +483,7 @@
 						<Input
 							id="credit-amount"
 							type="number"
-							placeholder="Enter amount"
+							placeholder="Enter amount…"
 							bind:value={creditAmount}
 							required
 						/>
@@ -511,7 +511,7 @@
 						<Input
 							id="credit-description"
 							type="text"
-							placeholder="Optional description"
+							placeholder="Optional description…"
 							bind:value={creditDescription}
 						/>
 					</div>

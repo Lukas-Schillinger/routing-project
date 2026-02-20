@@ -73,7 +73,7 @@
 						id="password"
 						type="password"
 						name="password"
-						placeholder="Create a strong password"
+						placeholder="Create a strong password…"
 						class="h-11 border-border/50 bg-background/50 pl-10 transition-colors focus:border-primary/50 focus:bg-background"
 						required
 					/>
@@ -95,7 +95,7 @@
 						id="confirm-password"
 						type="password"
 						name="password-confirm"
-						placeholder="Confirm your password"
+						placeholder="Confirm your password…"
 						class="h-11 border-border/50 bg-background/50 pl-10 transition-colors focus:border-primary/50 focus:bg-background"
 						required
 					/>

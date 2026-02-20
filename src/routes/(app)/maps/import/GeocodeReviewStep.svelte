@@ -248,7 +248,7 @@
 										<div class="max-w-sm">
 											<AddressAutocomplete
 												bind:value={editAddressValue}
-												placeholder="Search for address..."
+												placeholder="Search for address…"
 												onSelect={(location) =>
 													handleAddressSelected(record.id, location)}
 												onClear={cancelEditing}
@@ -366,7 +366,7 @@
 								<div>
 									<AddressAutocomplete
 										bind:value={editAddressValue}
-										placeholder="Search for address..."
+										placeholder="Search for address…"
 										onSelect={(location) =>
 											handleAddressSelected(record.id, location)}
 										onClear={cancelEditing}

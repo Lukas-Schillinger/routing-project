@@ -120,7 +120,7 @@
 				id="password"
 				type="password"
 				name="password"
-				placeholder="Enter your password"
+				placeholder="Enter your password…"
 				class="h-11 border-border/50 bg-background/50 pl-10 transition-colors focus:border-primary/50 focus:bg-background"
 				required
 				disabled={isSubmitting}

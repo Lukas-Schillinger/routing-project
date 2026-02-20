@@ -137,7 +137,7 @@
 						<Input
 							id="amount"
 							type="number"
-							placeholder="Enter amount (can be negative)"
+							placeholder="Enter amount (can be negative)…"
 							bind:value={amount}
 							required
 						/>
@@ -165,7 +165,7 @@
 						<Input
 							id="description"
 							type="text"
-							placeholder="Optional description"
+							placeholder="Optional description…"
 							bind:value={description}
 						/>
 					</div>

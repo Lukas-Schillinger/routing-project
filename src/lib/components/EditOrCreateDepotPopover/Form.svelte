@@ -182,8 +182,8 @@
 		<AddressAutocomplete
 			bind:value={address}
 			placeholder={mode === 'create'
-				? 'Search for depot address...'
-				: 'Search to update address...'}
+				? 'Search for depot address…'
+				: 'Search to update address…'}
 			onSelect={handleAddressSelect}
 			onClear={handleAddressClear}
 			disabled={isSubmitting}

@@ -54,7 +54,7 @@
 					id="newPassword"
 					type="password"
 					name="newPassword"
-					placeholder="Enter your new password"
+					placeholder="Enter your new password…"
 					class="h-11 border-border/50 bg-background/50 pl-10 transition-colors focus:border-primary/50 focus:bg-background"
 					required
 					disabled={isSubmitting}
@@ -77,7 +77,7 @@
 					id="confirmPassword"
 					type="password"
 					name="confirmPassword"
-					placeholder="Confirm your new password"
+					placeholder="Confirm your new password…"
 					class="h-11 border-border/50 bg-background/50 pl-10 transition-colors focus:border-primary/50 focus:bg-background"
 					required
 					disabled={isSubmitting}

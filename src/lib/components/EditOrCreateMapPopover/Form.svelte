@@ -102,7 +102,7 @@
 				<Textarea
 					id="map-description"
 					bind:value={$formData.description}
-					placeholder="Optional description..."
+					placeholder="Optional description…"
 					disabled={$submitting}
 					rows={3}
 					class="resize-none"

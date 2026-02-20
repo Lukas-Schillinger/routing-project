@@ -204,8 +204,8 @@
 		<AddressAutocomplete
 			bind:value={address}
 			placeholder={mode === 'create'
-				? 'Search for address...'
-				: 'Search to update address...'}
+				? 'Search for address…'
+				: 'Search to update address…'}
 			onSelect={handleAddressSelect}
 			onClear={handleAddressClear}
 			disabled={isSubmitting}
@@ -217,7 +217,7 @@
 		<Textarea
 			id="notes"
 			bind:value={notes}
-			placeholder="Add any delivery notes..."
+			placeholder="Add any delivery notes…"
 			disabled={isSubmitting}
 			rows={3}
 		/>

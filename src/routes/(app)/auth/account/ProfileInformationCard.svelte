@@ -84,7 +84,7 @@
 				bind:value={nameValue}
 				oninput={handleNameInput}
 				onblur={handleNameBlur}
-				placeholder="Enter your name"
+				placeholder="Enter your name…"
 				disabled={isSavingName}
 				class="max-w-xs"
 			/>
