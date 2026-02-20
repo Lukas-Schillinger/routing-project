@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { browser } from '$app/environment';
 	import { resolve } from '$app/paths';
 	import { env } from '$env/dynamic/public';
 	import type { Driver, StopWithLocation } from '$lib/schemas';
@@ -110,7 +111,7 @@
 	);
 </script>
 
-{#if mapUrl}
+{#if browser && mapUrl}
 	<a
 		href={resolve(`/maps/${mapId}`)}
 		class="block h-full overflow-hidden rounded-t-lg sm:rounded-r-none sm:rounded-bl-lg"
@@ -128,6 +129,11 @@
 			<div class="h-24 bg-secondary sm:h-full"></div>
 		{/if}
 	</a>
+{:else if !browser}
+	<div
+		class="h-32 w-full bg-muted sm:h-full sm:w-32 md:w-42 lg:w-72"
+		{...restProps}
+	></div>
 {:else}
 	<div
 		class="flex h-32 w-full items-center justify-center rounded-lg border border-border bg-muted sm:h-full sm:w-32"

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { browser } from '$app/environment';
 	import { invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { env } from '$env/dynamic/public';
@@ -9,9 +10,9 @@
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import type { Driver, Map as MapType } from '$lib/schemas';
+	import { mapApi } from '$lib/services/api';
 	import type { MapListStats } from '$lib/services/server/map.service';
 	import type { StopCoordinate } from '$lib/services/server/stop.service';
-	import { mapApi } from '$lib/services/api';
 	import { formatDate } from '$lib/utils';
 	import { Copy, Map, MoreHorizontal, Pencil, Trash2 } from 'lucide-svelte';
 	import { mode } from 'mode-watcher';
@@ -176,13 +177,17 @@
 			class="group relative flex h-48 flex-col overflow-hidden rounded-lg"
 		>
 			<!-- Full-bleed map image -->
-			<img
-				src={gridMapUrl}
-				alt="Map showing {stopCount} stops"
-				class="absolute inset-0 h-full w-full bg-muted object-cover transition-transform duration-300 group-hover:scale-105"
-				width="600"
-				height="400"
-			/>
+			{#if browser && gridMapUrl}
+				<img
+					src={gridMapUrl}
+					alt="Map showing {stopCount} stops"
+					class="absolute inset-0 h-full w-full bg-muted object-cover transition-transform duration-300 group-hover:scale-105"
+					width="600"
+					height="400"
+				/>
+			{:else}
+				<div class="absolute inset-0 bg-muted"></div>
+			{/if}
 
 			<!-- Ellipsis menu (frosted pill, top-right) -->
 			<div class="absolute top-2.5 right-2.5 z-10">
@@ -217,7 +222,7 @@
 							{/if}
 						</Tooltip.Root>
 					</Tooltip.Provider>
-					<span class="truncate font-semibold text-foreground">
+					<span class="truncate font-medium text-foreground">
 						{map.title}
 					</span>
 				</div>
