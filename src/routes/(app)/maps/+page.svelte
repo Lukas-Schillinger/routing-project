@@ -274,7 +274,7 @@
 			/>
 			<Input
 				type="search"
-				placeholder="Search maps..."
+				placeholder="Search maps…"
 				class="h-9 w-full border-border/50 bg-card pl-10 transition-colors focus:border-border sm:max-w-sm"
 				bind:value={searchQuery}
 			/>
@@ -307,7 +307,7 @@
 
 			<!-- Results count -->
 			{#if filteredMaps().length > 0}
-				<span class="text-sm text-muted-foreground">
+				<span class="text-sm text-muted-foreground tabular-nums">
 					{(currentPage - 1) * pageSize + 1}-{Math.min(
 						currentPage * pageSize,
 						filteredMaps().length
@@ -395,6 +395,7 @@
 								class="hidden h-8 w-8 sm:flex"
 								disabled={currentPage === 1}
 								onclick={() => goToPage(1)}
+								aria-label="First page"
 							>
 								<ChevronsLeft class="h-4 w-4" />
 							</Button>
@@ -405,6 +406,7 @@
 								class="h-8 w-8"
 								disabled={currentPage === 1}
 								onclick={() => goToPage(currentPage - 1)}
+								aria-label="Previous page"
 							>
 								<ChevronLeft class="h-4 w-4" />
 							</Button>
@@ -418,6 +420,7 @@
 									size="icon"
 									class="h-8 w-8 text-sm"
 									onclick={() => goToPage(page)}
+									aria-label="Page {page}"
 								>
 									{page}
 								</Button>
@@ -432,6 +435,7 @@
 								class="h-8 w-8"
 								disabled={currentPage === totalPages}
 								onclick={() => goToPage(currentPage + 1)}
+								aria-label="Next page"
 							>
 								<ChevronRight class="h-4 w-4" />
 							</Button>
@@ -442,6 +446,7 @@
 								class="hidden h-8 w-8 sm:flex"
 								disabled={currentPage === totalPages}
 								onclick={() => goToPage(totalPages)}
+								aria-label="Last page"
 							>
 								<ChevronsRight class="h-4 w-4" />
 							</Button>

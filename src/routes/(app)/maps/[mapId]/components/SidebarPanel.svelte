@@ -33,11 +33,13 @@
 					<MapPin class="h-3.5 w-3.5" />
 					<span>Stops</span>
 					{#if stopsCount > 0}
-						<span class="ml-1 text-xs text-muted-foreground"
+						<span class="ml-1 text-xs text-muted-foreground tabular-nums"
 							>({stopsCount})</span
 						>
 					{:else}
-						<span class="ml-1 text-xs text-warning">({stopsCount})</span>
+						<span class="ml-1 text-xs text-warning tabular-nums"
+							>({stopsCount})</span
+						>
 					{/if}
 				</Tabs.Trigger>
 				<Tabs.Trigger
@@ -48,11 +50,13 @@
 					<Truck class="h-3.5 w-3.5" />
 					<span>Drivers</span>
 					{#if driversCount > 0}
-						<span class="ml-1 text-xs text-muted-foreground"
+						<span class="ml-1 text-xs text-muted-foreground tabular-nums"
 							>({driversCount})</span
 						>
 					{:else}
-						<span class="ml-1 text-xs text-warning">({driversCount})</span>
+						<span class="ml-1 text-xs text-warning tabular-nums"
+							>({driversCount})</span
+						>
 					{/if}
 				</Tabs.Trigger>
 			</Tabs.List>
