@@ -446,7 +446,7 @@
 						.getAllColumns()
 						.find((col) => col.id === searchField)
 						?.columnDef.header?.toString()
-						.toLowerCase() || 'field'}..."
+						.toLowerCase() || 'field'}…"
 					bind:value={searchValue}
 					class="flex-1"
 					type="search"
@@ -629,6 +629,7 @@
 						onclick={() => table.previousPage()}
 						disabled={!table.getCanPreviousPage()}
 						class="size-7 @sm:hidden"
+						aria-label="Previous page"
 					>
 						<ChevronDown class="h-4 w-4 rotate-90" />
 					</Button>
@@ -647,6 +648,7 @@
 						onclick={() => table.nextPage()}
 						disabled={!table.getCanNextPage()}
 						class="size-7 @sm:hidden"
+						aria-label="Next page"
 					>
 						<ChevronDown class="h-4 w-4 -rotate-90" />
 					</Button>

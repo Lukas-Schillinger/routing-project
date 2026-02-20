@@ -46,7 +46,12 @@
 			{/if}
 		</div>
 		<EditOrCreateDepotPopover mode="create" onSuccess={handleDepotSuccess}>
-			<Button variant="ghost" size="icon" class="h-7 w-7">
+			<Button
+				variant="ghost"
+				size="icon"
+				class="h-7 w-7"
+				aria-label="Add depot"
+			>
 				<Plus class="h-4 w-4" />
 			</Button>
 		</EditOrCreateDepotPopover>

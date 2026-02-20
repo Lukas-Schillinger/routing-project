@@ -52,7 +52,12 @@
 
 	<DropdownMenu.Root>
 		<DropdownMenu.Trigger>
-			<Button variant="ghost" size="icon" class="h-8 w-8">
+			<Button
+				variant="ghost"
+				size="icon"
+				class="h-8 w-8"
+				aria-label="Map options"
+			>
 				<Ellipsis class="h-4 w-4" />
 			</Button>
 		</DropdownMenu.Trigger>

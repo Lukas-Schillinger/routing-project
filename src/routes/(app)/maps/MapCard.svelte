@@ -179,7 +179,9 @@
 			<img
 				src={gridMapUrl}
 				alt="Map showing {stopCount} stops"
-				class="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+				class="absolute inset-0 h-full w-full bg-muted object-cover transition-transform duration-300 group-hover:scale-105"
+				width="600"
+				height="400"
 			/>
 
 			<!-- Ellipsis menu (frosted pill, top-right) -->
@@ -191,6 +193,7 @@
 							size="icon"
 							class="h-7 w-7 rounded-full border bg-background/55 text-muted-foreground shadow backdrop-blur-lg hover:bg-background/80 hover:text-foreground"
 							onclick={(e) => e.preventDefault()}
+							aria-label="Map options"
 						>
 							<MoreHorizontal class="h-4 w-4" />
 						</Button>
@@ -253,6 +256,7 @@
 							size="icon"
 							class="h-7 w-7 rounded-full text-muted-foreground/50 hover:text-muted-foreground"
 							onclick={(e) => e.preventDefault()}
+							aria-label="Map options"
 						>
 							<MoreHorizontal class="h-4 w-4" />
 						</Button>
@@ -321,6 +325,7 @@
 						size="icon"
 						class="h-7 w-7 shrink-0 text-muted-foreground"
 						onclick={(e) => e.preventDefault()}
+						aria-label="Map options"
 					>
 						<MoreHorizontal class="h-4 w-4" />
 					</Button>

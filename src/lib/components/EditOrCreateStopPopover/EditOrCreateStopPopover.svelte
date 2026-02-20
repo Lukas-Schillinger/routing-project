@@ -66,7 +66,7 @@
 					Add Stop
 				</Button>
 			{:else}
-				<Button variant="ghost" size="icon">
+				<Button variant="ghost" size="icon" aria-label="Edit stop">
 					<Pencil class="h-4 w-4" />
 				</Button>
 			{/if}
@@ -96,7 +96,7 @@
 					Add Stop
 				</Button>
 			{:else}
-				<Button variant="ghost" size="icon">
+				<Button variant="ghost" size="icon" aria-label="Edit stop">
 					<Pencil class="h-4 w-4" />
 				</Button>
 			{/if}

@@ -52,7 +52,7 @@
 			Create Driver
 		</Button>
 	{:else}
-		<Button {...props} variant="ghost" size="icon">
+		<Button {...props} variant="ghost" size="icon" aria-label="Edit driver">
 			<Pencil class="h-4 w-4" />
 		</Button>
 	{/if}

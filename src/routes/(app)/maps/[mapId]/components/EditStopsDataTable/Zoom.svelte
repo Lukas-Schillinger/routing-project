@@ -10,4 +10,8 @@
 	let { stopId, onZoomToStop }: Props = $props();
 </script>
 
-<Button onclick={() => onZoomToStop(stopId)} size="icon"><Eye /></Button>
+<Button
+	onclick={() => onZoomToStop(stopId)}
+	size="icon"
+	aria-label="Zoom to stop"><Eye /></Button
+>

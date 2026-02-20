@@ -351,7 +351,7 @@
 				<Popover.Content class="w-65 p-0" align="end">
 					<Command.Root>
 						<Command.Input
-							placeholder="Search existing drivers..."
+							placeholder="Search existing drivers…"
 							disabled={localIsLoading}
 						/>
 						<Command.Empty>No drivers found.</Command.Empty>
@@ -505,6 +505,7 @@
 											variant="ghost"
 											size="icon"
 											class="h-7 w-7"
+											aria-label="Driver options"
 										>
 											<Ellipsis class="h-4 w-4" />
 										</Button>

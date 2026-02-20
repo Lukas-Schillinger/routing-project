@@ -39,7 +39,13 @@
 		</div>
 		<EditOrCreateDriverPopover mode="create" onSuccess={handleDriverSuccess}>
 			{#snippet children({ props })}
-				<Button {...props} variant="ghost" size="icon" class="h-7 w-7">
+				<Button
+					{...props}
+					variant="ghost"
+					size="icon"
+					class="h-7 w-7"
+					aria-label="Add driver"
+				>
 					<Plus class="h-4 w-4" />
 				</Button>
 			{/snippet}

@@ -170,6 +170,7 @@
 									variant="ghost"
 									size="icon"
 									disabled={$submitting}
+									aria-label="Randomize color"
 								>
 									<RefreshCw class="h-4 w-4" />
 								</Button>
@@ -187,7 +188,7 @@
 						<Textarea
 							{...props}
 							bind:value={$formData.notes}
-							placeholder="Additional information..."
+							placeholder="Additional information…"
 							disabled={$submitting}
 							rows={3}
 							class="resize-none"

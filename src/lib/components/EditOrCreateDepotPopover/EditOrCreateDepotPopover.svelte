@@ -54,7 +54,7 @@
 					Create Depot
 				</Button>
 			{:else}
-				<Button variant="ghost" size="icon">
+				<Button variant="ghost" size="icon" aria-label="Edit depot">
 					<Pencil class="h-4 w-4" />
 				</Button>
 			{/if}
@@ -83,7 +83,7 @@
 					Create Depot
 				</Button>
 			{:else}
-				<Button variant="ghost" size="icon">
+				<Button variant="ghost" size="icon" aria-label="Edit depot">
 					<Pencil class="h-4 w-4" />
 				</Button>
 			{/if}

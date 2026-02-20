@@ -116,7 +116,7 @@
 				bind:value={nameValue}
 				oninput={handleNameInput}
 				onblur={handleNameBlur}
-				placeholder="Enter organization name"
+				placeholder="Enter organization name…"
 				disabled={isSavingName || !canUpdateUsers}
 				class="max-w-xs"
 			/>
@@ -223,6 +223,7 @@
 													variant="ghost"
 													size="icon"
 													class="h-8 w-8 text-muted-foreground hover:text-destructive"
+													aria-label="Remove user"
 												>
 													<Trash2 class="h-4 w-4" />
 												</Button>

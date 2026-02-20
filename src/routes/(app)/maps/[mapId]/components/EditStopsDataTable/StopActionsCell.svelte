@@ -34,7 +34,7 @@
 	};
 </script>
 
-<TableActionsDropdown>
+<TableActionsDropdown label="Stop options">
 	<EditOrCreateStopPopover
 		mode="edit"
 		triggerClass="w-full"

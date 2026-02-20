@@ -47,7 +47,7 @@
 						Create Map
 					</Button>
 				{:else}
-					<Button {...props} variant="ghost" size="icon">
+					<Button {...props} variant="ghost" size="icon" aria-label="Edit map">
 						<Pencil class="h-4 w-4" />
 					</Button>
 				{/if}
@@ -77,7 +77,7 @@
 						Create Map
 					</Button>
 				{:else}
-					<Button {...props} variant="ghost" size="icon">
+					<Button {...props} variant="ghost" size="icon" aria-label="Edit map">
 						<Pencil class="h-4 w-4" />
 					</Button>
 				{/if}
