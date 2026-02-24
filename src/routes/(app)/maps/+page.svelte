@@ -7,6 +7,10 @@
 	import { SortButton, type SortOption } from '$lib/components/ui/sort-button';
 	import * as Tabs from '$lib/components/ui/tabs';
 	import { ServiceError } from '$lib/errors';
+	import {
+		mapListParamsSchema,
+		type SortColumn
+	} from '$lib/schemas/map-list-params';
 	import { mapApi } from '$lib/services/api';
 	import { pendingImport } from '$lib/stores/pending-import';
 	import { parseCsvFile } from '$lib/utils';
@@ -23,9 +27,9 @@
 		Plus,
 		Search
 	} from 'lucide-svelte';
-	import { untrack } from 'svelte';
 	import { toast } from 'svelte-sonner';
-	import { MediaQuery, SvelteURLSearchParams } from 'svelte/reactivity';
+	import { MediaQuery } from 'svelte/reactivity';
+	import { useSearchParams } from 'runed/kit';
 	import type { PageData } from './$types';
 	import DepotsCard from './DepotsCard.svelte';
 	import DriversCard from './DriversCard.svelte';
@@ -83,36 +87,10 @@
 		await goto(resolve('/maps/import'));
 	}
 
-	// Initialize state from URL params (via server) - untrack since we only want initial values
-	type SortColumn = 'created_at' | 'title' | 'stops';
-	let searchQuery = $state(untrack(() => data.initialState.searchQuery));
-	let currentPage = $state(untrack(() => data.initialState.currentPage));
-	let viewMode = $state<'list' | 'compact'>(
-		untrack(() => data.initialState.viewMode)
-	);
-	let sortColumn = $state<SortColumn>(
-		untrack(() => data.initialState.sortColumn)
-	);
-	let sortDirection = $state<'asc' | 'desc'>(
-		untrack(() => data.initialState.sortDirection)
-	);
+	const params = useSearchParams(mapListParamsSchema, {
+		pushHistory: false
+	});
 	const isMobile = new MediaQuery('(max-width: 640px)');
-
-	// TODO: Migrate to runed's useSearchParams for automatic bidirectional URL sync
-	function updateUrlParams() {
-		const params = new SvelteURLSearchParams();
-		if (searchQuery) params.set('q', searchQuery);
-		if (viewMode !== 'compact') params.set('view', viewMode);
-		if (sortColumn !== 'created_at') params.set('sort', sortColumn);
-		if (sortDirection !== 'desc') params.set('dir', sortDirection);
-		if (currentPage > 1) params.set('page', currentPage.toString());
-
-		const queryString = params.toString();
-		const newUrl = queryString ? `/maps?${queryString}` : '/maps';
-
-		// Use history.replaceState directly to avoid triggering SvelteKit navigation
-		history.replaceState(history.state, '', newUrl);
-	}
 
 	const sortOptions: SortOption<SortColumn>[] = [
 		{ value: 'created_at', label: 'Date' },
@@ -126,21 +104,21 @@
 
 	// Responsive page size
 	const pageSize = $derived(
-		isMobile.current ? 10 : viewMode === 'compact' ? 12 : 20
+		isMobile.current ? 10 : params.view === 'compact' ? 12 : 20
 	);
 
 	// Filter and sort maps
-	const filteredMaps = $derived(() => {
-		let maps = searchQuery
+	const filteredMaps = $derived.by(() => {
+		let maps = params.q
 			? data.maps.filter((map) =>
-					map.title.toLowerCase().includes(searchQuery.toLowerCase())
+					map.title.toLowerCase().includes(params.q.toLowerCase())
 				)
 			: [...data.maps];
 
 		// Sort maps
 		maps.sort((a, b) => {
 			let comparison = 0;
-			switch (sortColumn) {
+			switch (params.sort) {
 				case 'created_at':
 					comparison =
 						new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
@@ -152,40 +130,33 @@
 					comparison = getMapStopCount(a.id) - getMapStopCount(b.id);
 					break;
 			}
-			return sortDirection === 'asc' ? comparison : -comparison;
+			return params.dir === 'asc' ? comparison : -comparison;
 		});
 
 		return maps;
 	});
 
 	// Pagination calculations
-	const totalPages = $derived(Math.ceil(filteredMaps().length / pageSize));
+	const totalPages = $derived(Math.ceil(filteredMaps.length / pageSize));
 	const paginatedMaps = $derived(
-		filteredMaps().slice((currentPage - 1) * pageSize, currentPage * pageSize)
+		filteredMaps.slice((params.page - 1) * pageSize, params.page * pageSize)
 	);
 
 	// Reset to page 1 when search changes or when current page exceeds total
 	$effect(() => {
-		if (searchQuery) {
-			currentPage = 1;
+		if (params.q) {
+			params.page = 1;
 		}
 	});
 
 	$effect(() => {
-		if (currentPage > totalPages && totalPages > 0) {
-			currentPage = totalPages;
+		if (params.page > totalPages && totalPages > 0) {
+			params.page = totalPages;
 		}
-	});
-
-	// Sync state changes to URL
-	$effect(() => {
-		// Track all state values to trigger URL update
-		void [searchQuery, viewMode, sortColumn, sortDirection, currentPage];
-		updateUrlParams();
 	});
 
 	// Group stop coordinates by map_id for MapCard
-	const stopCoordinatesByMap = $derived(() => {
+	const stopCoordinatesByMap = $derived.by(() => {
 		const grouped: Record<string, typeof data.stopCoordinates> = {};
 		for (const coord of data.stopCoordinates) {
 			(grouped[coord.map_id] ??= []).push(coord);
@@ -196,7 +167,7 @@
 	// Pagination helpers
 	function goToPage(page: number) {
 		if (page >= 1 && page <= totalPages) {
-			currentPage = page;
+			params.page = page;
 		}
 	}
 
@@ -208,7 +179,7 @@
 			for (let i = 1; i <= totalPages; i++) pages.push(i);
 		} else {
 			const half = Math.floor(maxVisible / 2);
-			let start = Math.max(1, currentPage - half);
+			let start = Math.max(1, params.page - half);
 			let end = Math.min(totalPages, start + maxVisible - 1);
 
 			if (end - start < maxVisible - 1) {
@@ -276,7 +247,7 @@
 				type="search"
 				placeholder="Search maps…"
 				class="h-9 w-full border-border/50 bg-card pl-10 transition-colors focus:border-border sm:max-w-sm"
-				bind:value={searchQuery}
+				bind:value={params.q}
 			/>
 		</div>
 
@@ -284,7 +255,7 @@
 		<div class="flex items-center justify-between gap-2">
 			<div class="flex items-center gap-2">
 				<!-- View Mode Tabs -->
-				<Tabs.Root bind:value={viewMode} class="w-auto">
+				<Tabs.Root bind:value={params.view} class="w-auto">
 					<Tabs.List class="h-8 bg-card">
 						<Tabs.Trigger value="compact" class="gap-1.5 px-3">
 							<Grid3x3 class="h-4 w-4" />
@@ -300,19 +271,19 @@
 				<!-- Sort Button -->
 				<SortButton
 					options={sortOptions}
-					bind:value={sortColumn}
-					bind:direction={sortDirection}
+					bind:value={params.sort}
+					bind:direction={params.dir}
 				/>
 			</div>
 
 			<!-- Results count -->
-			{#if filteredMaps().length > 0}
+			{#if filteredMaps.length > 0}
 				<span class="text-sm text-muted-foreground tabular-nums">
-					{(currentPage - 1) * pageSize + 1}-{Math.min(
-						currentPage * pageSize,
-						filteredMaps().length
+					{(params.page - 1) * pageSize + 1}-{Math.min(
+						params.page * pageSize,
+						filteredMaps.length
 					)}
-					of {filteredMaps().length}
+					of {filteredMaps.length}
 				</span>
 			{/if}
 		</div>
@@ -322,7 +293,7 @@
 	<div class="grid gap-8 md:grid-cols-3">
 		<!-- Maps Section (2/3 width on large screens) -->
 		<div class="md:col-span-2">
-			{#if filteredMaps().length === 0}
+			{#if filteredMaps.length === 0}
 				<div
 					class="flex flex-col items-center justify-center rounded-lg border border-dashed border-border/50 bg-card/50 py-16"
 				>
@@ -331,7 +302,7 @@
 					>
 						<MapPin class="h-6 w-6 text-muted-foreground" />
 					</div>
-					{#if searchQuery}
+					{#if params.q}
 						<h3 class="mt-4 font-medium">No maps found</h3>
 						<p class="mt-1 text-sm text-muted-foreground">
 							Try adjusting your search query
@@ -339,7 +310,7 @@
 						<Button
 							class="mt-4"
 							variant="outline"
-							onclick={() => (searchQuery = '')}
+							onclick={() => (params.q = '')}
 						>
 							Clear search
 						</Button>
@@ -367,7 +338,7 @@
 			{:else}
 				<!-- Maps Grid/List -->
 				<div
-					class={viewMode === 'compact'
+					class={params.view === 'compact'
 						? 'grid grid-cols-1 gap-2 sm:grid-cols-2'
 						: 'divide-y divide-border/50 rounded-lg border border-border/50'}
 				>
@@ -375,9 +346,9 @@
 						<MapCard
 							{map}
 							stats={data.mapStats[map.id]}
-							stopCoordinates={stopCoordinatesByMap()[map.id] ?? []}
+							stopCoordinates={stopCoordinatesByMap[map.id] ?? []}
 							drivers={data.drivers}
-							showThumbnail={viewMode === 'list'}
+							showThumbnail={params.view === 'list'}
 						/>
 					{/each}
 				</div>
@@ -393,7 +364,7 @@
 								variant="ghost"
 								size="icon"
 								class="hidden h-8 w-8 sm:flex"
-								disabled={currentPage === 1}
+								disabled={params.page === 1}
 								onclick={() => goToPage(1)}
 								aria-label="First page"
 							>
@@ -404,8 +375,8 @@
 								variant="ghost"
 								size="icon"
 								class="h-8 w-8"
-								disabled={currentPage === 1}
-								onclick={() => goToPage(currentPage - 1)}
+								disabled={params.page === 1}
+								onclick={() => goToPage(params.page - 1)}
 								aria-label="Previous page"
 							>
 								<ChevronLeft class="h-4 w-4" />
@@ -416,7 +387,7 @@
 						<div class="flex items-center gap-1">
 							{#each getVisiblePageNumbers() as page (page)}
 								<Button
-									variant={currentPage === page ? 'secondary' : 'ghost'}
+									variant={params.page === page ? 'secondary' : 'ghost'}
 									size="icon"
 									class="h-8 w-8 text-sm"
 									onclick={() => goToPage(page)}
@@ -433,8 +404,8 @@
 								variant="ghost"
 								size="icon"
 								class="h-8 w-8"
-								disabled={currentPage === totalPages}
-								onclick={() => goToPage(currentPage + 1)}
+								disabled={params.page === totalPages}
+								onclick={() => goToPage(params.page + 1)}
 								aria-label="Next page"
 							>
 								<ChevronRight class="h-4 w-4" />
@@ -444,7 +415,7 @@
 								variant="ghost"
 								size="icon"
 								class="hidden h-8 w-8 sm:flex"
-								disabled={currentPage === totalPages}
+								disabled={params.page === totalPages}
 								onclick={() => goToPage(totalPages)}
 								aria-label="Last page"
 							>
