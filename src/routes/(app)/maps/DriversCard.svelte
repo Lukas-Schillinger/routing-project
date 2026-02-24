@@ -81,7 +81,7 @@
 			<div
 				class="flex flex-col gap-2 sm:grid sm:grid-cols-2 md:flex md:flex-col"
 			>
-				{#each drivers.slice(0, 5) as driver (driver.id)}
+				{#each drivers as driver (driver.id)}
 					<EditOrCreateDriverPopover
 						triggerClass="block w-full min-w-0 overflow-hidden"
 						mode="edit"
@@ -117,14 +117,6 @@
 					</EditOrCreateDriverPopover>
 				{/each}
 			</div>
-
-			{#if drivers.length > 5}
-				<p
-					class="mt-2 border-t border-border/50 pt-2 text-center text-xs text-muted-foreground"
-				>
-					{drivers.length - 5} more driver{drivers.length - 5 !== 1 ? 's' : ''}
-				</p>
-			{/if}
 		{/if}
 	</div>
 </div>

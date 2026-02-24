@@ -122,14 +122,6 @@
 					</EditOrCreateDepotPopover>
 				{/each}
 			</div>
-
-			{#if depots.length > 4}
-				<p
-					class="mt-2 border-t border-border/50 pt-2 text-center text-xs text-muted-foreground"
-				>
-					{depots.length - 4} more depot{depots.length - 4 !== 1 ? 's' : ''}
-				</p>
-			{/if}
 		{/if}
 	</div>
 </div>

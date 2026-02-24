@@ -120,8 +120,7 @@
 			let comparison = 0;
 			switch (params.sort) {
 				case 'created_at':
-					comparison =
-						new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+					comparison = a.created_at.getTime() - b.created_at.getTime();
 					break;
 				case 'title':
 					comparison = a.title.localeCompare(b.title);
@@ -146,13 +145,9 @@
 	);
 
 	// Group stop coordinates by map_id for MapCard
-	const stopCoordinatesByMap = $derived.by(() => {
-		const grouped: Record<string, typeof data.stopCoordinates> = {};
-		for (const coord of data.stopCoordinates) {
-			(grouped[coord.map_id] ??= []).push(coord);
-		}
-		return grouped;
-	});
+	const stopCoordinatesByMap = $derived(
+		Object.groupBy(data.stopCoordinates, (coord) => coord.map_id)
+	);
 
 	// Pagination helpers
 	function goToPage(page: number) {
@@ -269,7 +264,10 @@
 
 			<!-- Results count -->
 			{#if filteredMaps.length > 0}
-				<span class="text-sm text-muted-foreground tabular-nums">
+				<span
+					class="text-sm text-muted-foreground tabular-nums"
+					aria-live="polite"
+				>
 					{(currentPage - 1) * pageSize + 1}-{Math.min(
 						currentPage * pageSize,
 						filteredMaps.length
@@ -346,7 +344,8 @@
 
 				<!-- Pagination -->
 				{#if totalPages > 1}
-					<div
+					<nav
+						aria-label="Pagination"
 						class="mt-6 flex items-center justify-between border-t border-border/50 pt-4"
 					>
 						<div class="flex items-center gap-1">
@@ -413,7 +412,7 @@
 								<ChevronsRight class="h-4 w-4" />
 							</Button>
 						</div>
-					</div>
+					</nav>
 				{/if}
 			{/if}
 		</div>
