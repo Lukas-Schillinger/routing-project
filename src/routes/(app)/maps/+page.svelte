@@ -252,7 +252,7 @@
 				>
 					{#if isCreatingMap}
 						<Loader2 class="h-4 w-4 animate-spin" />
-						Creating...
+						Creating…
 					{:else}
 						<Plus class="h-4 w-4" />
 						New Map
@@ -356,7 +356,7 @@
 						>
 							{#if isCreatingMap}
 								<Loader2 class="h-4 w-4 animate-spin" />
-								Creating...
+								Creating…
 							{:else}
 								<Plus class="h-4 w-4" />
 								Create Map

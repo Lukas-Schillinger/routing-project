@@ -55,7 +55,7 @@
 					: ''
 	);
 
-	const totalDuration = $derived(() => {
+	const totalDuration = $derived.by(() => {
 		const total = stats?.total_duration ?? 0;
 		if (total === 0) return null;
 		const hours = Math.floor(total / 3600);
@@ -214,7 +214,9 @@
 				<div class="flex items-center gap-2">
 					<Tooltip.Provider>
 						<Tooltip.Root>
-							<Tooltip.Trigger>
+							<Tooltip.Trigger
+								aria-label={routingTooltip || 'No routing status'}
+							>
 								{@render statusIcon(14)}
 							</Tooltip.Trigger>
 							{#if routingTooltip}
@@ -235,9 +237,9 @@
 							>{driverCount} driver{driverCount !== 1 ? 's' : ''}</span
 						>
 					{/if}
-					{#if totalDuration()}
+					{#if totalDuration}
 						<span class="before:mx-1.5 before:content-['·']"
-							>{totalDuration()}</span
+							>{totalDuration}</span
 						>
 					{/if}
 					<span class="ml-auto">
@@ -289,7 +291,7 @@
 	>
 		<Tooltip.Provider>
 			<Tooltip.Root>
-				<Tooltip.Trigger>
+				<Tooltip.Trigger aria-label={routingTooltip || 'No routing status'}>
 					{@render statusIcon(16)}
 				</Tooltip.Trigger>
 				{#if routingTooltip}
@@ -313,8 +315,8 @@
 							? 's'
 							: ''}
 					{/if}
-					{#if totalDuration()}
-						<span class="mx-1">·</span>{totalDuration()}
+					{#if totalDuration}
+						<span class="mx-1">·</span>{totalDuration}
 					{/if}
 				</span>
 			{/if}

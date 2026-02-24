@@ -7,7 +7,7 @@
 	import type { Driver } from '$lib/schemas/driver';
 	import { driverApi } from '$lib/services/api/drivers';
 	import { formatPhoneNumber, getIdenticon } from '$lib/utils';
-	import { ChevronRight, Phone, Plus, Truck, Users } from 'lucide-svelte';
+	import { Phone, Plus, Truck, Users } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
 	let { drivers = $bindable([]) }: { drivers: Driver[] } = $props();
@@ -119,16 +119,11 @@
 			</div>
 
 			{#if drivers.length > 5}
-				<div class="mt-2 border-t border-border/50 pt-2">
-					<Button
-						variant="ghost"
-						size="sm"
-						class="w-full justify-between text-xs"
-					>
-						<span>View all {drivers.length} drivers</span>
-						<ChevronRight class="h-3.5 w-3.5" />
-					</Button>
-				</div>
+				<p
+					class="mt-2 border-t border-border/50 pt-2 text-center text-xs text-muted-foreground"
+				>
+					{drivers.length - 5} more driver{drivers.length - 5 !== 1 ? 's' : ''}
+				</p>
 			{/if}
 		{/if}
 	</div>

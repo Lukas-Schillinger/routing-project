@@ -5,7 +5,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import type { DepotWithLocationJoin } from '$lib/schemas/depot';
 	import { depotApi } from '$lib/services/api/depots';
-	import { Building2, ChevronRight, MapPin, Plus, Star } from 'lucide-svelte';
+	import { Building2, MapPin, Plus, Star } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
 	let { depots = $bindable([]) }: { depots: DepotWithLocationJoin[] } =
@@ -97,9 +97,12 @@
 								class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted"
 							>
 								{#if depot.depot.default_depot}
-									<Star class="h-4 w-4 text-primary" />
+									<Star class="h-4 w-4 text-primary" aria-hidden="true" />
 								{:else}
-									<MapPin class="h-4 w-4 text-muted-foreground" />
+									<MapPin
+										class="h-4 w-4 text-muted-foreground"
+										aria-hidden="true"
+									/>
 								{/if}
 							</div>
 							<div class="min-w-0 flex-1">
@@ -121,16 +124,11 @@
 			</div>
 
 			{#if depots.length > 4}
-				<div class="mt-2 border-t border-border/50 pt-2">
-					<Button
-						variant="ghost"
-						size="sm"
-						class="w-full justify-between text-xs"
-					>
-						<span>View all {depots.length} depots</span>
-						<ChevronRight class="h-3.5 w-3.5" />
-					</Button>
-				</div>
+				<p
+					class="mt-2 border-t border-border/50 pt-2 text-center text-xs text-muted-foreground"
+				>
+					{depots.length - 4} more depot{depots.length - 4 !== 1 ? 's' : ''}
+				</p>
 			{/if}
 		{/if}
 	</div>
