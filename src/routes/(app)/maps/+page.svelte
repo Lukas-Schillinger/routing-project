@@ -136,24 +136,14 @@
 		return maps;
 	});
 
-	// Pagination calculations
+	// Pagination calculations — clamp page to valid range instead of using effects
 	const totalPages = $derived(Math.ceil(filteredMaps.length / pageSize));
-	const paginatedMaps = $derived(
-		filteredMaps.slice((params.page - 1) * pageSize, params.page * pageSize)
+	const currentPage = $derived(
+		Math.min(Math.max(1, params.page), Math.max(1, totalPages))
 	);
-
-	// Reset to page 1 when search changes or when current page exceeds total
-	$effect(() => {
-		if (params.q) {
-			params.page = 1;
-		}
-	});
-
-	$effect(() => {
-		if (params.page > totalPages && totalPages > 0) {
-			params.page = totalPages;
-		}
-	});
+	const paginatedMaps = $derived(
+		filteredMaps.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+	);
 
 	// Group stop coordinates by map_id for MapCard
 	const stopCoordinatesByMap = $derived.by(() => {
@@ -179,7 +169,7 @@
 			for (let i = 1; i <= totalPages; i++) pages.push(i);
 		} else {
 			const half = Math.floor(maxVisible / 2);
-			let start = Math.max(1, params.page - half);
+			let start = Math.max(1, currentPage - half);
 			let end = Math.min(totalPages, start + maxVisible - 1);
 
 			if (end - start < maxVisible - 1) {
@@ -248,6 +238,7 @@
 				placeholder="Search maps…"
 				class="h-9 w-full border-border/50 bg-card pl-10 transition-colors focus:border-border sm:max-w-sm"
 				bind:value={params.q}
+				oninput={() => (params.page = 1)}
 			/>
 		</div>
 
@@ -279,8 +270,8 @@
 			<!-- Results count -->
 			{#if filteredMaps.length > 0}
 				<span class="text-sm text-muted-foreground tabular-nums">
-					{(params.page - 1) * pageSize + 1}-{Math.min(
-						params.page * pageSize,
+					{(currentPage - 1) * pageSize + 1}-{Math.min(
+						currentPage * pageSize,
 						filteredMaps.length
 					)}
 					of {filteredMaps.length}
@@ -364,7 +355,7 @@
 								variant="ghost"
 								size="icon"
 								class="hidden h-8 w-8 sm:flex"
-								disabled={params.page === 1}
+								disabled={currentPage === 1}
 								onclick={() => goToPage(1)}
 								aria-label="First page"
 							>
@@ -375,8 +366,8 @@
 								variant="ghost"
 								size="icon"
 								class="h-8 w-8"
-								disabled={params.page === 1}
-								onclick={() => goToPage(params.page - 1)}
+								disabled={currentPage === 1}
+								onclick={() => goToPage(currentPage - 1)}
 								aria-label="Previous page"
 							>
 								<ChevronLeft class="h-4 w-4" />
@@ -387,7 +378,7 @@
 						<div class="flex items-center gap-1">
 							{#each getVisiblePageNumbers() as page (page)}
 								<Button
-									variant={params.page === page ? 'secondary' : 'ghost'}
+									variant={currentPage === page ? 'secondary' : 'ghost'}
 									size="icon"
 									class="h-8 w-8 text-sm"
 									onclick={() => goToPage(page)}
@@ -404,8 +395,8 @@
 								variant="ghost"
 								size="icon"
 								class="h-8 w-8"
-								disabled={params.page === totalPages}
-								onclick={() => goToPage(params.page + 1)}
+								disabled={currentPage === totalPages}
+								onclick={() => goToPage(currentPage + 1)}
 								aria-label="Next page"
 							>
 								<ChevronRight class="h-4 w-4" />
@@ -415,7 +406,7 @@
 								variant="ghost"
 								size="icon"
 								class="hidden h-8 w-8 sm:flex"
-								disabled={params.page === totalPages}
+								disabled={currentPage === totalPages}
 								onclick={() => goToPage(totalPages)}
 								aria-label="Last page"
 							>
