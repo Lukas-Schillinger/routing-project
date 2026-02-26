@@ -5,7 +5,7 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
-	import { Progress } from '$lib/components/ui/progress';
+	import { CreditProgressBar } from '$lib/components/billing';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import * as Table from '$lib/components/ui/table';
 	import type { CreditBalance } from '$lib/schemas/billing';
@@ -81,21 +81,6 @@
 
 	// Collapsible state
 	let historyOpen = $state(false);
-
-	// Credit remaining calculations
-	const remainingPercentage = $derived(
-		monthlyCredits > 0
-			? Math.round((credits.available / monthlyCredits) * 100)
-			: 0
-	);
-
-	const progressColorClass = $derived.by(() => {
-		if (remainingPercentage <= 0)
-			return '[&_[data-slot=progress-indicator]]:bg-red-600';
-		if (remainingPercentage <= 20)
-			return '[&_[data-slot=progress-indicator]]:bg-yellow-600';
-		return '[&_[data-slot=progress-indicator]]:bg-primary';
-	});
 
 	// Transaction formatting helpers
 	function formatTransactionType(type: CreditTransactionType): string {
@@ -204,14 +189,7 @@
 				<p class="text-sm font-medium">Credits</p>
 			</div>
 			<div class="flex flex-1 flex-col gap-2 md:max-w-xs">
-				<Progress
-					value={remainingPercentage}
-					max={100}
-					class={progressColorClass}
-				/>
-				<p class="text-sm text-muted-foreground">
-					{credits.available.toLocaleString()} / {monthlyCredits.toLocaleString()}
-				</p>
+				<CreditProgressBar available={credits.available} {monthlyCredits} />
 			</div>
 		</div>
 

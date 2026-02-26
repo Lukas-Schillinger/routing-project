@@ -2,7 +2,7 @@
 	import * as Dialog from '$lib/components/ui/dialog';
 	import * as InputGroup from '$lib/components/ui/input-group';
 	import { Button } from '$lib/components/ui/button';
-	import { Progress } from '$lib/components/ui/progress';
+	import CreditProgressBar from './CreditProgressBar.svelte';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { billingApi } from '$lib/services/api/billing';
 	import type { CreditBalance } from '$lib/schemas/billing';
@@ -41,14 +41,6 @@
 			? Math.round((credits.available / monthlyCredits) * 100)
 			: 0
 	);
-
-	const progressColorClass = $derived.by(() => {
-		if (remainingPercentage <= 0)
-			return '[&_[data-slot=progress-indicator]]:bg-red-600';
-		if (remainingPercentage <= 20)
-			return '[&_[data-slot=progress-indicator]]:bg-yellow-600';
-		return '[&_[data-slot=progress-indicator]]:bg-primary';
-	});
 
 	const statusColorClass = $derived.by(() => {
 		if (remainingPercentage <= 0) return 'text-red-600';
@@ -124,14 +116,12 @@
 				{credits.available.toLocaleString()} / {monthlyCredits.toLocaleString()}
 			</span>
 		</div>
-		<Progress
-			value={remainingPercentage}
-			max={100}
-			class={progressColorClass}
+		<CreditProgressBar
+			available={credits.available}
+			{monthlyCredits}
+			showCount={false}
+			showPercentageLabel
 		/>
-		<p class="text-center text-xs text-muted-foreground">
-			{remainingPercentage}% remaining this period
-		</p>
 	</div>
 {/snippet}
 
