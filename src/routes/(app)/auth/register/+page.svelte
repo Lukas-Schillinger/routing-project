@@ -80,28 +80,6 @@
 				</div>
 			</div>
 
-			<div class="space-y-1.5">
-				<Label
-					for="confirm-password"
-					class="text-xs font-medium tracking-wider text-muted-foreground uppercase"
-				>
-					Confirm password
-				</Label>
-				<div class="relative">
-					<Lock
-						class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground/50"
-					/>
-					<Input
-						id="confirm-password"
-						type="password"
-						name="password-confirm"
-						placeholder="Confirm your password…"
-						class="h-11 border-border/50 bg-background/50 pl-10 transition-colors focus:border-primary/50 focus:bg-background"
-						required
-					/>
-				</div>
-			</div>
-
 			<div class="pt-2">
 				<Button
 					type="submit"

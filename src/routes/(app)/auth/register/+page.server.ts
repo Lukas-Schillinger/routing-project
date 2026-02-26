@@ -20,13 +20,8 @@ export const actions: Actions = {
 		const formData = await event.request.formData();
 		const email = formData.get('email');
 		const password = formData.get('password');
-		const passwordConfirm = formData.get('password-confirm');
 
-		const validation = registerSchema.safeParse({
-			email,
-			password,
-			passwordConfirm
-		});
+		const validation = registerSchema.safeParse({ email, password });
 		if (!validation.success) {
 			const errors = validation.error.issues;
 			const firstError = errors[0];

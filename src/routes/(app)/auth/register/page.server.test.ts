@@ -146,28 +146,18 @@ describe('Registration Server Actions', () => {
 			it('should validate complete registration input', () => {
 				const validInput = {
 					email: 'test@example.com',
-					password: 'password123',
-					passwordConfirm: 'password123'
+					password: 'password123'
 				};
 				expect(registerSchema.safeParse(validInput).success).toBe(true);
 			});
 
 			it('should reject invalid registration input', () => {
 				const invalidInputs = [
-					{
-						email: 'invalid',
-						password: 'password123',
-						passwordConfirm: 'password123'
-					},
-					{
-						email: 'test@example.com',
-						password: '123',
-						passwordConfirm: '123'
-					},
-					{ email: '', password: '', passwordConfirm: '' },
-					{ email: 'test@example.com', passwordConfirm: 'password123' }, // missing password
-					{ password: 'password123', passwordConfirm: 'password123' }, // missing email
-					{ email: 'test@example.com', password: 'password123' } // missing contirm password
+					{ email: 'invalid', password: 'password123' },
+					{ email: 'test@example.com', password: '123' },
+					{ email: '', password: '' },
+					{ email: 'test@example.com' }, // missing password
+					{ password: 'password123' } // missing email
 				];
 
 				invalidInputs.forEach((input) => {
@@ -228,8 +218,7 @@ describe('Registration Server Actions', () => {
 						formData: vi.fn().mockResolvedValue(
 							new Map([
 								['email', 'newuser@example.com'],
-								['password', 'password123'],
-								['password-confirm', 'password123']
+								['password', 'password123']
 							])
 						)
 					},
@@ -288,8 +277,7 @@ describe('Registration Server Actions', () => {
 						formData: vi.fn().mockResolvedValue(
 							new Map([
 								['email', 'existing@example.com'],
-								['password', 'password123'],
-								['password-confirm', 'password123']
+								['password', 'password123']
 							])
 						)
 					},

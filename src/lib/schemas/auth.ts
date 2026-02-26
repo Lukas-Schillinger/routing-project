@@ -9,16 +9,10 @@ export const loginSchema = z.object({
 	password: passwordSchema
 });
 
-export const registerSchema = z
-	.object({
-		email: emailSchema,
-		password: passwordSchema,
-		passwordConfirm: passwordSchema
-	})
-	.refine((data) => data.password === data.passwordConfirm, {
-		message: "Passwords don't match",
-		path: ['passwordConfirm']
-	});
+export const registerSchema = z.object({
+	email: emailSchema,
+	password: passwordSchema
+});
 
 export const createInvitationSchema = z.object({
 	email: emailSchema,
