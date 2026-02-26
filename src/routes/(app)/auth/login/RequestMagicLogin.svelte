@@ -1,3 +1,9 @@
+<!--
+	No superforms here. The request-OTP and verify-OTP forms share an email
+	value and are simple enough (one field each) that superforms' store-based
+	approach adds indirection without benefit. Plain $state + native enhance
+	keeps the data flow obvious.
+-->
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { AuthAlert } from '$lib/components/auth';
@@ -5,7 +11,6 @@
 	import { Input } from '$lib/components/ui/input';
 	import * as InputOTP from '$lib/components/ui/input-otp';
 	import { Label } from '$lib/components/ui/label';
-	import { loginTokensApi } from '$lib/services/api/auth';
 	import {
 		ArrowLeft,
 		ArrowRight,
@@ -34,51 +39,25 @@
 		initialOtpSent = false
 	}: Props = $props();
 
-	let internalEmail = $derived(initialEmail);
-	let email = $derived(debugEmail ?? internalEmail);
+	let email = $state(initialEmail);
 	let code = $state('');
+	let internalOtpSent = $state(initialOtpSent);
 	let isSubmitting = $state(false);
-	let internalOtpSent = $derived(initialOtpSent);
+	let errorMessage = $state<string | null>(null);
+	let successMessage = $state<string | null>(null);
 	let otpFormRef: HTMLFormElement | undefined = $state();
 
-	let internalErrorMessage = $state<string | null>(null);
-	let internalSuccessMessage = $state<string | null>(null);
-
-	// Use debug values if provided, otherwise use internal state
-	let otpSent = $derived(debugOtpSent ?? internalOtpSent);
-	let errorMessage = $derived(debugError ?? internalErrorMessage);
-	let successMessage = $derived(debugSuccess ?? internalSuccessMessage);
-
-	async function handleRequestOTP(e: Event) {
-		e.preventDefault();
-
-		if (!internalEmail) {
-			internalErrorMessage = 'Email is required';
-			return;
-		}
-
-		isSubmitting = true;
-		internalErrorMessage = null;
-		internalSuccessMessage = null;
-
-		try {
-			await loginTokensApi.requestLoginToken({ email });
-			internalSuccessMessage = 'Check your inbox for a login code';
-			internalOtpSent = true;
-		} catch (err) {
-			internalErrorMessage =
-				err instanceof Error ? err.message : 'Error sending login code';
-		} finally {
-			isSubmitting = false;
-		}
-	}
+	const otpSent = $derived(debugOtpSent ?? internalOtpSent);
+	const displayEmail = $derived(debugEmail ?? email);
+	const displayError = $derived(debugError ?? errorMessage);
+	const displaySuccess = $derived(debugSuccess ?? successMessage);
 
 	function handleBack() {
 		if (otpSent) {
 			internalOtpSent = false;
 			code = '';
-			internalErrorMessage = null;
-			internalSuccessMessage = null;
+			errorMessage = null;
+			successMessage = null;
 		} else {
 			onBack();
 		}
@@ -86,8 +65,30 @@
 </script>
 
 {#if !otpSent}
-	<form onsubmit={handleRequestOTP} class="space-y-5">
-		<AuthAlert message={errorMessage} />
+	<form
+		method="post"
+		action="?/requestOTP"
+		use:enhance={() => {
+			isSubmitting = true;
+			errorMessage = null;
+			return async ({ result, update }) => {
+				isSubmitting = false;
+				if (result.type === 'failure') {
+					errorMessage =
+						(result.data as { otpError?: string })?.otpError ??
+						'Error sending login code';
+				} else if (result.type === 'success') {
+					successMessage = 'Check your inbox for a login code';
+					internalOtpSent = true;
+				} else {
+					await update();
+				}
+			};
+		}}
+		class="space-y-5"
+		novalidate
+	>
+		<AuthAlert message={displayError} />
 
 		<div class="space-y-1.5">
 			<Label
@@ -103,7 +104,8 @@
 				<Input
 					id="magic-email"
 					type="email"
-					bind:value={internalEmail}
+					name="email"
+					bind:value={email}
 					placeholder="you@example.com"
 					class="h-11 border-border/50 bg-background/50 pl-10 transition-colors focus:border-primary/50 focus:bg-background"
 					required
@@ -146,17 +148,24 @@
 		action="?/verifyOTP"
 		use:enhance={() => {
 			isSubmitting = true;
-			return async ({ update }) => {
-				await update();
+			errorMessage = null;
+			return async ({ result, update }) => {
 				isSubmitting = false;
+				if (result.type === 'failure') {
+					errorMessage =
+						(result.data as { otpError?: string })?.otpError ??
+						'Verification failed';
+				} else {
+					await update();
+				}
 			};
 		}}
 		class="space-y-5"
 	>
-		<AuthAlert message={errorMessage} />
-		<AuthAlert message={successMessage} variant="success" />
+		<AuthAlert message={displayError} />
+		<AuthAlert message={displaySuccess} variant="success" />
 
-		<input type="hidden" name="email" value={email} />
+		<input type="hidden" name="email" value={displayEmail} />
 		<input type="hidden" name="code" value={code} />
 
 		<div class="space-y-3">
@@ -193,7 +202,7 @@
 				</InputOTP.Root>
 			</div>
 			<p class="text-center text-xs text-muted-foreground">
-				Sent to {email}
+				Sent to {displayEmail}
 			</p>
 		</div>
 

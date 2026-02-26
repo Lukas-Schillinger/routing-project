@@ -1,45 +1,69 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
+	import { enhance as nativeEnhance } from '$app/forms';
 	import { AuthAlert } from '$lib/components/auth';
 	import { Button } from '$lib/components/ui/button';
+	import * as Form from '$lib/components/ui/form';
 	import { Input } from '$lib/components/ui/input';
-	import { Label } from '$lib/components/ui/label';
+	import { loginSchema } from '$lib/schemas/auth';
 	import { ArrowLeft, Loader2, Lock, Mail } from 'lucide-svelte';
-	import type { ActionData } from './$types';
+	import type { Infer, SuperValidated } from 'sveltekit-superforms';
+	import { superForm } from 'sveltekit-superforms';
+	import { zod4Client } from 'sveltekit-superforms/adapters';
 
 	let {
-		form,
-		onRequestMagicLogin
+		loginForm: loginFormData,
+		onRequestMagicLogin,
+		debugMessage = undefined
 	}: {
-		form: ActionData;
+		loginForm: SuperValidated<Infer<typeof loginSchema>>;
 		onRequestMagicLogin: () => void;
+		debugMessage?: string | null;
 	} = $props();
 
-	let isSubmitting = $state(false);
-	let isResending = $state(false);
-	let emailValue = $state('');
+	const form = superForm(loginFormData, {
+		validators: zod4Client(loginSchema)
+	});
+	const { form: formData, enhance, submitting, message } = form;
 
-	let url = $derived(
-		`/auth/password-reset?email=${encodeURIComponent(emailValue)}`
+	// Parse $message: either a typed object { text, code, email } or a plain string
+	const parsed = $derived.by(() => {
+		if (debugMessage) return { text: debugMessage, unconfirmedEmail: null };
+		if (!$message) return null;
+		if (typeof $message === 'object' && 'code' in $message) {
+			const msg = $message as { text: string; code: string; email: string };
+			return {
+				text: msg.text,
+				unconfirmedEmail: msg.code === 'EMAIL_NOT_CONFIRMED' ? msg.email : null
+			};
+		}
+		return { text: $message as string, unconfirmedEmail: null };
+	});
+
+	let isResending = $state(false);
+	let resendSuccess = $state(false);
+
+	const passwordResetUrl = $derived(
+		`/auth/password-reset?email=${encodeURIComponent($formData.email)}`
 	);
 </script>
 
-{#if form?.message}
+{#if parsed}
 	<div class="space-y-3 pb-4">
-		<AuthAlert message={form?.message} />
-		{#if form && 'code' in form && form.code === 'EMAIL_NOT_CONFIRMED' && 'email' in form && form.email}
+		<AuthAlert message={parsed.text} />
+		{#if parsed.unconfirmedEmail}
 			<form
 				method="post"
 				action="?/resendConfirmation"
-				use:enhance={() => {
+				use:nativeEnhance={() => {
 					isResending = true;
 					return async ({ update }) => {
 						await update();
 						isResending = false;
+						resendSuccess = true;
 					};
 				}}
 			>
-				<input type="hidden" name="email" value={form.email} />
+				<input type="hidden" name="email" value={parsed.unconfirmedEmail} />
 				<Button
 					type="submit"
 					variant="outline"
@@ -59,7 +83,7 @@
 	</div>
 {/if}
 
-{#if form?.resendSuccess}
+{#if resendSuccess}
 	<div class="pb-4">
 		<AuthAlert
 			message="Confirmation email sent! Check your inbox."
@@ -68,82 +92,78 @@
 	</div>
 {/if}
 
-<form
-	method="post"
-	action="?/login"
-	use:enhance={() => {
-		isSubmitting = true;
-		return async ({ update }) => {
-			await update();
-			isSubmitting = false;
-		};
-	}}
-	class="space-y-5"
-	novalidate
->
-	<div class="space-y-1.5">
-		<Label
-			for="email"
-			class="text-xs font-medium tracking-wider text-muted-foreground uppercase"
-		>
-			Email
-		</Label>
-		<div class="relative">
-			<Mail
-				class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground/50"
-			/>
-			<Input
-				id="email"
-				type="email"
-				name="email"
-				placeholder="you@example.com"
-				class="h-11 border-border/50 bg-background/50 pl-10 transition-colors focus:border-primary/50 focus:bg-background"
-				required
-				disabled={isSubmitting}
-				bind:value={emailValue}
-			/>
-		</div>
-	</div>
+<form method="post" action="?/login" use:enhance class="space-y-5" novalidate>
+	<Form.Field {form} name="email">
+		<Form.Control>
+			{#snippet children({ props })}
+				<Form.Label
+					class="text-xs font-medium tracking-wider text-muted-foreground uppercase"
+				>
+					Email
+				</Form.Label>
+				<div class="relative">
+					<Mail
+						class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground/50"
+					/>
+					<Input
+						{...props}
+						type="email"
+						bind:value={$formData.email}
+						placeholder="you@example.com"
+						class="h-11 border-border/50 bg-background/50 pl-10 transition-colors focus:border-primary/50 focus:bg-background"
+						disabled={$submitting}
+					/>
+				</div>
+			{/snippet}
+		</Form.Control>
+		<Form.FieldErrors />
+	</Form.Field>
 
-	<div class="space-y-1.5">
-		<Label
-			for="password"
-			class="text-xs font-medium tracking-wider text-muted-foreground uppercase"
-		>
-			Password
-		</Label>
-		<div class="relative">
-			<Lock
-				class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground/50"
-			/>
-			<Input
-				id="password"
-				type="password"
-				name="password"
-				placeholder="Enter your password…"
-				class="h-11 border-border/50 bg-background/50 pl-10 transition-colors focus:border-primary/50 focus:bg-background"
-				required
-				disabled={isSubmitting}
-			/>
-		</div>
-		<!-- Resolve doesn't support query parameters. The ignore comment only works when 
-		 directly above the line and prettier wraps the anchor element when the full URL 
+	<Form.Field {form} name="password">
+		<Form.Control>
+			{#snippet children({ props })}
+				<Form.Label
+					class="text-xs font-medium tracking-wider text-muted-foreground uppercase"
+				>
+					Password
+				</Form.Label>
+				<div class="relative">
+					<Lock
+						class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground/50"
+					/>
+					<Input
+						{...props}
+						type="password"
+						bind:value={$formData.password}
+						placeholder="Enter your password…"
+						class="h-11 border-border/50 bg-background/50 pl-10 transition-colors focus:border-primary/50 focus:bg-background"
+						disabled={$submitting}
+					/>
+				</div>
+			{/snippet}
+		</Form.Control>
+		<!-- Resolve doesn't support query parameters. The ignore comment only works when
+		 directly above the line and prettier wraps the anchor element when the full URL
 		 is present. -->
 		<div class="text-xs text-muted-foreground">
 			<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
-			<a href={url} class="transition-colors hover:text-foreground">
+			<a
+				href={passwordResetUrl}
+				class="transition-colors hover:text-foreground"
+			>
 				Reset password
 			</a>
 		</div>
-	</div>
+		<Form.FieldErrors />
+	</Form.Field>
 
 	<div class="flex flex-col gap-3 pt-2">
 		<Button
 			type="submit"
 			class="h-11 w-full font-medium"
-			disabled={isSubmitting}
+			disabled={$submitting}
 		>
-			{#if isSubmitting}
+			{#if $submitting}
 				<Loader2 class="mr-2 h-4 w-4 animate-spin" />
 				Signing in...
 			{:else}
@@ -165,7 +185,7 @@
 			type="button"
 			class="h-10 w-full text-muted-foreground hover:text-foreground"
 			onclick={onRequestMagicLogin}
-			disabled={isSubmitting}
+			disabled={$submitting}
 		>
 			<ArrowLeft class="mr-2 h-4 w-4" />
 			Back to email

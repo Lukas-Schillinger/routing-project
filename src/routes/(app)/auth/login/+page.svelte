@@ -1,21 +1,20 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { AuthAlert, AuthCard } from '$lib/components/auth';
 	import DebugToolbar from '$lib/components/DebugToolbar.svelte';
 	import { Button } from '$lib/components/ui/button';
-	import type { ActionData } from './$types';
 	import LoginWithPassword from './LoginWithPassword.svelte';
 	import RequestMagicLogin from './RequestMagicLogin.svelte';
 
-	let { form }: { form: ActionData } = $props();
+	let { data } = $props();
 
 	// Registration flow: ?confirm=true&email=... (shows OTP entry with confirmation message)
 	// Normal login: no params (shows password login)
 	const isRegistrationFlow = $derived(
-		$page.url.searchParams.get('confirm') === 'true'
+		page.url.searchParams.get('confirm') === 'true'
 	);
-	const emailParam = $derived($page.url.searchParams.get('email') ?? '');
+	const emailParam = $derived(page.url.searchParams.get('email') ?? '');
 
 	// Default to magic login - passwords are optional so email login is primary
 	let userLoginMethod = $state<'password' | 'magic'>('magic');
@@ -72,8 +71,9 @@
 
 	{#if loginMethod === 'password'}
 		<LoginWithPassword
-			form={debugFormMessage ? { message: debugFormMessage } : form}
+			loginForm={data.loginForm}
 			onRequestMagicLogin={() => (userLoginMethod = 'magic')}
+			debugMessage={debugFormMessage}
 		/>
 	{:else}
 		<RequestMagicLogin

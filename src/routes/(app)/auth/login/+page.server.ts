@@ -1,70 +1,72 @@
 import { ARGON2_OPTIONS, TOKEN_EXPIRY } from '$lib/config';
-import { emailSchema } from '$lib/schemas/common';
+import { ServiceError } from '$lib/errors';
 import { loginSchema, verifyOTPSchema } from '$lib/schemas/auth';
-import * as auth from '$lib/services/server/auth';
-import { ServiceError } from '$lib/services/server/errors';
+import { emailSchema } from '$lib/schemas/common';
+import {
+	createSession,
+	generateSessionToken,
+	setSessionTokenCookie
+} from '$lib/services/server/auth';
 import { loginTokenService } from '$lib/services/server/login-token.service';
 import { mailService } from '$lib/services/server/mail.service.js';
 import { userService } from '$lib/services/server/user.service';
 import { verify } from '@node-rs/argon2';
 import { fail, redirect } from '@sveltejs/kit';
+import { message, setError, superValidate } from 'sveltekit-superforms';
+import { zod4 } from 'sveltekit-superforms/adapters';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async (event) => {
 	if (event.locals.user) {
 		return redirect(302, '/auth/account');
 	}
-	return {};
+	return {
+		loginForm: await superValidate(zod4(loginSchema))
+	};
 };
 
 export const actions: Actions = {
 	login: async (event) => {
-		const formData = await event.request.formData();
-		const email = formData.get('email');
-		const password = formData.get('password');
-
-		// Validate input using Zod
-		const validation = loginSchema.safeParse({ email, password });
-		if (!validation.success) {
-			const errors = validation.error.issues;
-			const firstError = errors[0];
-			return fail(400, {
-				message: firstError.message
-			});
+		const loginForm = await superValidate(event.request, zod4(loginSchema));
+		if (!loginForm.valid) {
+			return fail(400, { form: loginForm });
 		}
 
-		const { email: validEmail, password: validatedPassword } = validation.data;
+		const { email, password } = loginForm.data;
 
-		const existingUser = await userService.findAnyUserByEmail(validEmail);
+		const existingUser = await userService.findAnyUserByEmail(email);
 		if (!existingUser) {
-			return fail(400, { message: 'Incorrect email or password' });
+			return setError(loginForm, 'email', 'Incorrect email or password');
 		}
 
 		if (!existingUser.passwordHash) {
-			return fail(400, { message: 'Use email link to sign in' });
+			return setError(loginForm, 'email', 'Use email link to sign in');
 		}
 
 		const isPasswordValid = await verify(
 			existingUser.passwordHash,
-			validatedPassword,
+			password,
 			ARGON2_OPTIONS
 		);
 		if (!isPasswordValid) {
-			return fail(400, { message: 'Incorrect email or password' });
+			return setError(loginForm, 'email', 'Incorrect email or password');
 		}
 
-		// Check if email is confirmed
 		if (!existingUser.email_confirmed_at) {
-			return fail(400, {
-				message: 'Please confirm your email before logging in',
-				code: 'EMAIL_NOT_CONFIRMED',
-				email: validEmail
-			});
+			return message(
+				loginForm,
+				{
+					text: 'Please confirm your email before logging in',
+					code: 'EMAIL_NOT_CONFIRMED',
+					email
+				},
+				{ status: 400 }
+			);
 		}
 
-		const sessionToken = auth.generateSessionToken();
-		const session = await auth.createSession(sessionToken, existingUser.id);
-		auth.setSessionTokenCookie(event, sessionToken, session.expires_at);
+		const sessionToken = generateSessionToken();
+		const session = await createSession(sessionToken, existingUser.id);
+		setSessionTokenCookie(event, sessionToken, session.expires_at);
 
 		return redirect(302, '/auth/account');
 	},
@@ -81,13 +83,11 @@ export const actions: Actions = {
 		const email = parsed.data;
 
 		try {
-			// Use login token service to create a new login token
 			const { loginToken, token } = await loginTokenService.createLoginToken({
 				email,
 				token_duration_hours: TOKEN_EXPIRY.EMAIL_CONFIRMATION_HOURS
 			});
 
-			// Send welcome email
 			await mailService.sendLoginEmail(
 				loginToken,
 				email,
@@ -99,42 +99,68 @@ export const actions: Actions = {
 			// Swallow all errors to prevent email enumeration
 		}
 
-		// Always return success to prevent email enumeration
 		return { resendSuccess: true };
+	},
+
+	requestOTP: async (event) => {
+		const formData = await event.request.formData();
+		const parsed = emailSchema.safeParse(formData.get('email'));
+		if (!parsed.success) {
+			return fail(400, { otpError: 'Please enter a valid email address' });
+		}
+
+		const email = parsed.data;
+
+		try {
+			const { loginToken, token } = await loginTokenService.createLoginToken({
+				email
+			});
+
+			await mailService.sendLoginEmail(
+				loginToken,
+				email,
+				token,
+				event.url.origin
+			);
+		} catch (err) {
+			// If user not found, still return success to prevent email enumeration
+			if (err instanceof ServiceError && err.statusCode === 404) {
+				return { otpSent: true };
+			}
+			return fail(500, { otpError: 'Error sending login code' });
+		}
+
+		return { otpSent: true };
 	},
 
 	verifyOTP: async (event) => {
 		const formData = await event.request.formData();
-		const email = formData.get('email');
-		const code = formData.get('code');
+		const validation = verifyOTPSchema.safeParse({
+			email: formData.get('email'),
+			code: formData.get('code')
+		});
 
-		const validation = verifyOTPSchema.safeParse({ email, code });
 		if (!validation.success) {
-			const errors = validation.error.issues;
-			const firstError = errors[0];
-			return fail(400, { message: firstError.message });
+			return fail(400, { otpError: validation.error.issues[0].message });
 		}
 
-		const { email: validEmail, code: validCode } = validation.data;
+		const { email, code } = validation.data;
 
 		try {
-			const user = await loginTokenService.validateLoginToken(
-				validCode,
-				validEmail
-			);
+			const user = await loginTokenService.validateLoginToken(code, email);
 
 			await userService.confirmEmail(user.id);
 
-			const sessionToken = auth.generateSessionToken();
-			const session = await auth.createSession(sessionToken, user.id);
-			auth.setSessionTokenCookie(event, sessionToken, session.expires_at);
-
-			return redirect(302, '/auth/account');
+			const sessionToken = generateSessionToken();
+			const session = await createSession(sessionToken, user.id);
+			setSessionTokenCookie(event, sessionToken, session.expires_at);
 		} catch (err) {
 			if (err instanceof ServiceError) {
-				return fail(err.statusCode, { message: err.message });
+				return fail(err.statusCode, { otpError: err.message });
 			}
 			throw err;
 		}
+
+		redirect(302, '/auth/account');
 	}
 };

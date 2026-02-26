@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as auth from '$lib/services/server/auth';
 import { userService } from '$lib/services/server/user.service';
 import { verify } from '@node-rs/argon2';
+import { superValidate, message, setError } from 'sveltekit-superforms';
 
 // Mock dependencies
 vi.mock('$lib/services/server/user.service', () => ({
@@ -31,6 +32,29 @@ vi.mock('@sveltejs/kit', () => ({
 vi.mock('@node-rs/argon2', () => ({
 	hash: vi.fn(),
 	verify: vi.fn()
+}));
+
+vi.mock('$lib/services/server/login-token.service', () => ({
+	loginTokenService: {
+		createLoginToken: vi.fn(),
+		validateLoginToken: vi.fn()
+	}
+}));
+
+vi.mock('$lib/services/server/mail.service.js', () => ({
+	mailService: {
+		sendLoginEmail: vi.fn().mockResolvedValue(undefined)
+	}
+}));
+
+vi.mock('sveltekit-superforms', () => ({
+	superValidate: vi.fn(),
+	message: vi.fn(),
+	setError: vi.fn()
+}));
+
+vi.mock('sveltekit-superforms/adapters', () => ({
+	zod4: vi.fn()
 }));
 
 describe('Authentication Server Actions', () => {
@@ -148,29 +172,26 @@ describe('Authentication Server Actions', () => {
 	});
 
 	describe('Server Actions', () => {
-		// Helper function to create mock form data
-		const createMockEvent = (email: string, password: string) => ({
-			request: {
-				formData: vi.fn().mockResolvedValue(
-					new Map([
-						['email', email],
-						['password', password]
-					])
-				)
-			},
-			locals: { user: null, session: null }
+		const createMockEvent = () => ({
+			request: new Request('http://localhost', { method: 'POST' }),
+			locals: { user: null, session: null },
+			url: { origin: 'http://localhost:5173' }
 		});
 
 		describe('Login Action', () => {
 			it('should handle successful login flow', async () => {
 				const { actions } = await import('./+page.server.js');
 
-				// Configure redirect to throw (as SvelteKit does)
+				const mockForm = {
+					valid: true,
+					data: { email: 'test@example.com', password: 'password123' }
+				};
+				vi.mocked(superValidate).mockResolvedValue(mockForm as never);
+
 				vi.mocked(redirect).mockImplementation(() => {
 					throw new Error('redirect');
 				});
 
-				// Mock successful database query
 				const mockUser = {
 					id: 'user-123',
 					email: 'test@example.com',
@@ -181,11 +202,8 @@ describe('Authentication Server Actions', () => {
 				vi.mocked(userService.findAnyUserByEmail).mockResolvedValue(
 					mockUser as never
 				);
-
-				// Mock successful password verification
 				vi.mocked(verify).mockResolvedValue(true);
 
-				// Mock auth functions
 				vi.mocked(auth.generateSessionToken).mockReturnValue('session-token');
 				vi.mocked(auth.createSession).mockResolvedValue({
 					id: 'session-123',
@@ -194,68 +212,114 @@ describe('Authentication Server Actions', () => {
 				});
 				vi.mocked(auth.setSessionTokenCookie).mockImplementation(() => {});
 
-				const mockEvent = createMockEvent('test@example.com', 'password123');
+				const mockEvent = createMockEvent();
 
-				// Should throw redirect
 				await expect(actions.login(mockEvent as never)).rejects.toThrow(
 					'redirect'
 				);
 				expect(redirect).toHaveBeenCalledWith(302, '/auth/account');
 			});
 
-			it('should handle invalid email', async () => {
+			it('should handle invalid input', async () => {
 				const { actions } = await import('./+page.server.js');
 
+				const mockForm = { valid: false };
+				vi.mocked(superValidate).mockResolvedValue(mockForm as never);
 				vi.mocked(fail).mockReturnValue({ status: 400 } as never);
-				const mockEvent = createMockEvent('invalid-email', 'password123');
+
+				const mockEvent = createMockEvent();
 
 				await actions.login(mockEvent as never);
-				expect(fail).toHaveBeenCalledWith(400, {
-					message: 'Please enter a valid email address'
-				});
+				expect(fail).toHaveBeenCalledWith(400, { form: mockForm });
 			});
 
 			it('should handle user not found', async () => {
 				const { actions } = await import('./+page.server.js');
 
-				// Mock user not found
+				const mockForm = {
+					valid: true,
+					data: {
+						email: 'nonexistent@example.com',
+						password: 'password123'
+					}
+				};
+				vi.mocked(superValidate).mockResolvedValue(mockForm as never);
 				vi.mocked(userService.findAnyUserByEmail).mockResolvedValue(null);
 
-				vi.mocked(fail).mockReturnValue({ status: 400 } as never);
-				const mockEvent = createMockEvent(
-					'nonexistent@example.com',
-					'password123'
-				);
+				const mockEvent = createMockEvent();
 
 				await actions.login(mockEvent as never);
-				expect(fail).toHaveBeenCalledWith(400, {
-					message: 'Incorrect email or password'
-				});
+				expect(setError).toHaveBeenCalledWith(
+					mockForm,
+					'email',
+					'Incorrect email or password'
+				);
 			});
 
 			it('should handle incorrect password', async () => {
 				const { actions } = await import('./+page.server.js');
 
+				const mockForm = {
+					valid: true,
+					data: { email: 'test@example.com', password: 'wrongpassword' }
+				};
+				vi.mocked(superValidate).mockResolvedValue(mockForm as never);
+
 				const mockUser = {
 					id: 'user-123',
 					email: 'test@example.com',
-					passwordHash: 'hashed-password'
+					passwordHash: 'hashed-password',
+					email_confirmed_at: new Date()
 				};
 
 				vi.mocked(userService.findAnyUserByEmail).mockResolvedValue(
 					mockUser as never
 				);
-
-				// Mock failed password verification
 				vi.mocked(verify).mockResolvedValue(false);
-				vi.mocked(fail).mockReturnValue({ status: 400 } as never);
 
-				const mockEvent = createMockEvent('test@example.com', 'wrongpassword');
+				const mockEvent = createMockEvent();
 
 				await actions.login(mockEvent as never);
-				expect(fail).toHaveBeenCalledWith(400, {
-					message: 'Incorrect email or password'
-				});
+				expect(setError).toHaveBeenCalledWith(
+					mockForm,
+					'email',
+					'Incorrect email or password'
+				);
+			});
+
+			it('should handle unconfirmed email', async () => {
+				const { actions } = await import('./+page.server.js');
+
+				const mockForm = {
+					valid: true,
+					data: { email: 'test@example.com', password: 'password123' }
+				};
+				vi.mocked(superValidate).mockResolvedValue(mockForm as never);
+
+				const mockUser = {
+					id: 'user-123',
+					email: 'test@example.com',
+					passwordHash: 'hashed-password',
+					email_confirmed_at: null
+				};
+
+				vi.mocked(userService.findAnyUserByEmail).mockResolvedValue(
+					mockUser as never
+				);
+				vi.mocked(verify).mockResolvedValue(true);
+
+				const mockEvent = createMockEvent();
+
+				await actions.login(mockEvent as never);
+				expect(message).toHaveBeenCalledWith(
+					mockForm,
+					{
+						text: 'Please confirm your email before logging in',
+						code: 'EMAIL_NOT_CONFIRMED',
+						email: 'test@example.com'
+					},
+					{ status: 400 }
+				);
 			});
 		});
 	});
