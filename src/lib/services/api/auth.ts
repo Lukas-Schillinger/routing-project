@@ -1,6 +1,5 @@
 import type {
 	CreateInvitation,
-	CreateLoginToken,
 	Invitation,
 	Organization,
 	PublicUser,
@@ -19,12 +18,6 @@ class InvitationsApiService {
 		return apiClient.delete<{ success: true }>(
 			`/auth/invitations/${invitationId}`
 		);
-	}
-}
-
-class LoginTokensApiService {
-	async requestLoginToken(data: CreateLoginToken): Promise<void> {
-		await apiClient.post<void>('/auth/login-tokens', data);
 	}
 }
 
@@ -66,7 +59,6 @@ class OrganizationApiService {
 
 // Singleton instances
 export const invitationsApi = new InvitationsApiService();
-export const loginTokensApi = new LoginTokensApiService();
 export const authApi = new AuthApiService();
 export const organizationApi = new OrganizationApiService();
 export const usersApi = new UsersApiService();

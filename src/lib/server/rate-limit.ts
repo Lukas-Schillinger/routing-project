@@ -43,22 +43,10 @@ function createLimiter(
 	};
 }
 
-// Auth: 5 requests per 15 min
-const authLimiter = createLimiter(5, 15 * 60, 'auth');
-
-// Password reset: 3 per hour
-const passwordResetLimiter = createLimiter(3, 60 * 60, 'password-reset');
-
 // General API: 100 per minute
 const apiLimiter = createLimiter(100, 60, 'api');
 
 export function getLimiterForPath(pathname: string): RateLimiter | null {
-	if (pathname.startsWith('/api/auth/password-reset')) {
-		return passwordResetLimiter;
-	}
-	if (pathname.startsWith('/api/auth/login-tokens')) {
-		return authLimiter;
-	}
 	// Sentry tunnel excluded - proxied responses have immutable headers
 	if (pathname === '/api/sentry-tunnel') {
 		return null;
