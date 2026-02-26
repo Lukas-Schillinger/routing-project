@@ -73,8 +73,7 @@
 
 			// Within same status, newest first
 			return (
-				new Date(b.invitation.created_at).getTime() -
-				new Date(a.invitation.created_at).getTime()
+				b.invitation.created_at.getTime() - a.invitation.created_at.getTime()
 			);
 		})
 	);

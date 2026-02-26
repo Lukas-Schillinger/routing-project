@@ -131,7 +131,7 @@
 				</p>
 			</div>
 			<Button
-				href="/auth/password-reset?email={encodeURIComponent(user.email)}"
+				href={`${resolve('/auth/password-reset')}?email=${encodeURIComponent(user.email)}`}
 				variant="outline"
 				size="sm"
 			>

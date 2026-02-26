@@ -2,7 +2,7 @@
 <script lang="ts">
 	import { goto, invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import DebugToolbar from '$lib/components/DebugToolbar.svelte';
 	import { ConfirmDeleteDialog } from '$lib/components/ConfirmDeleteDialog';
 	import { Button } from '$lib/components/ui/button';
@@ -40,9 +40,9 @@
 	);
 
 	onMount(() => {
-		if ($page.url.searchParams.has('upgraded')) {
+		if (page.url.searchParams.has('upgraded')) {
 			toast.success('Upgraded to Pro!');
-			const url = new URL($page.url);
+			const url = new URL(page.url);
 			url.searchParams.delete('upgraded');
 			history.replaceState({}, '', url.pathname + url.search);
 		}
