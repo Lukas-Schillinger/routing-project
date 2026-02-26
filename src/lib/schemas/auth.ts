@@ -37,17 +37,11 @@ export const requestPasswordResetSchema = z.object({
 	email: emailSchema
 });
 
-export const resetPasswordSchema = z
-	.object({
-		email: emailSchema,
-		token: z.string().min(1),
-		newPassword: z.string().min(6).max(255),
-		confirmPassword: z.string().min(6).max(255)
-	})
-	.refine((data) => data.newPassword === data.confirmPassword, {
-		message: "Passwords don't match",
-		path: ['confirmPassword']
-	});
+export const resetPasswordSchema = z.object({
+	email: emailSchema,
+	token: z.string().min(1),
+	newPassword: z.string().min(6).max(255)
+});
 
 export const invitationSchema = z.object({
 	id: z.string(),
