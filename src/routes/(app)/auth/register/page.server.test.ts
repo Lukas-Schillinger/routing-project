@@ -1,14 +1,14 @@
 import { registerSchema } from '$lib/schemas/auth';
 import { emailSchema, passwordSchema } from '$lib/schemas/common';
+import { ServiceError } from '$lib/errors';
 import { fail, redirect } from '@sveltejs/kit';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Import modules that will be mocked
-import { db } from '$lib/server/db';
-import * as auth from '$lib/services/server/auth';
 import { userService } from '$lib/services/server/user.service.js';
 import { loginTokenService } from '$lib/services/server/login-token.service.js';
 import { mailService } from '$lib/services/server/mail.service';
+import { superValidate, message, setError } from 'sveltekit-superforms';
 
 // Mock dependencies
 vi.mock('$lib/server/db', () => ({
@@ -51,6 +51,16 @@ vi.mock('$lib/services/server/mail.service', () => ({
 	mailService: {
 		sendLoginEmail: vi.fn().mockResolvedValue(undefined)
 	}
+}));
+
+vi.mock('sveltekit-superforms', () => ({
+	superValidate: vi.fn(),
+	message: vi.fn(),
+	setError: vi.fn()
+}));
+
+vi.mock('sveltekit-superforms/adapters', () => ({
+	zod4: vi.fn()
 }));
 
 describe('Registration Server Actions', () => {
@@ -168,28 +178,36 @@ describe('Registration Server Actions', () => {
 	});
 
 	describe('Server Actions', () => {
+		const createMockEvent = () => ({
+			request: new Request('http://localhost', { method: 'POST' }),
+			locals: { user: null, session: null },
+			url: { origin: 'http://localhost:5173' }
+		});
+
 		describe('Register Action', () => {
 			it('should handle successful registration', async () => {
 				const { actions } = await import('./+page.server.js');
 
+				const mockForm = {
+					valid: true,
+					data: { email: 'newuser@example.com', password: 'password123' }
+				};
+				vi.mocked(superValidate).mockResolvedValue(mockForm as never);
+
 				// Configure redirect to throw (as SvelteKit does)
-				// Must include status: 302 so the catch block re-throws it
 				vi.mocked(redirect).mockImplementation(() => {
 					throw Object.assign(new Error('redirect'), { status: 302 });
 				});
 
-				// Mock loginTokenService
 				vi.mocked(loginTokenService.createLoginToken).mockResolvedValue({
 					loginToken: { id: 'token-123' },
 					token: '123456'
 				} as never);
 
-				// Mock mailService
 				vi.mocked(mailService.sendLoginEmail).mockResolvedValue(
 					undefined as never
 				);
 
-				// Mock the createUser function
 				vi.mocked(userService.createUser).mockResolvedValue({
 					id: 'new-user-123',
 					email: 'test@example.com',
@@ -204,27 +222,7 @@ describe('Registration Server Actions', () => {
 					email_confirmed_at: null
 				});
 
-				// Mock auth functions
-				vi.mocked(auth.generateSessionToken).mockReturnValue('session-token');
-				vi.mocked(auth.createSession).mockResolvedValue({
-					id: 'session-123',
-					user_id: 'new-user-123',
-					expires_at: new Date('2025-01-01')
-				});
-				vi.mocked(auth.setSessionTokenCookie).mockImplementation(() => {});
-
-				const mockEvent = {
-					request: {
-						formData: vi.fn().mockResolvedValue(
-							new Map([
-								['email', 'newuser@example.com'],
-								['password', 'password123']
-							])
-						)
-					},
-					locals: { user: null, session: null },
-					url: { origin: 'http://localhost:5173' }
-				};
+				const mockEvent = createMockEvent();
 
 				await expect(actions.register(mockEvent as never)).rejects.toThrow(
 					'redirect'
@@ -235,59 +233,63 @@ describe('Registration Server Actions', () => {
 				);
 			});
 
-			it('should handle registration with invalid email', async () => {
+			it('should handle registration with invalid input', async () => {
 				const { actions } = await import('./+page.server.js');
 
+				const mockForm = { valid: false };
+				vi.mocked(superValidate).mockResolvedValue(mockForm as never);
 				vi.mocked(fail).mockReturnValue({ status: 400 } as never);
 
-				const mockEvent = {
-					request: {
-						formData: vi.fn().mockResolvedValue(
-							new Map([
-								['email', 'invalid-email'],
-								['password', 'password123']
-							])
-						)
-					},
-					locals: { user: null, session: null }
-				};
+				const mockEvent = createMockEvent();
 
 				await actions.register(mockEvent as never);
-				expect(fail).toHaveBeenCalledWith(400, {
-					message: 'Please enter a valid email address'
-				});
+				expect(fail).toHaveBeenCalledWith(400, { form: mockForm });
 			});
 
-			it('should handle database error during registration', async () => {
+			it('should handle duplicate email ServiceError', async () => {
 				const { actions } = await import('./+page.server.js');
 
-				// Mock database error
-				vi.mocked(db.insert).mockReturnValue({
-					values: vi.fn().mockReturnValue({
-						returning: vi
-							.fn()
-							.mockRejectedValue(new Error('Unique constraint violation'))
-					})
-				} as never);
-
-				vi.mocked(fail).mockReturnValue({ status: 500 } as never);
-
-				const mockEvent = {
-					request: {
-						formData: vi.fn().mockResolvedValue(
-							new Map([
-								['email', 'existing@example.com'],
-								['password', 'password123']
-							])
-						)
-					},
-					locals: { user: null, session: null }
+				const mockForm = {
+					valid: true,
+					data: { email: 'existing@example.com', password: 'password123' }
 				};
+				vi.mocked(superValidate).mockResolvedValue(mockForm as never);
 
+				vi.mocked(userService.createUser).mockRejectedValue(
+					new ServiceError('Email already registered', 'CONFLICT', 409)
+				);
+
+				const mockEvent = createMockEvent();
 				await actions.register(mockEvent as never);
-				expect(fail).toHaveBeenCalledWith(500, {
-					message: 'an unknown error occurred'
-				});
+
+				expect(setError).toHaveBeenCalledWith(
+					mockForm,
+					'email',
+					'Email already registered'
+				);
+			});
+
+			it('should handle unknown error during registration', async () => {
+				const { actions } = await import('./+page.server.js');
+
+				const mockForm = {
+					valid: true,
+					data: { email: 'test@example.com', password: 'password123' }
+				};
+				vi.mocked(superValidate).mockResolvedValue(mockForm as never);
+
+				vi.mocked(userService.createUser).mockRejectedValue(
+					new Error('Unknown error')
+				);
+
+				const mockEvent = createMockEvent();
+				await actions.register(mockEvent as never);
+
+				expect(message).toHaveBeenCalledWith(
+					mockForm,
+					'An unexpected error occurred',
+					{ status: 500 }
+				);
 			});
 		});
 	});

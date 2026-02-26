@@ -1,16 +1,19 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
 	import { AuthAlert, AuthCard } from '$lib/components/auth';
 	import { Button } from '$lib/components/ui/button';
+	import * as Form from '$lib/components/ui/form';
 	import { Input } from '$lib/components/ui/input';
-	import { Label } from '$lib/components/ui/label';
+	import { registerSchema } from '$lib/schemas/auth';
 	import { Loader2, Lock, Mail, UserPlus } from 'lucide-svelte';
-	import type { ActionData } from './$types';
+	import { superForm } from 'sveltekit-superforms';
+	import { zod4Client } from 'sveltekit-superforms/adapters';
 
-	let { form }: { form: ActionData } = $props();
-
-	let isSubmitting = $state(false);
+	let { data } = $props();
+	const form = superForm(data.form, {
+		validators: zod4Client(registerSchema)
+	});
+	const { form: formData, enhance, submitting, message } = form;
 </script>
 
 <svelte:head>
@@ -22,72 +25,74 @@
 	description="Start optimizing your routes today"
 >
 	<div class="space-y-6">
-		<AuthAlert message={form?.message} />
+		{#if $message}
+			<AuthAlert message={$message} />
+		{/if}
 
 		<form
 			method="post"
 			action="?/register"
-			use:enhance={() => {
-				isSubmitting = true;
-				return async ({ update }) => {
-					await update();
-					isSubmitting = false;
-				};
-			}}
+			use:enhance
 			class="space-y-5"
 			novalidate
 		>
-			<div class="space-y-1.5">
-				<Label
-					for="email"
-					class="text-xs font-medium tracking-wider text-muted-foreground uppercase"
-				>
-					Email
-				</Label>
-				<div class="relative">
-					<Mail
-						class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground/50"
-					/>
-					<Input
-						id="email"
-						type="email"
-						name="email"
-						placeholder="you@example.com"
-						class="h-11 border-border/50 bg-background/50 pl-10 transition-colors focus:border-primary/50 focus:bg-background"
-						required
-					/>
-				</div>
-			</div>
+			<Form.Field {form} name="email">
+				<Form.Control>
+					{#snippet children({ props })}
+						<Form.Label
+							class="text-xs font-medium tracking-wider text-muted-foreground uppercase"
+						>
+							Email
+						</Form.Label>
+						<div class="relative">
+							<Mail
+								class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground/50"
+							/>
+							<Input
+								{...props}
+								type="email"
+								bind:value={$formData.email}
+								placeholder="you@example.com"
+								class="h-11 border-border/50 bg-background/50 pl-10 transition-colors focus:border-primary/50 focus:bg-background"
+							/>
+						</div>
+					{/snippet}
+				</Form.Control>
+				<Form.FieldErrors />
+			</Form.Field>
 
-			<div class="space-y-1.5">
-				<Label
-					for="password"
-					class="text-xs font-medium tracking-wider text-muted-foreground uppercase"
-				>
-					Password
-				</Label>
-				<div class="relative">
-					<Lock
-						class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground/50"
-					/>
-					<Input
-						id="password"
-						type="password"
-						name="password"
-						placeholder="Create a strong password…"
-						class="h-11 border-border/50 bg-background/50 pl-10 transition-colors focus:border-primary/50 focus:bg-background"
-						required
-					/>
-				</div>
-			</div>
+			<Form.Field {form} name="password">
+				<Form.Control>
+					{#snippet children({ props })}
+						<Form.Label
+							class="text-xs font-medium tracking-wider text-muted-foreground uppercase"
+						>
+							Password
+						</Form.Label>
+						<div class="relative">
+							<Lock
+								class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground/50"
+							/>
+							<Input
+								{...props}
+								type="password"
+								bind:value={$formData.password}
+								placeholder="Create a strong password…"
+								class="h-11 border-border/50 bg-background/50 pl-10 transition-colors focus:border-primary/50 focus:bg-background"
+							/>
+						</div>
+					{/snippet}
+				</Form.Control>
+				<Form.FieldErrors />
+			</Form.Field>
 
 			<div class="pt-2">
 				<Button
 					type="submit"
 					class="h-11 w-full font-medium"
-					disabled={isSubmitting}
+					disabled={$submitting}
 				>
-					{#if isSubmitting}
+					{#if $submitting}
 						<Loader2 class="mr-2 h-4 w-4 animate-spin" />
 						Creating account...
 					{:else}
