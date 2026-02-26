@@ -12,6 +12,14 @@ export const TOKEN_EXPIRY = {
 	SHARE_HOURS: 720 // 30 days
 } as const;
 
+// Argon2 password hashing parameters
+export const ARGON2_OPTIONS = {
+	memoryCost: 19456,
+	timeCost: 2,
+	outputLen: 32,
+	parallelism: 1
+} as const;
+
 // File upload limits
 export const FILE_LIMITS = {
 	MAX_SIZE_BYTES: 10 * 1024 * 1024 // 10 MB

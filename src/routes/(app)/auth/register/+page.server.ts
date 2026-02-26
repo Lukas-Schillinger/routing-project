@@ -1,4 +1,4 @@
-import { TOKEN_EXPIRY } from '$lib/config';
+import { ARGON2_OPTIONS, TOKEN_EXPIRY } from '$lib/config';
 import { ServiceError } from '$lib/errors';
 import { registerSchema } from '$lib/schemas/auth';
 import { mailService } from '$lib/services/server/mail.service.js';
@@ -32,12 +32,7 @@ export const actions: Actions = {
 
 		const { email: validEmail, password: validPassword } = validation.data;
 
-		const passwordHash = await hash(validPassword, {
-			memoryCost: 19456,
-			timeCost: 2,
-			outputLen: 32,
-			parallelism: 1
-		});
+		const passwordHash = await hash(validPassword, ARGON2_OPTIONS);
 
 		try {
 			// Create user (email_confirmed_at will be null)

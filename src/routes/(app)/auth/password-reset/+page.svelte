@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { page } from '$app/stores';
 	import { AuthCard } from '$lib/components/auth';
 	import { Button } from '$lib/components/ui/button';
@@ -71,7 +72,7 @@
 			</div>
 			<Button
 				variant="ghost"
-				href="/auth/login"
+				href={resolve('/auth/login')}
 				class="mt-2 h-10 text-muted-foreground hover:text-foreground"
 			>
 				Back to login
@@ -118,7 +119,7 @@
 
 				<Button
 					variant="ghost"
-					href="/auth/login"
+					href={resolve('/auth/login')}
 					class="h-10 w-full text-muted-foreground hover:text-foreground"
 					disabled={isSubmitting}
 				>

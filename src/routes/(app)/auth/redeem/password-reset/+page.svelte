@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { resolve } from '$app/paths';
 	import { AuthAlert, AuthCard } from '$lib/components/auth';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
@@ -106,7 +107,7 @@
 			Remember your password?
 			<Button
 				variant="link"
-				href="/auth/login"
+				href={resolve('/auth/login')}
 				class="h-auto p-0 pl-1 text-sm font-medium text-foreground underline-offset-4 hover:text-primary hover:underline"
 			>
 				Sign in

@@ -1,3 +1,4 @@
+import { ARGON2_OPTIONS } from '$lib/config';
 import { resetPasswordSchema } from '$lib/schemas';
 import {
 	createSession,
@@ -87,12 +88,7 @@ export const actions: Actions = {
 			);
 
 			// Hash the new password
-			const passwordHash = await hash(newPassword, {
-				memoryCost: 19456,
-				timeCost: 2,
-				outputLen: 32,
-				parallelism: 1
-			});
+			const passwordHash = await hash(newPassword, ARGON2_OPTIONS);
 
 			// Update the user's password
 			await userService.updatePasswordHash(

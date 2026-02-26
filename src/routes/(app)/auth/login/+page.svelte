@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { page } from '$app/stores';
 	import { AuthAlert, AuthCard } from '$lib/components/auth';
 	import DebugToolbar from '$lib/components/DebugToolbar.svelte';
@@ -93,7 +94,7 @@
 			Don't have an account?
 			<Button
 				variant="link"
-				href="/auth/register"
+				href={resolve('/auth/register')}
 				class="h-auto p-0 pl-1 text-sm font-medium text-foreground underline-offset-4 hover:text-primary hover:underline"
 			>
 				Create one

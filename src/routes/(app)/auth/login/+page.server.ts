@@ -1,4 +1,5 @@
-import { TOKEN_EXPIRY } from '$lib/config';
+import { ARGON2_OPTIONS, TOKEN_EXPIRY } from '$lib/config';
+import { emailSchema } from '$lib/schemas/common';
 import { loginSchema, verifyOTPSchema } from '$lib/schemas/auth';
 import * as auth from '$lib/services/server/auth';
 import { ServiceError } from '$lib/services/server/errors';
@@ -46,12 +47,7 @@ export const actions: Actions = {
 		const isPasswordValid = await verify(
 			existingUser.passwordHash,
 			validatedPassword,
-			{
-				memoryCost: 19456,
-				timeCost: 2,
-				outputLen: 32,
-				parallelism: 1
-			}
+			ARGON2_OPTIONS
 		);
 		if (!isPasswordValid) {
 			return fail(400, { message: 'Incorrect email or password' });
@@ -75,11 +71,14 @@ export const actions: Actions = {
 
 	resendConfirmation: async (event) => {
 		const formData = await event.request.formData();
-		const email = formData.get('email') as string;
+		const rawEmail = formData.get('email');
 
-		if (!email) {
+		const parsed = emailSchema.safeParse(rawEmail);
+		if (!parsed.success) {
 			return fail(400, { message: 'Email is required' });
 		}
+
+		const email = parsed.data;
 
 		try {
 			// Use login token service to create a new login token
@@ -96,16 +95,12 @@ export const actions: Actions = {
 				event.url.origin,
 				true
 			);
-
-			// Always return success to prevent email enumeration
-			return { resendSuccess: true };
-		} catch (error) {
-			if (error instanceof ServiceError && error.statusCode === 404) {
-				// User not found - still return success to prevent enumeration
-				return { resendSuccess: true };
-			}
-			return { resendSuccess: true };
+		} catch {
+			// Swallow all errors to prevent email enumeration
 		}
+
+		// Always return success to prevent email enumeration
+		return { resendSuccess: true };
 	},
 
 	verifyOTP: async (event) => {
