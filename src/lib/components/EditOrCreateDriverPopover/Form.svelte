@@ -2,8 +2,8 @@
 	import { ConfirmDeleteDialog } from '$lib/components/ConfirmDeleteDialog';
 	import PhoneInput from '$lib/components/PhoneInput.svelte';
 	import { Button } from '$lib/components/ui/button';
-	import * as Form from '$lib/components/ui/form';
 	import { ColorInput } from '$lib/components/ui/color-input';
+	import * as Form from '$lib/components/ui/form';
 	import { Input } from '$lib/components/ui/input';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { ServiceError } from '$lib/errors';
@@ -21,6 +21,24 @@
 	} from 'sveltekit-superforms';
 	import { zod4, zod4Client } from 'sveltekit-superforms/adapters';
 
+	type Props = {
+		mapId?: string;
+		onSuccess: (driver: Driver) => void;
+	} & (
+		| {
+				mode?: 'create';
+				driver?: never;
+				temporaryDriver?: boolean;
+				onDelete?: never;
+		  }
+		| {
+				mode: 'edit';
+				driver: Driver;
+				temporaryDriver?: never;
+				onDelete?: () => Promise<void>;
+		  }
+	);
+
 	let {
 		mode = 'create',
 		driver,
@@ -28,14 +46,7 @@
 		temporaryDriver = false,
 		onSuccess,
 		onDelete
-	}: {
-		mode?: 'create' | 'edit';
-		driver?: Driver;
-		mapId?: string;
-		temporaryDriver?: boolean;
-		onSuccess: (driver: Driver) => void;
-		onDelete?: () => Promise<void>;
-	} = $props();
+	}: Props = $props();
 
 	const generateDriverName = () =>
 		`driver-${Math.floor(Math.random() * 100000)
@@ -95,22 +106,20 @@
 	});
 
 	const { form: formData, message, enhance, submitting } = form;
-
-	$effect(() => {
-		form.reset({ data: initialData });
-	});
 </script>
 
 <form method="POST" use:enhance class="space-y-4">
-	<fieldset class="space-y-4">
-		<legend class="text-sm leading-none font-medium">
-			{mode === 'create' ? 'Create New Driver' : 'Edit Driver'}
-		</legend>
-		<p class="text-sm text-muted-foreground">
-			{mode === 'create'
-				? 'Add a new driver for your organization'
-				: 'Update driver details'}
-		</p>
+	<div class="space-y-4">
+		<div>
+			<h3 class="text-sm leading-none font-medium">
+				{mode === 'create' ? 'Create New Driver' : 'Edit Driver'}
+			</h3>
+			<p class="mt-1 text-sm text-muted-foreground">
+				{mode === 'create'
+					? 'Add a new driver for your organization'
+					: 'Update driver details'}
+			</p>
+		</div>
 
 		{#if $message}
 			<div class="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
@@ -198,7 +207,7 @@
 				<Form.FieldErrors />
 			</Form.Field>
 		</div>
-	</fieldset>
+	</div>
 
 	{#if mode === 'edit' && driver}
 		<div class="flex items-center justify-between">

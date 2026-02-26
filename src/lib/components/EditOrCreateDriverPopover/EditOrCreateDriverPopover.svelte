@@ -8,31 +8,36 @@
 	import type { Snippet } from 'svelte';
 	import Form from './Form.svelte';
 
+	type Props = {
+		mapId?: string;
+		triggerClass?: string;
+		children?: Snippet<[{ props: Record<string, unknown> }]>;
+		onSuccess?: (driver: Driver) => void;
+	} & (
+		| {
+				mode?: 'create';
+				driver?: never;
+				temporaryDriver?: boolean;
+				onDelete?: never;
+		  }
+		| {
+				mode: 'edit';
+				driver: Driver;
+				temporaryDriver?: never;
+				onDelete?: () => Promise<void>;
+		  }
+	);
+
 	let {
 		mode = 'create',
-		driver = undefined,
-		mapId = undefined,
+		driver,
+		mapId,
 		temporaryDriver = false,
 		triggerClass = '',
 		children,
 		onSuccess = () => {},
 		onDelete
-	}: {
-		mode?: 'create' | 'edit';
-		driver?: Driver;
-		mapId?: string;
-		temporaryDriver?: boolean;
-		triggerClass?: string;
-		children?: Snippet<[{ props: Record<string, unknown> }]>;
-		onSuccess?: (driver: Driver) => void;
-		onDelete?: () => Promise<void>;
-	} = $props();
-
-	$effect(() => {
-		if (mode === 'edit' && !driver) {
-			throw new Error('driver prop is required when mode is "edit"');
-		}
-	});
+	}: Props = $props();
 
 	const isMobile = new IsMobile();
 	let open = $state(false);
@@ -59,14 +64,11 @@
 {/snippet}
 
 {#snippet formContent()}
-	<Form
-		{driver}
-		{mode}
-		{mapId}
-		{temporaryDriver}
-		{onDelete}
-		onSuccess={handleSuccess}
-	/>
+	{#if mode === 'edit' && driver}
+		<Form mode="edit" {driver} {mapId} {onDelete} onSuccess={handleSuccess} />
+	{:else}
+		<Form {mapId} {temporaryDriver} onSuccess={handleSuccess} />
+	{/if}
 {/snippet}
 
 {#if !isMobile.current}
