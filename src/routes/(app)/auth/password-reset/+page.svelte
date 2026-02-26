@@ -1,50 +1,28 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { page } from '$app/stores';
 	import { AuthCard } from '$lib/components/auth';
 	import { Button } from '$lib/components/ui/button';
+	import * as Form from '$lib/components/ui/form';
 	import { Input } from '$lib/components/ui/input';
-	import { Label } from '$lib/components/ui/label';
+	import { requestPasswordResetSchema } from '$lib/schemas';
 	import { CheckCircle, Loader2, Mail } from 'lucide-svelte';
-	import { toast } from 'svelte-sonner';
+	import { superForm } from 'sveltekit-superforms';
+	import { zod4Client } from 'sveltekit-superforms/adapters';
 
-	let email = $state($page.url.searchParams.get('email') ?? '');
-	let isSubmitting = $state(false);
-	let isSuccess = $state(false);
+	let { data } = $props();
+	const form = superForm(data.form, {
+		validators: zod4Client(requestPasswordResetSchema)
+	});
+	const { form: formData, enhance, submitting, message } = form;
 
-	async function handleSubmit(e: Event) {
-		e.preventDefault();
-
-		if (!email) {
-			toast.error('Please enter your email address');
-			return;
-		}
-
-		isSubmitting = true;
-
-		try {
-			const response = await fetch('/api/auth/password-reset', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({ email })
-			});
-
-			if (!response.ok) {
-				const data = await response.json();
-				throw new Error(data.message || 'Failed to send reset link');
-			}
-
-			isSuccess = true;
-		} catch (err) {
-			toast.error(
-				err instanceof Error ? err.message : 'Failed to send reset link'
-			);
-		} finally {
-			isSubmitting = false;
-		}
-	}
+	const isSuccess = $derived(
+		$message && typeof $message === 'object' && $message.status === 'success'
+	);
+	const successEmail = $derived(
+		$message && typeof $message === 'object' && 'email' in $message
+			? ($message.email as string)
+			: ''
+	);
 </script>
 
 <svelte:head>
@@ -66,7 +44,7 @@
 				<p class="font-medium text-foreground">Check your email</p>
 				<p class="text-sm text-muted-foreground">
 					We've sent a password reset link to <span class="font-medium"
-						>{email}</span
+						>{successEmail}</span
 					>
 				</p>
 			</div>
@@ -79,37 +57,46 @@
 			</Button>
 		</div>
 	{:else}
-		<form onsubmit={handleSubmit} class="space-y-5">
-			<div class="space-y-1.5">
-				<Label
-					for="email"
-					class="text-xs font-medium tracking-wider text-muted-foreground uppercase"
-				>
-					Email address
-				</Label>
-				<div class="relative">
-					<Mail
-						class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground/50"
-					/>
-					<Input
-						id="email"
-						type="email"
-						bind:value={email}
-						placeholder="you@example.com"
-						class="h-11 border-border/50 bg-background/50 pl-10 transition-colors focus:border-primary/50 focus:bg-background"
-						required
-						disabled={isSubmitting}
-					/>
-				</div>
-			</div>
+		<form
+			method="post"
+			action="?/requestReset"
+			use:enhance
+			class="space-y-5"
+			novalidate
+		>
+			<Form.Field {form} name="email">
+				<Form.Control>
+					{#snippet children({ props })}
+						<Form.Label
+							class="text-xs font-medium tracking-wider text-muted-foreground uppercase"
+						>
+							Email address
+						</Form.Label>
+						<div class="relative">
+							<Mail
+								class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground/50"
+							/>
+							<Input
+								{...props}
+								type="email"
+								bind:value={$formData.email}
+								placeholder="you@example.com"
+								class="h-11 border-border/50 bg-background/50 pl-10 transition-colors focus:border-primary/50 focus:bg-background"
+								disabled={$submitting}
+							/>
+						</div>
+					{/snippet}
+				</Form.Control>
+				<Form.FieldErrors />
+			</Form.Field>
 
 			<div class="flex flex-col gap-3 pt-2">
 				<Button
 					type="submit"
 					class="h-11 w-full font-medium"
-					disabled={isSubmitting}
+					disabled={$submitting}
 				>
-					{#if isSubmitting}
+					{#if $submitting}
 						<Loader2 class="mr-2 h-4 w-4 animate-spin" />
 						Sending...
 					{:else}
@@ -121,7 +108,7 @@
 					variant="ghost"
 					href={resolve('/auth/login')}
 					class="h-10 w-full text-muted-foreground hover:text-foreground"
-					disabled={isSubmitting}
+					disabled={$submitting}
 				>
 					Back to login
 				</Button>
