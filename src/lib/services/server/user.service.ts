@@ -95,6 +95,20 @@ export class UserService {
 		return user;
 	}
 
+	/** Sets email_confirmed_at if not already set. Used during login token redemption. */
+	async confirmEmail(userId: string): Promise<void> {
+		const user = await this.getAnyUser(userId);
+		if (!user) {
+			throw ServiceError.notFound('User not found');
+		}
+		if (user.email_confirmed_at) return;
+
+		await db
+			.update(users)
+			.set({ email_confirmed_at: new Date() })
+			.where(eq(users.id, userId));
+	}
+
 	async updateUser(
 		userId: string,
 		organizationId: string,

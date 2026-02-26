@@ -136,6 +136,47 @@ describe('UserService', () => {
 		});
 	});
 
+	describe('confirmEmail()', () => {
+		it('sets email_confirmed_at when not already confirmed', async () => {
+			await withTestTransaction(async () => {
+				const { organization } = await createTestEnvironment();
+				const unconfirmed = await createUser({
+					organization_id: organization.id,
+					email_confirmed_at: null
+				});
+
+				await userService.confirmEmail(unconfirmed.id);
+
+				const updated = await userService.getAnyUser(unconfirmed.id);
+				expect(updated?.email_confirmed_at).toBeInstanceOf(Date);
+			});
+		});
+
+		it('no-ops when email is already confirmed', async () => {
+			await withTestTransaction(async () => {
+				const { organization } = await createTestEnvironment();
+				const confirmedAt = new Date('2025-01-01');
+				const confirmed = await createUser({
+					organization_id: organization.id,
+					email_confirmed_at: confirmedAt
+				});
+
+				await userService.confirmEmail(confirmed.id);
+
+				const after = await userService.getAnyUser(confirmed.id);
+				expect(after?.email_confirmed_at).toEqual(confirmedAt);
+			});
+		});
+
+		it('throws notFound for non-existent user', async () => {
+			await withTestTransaction(async () => {
+				await expect(
+					userService.confirmEmail(NON_EXISTENT_UUID)
+				).rejects.toMatchObject({ code: 'NOT_FOUND' });
+			});
+		});
+	});
+
 	describe('updateUser()', () => {
 		it('updates user name', async () => {
 			await withTestTransaction(async () => {

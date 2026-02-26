@@ -1,14 +1,12 @@
 import { TOKEN_EXPIRY } from '$lib/config';
 import { loginSchema, verifyOTPSchema } from '$lib/schemas/auth';
-import { db } from '$lib/server/db';
-import * as table from '$lib/server/db/schema';
 import * as auth from '$lib/services/server/auth';
 import { ServiceError } from '$lib/services/server/errors';
 import { loginTokenService } from '$lib/services/server/login-token.service';
 import { mailService } from '$lib/services/server/mail.service.js';
+import { userService } from '$lib/services/server/user.service';
 import { verify } from '@node-rs/argon2';
 import { fail, redirect } from '@sveltejs/kit';
-import { eq } from 'drizzle-orm';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async (event) => {
@@ -36,12 +34,7 @@ export const actions: Actions = {
 
 		const { email: validEmail, password: validatedPassword } = validation.data;
 
-		const results = await db
-			.select()
-			.from(table.users)
-			.where(eq(table.users.email, validEmail));
-
-		const existingUser = results.at(0);
+		const existingUser = await userService.findAnyUserByEmail(validEmail);
 		if (!existingUser) {
 			return fail(400, { message: 'Incorrect email or password' });
 		}
@@ -135,13 +128,7 @@ export const actions: Actions = {
 				validEmail
 			);
 
-			// Set email_confirmed_at if this is first login (email confirmation)
-			if (!user.email_confirmed_at) {
-				await db
-					.update(table.users)
-					.set({ email_confirmed_at: new Date() })
-					.where(eq(table.users.id, user.id));
-			}
+			await userService.confirmEmail(user.id);
 
 			const sessionToken = auth.generateSessionToken();
 			const session = await auth.createSession(sessionToken, user.id);

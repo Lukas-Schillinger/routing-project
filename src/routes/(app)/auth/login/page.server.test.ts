@@ -4,15 +4,15 @@ import { fail, redirect } from '@sveltejs/kit';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Import modules that will be mocked
-import { db } from '$lib/server/db';
 import * as auth from '$lib/services/server/auth';
+import { userService } from '$lib/services/server/user.service';
 import { verify } from '@node-rs/argon2';
 
 // Mock dependencies
-vi.mock('$lib/server/db', () => ({
-	db: {
-		select: vi.fn(),
-		insert: vi.fn()
+vi.mock('$lib/services/server/user.service', () => ({
+	userService: {
+		findAnyUserByEmail: vi.fn(),
+		confirmEmail: vi.fn()
 	}
 }));
 
@@ -178,11 +178,9 @@ describe('Authentication Server Actions', () => {
 					email_confirmed_at: new Date()
 				};
 
-				vi.mocked(db.select).mockReturnValue({
-					from: vi.fn().mockReturnValue({
-						where: vi.fn().mockResolvedValue([mockUser])
-					})
-				} as never);
+				vi.mocked(userService.findAnyUserByEmail).mockResolvedValue(
+					mockUser as never
+				);
 
 				// Mock successful password verification
 				vi.mocked(verify).mockResolvedValue(true);
@@ -220,12 +218,8 @@ describe('Authentication Server Actions', () => {
 			it('should handle user not found', async () => {
 				const { actions } = await import('./+page.server.js');
 
-				// Mock empty database result
-				vi.mocked(db.select).mockReturnValue({
-					from: vi.fn().mockReturnValue({
-						where: vi.fn().mockResolvedValue([])
-					})
-				} as never);
+				// Mock user not found
+				vi.mocked(userService.findAnyUserByEmail).mockResolvedValue(null);
 
 				vi.mocked(fail).mockReturnValue({ status: 400 } as never);
 				const mockEvent = createMockEvent(
@@ -248,11 +242,9 @@ describe('Authentication Server Actions', () => {
 					passwordHash: 'hashed-password'
 				};
 
-				vi.mocked(db.select).mockReturnValue({
-					from: vi.fn().mockReturnValue({
-						where: vi.fn().mockResolvedValue([mockUser])
-					})
-				} as never);
+				vi.mocked(userService.findAnyUserByEmail).mockResolvedValue(
+					mockUser as never
+				);
 
 				// Mock failed password verification
 				vi.mocked(verify).mockResolvedValue(false);
