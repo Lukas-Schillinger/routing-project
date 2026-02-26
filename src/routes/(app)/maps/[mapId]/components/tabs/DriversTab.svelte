@@ -572,7 +572,7 @@
 									<ConfirmDeleteDialog
 										variant="remove"
 										title="Remove Driver"
-										description="Are you sure you want to remove this driver from the map?"
+										description="Are you sure you want to remove this driver from the map? Their stops will be unassigned."
 										onConfirm={() => handleRemoveDriver(col.driver!.id)}
 									>
 										{#snippet trigger({ props })}

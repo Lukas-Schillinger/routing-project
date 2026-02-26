@@ -154,14 +154,6 @@
 
 	async function removeDriver(driverId: string) {
 		if (isLoading) return;
-
-		// Find the route for this driver
-		const route = data.routes.find((r) => r.driver_id === driverId);
-		if (route) {
-			toast.error('Could not find route for driver');
-			return;
-		}
-
 		isLoading = true;
 
 		try {
