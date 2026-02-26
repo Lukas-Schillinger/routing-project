@@ -2,7 +2,6 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
 	import { ConfirmDeleteDialog } from '$lib/components/ConfirmDeleteDialog';
-	import Badge from '$lib/components/ui/badge/badge.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input';
@@ -181,7 +180,7 @@
 										onValueChange={(value) =>
 											value && handleRoleChange(user.id, value as Role)}
 									>
-										<Select.Trigger class="h-7 w-24 text-xs">
+										<Select.Trigger class="h-7 w-24 text-sm">
 											{user.role}
 										</Select.Trigger>
 										<Select.Content>
@@ -199,9 +198,11 @@
 										</Select.Content>
 									</Select.Root>
 								{:else}
-									<Badge class="w-20 justify-center" variant="secondary">
-										{user.role}
-									</Badge>
+									<Select.Root type="single" value={user.role} disabled>
+										<Select.Trigger class="h-7 w-24 text-sm">
+											{user.role}
+										</Select.Trigger>
+									</Select.Root>
 								{/if}
 							</Table.Cell>
 							<Table.Cell
