@@ -1294,6 +1294,17 @@ The component is named `WendMagicLinkEmail` but it's the confirm-email template.
 9. Address accessibility issues (FP5)
 10. Consolidate icon libraries (FP9)
 
+### Backlog — Plan Roadmap Items
+
+Items from the original roadmap that don't fit into the 4-week sprint:
+
+1. Audit logging system — schema, service, integration (PLAN-1)
+2. E2E test workflows — maps, CSV import, routes, account (PLAN-2)
+3. Branding & social assets — favicons, OG images, manifest (PLAN-3)
+4. SEO & discoverability — sitemap, canonical URLs, JSON-LD (PLAN-4)
+5. SECURITY.md — vulnerability disclosure policy (PLAN-5)
+6. API documentation — OpenAPI spec (PLAN-6)
+
 ---
 
 ## Consistency Audit
@@ -1795,3 +1806,104 @@ The redirect-in-catch pattern (`if (err.status === 302) throw err`) is needed be
 #### C14.4 Conditional billing data typing (LOW)
 
 `auth/account/+page.server.ts:46-56` returns `billing` as either an object or `null`, based on permission. Frontend must null-check but TypeScript doesn't enforce it strongly through PageData.
+
+---
+
+---
+
+## Plan Backlog Items
+
+Items ported from the original `.claude/plan.md` roadmap that remain unimplemented. Cross-referenced against Linear issue status and current codebase state (Feb 2026).
+
+---
+
+### PLAN-1. Audit Logging System `Medium` `Architecture`
+
+**Linear:** I-21, I-22, I-23 (Backlog) | **From:** plan.md 3.10–3.12
+
+No audit logging exists for security-relevant operations. Three pieces needed:
+
+1. **Schema** — Create `audit_logs` table with fields: `id`, `organization_id`, `user_id`, `action`, `resource_type`, `resource_id`, `metadata` (jsonb), `ip_address`, `created_at`. Add index on `(organization_id, created_at)`.
+
+2. **Service** — Create `src/lib/services/server/audit.service.ts` with a `log()` method that accepts structured audit entries. Follow the existing service pattern (org-scoped, `created_by` tracking).
+
+3. **Integration** — Add audit calls to: auth events (login, logout, password change), permission/membership changes (role updates, invitation acceptance), and data exports.
+
+**Files:** `src/lib/server/db/schema.ts` (table), `src/lib/services/server/audit.service.ts` (new), auth/permission services (integration points)
+
+---
+
+### PLAN-2. E2E Test Workflows `Medium` `Testing`
+
+**Linear:** I-51, I-52, I-53, I-54 (Backlog) | **From:** plan.md 4.6.1–4.6.4
+
+Only auth flows have E2E coverage (`e2e/auth.spec.ts`). Four missing workflow specs:
+
+1. **Map creation** (`e2e/maps.spec.ts`) — Create map, add driver, add stops, verify display
+2. **CSV import** (`e2e/import.spec.ts`) — Upload CSV, map columns, verify stops created, handle error cases
+3. **Route management** (`e2e/routes.spec.ts`) — View routes, share via email, access as external user
+4. **Account management** (`e2e/account.spec.ts`) — Update profile, change password, invite member, org settings
+
+**Files:** `e2e/` directory
+
+---
+
+### PLAN-3. Branding & Social Assets `Medium` `Open Source`
+
+**Linear:** I-71 (Backlog) | **From:** plan.md 7.4
+
+Only `static/favicon.svg` exists. Missing assets:
+
+- Favicon variants: `favicon.ico`, `favicon-16x16.png`, `favicon-32x32.png`
+- Apple Touch Icon (180×180)
+- Open Graph image (1200×630) for link previews
+- Twitter Card image (`summary_large_image`)
+- Web App Manifest (`site.webmanifest`)
+- Meta tags in `src/app.html`: `og:title`, `og:description`, `og:image`, `twitter:card`
+- Theme color meta tag
+
+**Files:** `static/` (assets), `src/app.html` (meta tags), `static/site.webmanifest` (new)
+
+---
+
+### PLAN-4. SEO & Discoverability `Medium` `Open Source`
+
+**Linear:** I-72 (Backlog) | **From:** plan.md 7.5
+
+Only `static/robots.txt` exists. Missing:
+
+- `sitemap.xml` — static file or dynamic SvelteKit route (`src/routes/sitemap.xml/+server.ts`)
+- Canonical URLs on all pages
+- Structured data — JSON-LD with `SoftwareApplication` / `WebApplication` schema
+
+**Files:** `static/sitemap.xml` or `src/routes/sitemap.xml/+server.ts`, page `<svelte:head>` elements
+
+---
+
+### PLAN-5. SECURITY.md `Low` `Open Source`
+
+**Linear:** I-11 (Backlog) | **From:** plan.md 2.3
+
+Create `SECURITY.md` at project root:
+
+- Security contact email
+- Vulnerability disclosure process (1–2 paragraphs)
+- Scope: what's covered (the web app, API), what's not (third-party dependencies, infrastructure)
+
+**Files:** `SECURITY.md` (new)
+
+---
+
+### PLAN-6. API Documentation `Low` `Open Source`
+
+**Linear:** I-73 (Backlog) | **From:** plan.md 7.6
+
+No API documentation exists. Add:
+
+- OpenAPI/Swagger spec for all endpoints under `src/routes/api/`
+- Request/response examples
+- Authentication documentation (session-based, webhook secrets)
+
+Consider `swagger-jsdoc` or a manual spec file at `static/openapi.yaml`.
+
+**Files:** `static/openapi.yaml` (new) or generated from route annotations

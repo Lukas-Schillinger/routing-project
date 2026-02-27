@@ -13,6 +13,7 @@ npm run db:migrate   # Apply Drizzle migration
 
 ## Workflow
 
+- When working on a Linear issue, update its status to `In Progress` immediately — before planning or exploring. Update to `Done` when complete.
 - Always use the code-simplifier agent after modifying service files to ensure clarity and consistency.
 - Always use vercel-frontend-review agent after modifying frontend files
 - Before committing, ensure checks pass: `npm run check` (types) and `npm run lint` (ESLint). CI will reject commits that fail.
@@ -145,3 +146,21 @@ Reference: `src/lib/testing/index.ts`
 - `createTestEnvironment(tx)` - Creates org + admin user
 - `createTestRouteSetup(tx)` - Creates full route setup for optimization tests
 - Service mocks for external APIs (R2, Mapbox, Resend) in `src/lib/testing/mocks.ts`
+
+## Linear Issue Workflow
+
+> **Source:** `.claude/review.md` and `.claude/best-practices-audit.md` contain full context for review items (Review ID in issue description).
+
+1. **Claim:** Pick a Linear issue. Set status to `In Progress` immediately — before planning or exploring.
+2. **Verify:** Read the referenced files. Confirm the problem actually exists. The review was written by AI agents and may contain:
+   - False positives (problem doesn't exist or was already fixed)
+   - Wrong severity (a "critical" that's actually low-impact)
+   - Wrong fix (the suggested fix is worse than the current code)
+   - Symptoms of a larger structural problem (fix the root cause, not the symptom)
+3. **Decide:**
+   - If invalid → set status to `Canceled` with a comment explaining why
+   - If it's a symptom of something bigger → comment the root cause, fix that instead
+   - If valid → implement the fix
+4. **Implement:** Work in a git worktree for isolation. Follow CLAUDE.md conventions.
+5. **Check:** Run `npm run check && npm run lint`. Run relevant tests if they exist.
+6. **Complete:** Set status to `Done`.
