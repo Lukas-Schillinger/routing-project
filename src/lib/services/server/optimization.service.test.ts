@@ -308,7 +308,7 @@ describe('OptimizationService', () => {
 					job_id: job.id,
 					result: {
 						routes: [],
-						total_cost: 0
+						total_travel_duration: 0
 					}
 				});
 
@@ -435,7 +435,7 @@ describe('OptimizationService', () => {
 					job_id: job.id,
 					result: {
 						routes: [],
-						total_cost: 0
+						total_travel_duration: 0
 					}
 				});
 
@@ -504,10 +504,10 @@ describe('OptimizationService', () => {
 										{ stop_id: stopLocation1.id, stop_index: 0 },
 										{ stop_id: stopLocation2.id, stop_index: 1 }
 									],
-									cost: 900
+									travel_duration: 900
 								}
 							],
-							total_cost: 900
+							total_travel_duration: 900
 						}
 					});
 
@@ -613,7 +613,7 @@ describe('OptimizationService', () => {
 										{ stop_id: stopLocation1.id, stop_index: 0 },
 										{ stop_id: stopLocation2.id, stop_index: 1 }
 									],
-									cost: 900
+									travel_duration: 900
 								},
 								{
 									driver_id: driver2.id,
@@ -621,10 +621,10 @@ describe('OptimizationService', () => {
 										{ stop_id: loc3.id, stop_index: 0 },
 										{ stop_id: loc4.id, stop_index: 1 }
 									],
-									cost: 900
+									travel_duration: 900
 								}
 							],
-							total_cost: 1800
+							total_travel_duration: 1800
 						}
 					});
 
@@ -695,7 +695,7 @@ describe('OptimizationService', () => {
 					job_id: job.id,
 					result: {
 						routes: [],
-						total_cost: 0
+						total_travel_duration: 0
 					}
 				});
 

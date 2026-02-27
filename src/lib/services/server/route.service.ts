@@ -16,7 +16,7 @@ import {
 } from '$lib/server/db/schema';
 import { mapboxNavigation } from '$lib/services/external/mapbox/navigation';
 import type { Coordinate } from '$lib/services/external/mapbox/types';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { depotService } from './depot.service';
 import { ServiceError } from './errors';
 import { stopService } from './stop.service';
@@ -183,6 +183,37 @@ export class RouteService {
 			}
 			return results;
 		});
+	}
+
+	/**
+	 * Bulk upsert routes in a single query using onConflictDoUpdate.
+	 * Skips per-row ownership validation — caller must ensure all inputs are valid.
+	 * Uses the unique index on (map_id, driver_id).
+	 */
+	async bulkUpsertRoutesInternal(inputs: CreateRoute[]): Promise<void> {
+		if (inputs.length === 0) return;
+
+		await db
+			.insert(routes)
+			.values(
+				inputs.map((input) => ({
+					organization_id: input.organization_id,
+					map_id: input.map_id,
+					driver_id: input.driver_id,
+					depot_id: input.depot_id,
+					geometry: input.geometry,
+					duration: input.duration?.toString()
+				}))
+			)
+			.onConflictDoUpdate({
+				target: [routes.map_id, routes.driver_id],
+				set: {
+					geometry: sql`excluded.geometry`,
+					duration: sql`excluded.duration`,
+					depot_id: sql`excluded.depot_id`,
+					updated_at: new Date()
+				}
+			});
 	}
 
 	async getRouteById(routeId: string, organizationId: string): Promise<Route> {

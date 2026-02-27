@@ -57,6 +57,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		log.info({ jobId }, 'Optimization webhook processed');
 		return json({ success: true });
 	} catch (error) {
+		log.error({ error, jobId }, 'Webhook handler error');
 		const { body, status } = handleWebhookError(
 			error,
 			'complete-optimization',

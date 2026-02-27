@@ -16,7 +16,7 @@ import {
 import { logger } from '$lib/server/logger';
 import { SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs';
 import { createHash } from 'crypto';
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { mapboxDistanceMatrix, mapboxNavigation } from '../external/mapbox';
 import type { CoordinatesData } from '../external/mapbox/distance-matrix';
@@ -103,13 +103,13 @@ export const legSchema = z.object({
 
 export const routeSchema = z.object({
 	driver_id: z.string(),
-	cost: z.number().int(),
+	travel_duration: z.number().int(),
 	legs: z.array(legSchema)
 });
 
 export const optimizationResultSchema = z.object({
 	routes: z.array(routeSchema),
-	total_cost: z.number().int().nullable()
+	total_travel_duration: z.number().int().optional()
 });
 
 // Discriminated union for optimization response - TypeScript narrows automatically
@@ -166,10 +166,6 @@ const VALID_TRANSITIONS: Record<JobStatus, JobStatus[]> = {
 	failed: [],
 	cancelled: []
 };
-
-function canTransition(from: JobStatus, to: JobStatus): boolean {
-	return VALID_TRANSITIONS[from]?.includes(to) ?? false;
-}
 
 /**
  * Optimization Service
@@ -228,20 +224,19 @@ export class OptimizationService {
 		options: OptimizationOptions,
 		requestId?: string
 	): Promise<OptimizationJob> {
-		// Get map to fall back to its depot if not specified in options
-		const map = await mapService.getMapById(mapId, organizationId);
-		const depotId = options.depotId ?? map.depot_id;
+		// Parallel: fetch map and assigned drivers (independent queries)
+		const [map, assignedDrivers] = await Promise.all([
+			mapService.getMapById(mapId, organizationId),
+			this.fetchAssignedDrivers(mapId, organizationId)
+		]);
 
+		const depotId = options.depotId ?? map.depot_id;
 		if (!depotId) {
 			throw ServiceError.validation(
 				'No depot selected. Select a depot before optimizing routes.'
 			);
 		}
 
-		const assignedDrivers = await this.fetchAssignedDrivers(
-			mapId,
-			organizationId
-		);
 		const nonEmptyDrivers = requireNonEmpty(
 			assignedDrivers,
 			'active drivers assigned to this map. Assign at least one driver before optimizing'
@@ -276,18 +271,8 @@ export class OptimizationService {
 			options.fairness
 		);
 
-		logger.info(
-			{
-				jobId: job.id,
-				mapId,
-				requestId,
-				driverCount: vehicleIds.length,
-				stopCount: coordinatesData.locationIds.length
-			},
-			'Optimization job created'
-		);
-
 		await this.sendToSQS(job.id, payload, requestId);
+
 		return job;
 	}
 
@@ -433,14 +418,15 @@ export class OptimizationService {
 		}
 
 		const result = response.result;
-		const { depotCoord, locationCoordMap } = await this.getCoordinatesData(
-			mapId,
-			depotId,
-			organizationId
-		);
 
-		await this.clearStopAssignments(mapId);
+		// Parallel: coordinates fetch and clearing assignments are independent
+		const [{ depotCoord, locationCoordMap }] = await Promise.all([
+			this.getCoordinatesData(mapId, depotId, organizationId),
+			this.clearStopAssignments(mapId)
+		]);
+
 		await this.applyOptimizedRoutes(mapId, result);
+
 		await this.computeAndSaveRoutes(
 			mapId,
 			organizationId,
@@ -456,10 +442,10 @@ export class OptimizationService {
 		log.info(
 			{
 				routeCount: result.routes.length,
-				totalCost: result.total_cost,
+				totalDuration: result.total_travel_duration,
 				stopCount
 			},
-			'Optimization completed successfully'
+			'Optimization completed'
 		);
 
 		return { stopCount, organizationId, jobId };
@@ -518,21 +504,26 @@ export class OptimizationService {
 				.filter((update): update is StopUpdate => update !== null)
 		);
 
-		const now = new Date();
-		await db.transaction(async (tx) => {
-			await Promise.all(
-				updates.map((update) =>
-					tx
-						.update(stops)
-						.set({
-							driver_id: update.driverId,
-							delivery_index: update.deliveryIndex,
-							updated_at: now
-						})
-						.where(eq(stops.id, update.stopId))
-				)
-			);
-		});
+		if (updates.length === 0) return;
+
+		// Bulk UPDATE using VALUES join — single query instead of N individual updates
+		const valuesClause = updates
+			.map(
+				(u) =>
+					`('${u.stopId}'::uuid, '${u.driverId}'::uuid, ${u.deliveryIndex})`
+			)
+			.join(', ');
+
+		await db.execute(
+			sql.raw(`
+				UPDATE stops SET
+					driver_id = v.driver_id,
+					delivery_index = v.delivery_index,
+					updated_at = NOW()
+				FROM (VALUES ${valuesClause}) AS v(stop_id, driver_id, delivery_index)
+				WHERE stops.id = v.stop_id
+			`)
+		);
 	}
 
 	private async computeAndSaveRoutes(
@@ -543,65 +534,76 @@ export class OptimizationService {
 		depotCoord: ValidatedCoordinate,
 		locationCoordMap: Map<string, ValidatedCoordinate>
 	): Promise<void> {
-		type RouteResult = { driverId: string; success: boolean; error?: string };
-
-		const computeRoute = async (route: Route): Promise<RouteResult | null> => {
-			if (route.legs.length === 0) return null;
-
-			const legStopIds = route.legs.map((leg) => leg.stop_id);
-			const missingIds = legStopIds.filter((id) => !locationCoordMap.has(id));
-
-			if (missingIds.length > 0) {
-				return {
-					driverId: route.driver_id,
-					success: false,
-					error: `Missing coordinates for stops: ${missingIds.join(', ')}`
-				};
-			}
-
-			try {
-				const legCoords = route.legs.map(
-					(leg) => locationCoordMap.get(leg.stop_id)!
-				);
-				const directions = await mapboxNavigation.getDirections([
-					depotCoord,
-					...legCoords,
-					depotCoord
-				]);
-
-				if (directions.routes.length === 0) return null;
-
-				const { geometry, duration } = directions.routes[0];
-				await routeService.upsertRoute({
-					organization_id: organizationId,
-					map_id: mapId,
-					driver_id: route.driver_id,
-					depot_id: depotId,
-					geometry,
-					duration
-				});
-
-				return { driverId: route.driver_id, success: true };
-			} catch (error) {
-				const errorMessage =
-					error instanceof Error ? error.message : 'Unknown error';
-				return {
-					driverId: route.driver_id,
-					success: false,
-					error: errorMessage
-				};
-			}
+		type DirectionsResult = {
+			driverId: string;
+			geometry: { type: 'LineString'; coordinates: number[][] };
+			duration: number;
 		};
+		type FailureResult = { driverId: string; error: string };
 
-		const results = await Promise.all(result.routes.map(computeRoute));
-		const failures = results.filter(
-			(r): r is RouteResult => r !== null && !r.success
+		// Fetch all Mapbox directions in parallel
+		const directionResults: DirectionsResult[] = [];
+		const failures: FailureResult[] = [];
+
+		await Promise.all(
+			result.routes.map(async (route) => {
+				if (route.legs.length === 0) return;
+
+				const legStopIds = route.legs.map((leg) => leg.stop_id);
+				const missingIds = legStopIds.filter((id) => !locationCoordMap.has(id));
+
+				if (missingIds.length > 0) {
+					failures.push({
+						driverId: route.driver_id,
+						error: `Missing coordinates for stops: ${missingIds.join(', ')}`
+					});
+					return;
+				}
+
+				try {
+					const legCoords = route.legs.map(
+						(leg) => locationCoordMap.get(leg.stop_id)!
+					);
+					const directions = await mapboxNavigation.getDirections([
+						depotCoord,
+						...legCoords,
+						depotCoord
+					]);
+
+					if (directions.routes.length === 0) return;
+
+					const { geometry, duration } = directions.routes[0];
+					directionResults.push({
+						driverId: route.driver_id,
+						geometry,
+						duration
+					});
+				} catch (error) {
+					const errorMessage =
+						error instanceof Error ? error.message : 'Unknown error';
+					failures.push({ driverId: route.driver_id, error: errorMessage });
+				}
+			})
 		);
 
 		if (failures.length > 0) {
 			const failedDriverIds = failures.map((f) => f.driverId).join(', ');
 			throw ServiceError.internal(
 				`Failed to compute routes for ${failures.length} driver(s): ${failedDriverIds}`
+			);
+		}
+
+		// Bulk upsert all routes in a single query
+		if (directionResults.length > 0) {
+			await routeService.bulkUpsertRoutesInternal(
+				directionResults.map((r) => ({
+					organization_id: organizationId,
+					map_id: mapId,
+					driver_id: r.driverId,
+					depot_id: depotId,
+					geometry: r.geometry,
+					duration: r.duration
+				}))
 			);
 		}
 	}
@@ -627,20 +629,14 @@ export class OptimizationService {
 		status: JobStatus,
 		errorMessage?: string
 	): Promise<void> {
-		const [job] = await db
-			.select({ status: optimizationJobs.status })
-			.from(optimizationJobs)
-			.where(eq(optimizationJobs.id, jobId))
-			.limit(1);
+		// Compute which statuses can transition to the target status
+		const validFromStatuses = (
+			Object.entries(VALID_TRANSITIONS) as [JobStatus, JobStatus[]][]
+		)
+			.filter(([, targets]) => targets.includes(status))
+			.map(([from]) => from);
 
-		if (!job) {
-			throw ServiceError.notFound('Optimization job not found');
-		}
-
-		if (!canTransition(job.status as JobStatus, status)) {
-			return;
-		}
-
+		// Single atomic conditional UPDATE — no separate SELECT needed
 		await db
 			.update(optimizationJobs)
 			.set({
@@ -648,7 +644,12 @@ export class OptimizationService {
 				...(errorMessage && { error_message: errorMessage }),
 				updated_at: new Date()
 			})
-			.where(eq(optimizationJobs.id, jobId));
+			.where(
+				and(
+					eq(optimizationJobs.id, jobId),
+					inArray(optimizationJobs.status, validFromStatuses)
+				)
+			);
 	}
 
 	private async getOrCreateDistanceMatrix(
@@ -715,18 +716,21 @@ export class OptimizationService {
 		depotCoord: ValidatedCoordinate;
 		locationCoordMap: Map<string, ValidatedCoordinate>;
 	}> {
-		const depot = await depotService.getDepotById(depotId, organizationId);
+		// Parallel: depot and stops queries are independent
+		const [depot, mapStops] = await Promise.all([
+			depotService.getDepotById(depotId, organizationId),
+			db
+				.select({ stop: stops, location: locations })
+				.from(stops)
+				.innerJoin(locations, eq(stops.location_id, locations.id))
+				.where(eq(stops.map_id, mapId))
+		]);
+
 		const depotCoord = parseCoordinate(
 			depot.location.lon,
 			depot.location.lat,
 			`depot ${depot.depot.name}`
 		);
-
-		const mapStops = await db
-			.select({ stop: stops, location: locations })
-			.from(stops)
-			.innerJoin(locations, eq(stops.location_id, locations.id))
-			.where(eq(stops.map_id, mapId));
 
 		const nonEmptyStops = requireNonEmpty(mapStops, 'stops for this map');
 		nonEmptyStops.sort((a, b) =>
