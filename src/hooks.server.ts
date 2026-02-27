@@ -42,7 +42,7 @@ const handleRequestId: Handle = async ({ event, resolve }) => {
 };
 
 const handleRateLimit: Handle = async ({ event, resolve }) => {
-	const limiter = getLimiterForPath(event.url.pathname);
+	const limiter = getLimiterForPath(event.url.pathname, event.request.method);
 
 	if (!limiter) {
 		return resolve(event);

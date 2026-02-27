@@ -46,7 +46,16 @@ function createLimiter(
 // General API: 100 per minute
 const apiLimiter = createLimiter(100, 60, 'api');
 
-export function getLimiterForPath(pathname: string): RateLimiter | null {
+// Auth form actions: 10 per minute (brute-force prevention)
+const authLimiter = createLimiter(10, 60, 'auth');
+
+// General form actions: 30 per minute
+const formLimiter = createLimiter(30, 60, 'form');
+
+export function getLimiterForPath(
+	pathname: string,
+	method: string
+): RateLimiter | null {
 	// Sentry tunnel excluded - proxied responses have immutable headers
 	if (pathname === '/api/sentry-tunnel') {
 		return null;
@@ -54,5 +63,12 @@ export function getLimiterForPath(pathname: string): RateLimiter | null {
 	if (pathname.startsWith('/api/')) {
 		return apiLimiter;
 	}
+
+	// Rate limit form actions (POST) on page routes — GET (page loads) pass through
+	if (method === 'POST') {
+		if (pathname.startsWith('/auth/')) return authLimiter;
+		return formLimiter;
+	}
+
 	return null;
 }
