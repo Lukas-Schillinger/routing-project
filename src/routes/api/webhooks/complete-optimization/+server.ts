@@ -6,6 +6,7 @@ import {
 	optimizationService
 } from '$lib/services/server/optimization.service';
 import { json } from '@sveltejs/kit';
+import { createHmac, timingSafeEqual } from 'crypto';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ request, locals }) => {
@@ -21,7 +22,9 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			throw ServiceError.internal('OPTIMIZATION_WEBHOOK_SECRET not configured');
 		}
 
-		if (authHeader !== `Bearer ${expectedToken}`) {
+		const expected = `Bearer ${expectedToken}`;
+		const hmac = (s: string) => createHmac('sha256', expected).update(s).digest();
+		if (!timingSafeEqual(hmac(authHeader ?? ''), hmac(expected))) {
 			throw ServiceError.unauthorized('Invalid webhook authentication');
 		}
 

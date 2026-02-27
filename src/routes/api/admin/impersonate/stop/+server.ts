@@ -1,4 +1,5 @@
 import { handleApiError } from '$lib/errors';
+import { requireAdminApi } from '$lib/services/server/admin';
 import {
 	invalidateSession,
 	sessionCookieName,
@@ -14,6 +15,8 @@ const log = logger.child({ service: 'admin-impersonate' });
 const IMPERSONATION_COOKIE_NAME = 'admin-original-session';
 
 export const POST: RequestHandler = async ({ cookies, locals }) => {
+	requireAdminApi();
+
 	try {
 		// Get the admin's original session token
 		const adminSessionToken = cookies.get(IMPERSONATION_COOKIE_NAME);
