@@ -68,6 +68,7 @@ export const loginTokenSchema = z.object({
 	token_hash: z.string(),
 	type: loginTokenTypeEnum,
 	expires_at: z.date(),
+	used_at: z.date().nullable(),
 	mail_record_id: z.string().nullable()
 });
 

@@ -64,11 +64,10 @@ export const actions: Actions = {
 		const { email, token, newPassword } = form.data;
 
 		try {
-			const user = await loginTokenService.validateLoginToken(token, email);
-
-			const loginToken = await loginTokenService.getLoginTokenFromToken(
+			const user = await loginTokenService.validateLoginToken(
 				token,
-				email
+				email,
+				'password_reset'
 			);
 
 			const passwordHash = await hash(newPassword, ARGON2_OPTIONS);
@@ -78,10 +77,6 @@ export const actions: Actions = {
 				user.organization_id,
 				passwordHash
 			);
-
-			if (loginToken) {
-				await loginTokenService.deleteLoginToken(loginToken.id);
-			}
 
 			const sessionToken = generateSessionToken();
 			const session = await createSession(sessionToken, user.id);

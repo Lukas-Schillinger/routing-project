@@ -98,11 +98,72 @@ describe('LoginTokenService', () => {
 
 				const validatedUser = await loginTokenService.validateLoginToken(
 					token,
-					user.email
+					user.email,
+					'login_token'
 				);
 
 				expect(validatedUser.id).toBe(user.id);
 				expect(validatedUser.email).toBe(user.email);
+			});
+		});
+
+		it('sets used_at after successful validation', async () => {
+			await withTestTransaction(async () => {
+				const { user } = await createTestEnvironment();
+
+				const { loginToken, token } = await loginTokenService.createLoginToken({
+					email: user.email
+				});
+
+				expect(loginToken.used_at).toBeNull();
+
+				await loginTokenService.validateLoginToken(
+					token,
+					user.email,
+					'login_token'
+				);
+
+				const [updated] = await db
+					.select()
+					.from(loginTokens)
+					.where(eq(loginTokens.id, loginToken.id));
+
+				expect(updated.used_at).not.toBeNull();
+			});
+		});
+
+		it('throws forbidden when token has already been used', async () => {
+			await withTestTransaction(async () => {
+				const { user } = await createTestEnvironment();
+
+				const { token } = await loginTokenService.createLoginToken({
+					email: user.email
+				});
+
+				await loginTokenService.validateLoginToken(
+					token,
+					user.email,
+					'login_token'
+				);
+
+				await expect(
+					loginTokenService.validateLoginToken(token, user.email, 'login_token')
+				).rejects.toMatchObject({ statusCode: 403 });
+			});
+		});
+
+		it('throws forbidden when token type does not match', async () => {
+			await withTestTransaction(async () => {
+				const { user } = await createTestEnvironment();
+
+				const { token } = await loginTokenService.createLoginToken({
+					email: user.email,
+					type: 'password_reset'
+				});
+
+				await expect(
+					loginTokenService.validateLoginToken(token, user.email, 'login_token')
+				).rejects.toMatchObject({ statusCode: 403 });
 			});
 		});
 
@@ -116,7 +177,7 @@ describe('LoginTokenService', () => {
 				});
 
 				await expect(
-					loginTokenService.validateLoginToken(token, user.email)
+					loginTokenService.validateLoginToken(token, user.email, 'login_token')
 				).rejects.toMatchObject({ statusCode: 403 });
 			});
 		});
@@ -130,7 +191,11 @@ describe('LoginTokenService', () => {
 				});
 
 				await expect(
-					loginTokenService.validateLoginToken(token, 'wrong@example.com')
+					loginTokenService.validateLoginToken(
+						token,
+						'wrong@example.com',
+						'login_token'
+					)
 				).rejects.toMatchObject({ statusCode: 404 });
 			});
 		});
@@ -144,7 +209,11 @@ describe('LoginTokenService', () => {
 				});
 
 				await expect(
-					loginTokenService.validateLoginToken('000000', user.email)
+					loginTokenService.validateLoginToken(
+						'000000',
+						user.email,
+						'login_token'
+					)
 				).rejects.toMatchObject({ statusCode: 404 });
 			});
 		});

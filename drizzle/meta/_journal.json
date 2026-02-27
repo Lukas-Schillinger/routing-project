@@ -176,6 +176,13 @@
       "when": 1771125169252,
       "tag": "0024_tense_johnny_blaze",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1772229104526,
+      "tag": "0025_orange_dazzler",
+      "breakpoints": true
     }
   ]
 }

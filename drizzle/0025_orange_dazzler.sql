@@ -1,0 +1,1 @@
+ALTER TABLE "login_tokens" ADD COLUMN "used_at" timestamp with time zone;

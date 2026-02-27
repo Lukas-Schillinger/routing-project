@@ -30,7 +30,11 @@ export const load: PageServerLoad = async (event) => {
 		}
 
 		// Validate login token and get user
-		const user = await loginTokenService.validateLoginToken(token, email);
+		const user = await loginTokenService.validateLoginToken(
+			token,
+			email,
+			'login_token'
+		);
 
 		await userService.confirmEmail(user.id);
 

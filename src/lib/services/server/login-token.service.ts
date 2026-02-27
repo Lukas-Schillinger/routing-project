@@ -70,16 +70,34 @@ export class LoginTokenService {
 		return { loginToken, token };
 	}
 
-	async validateLoginToken(token: string, email: string): Promise<PublicUser> {
+	async validateLoginToken(
+		token: string,
+		email: string,
+		expectedType: 'login_token' | 'password_reset'
+	): Promise<PublicUser> {
 		const loginToken = await this.getLoginTokenFromToken(token, email);
 
 		if (!loginToken) {
 			throw ServiceError.notFound("Couldn't find a login matching that token");
 		}
 
+		if (loginToken.used_at) {
+			throw ServiceError.forbidden('Token has already been used');
+		}
+
 		if (TokenUtils.isExpired(loginToken.expires_at)) {
 			throw ServiceError.forbidden('Login token expired');
 		}
+
+		if (loginToken.type !== expectedType) {
+			throw ServiceError.forbidden('Invalid token type');
+		}
+
+		// Mark as used — prevents replay
+		await db
+			.update(loginTokens)
+			.set({ used_at: new Date() })
+			.where(eq(loginTokens.id, loginToken.id));
 
 		const user = await userService.getPublicUser(
 			loginToken.user_id,

@@ -147,7 +147,11 @@ export const actions: Actions = {
 		const { email, code } = validation.data;
 
 		try {
-			const user = await loginTokenService.validateLoginToken(code, email);
+			const user = await loginTokenService.validateLoginToken(
+				code,
+				email,
+				'login_token'
+			);
 
 			await userService.confirmEmail(user.id);
 

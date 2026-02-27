@@ -59,6 +59,7 @@ function buildLoginToken(overrides?: Partial<LoginToken>): LoginToken {
 		type: 'login_token',
 		expires_at: new Date(Date.now() + 15 * 60 * 1000),
 		created_at: new Date(),
+		used_at: null,
 		mail_record_id: null,
 		...overrides
 	};

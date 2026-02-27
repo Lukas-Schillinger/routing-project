@@ -196,6 +196,7 @@ export const loginTokens = pgTable(
 			.default('login_token')
 			.notNull(),
 		expires_at: ts('expires_at'),
+		used_at: timestamp('used_at', { withTimezone: true }),
 		mail_record_id: uuid('mail_record_id').references(() => mailRecords.id, {
 			onDelete: 'set null'
 		})
