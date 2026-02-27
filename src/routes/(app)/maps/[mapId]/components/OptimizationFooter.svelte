@@ -352,10 +352,10 @@
 							class="inline-flex h-8 items-center justify-center rounded-md border border-warning bg-warning/15 px-2 text-warning-foreground transition-colors hover:bg-warning/25"
 							aria-label="Validation warning"
 						>
-							<TriangleAlert class="h-3.5 w-3.5" />
+							<TriangleAlert class="h-3.5 w-3.5 text-warning" />
 						</Popover.Trigger>
 						<Popover.Content
-							class="w-auto max-w-50 border-warning/50 p-2 text-xs text-warning-foreground"
+							class="w-auto max-w-50 border-warning/50 p-2 text-xs text-warning"
 							side="top"
 						>
 							{validationMessage}
