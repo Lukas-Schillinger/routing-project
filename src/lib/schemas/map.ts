@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { notesSchema, phoneSchema } from './common';
 import { locationCreateSchema } from './location';
 
 /** Ugly hack because schemas with `.refine()` don't support `.omit()`.
@@ -11,8 +12,8 @@ export const createMaplessStopSchema = z
 		driver_id: z.uuid().nullable().optional(),
 		delivery_index: z.number().int().nullable().optional(),
 		contact_name: z.string().max(200).nullable().optional(),
-		contact_phone: z.string().max(32).nullable().optional(),
-		notes: z.string().nullable().optional()
+		contact_phone: phoneSchema.optional(),
+		notes: notesSchema.optional()
 	})
 	.refine((data) => data.location_id || data.location, {
 		message: 'Either location_id or location data must be provided',
