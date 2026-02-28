@@ -1,6 +1,10 @@
 import { AsyncLocalStorage } from 'async_hooks';
-import 'dotenv/config';
+import path from 'node:path';
+import dotenv from 'dotenv';
 import { drizzle } from 'drizzle-orm/postgres-js';
+import { getEnvDir } from '$lib/env-dir';
+
+dotenv.config({ path: path.join(getEnvDir(), '.env') });
 import postgres from 'postgres';
 import * as schema from './schema';
 

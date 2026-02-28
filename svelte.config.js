@@ -1,6 +1,7 @@
 import { mdsvex } from 'mdsvex';
 import adapter from '@sveltejs/adapter-vercel';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
+import { getEnvDir } from './src/lib/env-dir.ts';
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
@@ -9,6 +10,9 @@ const config = {
 	preprocess: [vitePreprocess(), mdsvex()],
 	kit: {
 		adapter: adapter(),
+		env: {
+			dir: getEnvDir()
+		},
 		experimental: {
 			instrumentation: { server: true },
 			tracing: { server: true }
