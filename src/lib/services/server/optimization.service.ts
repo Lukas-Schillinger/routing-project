@@ -101,14 +101,14 @@ export const legSchema = z.object({
 	stop_index: z.number().int()
 });
 
-export const routeSchema = z.object({
+export const routeOptimizationResultSchema = z.object({
 	driver_id: z.string(),
 	travel_duration: z.number().int(),
 	legs: z.array(legSchema)
 });
 
 export const optimizationResultSchema = z.object({
-	routes: z.array(routeSchema),
+	routes: z.array(routeOptimizationResultSchema),
 	total_travel_duration: z.number().int().optional()
 });
 
@@ -135,7 +135,9 @@ export const optimizationResponseSchema = z.discriminatedUnion('success', [
 export type OptimizationConfig = z.infer<typeof optimizationConfigSchema>;
 export type MatrixPayload = z.infer<typeof matrixPayloadSchema>;
 export type Leg = z.infer<typeof legSchema>;
-export type Route = z.infer<typeof routeSchema>;
+export type RouteOptimizationResult = z.infer<
+	typeof routeOptimizationResultSchema
+>;
 export type OptimizationResult = z.infer<typeof optimizationResultSchema>;
 export type OptimizationResponse = z.infer<typeof optimizationResponseSchema>;
 export type SuccessfulOptimizationResponse = z.infer<
