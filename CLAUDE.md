@@ -1,7 +1,7 @@
 ## Commands
 
 ```bash
-npm run dev          # Start dev server (port 5173)
+portless $(basename $PWD) vite dev  # Dev server at <worktree>.localhost:1355 (avoids port conflicts)
 npm run build        # Production build
 npm run check        # Type checking (svelte-kit sync + svelte-check)
 npm run lint         # Prettier + ESLint
@@ -147,11 +147,21 @@ Reference: `src/lib/testing/index.ts`
 - `createTestRouteSetup(tx)` - Creates full route setup for optimization tests
 - Service mocks for external APIs (R2, Mapbox, Resend) in `src/lib/testing/mocks.ts`
 
+## Multi-Agent Workflow
+
+Multiple Claude agents can work in parallel, each in its own worktree. Each agent is assigned a Linear area label (e.g. "Backend", "Frontend", "TSP Solver") at launch.
+
+- **Dev server:** `portless $(basename $PWD) vite dev` — derives the name from the worktree directory. Each agent gets a unique URL at `<worktree>.localhost:1355`. Must use `vite dev` directly (not `npm run dev`) so portless can inject `--port` and `--host` flags.
+- **Task picking:** Filter Linear backlog by your assigned area label. Claim by assigning to yourself and setting "In Progress". Work highest priority first.
+- **Commits:** Commit per issue. Don't push or create PRs — branches are reconciled by the user at end of day.
+- **Frontend verification:** After UI changes, use Claude in Chrome to verify the fix at your dev server URL.
+- **Stay in your lane:** If an issue requires changes outside your area, comment on the issue and skip it.
+
 ## Linear Issue Workflow
 
 > **Source:** `.claude/review.md` and `.claude/best-practices-audit.md` contain full context for review items (Review ID in issue description).
 
-1. **Claim:** Pick a Linear issue. Set status to `In Progress` immediately — before planning or exploring.
+1. **Claim:** Pick an unassigned Linear issue in your area. Set status to `In Progress` immediately — before planning or exploring.
 2. **Verify:** Read the referenced files. Confirm the problem actually exists. The review was written by AI agents and may contain:
    - False positives (problem doesn't exist or was already fixed)
    - Wrong severity (a "critical" that's actually low-impact)
@@ -161,6 +171,6 @@ Reference: `src/lib/testing/index.ts`
    - If invalid → set status to `Canceled` with a comment explaining why
    - If it's a symptom of something bigger → comment the root cause, fix that instead
    - If valid → implement the fix
-4. **Implement:** Work in a git worktree for isolation. Follow CLAUDE.md conventions.
+4. **Implement:** Follow CLAUDE.md conventions.
 5. **Check:** Run `npm run check && npm run lint`. Run relevant tests if they exist.
 6. **Complete:** Set status to `Done`.
