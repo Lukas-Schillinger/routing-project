@@ -1,6 +1,7 @@
 <!-- @component Billing Card for account page - displays subscription, credits, and transaction history -->
 <script lang="ts">
-	import { invalidateAll } from '$app/navigation';
+	import { invalidate } from '$app/navigation';
+	import { INVALIDATION_KEYS } from '$lib/invalidation-keys';
 	import { BillingModal } from '$lib/components/billing';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
@@ -53,7 +54,7 @@
 		actionError = null;
 		try {
 			await billingApi.cancelScheduledDowngrade();
-			await invalidateAll();
+			await invalidate(INVALIDATION_KEYS.ACCOUNT);
 		} catch (e) {
 			actionError =
 				e instanceof Error ? e.message : 'Failed to cancel downgrade';

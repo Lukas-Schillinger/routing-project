@@ -5,10 +5,12 @@ import {
 	stopService
 } from '$lib/services/server';
 import { requirePermission } from '$lib/services/server/permissions';
+import { INVALIDATION_KEYS } from '$lib/invalidation-keys';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async () => {
+export const load: PageServerLoad = async ({ depends }) => {
 	const user = requirePermission('resources:read');
+	depends(INVALIDATION_KEYS.MAPS);
 
 	// Fetch all data in parallel since they're independent
 	const [userMaps, userDepots, userDrivers, mapStats, stopCoordinates] =

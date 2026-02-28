@@ -1,6 +1,7 @@
 <!-- @component Admin Credits Page - displays all credit transactions across organizations with adjustment form -->
 <script lang="ts">
-	import { invalidateAll } from '$app/navigation';
+	import { invalidate } from '$app/navigation';
+	import { INVALIDATION_KEYS } from '$lib/invalidation-keys';
 	import { resolve } from '$app/paths';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
@@ -82,7 +83,7 @@
 			amount = '';
 			description = '';
 			type = 'adjustment';
-			await invalidateAll();
+			await invalidate(INVALIDATION_KEYS.ADMIN);
 		} catch (error) {
 			toast.error(
 				error instanceof Error ? error.message : 'Failed to adjust credits'

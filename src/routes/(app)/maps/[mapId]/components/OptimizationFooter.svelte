@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { invalidateAll } from '$app/navigation';
+	import { invalidate } from '$app/navigation';
+	import { INVALIDATION_KEYS } from '$lib/invalidation-keys';
 	import CreditBadge from '$lib/components/billing/CreditBadge.svelte';
 	import { ConfirmDeleteDialog } from '$lib/components/ConfirmDeleteDialog';
 	import EditOrCreateDepotPopover from '$lib/components/EditOrCreateDepotPopover';
@@ -171,7 +172,7 @@
 		isResetting = true;
 		try {
 			await mapApi.resetOptimization(map.id);
-			await invalidateAll();
+			await invalidate(INVALIDATION_KEYS.MAP_DATA);
 			toast.success('Routes reset successfully');
 		} catch (err) {
 			toast.error('Failed to reset routes', {

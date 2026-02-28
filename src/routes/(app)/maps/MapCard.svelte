@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
-	import { invalidateAll } from '$app/navigation';
+	import { invalidate } from '$app/navigation';
+	import { INVALIDATION_KEYS } from '$lib/invalidation-keys';
 	import { resolve } from '$app/paths';
 	import { env } from '$env/dynamic/public';
 	import { ConfirmDeleteDialog } from '$lib/components/ConfirmDeleteDialog';
@@ -116,7 +117,7 @@
 	async function handleDelete() {
 		await mapApi.delete(map.id);
 		toast.success('Map deleted');
-		await invalidateAll();
+		await invalidate(INVALIDATION_KEYS.MAPS);
 	}
 </script>
 
@@ -139,7 +140,7 @@
 		<EditOrCreateMapPopover
 			mode="edit"
 			{map}
-			onSuccess={() => invalidateAll()}
+			onSuccess={() => invalidate(INVALIDATION_KEYS.MAPS)}
 			triggerClass="w-full"
 		>
 			{#snippet children({ props })}

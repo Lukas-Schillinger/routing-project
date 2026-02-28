@@ -1,6 +1,7 @@
 <!-- @component Account page with user profile and organization settings -->
 <script lang="ts">
-	import { goto, invalidateAll } from '$app/navigation';
+	import { goto, invalidate } from '$app/navigation';
+	import { INVALIDATION_KEYS } from '$lib/invalidation-keys';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import DebugToolbar from '$lib/components/DebugToolbar.svelte';
@@ -106,8 +107,8 @@
 				<!-- Invitations Section -->
 				<InvitationsCard
 					invitationsWithMailRecord={data.invitationsWithMailRecord}
-					onCreateInvitation={() => invalidateAll()}
-					onDeleteInvitation={() => invalidateAll()}
+					onCreateInvitation={() => invalidate(INVALIDATION_KEYS.ACCOUNT)}
+					onDeleteInvitation={() => invalidate(INVALIDATION_KEYS.ACCOUNT)}
 				/>
 			{/if}
 

@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { invalidateAll } from '$app/navigation';
+	import { invalidate } from '$app/navigation';
+	import { INVALIDATION_KEYS } from '$lib/invalidation-keys';
 	import EditOrCreateDriverPopover from '$lib/components/EditOrCreateDriverPopover';
 	import * as Avatar from '$lib/components/ui/avatar/index.js';
 	import { Badge } from '$lib/components/ui/badge';
@@ -13,7 +14,7 @@
 	let { drivers = $bindable([]) }: { drivers: Driver[] } = $props();
 
 	async function handleDriverSuccess() {
-		await invalidateAll();
+		await invalidate(INVALIDATION_KEYS.MAPS);
 	}
 
 	async function handleDelete(driver: Driver) {

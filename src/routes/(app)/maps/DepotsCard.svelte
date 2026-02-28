@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { invalidateAll } from '$app/navigation';
+	import { invalidate } from '$app/navigation';
+	import { INVALIDATION_KEYS } from '$lib/invalidation-keys';
 	import EditOrCreateDepotPopover from '$lib/components/EditOrCreateDepotPopover';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
@@ -12,7 +13,7 @@
 		$props();
 
 	async function handleDepotSuccess() {
-		await invalidateAll();
+		await invalidate(INVALIDATION_KEYS.MAPS);
 	}
 
 	async function handleDelete(depot: DepotWithLocationJoin) {

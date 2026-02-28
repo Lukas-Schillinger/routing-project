@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { invalidateAll } from '$app/navigation';
+	import { invalidate } from '$app/navigation';
+	import { INVALIDATION_KEYS } from '$lib/invalidation-keys';
 	import { resolve } from '$app/paths';
 	import { ConfirmDeleteDialog } from '$lib/components/ConfirmDeleteDialog';
 	import DropdownMetadataLabel from '$lib/components/DropdownMetadataLabel.svelte';
@@ -250,7 +251,7 @@
 		} finally {
 			pendingSaves--;
 			if (pendingSaves === 0) {
-				await invalidateAll();
+				await invalidate(INVALIDATION_KEYS.MAP_DATA);
 				columns = buildColumns();
 				original = snapshotPositions(columns);
 			}
@@ -264,7 +265,7 @@
 
 		try {
 			await mapApi.addDriver(mapId, driverId);
-			await invalidateAll();
+			await invalidate(INVALIDATION_KEYS.MAP_DATA);
 			columns = buildColumns();
 			original = snapshotPositions(columns);
 			addPopoverOpen = false;
@@ -284,13 +285,13 @@
 
 	async function handleDriverCreated(): Promise<void> {
 		addPopoverOpen = false;
-		await invalidateAll();
+		await invalidate(INVALIDATION_KEYS.MAP_DATA);
 		columns = buildColumns();
 		original = snapshotPositions(columns);
 	}
 
 	async function handleDriverEdited(): Promise<void> {
-		await invalidateAll();
+		await invalidate(INVALIDATION_KEYS.MAP_DATA);
 		columns = buildColumns();
 		original = snapshotPositions(columns);
 	}

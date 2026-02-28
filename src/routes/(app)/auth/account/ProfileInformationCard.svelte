@@ -1,6 +1,7 @@
 <!-- @component Profile Information card for account page -->
 <script lang="ts">
-	import { goto, invalidateAll } from '$app/navigation';
+	import { goto, invalidate } from '$app/navigation';
+	import { INVALIDATION_KEYS } from '$lib/invalidation-keys';
 	import { resolve } from '$app/paths';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
@@ -39,7 +40,7 @@
 		isSavingName = true;
 		try {
 			await usersApi.updateMe({ name: newName });
-			await invalidateAll();
+			await invalidate(INVALIDATION_KEYS.ACCOUNT);
 			toast.success('Profile updated');
 		} catch (error) {
 			console.error('Failed to update profile:', error);

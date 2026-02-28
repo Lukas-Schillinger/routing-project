@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { invalidateAll } from '$app/navigation';
+	import { invalidate } from '$app/navigation';
+	import { INVALIDATION_KEYS } from '$lib/invalidation-keys';
 	import * as Avatar from '$lib/components/ui/avatar';
 	import { stopApi } from '$lib/services/api';
 	import { addressDisplay, getIdenticon } from '$lib/utils';
@@ -119,13 +120,13 @@
 		try {
 			const result = await stopApi.reorder(data.mapId, updates);
 			console.log('[dnd] server responded with', result.stops.length, 'stops');
-			await invalidateAll();
+			await invalidate(INVALIDATION_KEYS.DEMO);
 			console.log('[dnd] invalidated, rebuilding lists from server data');
 			lists = buildLists();
 			console.log('[dnd] done');
 		} catch (err) {
 			console.error('[dnd] save failed, reverting to server state', err);
-			await invalidateAll();
+			await invalidate(INVALIDATION_KEYS.DEMO);
 			lists = buildLists();
 		} finally {
 			saving = false;

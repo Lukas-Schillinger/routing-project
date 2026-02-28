@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { invalidateAll } from '$app/navigation';
+	import { invalidate } from '$app/navigation';
+	import { INVALIDATION_KEYS } from '$lib/invalidation-keys';
 	import DebugToolbar from '$lib/components/DebugToolbar.svelte';
 	import MapView from '$lib/components/map/MapView.svelte';
 	import { Button } from '$lib/components/ui/button';
@@ -110,16 +111,16 @@
 			if (!job || job.status === 'completed') {
 				stopPolling();
 				isOptimizing = false;
-				await invalidateAll();
+				await invalidate(INVALIDATION_KEYS.MAP_DATA);
 			} else if (job.status === 'failed') {
 				stopPolling();
 				isOptimizing = false;
 				toast.error(job.error_message || 'Optimization failed');
-				await invalidateAll();
+				await invalidate(INVALIDATION_KEYS.MAP_DATA);
 			} else if (job.status === 'cancelled') {
 				stopPolling();
 				isOptimizing = false;
-				await invalidateAll();
+				await invalidate(INVALIDATION_KEYS.MAP_DATA);
 			}
 		} catch (err) {
 			console.error('Error polling optimization status:', err);
@@ -140,7 +141,7 @@
 	async function handleDepotChange(depotId: string) {
 		try {
 			await mapApi.update(data.map.id, { depot_id: depotId });
-			await invalidateAll();
+			await invalidate(INVALIDATION_KEYS.MAP_DATA);
 		} catch (err) {
 			const message =
 				err instanceof ServiceError ? err.message : 'Failed to update depot';
@@ -158,7 +159,7 @@
 
 		try {
 			await mapApi.removeDriver(data.map.id, driverId);
-			await invalidateAll();
+			await invalidate(INVALIDATION_KEYS.MAP_DATA);
 			toast.success('Driver removed');
 		} catch (err) {
 			const message =
@@ -185,7 +186,7 @@
 		map={data.map}
 		{pageState}
 		onDelete={handleDeleteMap}
-		onUpdate={() => invalidateAll()}
+		onUpdate={() => invalidate(INVALIDATION_KEYS.MAP_DATA)}
 	/>
 
 	<MapDetailLayout bind:paneSize={params.pane}>
@@ -202,9 +203,9 @@
 					showToolbar
 					toolbarLayoutControls={layoutControls}
 					mapId={data.map.id}
-					onStopCreated={() => invalidateAll()}
-					onStopUpdated={() => invalidateAll()}
-					onStopDeleted={() => invalidateAll()}
+					onStopCreated={() => invalidate(INVALIDATION_KEYS.MAP_DATA)}
+					onStopUpdated={() => invalidate(INVALIDATION_KEYS.MAP_DATA)}
+					onStopDeleted={() => invalidate(INVALIDATION_KEYS.MAP_DATA)}
 				/>
 
 				{#if pageState === 'optimizing'}
@@ -227,9 +228,9 @@
 						mapId={data.map.id}
 						bind:sortColumn={params.sort}
 						bind:sortDirection={params.dir}
-						onUpdate={() => invalidateAll()}
-						onCreate={() => invalidateAll()}
-						onDelete={() => invalidateAll()}
+						onUpdate={() => invalidate(INVALIDATION_KEYS.MAP_DATA)}
+						onCreate={() => invalidate(INVALIDATION_KEYS.MAP_DATA)}
+						onDelete={() => invalidate(INVALIDATION_KEYS.MAP_DATA)}
 						onZoomToStop={(stopId) => (focusedStopId = stopId)}
 					/>
 				{/snippet}

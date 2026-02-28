@@ -1,6 +1,7 @@
 <!-- @component Organization card for account page -->
 <script lang="ts">
-	import { invalidateAll } from '$app/navigation';
+	import { invalidate } from '$app/navigation';
+	import { INVALIDATION_KEYS } from '$lib/invalidation-keys';
 	import { ConfirmDeleteDialog } from '$lib/components/ConfirmDeleteDialog';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
@@ -52,7 +53,7 @@
 				name: newName
 			});
 			organization = updatedOrg;
-			await invalidateAll();
+			await invalidate(INVALIDATION_KEYS.ACCOUNT);
 			toast.success('Organization updated');
 		} catch (error) {
 			console.error('Failed to update organization:', error);
@@ -75,7 +76,7 @@
 	// Delete user
 	async function handleDeleteUser(userId: string) {
 		await usersApi.delete(userId);
-		await invalidateAll();
+		await invalidate(INVALIDATION_KEYS.ACCOUNT);
 		toast.success('User deleted');
 	}
 
@@ -90,7 +91,7 @@
 		} catch (error) {
 			console.error('Failed to update role:', error);
 			toast.error('Failed to update role');
-			await invalidateAll();
+			await invalidate(INVALIDATION_KEYS.ACCOUNT);
 		}
 	}
 </script>

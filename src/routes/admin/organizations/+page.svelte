@@ -1,6 +1,7 @@
 <!-- @component Admin Organizations Page - displays a table of all organizations with subscription info -->
 <script lang="ts">
-	import { goto, invalidateAll } from '$app/navigation';
+	import { goto, invalidate } from '$app/navigation';
+	import { INVALIDATION_KEYS } from '$lib/invalidation-keys';
 	import { resolve } from '$app/paths';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
@@ -60,7 +61,7 @@
 			const result = await response.json();
 			toast.success('Test account created');
 			dialogOpen = false;
-			await invalidateAll();
+			await invalidate(INVALIDATION_KEYS.ADMIN);
 			goto(resolve(`/admin/organizations/${result.organization.id}`));
 		} catch (error) {
 			toast.error(

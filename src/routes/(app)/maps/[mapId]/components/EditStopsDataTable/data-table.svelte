@@ -8,7 +8,8 @@
 	5. Test search, sort, and filter functionality after changes
 -->
 <script lang="ts">
-	import { goto, invalidateAll } from '$app/navigation';
+	import { goto, invalidate } from '$app/navigation';
+	import { INVALIDATION_KEYS } from '$lib/invalidation-keys';
 	import { resolve } from '$app/paths';
 	import EditOrCreateStopPopover from '$lib/components/EditOrCreateStopPopover';
 	import DriverPicker from '$lib/components/map/DriverPicker.svelte';
@@ -428,7 +429,7 @@
 				<div class="h-px flex-1 bg-border"></div>
 			</div>
 
-			<EditOrCreateStopPopover mode="create" {mapId} onSuccess={invalidateAll}>
+			<EditOrCreateStopPopover mode="create" {mapId} onSuccess={() => invalidate(INVALIDATION_KEYS.MAP_DATA)}>
 				<Button variant="outline"><Plus />Add Stop</Button>
 			</EditOrCreateStopPopover>
 		</div>

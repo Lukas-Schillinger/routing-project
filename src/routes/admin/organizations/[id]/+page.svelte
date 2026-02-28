@@ -1,6 +1,7 @@
 <!-- @component Admin Organization Detail Page - displays detailed info for a single organization -->
 <script lang="ts">
-	import { goto, invalidateAll } from '$app/navigation';
+	import { goto, invalidate } from '$app/navigation';
+	import { INVALIDATION_KEYS } from '$lib/invalidation-keys';
 	import { resolve } from '$app/paths';
 	import { ConfirmDeleteDialog } from '$lib/components/ConfirmDeleteDialog';
 	import { Badge } from '$lib/components/ui/badge';
@@ -108,7 +109,7 @@
 			}
 
 			toast.success('Subscription synced from Stripe');
-			await invalidateAll();
+			await invalidate(INVALIDATION_KEYS.ADMIN);
 		} catch (error) {
 			toast.error(
 				error instanceof Error ? error.message : 'Failed to sync from Stripe'
@@ -148,7 +149,7 @@
 			creditAmount = '';
 			creditDescription = '';
 			creditType = 'adjustment';
-			await invalidateAll();
+			await invalidate(INVALIDATION_KEYS.ADMIN);
 		} catch (error) {
 			toast.error(
 				error instanceof Error ? error.message : 'Failed to adjust credits'

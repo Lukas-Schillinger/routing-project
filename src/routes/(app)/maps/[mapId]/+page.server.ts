@@ -10,10 +10,12 @@ import {
 } from '$lib/services/server';
 import { requirePermission } from '$lib/services/server/permissions';
 import { error } from '@sveltejs/kit';
+import { INVALIDATION_KEYS } from '$lib/invalidation-keys';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ params }) => {
+export const load: PageServerLoad = async ({ params, depends }) => {
 	const user = requirePermission('resources:read');
+	depends(INVALIDATION_KEYS.MAP_DATA);
 
 	const { mapId } = params;
 

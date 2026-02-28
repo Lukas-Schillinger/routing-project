@@ -5,10 +5,12 @@ import {
 	organizationService,
 	userService
 } from '$lib/services/server/user.service';
+import { INVALIDATION_KEYS } from '$lib/invalidation-keys';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async () => {
+export const load: PageServerLoad = async ({ depends }) => {
 	const user = requireAuth();
+	depends(INVALIDATION_KEYS.ACCOUNT);
 
 	const hasBillingPermission = hasPermission(user.role, 'billing:read');
 	const canManageUsers = hasPermission(user.role, 'users:update');
