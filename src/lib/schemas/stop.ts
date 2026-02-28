@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { BULK_LIMITS } from '$lib/config';
-import { phoneSchema } from './common';
+import { notesSchema, phoneSchema } from './common';
 import type { Location } from './location';
 import { locationCreateSchema } from './location';
 
@@ -13,7 +13,7 @@ export const createStopSchema = z
 		delivery_index: z.number().int().nullable().optional(),
 		contact_name: z.string().max(200).nullable().optional(),
 		contact_phone: phoneSchema.optional(),
-		notes: z.string().nullable().optional()
+		notes: notesSchema.optional()
 	})
 	.refine((data) => data.location_id || data.location, {
 		message: 'Either location_id or location data must be provided',
@@ -31,7 +31,7 @@ export const bulkCreateStopsSchema = z
 				delivery_index: z.number().int().nullable().optional(),
 				contact_name: z.string().max(200).nullable().optional(),
 				contact_phone: phoneSchema.optional(),
-				notes: z.string().nullable().optional()
+				notes: notesSchema.optional()
 			})
 			.refine((data) => data.location_id || data.location, {
 				message: 'Either location_id or location data must be provided',
@@ -48,7 +48,7 @@ export const updateStopSchema = z.object({
 	delivery_index: z.number().int().nullable().optional(),
 	contact_name: z.string().max(200).nullable().optional(),
 	contact_phone: phoneSchema.optional(),
-	notes: z.string().nullable().optional()
+	notes: notesSchema.optional()
 });
 
 export const stopSchema = z.object({
@@ -60,7 +60,7 @@ export const stopSchema = z.object({
 	delivery_index: z.number().int().nullable(),
 	contact_name: z.string().nullable(),
 	contact_phone: phoneSchema,
-	notes: z.string().nullable(),
+	notes: notesSchema,
 	created_at: z.date(),
 	created_by: z.uuid().nullable(),
 	updated_at: z.date(),
