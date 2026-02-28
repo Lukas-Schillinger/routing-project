@@ -23,7 +23,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		}
 
 		const expected = `Bearer ${expectedToken}`;
-		const hmac = (s: string) => createHmac('sha256', expected).update(s).digest();
+		const hmac = (s: string) =>
+			createHmac('sha256', expected).update(s).digest();
 		if (!timingSafeEqual(hmac(authHeader ?? ''), hmac(expected))) {
 			throw ServiceError.unauthorized('Invalid webhook authentication');
 		}
