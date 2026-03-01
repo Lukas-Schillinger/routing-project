@@ -1,11 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { PublicUser, Role } from '$lib/schemas/user';
+import { hasPermission, type Permission } from '$lib/schemas/permissions';
 import {
-	hasPermission,
 	requireAuth,
 	requirePermission,
-	requirePermissionApi,
-	type Permission
+	requirePermissionApi
 } from './permissions';
 
 // Mock getRequestEvent from SvelteKit

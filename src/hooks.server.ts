@@ -6,7 +6,7 @@ import { getLimiterForPath } from '$lib/server/rate-limit';
 import * as auth from '$lib/services/server/auth';
 import { getPlanFeatures } from '$lib/config/billing';
 import { billingService } from '$lib/services/server/billing.service';
-import { rolePermissions } from '$lib/services/server/permissions';
+import { rolePermissions } from '$lib/schemas/permissions';
 import * as Sentry from '@sentry/sveltekit';
 import type { Handle, HandleServerError } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';

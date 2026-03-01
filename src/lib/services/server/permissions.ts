@@ -3,14 +3,6 @@ import { hasPermission, type Permission } from '$lib/schemas/permissions';
 import type { PublicUser } from '$lib/schemas/user';
 import { error, redirect } from '@sveltejs/kit';
 
-// Re-export client-safe permission utilities
-export {
-	hasPermission,
-	roleDescriptions,
-	rolePermissions,
-	type Permission
-} from '$lib/schemas/permissions';
-
 /**
  * Get authenticated user - for page routes that just need auth (no permission check)
  * Redirects to login if not authenticated
