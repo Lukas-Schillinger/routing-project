@@ -166,7 +166,7 @@
 		currentVariant = 'idle';
 	}
 
-	const acceptHint = $derived(() => {
+	const acceptHint = $derived.by(() => {
 		if (hint) return hint;
 		if (accept === '*') return 'Any file type';
 		return accept
@@ -247,7 +247,7 @@
 
 			<!-- Hint -->
 			<p class="text-xs text-muted-foreground/70">
-				{acceptHint()}
+				{acceptHint}
 			</p>
 		</div>
 	{/if}
