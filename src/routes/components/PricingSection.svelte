@@ -168,9 +168,9 @@
 
 					<Button
 						href={plan.href}
-						class="mb-6 w-full rounded-sm
-							{plan.highlighted
-							? 'bg-landing-primary text-landing-primary-foreground hover:bg-landing-primary-hover'
+						variant={plan.highlighted ? 'landing' : undefined}
+						class="mb-6 w-full rounded-sm {plan.highlighted
+							? ''
 							: 'bg-foreground/5 text-foreground hover:bg-foreground/10'}"
 					>
 						{plan.cta}
