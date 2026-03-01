@@ -173,8 +173,9 @@ describe.skipIf(!hasStripeTestKey())('Stripe Billing Integration', () => {
 			const original = await testClock.getSubscription(subscriptionId);
 			const originalPeriodEnd = original.items.data[0].current_period_end;
 
-			// Advance 31 days to trigger renewal (polling handles waiting for ready)
-			await testClock.advanceDays(31);
+			// Advance 31 days + 1 hour to trigger renewal and finalize the invoice
+			// (Stripe keeps renewal invoices in 'draft' for ~1 hour before auto-paying)
+			await testClock.advanceTime(31 * 24 * 60 * 60 + 3600);
 
 			const renewed = await testClock.getSubscription(subscriptionId);
 			expect(renewed.status).toBe('active');
