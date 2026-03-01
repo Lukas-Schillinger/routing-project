@@ -85,7 +85,9 @@ export class R2Service {
 			return url;
 		} catch (error) {
 			log.error({ key, error: String(error) }, 'Signed URL generation failed');
-			throw ServiceError.internal('Failed to generate signed URL', { cause: error });
+			throw ServiceError.internal('Failed to generate signed URL', {
+				cause: error
+			});
 		}
 	}
 
