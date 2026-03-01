@@ -47,7 +47,7 @@ export class R2Service {
 			log.info({ key, size }, 'File uploaded');
 		} catch (error) {
 			log.error({ key, error: String(error) }, 'File upload failed');
-			throw ServiceError.internal(`Failed to upload file: ${error}`);
+			throw ServiceError.internal('Failed to upload file', { cause: error });
 		}
 	}
 
@@ -64,7 +64,7 @@ export class R2Service {
 			log.info({ key }, 'File deleted');
 		} catch (error) {
 			log.error({ key, error: String(error) }, 'File deletion failed');
-			throw ServiceError.internal(`Failed to delete file: ${error}`);
+			throw ServiceError.internal('Failed to delete file', { cause: error });
 		}
 	}
 
@@ -85,7 +85,7 @@ export class R2Service {
 			return url;
 		} catch (error) {
 			log.error({ key, error: String(error) }, 'Signed URL generation failed');
-			throw ServiceError.internal(`Failed to generate signed URL: ${error}`);
+			throw ServiceError.internal('Failed to generate signed URL', { cause: error });
 		}
 	}
 
