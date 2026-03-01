@@ -125,7 +125,7 @@
 		importState.step === 2 || importState.step === 3
 	);
 
-	const nextButtonDisabled = $derived(() => {
+	const nextButtonDisabled = $derived.by(() => {
 		if (importState.step === 2) {
 			return !step2CanProceed || importState.isProcessing;
 		}
@@ -137,7 +137,7 @@
 		return true;
 	});
 
-	const nextButtonLabel = $derived(() => {
+	const nextButtonLabel = $derived.by(() => {
 		if (importState.step === 2) {
 			if (importState.isProcessing) return 'Geocoding...';
 			return 'Next';
@@ -246,13 +246,13 @@
 					<Button
 						size="sm"
 						onclick={handleNext}
-						disabled={nextButtonDisabled()}
+						disabled={nextButtonDisabled}
 						class="gap-1.5"
 					>
 						{#if isProcessing}
 							<Loader2 class="h-4 w-4 animate-spin" />
 						{/if}
-						{nextButtonLabel()}
+						{nextButtonLabel}
 						{#if !isProcessing}
 							<ArrowRight class="h-4 w-4" />
 						{/if}
