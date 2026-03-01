@@ -44,5 +44,27 @@
 	"enabledPlugins": {
 		"typescript-lsp@claude-plugins-official": true,
 		"linear@claude-plugins-official": true
+	},
+	"hooks": {
+		"WorktreeCreate": [
+			{
+				"hooks": [
+					{
+						"type": "command",
+						"command": ".claude/hooks/setup-worktree.sh"
+					}
+				]
+			}
+		],
+		"WorktreeRemove": [
+			{
+				"hooks": [
+					{
+						"type": "command",
+						"command": "bash -c 'jq -r .worktree_path | xargs git worktree remove --force'"
+					}
+				]
+			}
+		]
 	}
 }

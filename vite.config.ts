@@ -1,15 +1,14 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { sentrySvelteKit } from '@sentry/sveltekit';
 import { sveltekit } from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
-import { defineConfig, loadEnv } from 'vite';
+import { defineConfig, loadEnv, searchForWorkspaceRoot } from 'vite';
 import devtoolsJson from 'vite-plugin-devtools-json';
-import { getEnvDir } from './src/lib/env-dir';
 
 export default defineConfig(({ mode }) => {
-	const envDir = getEnvDir();
-	const env = loadEnv(mode, envDir, '');
+	const env = loadEnv(mode, process.cwd(), '');
 	return {
-		envDir,
 		plugins: [
 			sentrySvelteKit({
 				sourceMapsUploadOptions: {
@@ -23,7 +22,18 @@ export default defineConfig(({ mode }) => {
 			devtoolsJson()
 		],
 		server: {
-			allowedHosts: env.CF_TUNNEL_URL ? [env.CF_TUNNEL_URL] : []
+			allowedHosts: env.CF_TUNNEL_URL ? [env.CF_TUNNEL_URL] : [],
+			fs: {
+				allow: [
+					searchForWorkspaceRoot(process.cwd()),
+					// When node_modules is a symlink (e.g. git worktrees),
+					// Vite resolves it to the real path which may be outside
+					// the workspace root. Allow the resolved path explicitly.
+					...(fs.existsSync('node_modules')
+						? [fs.realpathSync(path.resolve('node_modules'))]
+						: [])
+				]
+			}
 		},
 		test: {
 			expect: { requireAssertions: true },
