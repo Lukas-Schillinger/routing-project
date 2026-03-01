@@ -7,7 +7,7 @@
 	import { createInvitationSchema, type Invitation } from '$lib/schemas';
 	import type { Role } from '$lib/schemas/user';
 	import { invitationsApi } from '$lib/services/api/auth';
-	import { roleDescriptions } from '$lib/services/server/permissions';
+	import { roleDescriptions } from '$lib/schemas/permissions';
 	import { Check, LoaderCircle, Mail, TriangleAlert } from 'lucide-svelte';
 	import { untrack } from 'svelte';
 	import { defaults, setMessage, superForm } from 'sveltekit-superforms';

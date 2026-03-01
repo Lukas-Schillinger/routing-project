@@ -8,10 +8,9 @@
 	import { Input } from '$lib/components/ui/input';
 	import * as Select from '$lib/components/ui/select';
 	import * as Table from '$lib/components/ui/table';
-	import type { Organization, PublicUser, Role } from '$lib/schemas';
+	import type { Organization, Permission, PublicUser, Role } from '$lib/schemas';
+	import { roleDescriptions } from '$lib/schemas/permissions';
 	import { organizationApi, usersApi } from '$lib/services/api/auth';
-	import type { Permission } from '$lib/services/server/permissions';
-	import { roleDescriptions } from '$lib/services/server/permissions';
 	import { checkPermission, formatDate } from '$lib/utils';
 	import { Trash2 } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';

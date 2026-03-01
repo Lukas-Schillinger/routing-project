@@ -14,7 +14,7 @@ import {
 } from './schemas/location';
 import type { GeocodingFeature } from './services/external/mapbox/types';
 import type { PlanFeatures } from './config/billing';
-import type { Permission } from './services/server/permissions';
+import type { Permission } from './schemas/permissions';
 
 TimeAgo.addLocale(en);
 const timeAgo = new TimeAgo('en-US');
