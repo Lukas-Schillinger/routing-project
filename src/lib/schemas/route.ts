@@ -1,10 +1,5 @@
 import { z } from 'zod';
-
-// GeoJSON LineString schema - matches Mapbox Directions API format when geometries=geojson
-const geoJsonLineStringSchema = z.object({
-	type: z.literal('LineString'),
-	coordinates: z.array(z.array(z.number())) // Array of [longitude, latitude] positions
-});
+import { geoJsonLineStringSchema } from './common';
 
 export const routeSchema = z.object({
 	id: z.uuid(),

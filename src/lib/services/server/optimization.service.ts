@@ -538,7 +538,7 @@ export class OptimizationService {
 	): Promise<void> {
 		type DirectionsResult = {
 			driverId: string;
-			geometry: { type: 'LineString'; coordinates: number[][] };
+			geometry: { type: 'LineString'; coordinates: [number, number][] };
 			duration: number;
 		};
 		type FailureResult = { driverId: string; error: string };

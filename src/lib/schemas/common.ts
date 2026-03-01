@@ -58,3 +58,13 @@ export const notesSchema = z
 	.max(1000, 'Notes must be less than 1000 characters')
 	.transform((val) => (val?.trim() === '' ? null : val))
 	.nullable();
+
+// GeoJSON schemas
+export const coordinateSchema = z.tuple([z.number(), z.number()]); // [longitude, latitude]
+
+export const geoJsonLineStringSchema = z.object({
+	type: z.literal('LineString'),
+	coordinates: z.array(coordinateSchema)
+});
+
+export type GeoJsonLineString = z.infer<typeof geoJsonLineStringSchema>;

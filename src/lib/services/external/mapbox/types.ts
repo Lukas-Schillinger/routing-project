@@ -1,12 +1,13 @@
+import { coordinateSchema, geoJsonLineStringSchema } from '$lib/schemas/common';
 import { z } from 'zod';
+
+export { coordinateSchema, geoJsonLineStringSchema };
 
 // Mapbox API response schemas
 export const mapboxErrorSchema = z.object({
 	message: z.string(),
 	code: z.string().optional()
 });
-
-export const coordinateSchema = z.tuple([z.number(), z.number()]); // [longitude, latitude]
 
 // Context sub-objects in v6
 const contextSubObjectSchema = z.object({
@@ -158,12 +159,6 @@ export const directionsLegGeoJsonSchema = z.object({
 	duration: z.number(),
 	steps: z.array(directionsStepGeoJsonSchema).optional(),
 	summary: z.string().optional()
-});
-
-// GeoJSON LineString geometry schema
-export const geoJsonLineStringSchema = z.object({
-	type: z.literal('LineString'),
-	coordinates: z.array(coordinateSchema)
 });
 
 // Generic directions route schema (supports both polyline and geojson)
