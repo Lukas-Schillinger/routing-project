@@ -13,7 +13,6 @@ npm run db:migrate   # Apply Drizzle migration
 
 ## Workflow
 
-- When working on a Linear issue, update its status to `In Progress` immediately — before planning or exploring. Update to `Done` when complete.
 - Always use the code-simplifier agent after modifying service files to ensure clarity and consistency.
 - Always use vercel-frontend-review agent after modifying frontend files
 - Before committing, ensure checks pass: `npm run check` (types) and `npm run lint` (ESLint). CI will reject commits that fail.
@@ -22,6 +21,34 @@ npm run db:migrate   # Apply Drizzle migration
   - Drizzle: prefer `npm run db:generate` then `npm run db:migrate` for schema changes. `drizzle-kit push --force` skips most prompts but may still hang on create-vs-rename column disambiguation — if it hangs, kill it and use the generate+migrate workflow instead. Avoid `drizzle-kit studio`.
   - shadcn-svelte: always pass component names directly and use `--yes` to skip confirmation (e.g., `npx shadcn-svelte@latest add button card --yes`).
 - Never use `git -C` — the working directory is already the project root.
+
+### Linear Issue Workflow
+
+Multiple Claude agents can work in parallel, each in its own worktree. Each agent is assigned a Linear area label (e.g. "Backend", "Frontend", "TSP Solver") at launch.
+
+- **Dev server:** `portless $(basename $PWD) vite dev` — derives the name from the worktree directory. Each agent gets a unique URL at `<worktree>.localhost:1355`. Must use `vite dev` directly (not `npm run dev`) so portless can inject `--port` and `--host` flags.
+- **Task picking:** Filter Linear backlog by your assigned area label. Claim by assigning to yourself and setting "In Progress". Work highest priority first.
+- **Commits:** Commit per issue. Don't push or create PRs — branches are reconciled by the user at end of day.
+- **Frontend verification:** After UI changes, use Claude in Chrome to verify the fix at your dev server URL.
+- **Stay in your lane:** If an issue requires changes outside your area, comment on the issue and skip it.
+
+> **Source:** `.claude/review.md` and `.claude/best-practices-audit.md` contain full context for review items (Review ID in issue description).
+
+1. **Claim:** Pick an unassigned Linear issue in your area. Set status to `In Progress` immediately — before planning or exploring.
+2. **Plan:** **Always use plan mode before modifying files.** Enter plan mode, explore the codebase, understand the problem, design a solution, and get approval before writing any code. Never jump straight into editing files.
+3. **Verify:** Read the referenced files. Confirm the problem actually exists. The review was written by AI agents and may contain:
+   - False positives (problem doesn't exist or was already fixed)
+   - Wrong severity (a "critical" that's actually low-impact)
+   - Wrong fix (the suggested fix is worse than the current code)
+   - Symptoms of a larger structural problem (fix the root cause, not the symptom)
+4. **Decide:**
+   - If invalid → set status to `Canceled` with a comment explaining why
+   - If it's a symptom of something bigger → comment the root cause, fix that instead
+   - If valid → implement the fix
+5. **Root cause:** **Always find and fix the root cause.** Never use workarounds, hacks, or suppress warnings/errors to avoid fixing the real issue. If a lint rule warns, understand why and fix the code — don't add a disable comment unless the tool genuinely can't detect the correct usage.
+6. **Implement:** Follow CLAUDE.md conventions.
+7. **Check:** Run `npm run check && npm run lint`. Run relevant tests if they exist.
+8. **Complete:** Set status to `Done`.
 
 ## Conventions
 
@@ -146,31 +173,3 @@ Reference: `src/lib/testing/index.ts`
 - `createTestEnvironment(tx)` - Creates org + admin user
 - `createTestRouteSetup(tx)` - Creates full route setup for optimization tests
 - Service mocks for external APIs (R2, Mapbox, Resend) in `src/lib/testing/mocks.ts`
-
-## Multi-Agent Workflow
-
-Multiple Claude agents can work in parallel, each in its own worktree. Each agent is assigned a Linear area label (e.g. "Backend", "Frontend", "TSP Solver") at launch.
-
-- **Dev server:** `portless $(basename $PWD) vite dev` — derives the name from the worktree directory. Each agent gets a unique URL at `<worktree>.localhost:1355`. Must use `vite dev` directly (not `npm run dev`) so portless can inject `--port` and `--host` flags.
-- **Task picking:** Filter Linear backlog by your assigned area label. Claim by assigning to yourself and setting "In Progress". Work highest priority first.
-- **Commits:** Commit per issue. Don't push or create PRs — branches are reconciled by the user at end of day.
-- **Frontend verification:** After UI changes, use Claude in Chrome to verify the fix at your dev server URL.
-- **Stay in your lane:** If an issue requires changes outside your area, comment on the issue and skip it.
-
-## Linear Issue Workflow
-
-> **Source:** `.claude/review.md` and `.claude/best-practices-audit.md` contain full context for review items (Review ID in issue description).
-
-1. **Claim:** Pick an unassigned Linear issue in your area. Set status to `In Progress` immediately — before planning or exploring.
-2. **Verify:** Read the referenced files. Confirm the problem actually exists. The review was written by AI agents and may contain:
-   - False positives (problem doesn't exist or was already fixed)
-   - Wrong severity (a "critical" that's actually low-impact)
-   - Wrong fix (the suggested fix is worse than the current code)
-   - Symptoms of a larger structural problem (fix the root cause, not the symptom)
-3. **Decide:**
-   - If invalid → set status to `Canceled` with a comment explaining why
-   - If it's a symptom of something bigger → comment the root cause, fix that instead
-   - If valid → implement the fix
-4. **Implement:** Follow CLAUDE.md conventions.
-5. **Check:** Run `npm run check && npm run lint`. Run relevant tests if they exist.
-6. **Complete:** Set status to `Done`.
