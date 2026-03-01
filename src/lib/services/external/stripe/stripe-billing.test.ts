@@ -1,10 +1,19 @@
 import { env } from '$env/dynamic/private';
+import { randomUUID } from 'crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
 	createStripeTestClock,
 	hasStripeTestKey,
 	type StripeTestClockHelper
 } from '$lib/testing/stripe/test-clocks';
+
+// Stable fake UUIDs for each test block — avoids Stripe metadata poisoning
+// the webhook handler with non-UUID organization IDs.
+const ORG_ID_CREATE = randomUUID();
+const ORG_ID_UPGRADE = randomUUID();
+const ORG_ID_DOWNGRADE = randomUUID();
+const ORG_ID_DECLINE = randomUUID();
+const ORG_ID_RENEW = randomUUID();
 
 function getFreePlanPriceId(): string {
 	const id = env.STRIPE_FREE_PLAN_PRICE_ID;
@@ -31,11 +40,11 @@ describe.skipIf(!hasStripeTestKey())('Stripe Billing Integration', () => {
 		});
 
 		it('creates a Free subscription with correct status and price', async () => {
-			const customer = await testClock.createCustomer('org_test_create');
+			const customer = await testClock.createCustomer(ORG_ID_CREATE);
 			const subscription = await testClock.createSubscription(
 				customer.id,
 				getFreePlanPriceId(),
-				'org_test_create'
+				ORG_ID_CREATE
 			);
 
 			expect(subscription.status).toBe('active');
@@ -51,14 +60,14 @@ describe.skipIf(!hasStripeTestKey())('Stripe Billing Integration', () => {
 		beforeAll(async () => {
 			testClock = await createStripeTestClock('Upgrade Flow Test');
 
-			const customer = await testClock.createCustomer('org_test_upgrade');
+			const customer = await testClock.createCustomer(ORG_ID_UPGRADE);
 			customerId = customer.id;
 			await testClock.attachPaymentMethod(customerId);
 
 			const subscription = await testClock.createSubscription(
 				customerId,
 				getFreePlanPriceId(),
-				'org_test_upgrade'
+				ORG_ID_UPGRADE
 			);
 			subscriptionId = subscription.id;
 		});
@@ -88,13 +97,13 @@ describe.skipIf(!hasStripeTestKey())('Stripe Billing Integration', () => {
 		beforeAll(async () => {
 			testClock = await createStripeTestClock('Downgrade Flow Test');
 
-			const customer = await testClock.createCustomer('org_test_downgrade');
+			const customer = await testClock.createCustomer(ORG_ID_DOWNGRADE);
 			await testClock.attachPaymentMethod(customer.id);
 
 			const subscription = await testClock.createSubscription(
 				customer.id,
 				getProPlanPriceId(),
-				'org_test_downgrade'
+				ORG_ID_DOWNGRADE
 			);
 			subscriptionId = subscription.id;
 		});
@@ -132,14 +141,14 @@ describe.skipIf(!hasStripeTestKey())('Stripe Billing Integration', () => {
 		});
 
 		it('rejects subscription creation without a payment method', async () => {
-			const customer = await testClock.createCustomer('org_test_decline');
+			const customer = await testClock.createCustomer(ORG_ID_DECLINE);
 
 			// Creating a paid subscription without a payment method should fail
 			await expect(
 				testClock.createSubscription(
 					customer.id,
 					getProPlanPriceId(),
-					'org_test_decline'
+					ORG_ID_DECLINE
 				)
 			).rejects.toThrow('no attached payment source or default payment method');
 		});
@@ -153,14 +162,14 @@ describe.skipIf(!hasStripeTestKey())('Stripe Billing Integration', () => {
 		beforeAll(async () => {
 			testClock = await createStripeTestClock('Renewal Test');
 
-			const customer = await testClock.createCustomer('org_test_renew');
+			const customer = await testClock.createCustomer(ORG_ID_RENEW);
 			customerId = customer.id;
 			await testClock.attachPaymentMethod(customer.id);
 
 			const subscription = await testClock.createSubscription(
 				customer.id,
 				getProPlanPriceId(),
-				'org_test_renew'
+				ORG_ID_RENEW
 			);
 			subscriptionId = subscription.id;
 		});

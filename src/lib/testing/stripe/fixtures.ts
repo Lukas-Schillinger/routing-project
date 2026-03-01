@@ -3,6 +3,7 @@
  *
  * Mock Stripe objects for testing webhook handlers and services.
  */
+import { randomUUID } from 'crypto';
 import type Stripe from 'stripe';
 
 // ============================================================================
@@ -31,7 +32,7 @@ export function createMockStripeSubscription(
 		id: `sub_mock_${Date.now()}`,
 		customer: `cus_mock_${Date.now()}`,
 		status: 'active' as const,
-		organizationId: 'org_test',
+		organizationId: randomUUID(),
 		priceId: 'price_mock',
 		periodStart: now,
 		periodEnd: now + 30 * 24 * 60 * 60,
