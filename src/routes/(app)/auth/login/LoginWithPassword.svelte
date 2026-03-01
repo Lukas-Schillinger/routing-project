@@ -6,6 +6,7 @@
 	import { Input } from '$lib/components/ui/input';
 	import { loginSchema } from '$lib/schemas/auth';
 	import { ArrowLeft, Loader2, Lock, Mail } from 'lucide-svelte';
+	import { untrack } from 'svelte';
 	import type { Infer, SuperValidated } from 'sveltekit-superforms';
 	import { superForm } from 'sveltekit-superforms';
 	import { zod4Client } from 'sveltekit-superforms/adapters';
@@ -20,9 +21,12 @@
 		debugMessage?: string | null;
 	} = $props();
 
-	const form = superForm(loginFormData, {
-		validators: zod4Client(loginSchema)
-	});
+	const form = superForm(
+		untrack(() => loginFormData),
+		{
+			validators: zod4Client(loginSchema)
+		}
+	);
 	const { form: formData, enhance, submitting, message } = form;
 
 	// Parse $message: either a typed object { text, code, email } or a plain string

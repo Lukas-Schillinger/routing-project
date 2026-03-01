@@ -7,6 +7,7 @@
 	import { ChevronDown, GripVertical, Package } from 'lucide-svelte';
 	import { dndzone, type DndEvent } from 'svelte-dnd-action';
 	import { flip } from 'svelte/animate';
+	import { untrack } from 'svelte';
 	import { SvelteSet } from 'svelte/reactivity';
 	import { slide } from 'svelte/transition';
 	import type { PageData } from './$types';
@@ -58,7 +59,7 @@
 		Object.fromEntries(data.assignedDrivers.map((d) => [d.id, d]))
 	);
 	let expandedColumns = new SvelteSet<string>(
-		data.assignedDrivers.map((d) => d.id).concat(UNASSIGNED)
+		untrack(() => data.assignedDrivers.map((d) => d.id).concat(UNASSIGNED))
 	);
 
 	function handleConsider(

@@ -11,6 +11,7 @@
 	import { Input } from '$lib/components/ui/input';
 	import * as InputOTP from '$lib/components/ui/input-otp';
 	import { Label } from '$lib/components/ui/label';
+	import { untrack } from 'svelte';
 	import {
 		ArrowLeft,
 		ArrowRight,
@@ -39,9 +40,9 @@
 		initialOtpSent = false
 	}: Props = $props();
 
-	let email = $state(initialEmail);
+	let email = $state(untrack(() => initialEmail));
 	let code = $state('');
-	let internalOtpSent = $state(initialOtpSent);
+	let internalOtpSent = $state(untrack(() => initialOtpSent));
 	let isSubmitting = $state(false);
 	let errorMessage = $state<string | null>(null);
 	let successMessage = $state<string | null>(null);

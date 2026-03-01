@@ -6,13 +6,17 @@
 	import { Input } from '$lib/components/ui/input';
 	import { resetPasswordSchema } from '$lib/schemas';
 	import { Loader2, Lock } from 'lucide-svelte';
+	import { untrack } from 'svelte';
 	import { superForm } from 'sveltekit-superforms';
 	import { zod4Client } from 'sveltekit-superforms/adapters';
 
 	let { data } = $props();
-	const form = superForm(data.form, {
-		validators: zod4Client(resetPasswordSchema)
-	});
+	const form = superForm(
+		untrack(() => data.form),
+		{
+			validators: zod4Client(resetPasswordSchema)
+		}
+	);
 	const { form: formData, enhance, submitting, message } = form;
 </script>
 

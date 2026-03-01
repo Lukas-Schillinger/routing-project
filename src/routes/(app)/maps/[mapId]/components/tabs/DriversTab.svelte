@@ -130,7 +130,7 @@
 	}
 
 	let columns: Record<string, Column> = $state(untrack(() => buildColumns()));
-	let original = snapshotPositions(columns);
+	let original = untrack(() => snapshotPositions(columns));
 	let pendingSaves = $state(0);
 
 	const availableDrivers = $derived.by(() => {
