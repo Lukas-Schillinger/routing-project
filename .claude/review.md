@@ -55,6 +55,7 @@ Compare the magic link redemption path (`/auth/redeem/login-token/+page.server.t
 The token has only 1,000,000 possible values (10^6) with a 15-minute window.
 
 **Fix:**
+
 ```typescript
 // In loginTokenService.validateLoginToken(), delete after successful validation:
 async validateLoginToken(token: string, email: string): Promise<PublicUser> {
@@ -81,6 +82,7 @@ The `validateLoginToken()` function does not check `loginToken.type`. The `login
 **Attack scenario:** An attacker who gets access to a valid password-reset link URL (e.g., from a compromised email inbox) can use that token at the login endpoint to create a valid session without ever setting a new password.
 
 **Fix:**
+
 ```typescript
 async validateLoginToken(token: string, email: string, expectedType?: 'login_token' | 'password_reset'): Promise<PublicUser> {
     const loginToken = await this.getLoginTokenFromToken(token, email);
@@ -94,6 +96,7 @@ async validateLoginToken(token: string, email: string, expectedType?: 'login_tok
 ```
 
 Call sites should pass the expected type:
+
 - `/auth/redeem/login-token`: pass `'login_token'`
 - `/auth/login` verifyOTP: pass `'login_token'`
 - `/auth/redeem/password-reset`: pass `'password_reset'`
@@ -113,22 +116,23 @@ JavaScript's `!==` string comparison is not timing-safe. It short-circuits at th
 The Stripe webhook uses `stripeClient.constructWebhookEvent()` (internally timing-safe). The Resend webhook uses `resend.webhooks.verify()` (also timing-safe). But the optimization webhook is hand-rolled and vulnerable.
 
 **Fix:**
+
 ```typescript
 import { timingSafeEqual } from 'crypto';
 
 function timingSafeStringEqual(a: string, b: string): boolean {
-    const aBuf = Buffer.from(a);
-    const bBuf = Buffer.from(b);
-    if (aBuf.length !== bBuf.length) {
-        timingSafeEqual(aBuf, aBuf); // avoid length leakage timing
-        return false;
-    }
-    return timingSafeEqual(aBuf, bBuf);
+	const aBuf = Buffer.from(a);
+	const bBuf = Buffer.from(b);
+	if (aBuf.length !== bBuf.length) {
+		timingSafeEqual(aBuf, aBuf); // avoid length leakage timing
+		return false;
+	}
+	return timingSafeEqual(aBuf, bBuf);
 }
 
 const expected = `Bearer ${expectedToken}`;
 if (!timingSafeStringEqual(authHeader ?? '', expected)) {
-    throw ServiceError.unauthorized('Invalid webhook authentication');
+	throw ServiceError.unauthorized('Invalid webhook authentication');
 }
 ```
 
@@ -154,27 +158,30 @@ const token = TokenUtils.generateHex(); // not generateOTP()
 
 ```typescript
 export function getLimiterForPath(pathname: string): RateLimiter | null {
-    if (pathname === '/api/sentry-tunnel') return null;
-    if (pathname.startsWith('/api/')) return apiLimiter;
-    return null; // Page routes not rate-limited
+	if (pathname === '/api/sentry-tunnel') return null;
+	if (pathname.startsWith('/api/')) return apiLimiter;
+	return null; // Page routes not rate-limited
 }
 ```
 
 Rate limiting only applies to `/api/*` routes. Login, OTP verification, and password reset are SvelteKit form actions on page routes — they bypass rate limiting entirely.
 
 **Fix:**
+
 ```typescript
 const authLimiter = createLimiter(10, 60, 'auth'); // 10 per minute
 
 export function getLimiterForPath(pathname: string): RateLimiter | null {
-    if (pathname === '/api/sentry-tunnel') return null;
-    if (pathname.startsWith('/auth/login') ||
-        pathname.startsWith('/auth/password-reset') ||
-        pathname.startsWith('/auth/register')) {
-        return authLimiter;
-    }
-    if (pathname.startsWith('/api/')) return apiLimiter;
-    return null;
+	if (pathname === '/api/sentry-tunnel') return null;
+	if (
+		pathname.startsWith('/auth/login') ||
+		pathname.startsWith('/auth/password-reset') ||
+		pathname.startsWith('/auth/register')
+	) {
+		return authLimiter;
+	}
+	if (pathname.startsWith('/api/')) return apiLimiter;
+	return null;
 }
 ```
 
@@ -230,21 +237,23 @@ UUIDs and integers are interpolated directly into a raw SQL string:
 
 ```typescript
 const valuesClause = updates
-    .map(
-        (u) =>
-            `('${u.stopId}'::uuid, '${u.driverId}'::uuid, ${u.deliveryIndex})`
-    )
-    .join(', ');
+	.map(
+		(u) => `('${u.stopId}'::uuid, '${u.driverId}'::uuid, ${u.deliveryIndex})`
+	)
+	.join(', ');
 
-await db.execute(sql.raw(`UPDATE stops SET ... FROM (VALUES ${valuesClause}) ...`));
+await db.execute(
+	sql.raw(`UPDATE stops SET ... FROM (VALUES ${valuesClause}) ...`)
+);
 ```
 
 While inputs come from prior DB lookups and Zod validation, this pattern is inherently fragile. Any future refactor introducing external input would open a real injection vector.
 
 **Fix:**
+
 ```typescript
 const valuesRows = updates.map(
-    (u) => sql`(${u.stopId}::uuid, ${u.driverId}::uuid, ${u.deliveryIndex})`
+	(u) => sql`(${u.stopId}::uuid, ${u.driverId}::uuid, ${u.deliveryIndex})`
 );
 const valuesClause = sql.join(valuesRows, sql`, `);
 await db.execute(sql`
@@ -301,6 +310,7 @@ Deletes invitations for that email across ALL organizations. Violates tenancy en
 `transactionExists()` does a SELECT then INSERT. No `UNIQUE` index on `stripe_payment_intent_id` or `optimization_job_id`. Two concurrent webhook deliveries for the same event can both pass the existence check and double-charge.
 
 **Fix:**
+
 ```typescript
 uniqueIndex('credit_tx_payment_intent_uidx').on(t.stripe_payment_intent_id)
     .where(sql`${t.stripe_payment_intent_id} IS NOT NULL`),
@@ -399,9 +409,12 @@ let nameValue = $derived(user.name ?? '');
 `$derived` values are read-only in Svelte 5. `bind:value` will throw `Cannot set property nameValue` when the user types.
 
 **Fix:** Use `$state` with an `$effect` for synchronization:
+
 ```typescript
 let nameValue = $state(user.name ?? '');
-$effect(() => { nameValue = user.name ?? ''; });
+$effect(() => {
+	nameValue = user.name ?? '';
+});
 ```
 
 ---
@@ -549,6 +562,7 @@ Throws `new Error(...)` instead of `ServiceError.validation(...)` or `ServiceErr
 Documented in MEMORY.md but still unfixed. `syncSubscription` only reads `cancel_at_period_end`. Stripe portal sets `cancel_at` timestamp instead. UI won't show the downgrade warning.
 
 **Fix:**
+
 ```typescript
 cancel_at_period_end:
   stripeSubscription.cancel_at_period_end ||
@@ -601,7 +615,7 @@ Every authenticated page load and API request fires a SELECT against `organizati
 
 ---
 
-### P2. `bulkCreateStops` = O(N*5) Queries
+### P2. `bulkCreateStops` = O(N\*5) Queries
 
 **File:** `src/lib/services/server/stop.service.ts:419-441`
 
@@ -628,8 +642,13 @@ Fetch map, fetch driver, fetch depot, check existing + insert/update. `upsertRou
 Polled every 2 seconds during optimization. Full table scan with no composite index.
 
 **Fix:**
+
 ```typescript
-index('optimization_jobs_map_org_status_idx').on(t.map_id, t.organization_id, t.status)
+index('optimization_jobs_map_org_status_idx').on(
+	t.map_id,
+	t.organization_id,
+	t.status
+);
 ```
 
 ---
@@ -641,8 +660,9 @@ index('optimization_jobs_map_org_status_idx').on(t.map_id, t.organization_id, t.
 `getOrCreateDistanceMatrix` queries on `(organization_id, inputs_hash)` with no index.
 
 **Fix:**
+
 ```typescript
-index('matrices_org_hash_idx').on(t.organization_id, t.inputsHash)
+index('matrices_org_hash_idx').on(t.organization_id, t.inputsHash);
 ```
 
 ---
@@ -664,8 +684,9 @@ Every stop query returns the full `location` object including `geocode_raw` (hun
 `getStopsForRoute` filters on `(map_id, driver_id)`. Only separate indexes exist. Requires heap scan over all stops in a map.
 
 **Fix:**
+
 ```typescript
-index('stops_map_driver_idx').on(t.map_id, t.driver_id)
+index('stops_map_driver_idx').on(t.map_id, t.driver_id);
 ```
 
 ---
@@ -683,6 +704,7 @@ index('stops_map_driver_idx').on(t.map_id, t.driver_id)
 ### P9. Sequential Queries That Should Be Parallel
 
 **Files:**
+
 - `route.service.ts:443-484` — `recalculateRouteForDriver` has 4 sequential queries, 3 are independent
 - `map.service.ts:422-456` — `addDriverToMap` has 3 sequential verify queries, 2 are independent
 
@@ -700,16 +722,17 @@ N sequential queries for N reordered stops.
 
 ---
 
-### P11. O(N*M) Linear Searches in MapView Render Loop
+### P11. O(N\*M) Linear Searches in MapView Render Loop
 
 **File:** `src/lib/components/map/MapView.svelte:250,274,126-134`
 
 `hiddenDrivers.find()` and `getDriverColorById()` called per marker per render. For 100 stops and 10 hidden drivers: 1000 comparisons.
 
 **Fix:** Derive `Set` and `Map` lookups once:
+
 ```typescript
-const hiddenDriverIds = $derived(new Set(hiddenDrivers.map(d => d.id)));
-const driverColorMap = $derived(new Map(drivers.map(d => [d.id, d.color])));
+const hiddenDriverIds = $derived(new Set(hiddenDrivers.map((d) => d.id)));
+const driverColorMap = $derived(new Map(drivers.map((d) => [d.id, d.color])));
 ```
 
 ---
@@ -717,6 +740,7 @@ const driverColorMap = $derived(new Map(drivers.map(d => [d.id, d.color])));
 ### P12. Unbounded Queries
 
 **Files:**
+
 - `location.service.ts:37-43` — `getLocations` returns all locations with no LIMIT
 - `stop.service.ts:71-89` — `getStopCoordinates` unbounded org-wide fetch
 - `driver.service.ts:111-119` — `deleteDriver` fetches all assigned stops (should use `.limit(1)`)
@@ -741,6 +765,7 @@ Should use `toSorted()` (non-mutating) as used elsewhere in the codebase.
 The CI pipeline runs only `npm run lint` and `npm run check` (type checking). No tests are executed. The 70% coverage thresholds in `vite.config.ts` are never enforced. The test suite could be completely broken and CI would still pass.
 
 **Fix:** Add a test job with a postgres service container:
+
 ```yaml
 services:
   postgres:
@@ -788,6 +813,7 @@ The admin service handles impersonation, organization management, and subscripti
 Not a single test file. The solver contains non-trivial algorithmic logic (binary search for fairness, solution mapping, edge case handling).
 
 Critical untested behaviors:
+
 - `validate_payload` edge cases (empty matrix, non-square, NaN values)
 - Binary search termination and correctness
 - `map_solution` mapping for depot/start/end leg inclusion
@@ -1170,6 +1196,7 @@ Accepted in schema, never read. Vehicles always start at depot regardless.
 `float('nan') < 0` is `False` in Python. NaN passes the check.
 
 **Fix:**
+
 ```python
 import math
 if not math.isfinite(val):
@@ -1338,17 +1365,17 @@ Client-side error handlers check different types for the same purpose:
 
 #### C1.3 Three error display patterns on client (MEDIUM)
 
-| Pattern | Used In |
-|---------|---------|
-| `<div class="bg-destructive/10">` inline | EditOrCreate* popovers, OptimizationFooter |
-| `<AuthAlert>` component | Auth pages (login, register, password-reset) |
-| `<Alert.Root variant="destructive">` | CreateInvitationPopover |
+| Pattern                                  | Used In                                      |
+| ---------------------------------------- | -------------------------------------------- |
+| `<div class="bg-destructive/10">` inline | EditOrCreate\* popovers, OptimizationFooter  |
+| `<AuthAlert>` component                  | Auth pages (login, register, password-reset) |
+| `<Alert.Root variant="destructive">`     | CreateInvitationPopover                      |
 
 These should converge to two patterns max: AuthAlert for auth pages, inline div for everything else.
 
 #### C1.4 `console.error()` usage inconsistent in page server files (LOW)
 
-Some auth pages log errors with `console.error()` (register, redeem/*), while similar pages (login, password-reset) don't. Should use `event.locals.log` consistently per CLAUDE.md.
+Some auth pages log errors with `console.error()` (register, redeem/\*), while similar pages (login, password-reset) don't. Should use `event.locals.log` consistently per CLAUDE.md.
 
 #### C1.5 Silent error swallowing (LOW)
 
@@ -1361,10 +1388,10 @@ Some auth pages log errors with `console.error()` (register, redeem/*), while si
 
 #### C2.1 Superforms vs manual state management (HIGH)
 
-| Pattern | Forms Using It |
-|---------|---------------|
+| Pattern                                               | Forms Using It                                                                                                         |
+| ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | Superforms (`$submitting`, validators, `use:enhance`) | EditOrCreateDriver, EditOrCreateMap, CreateInvitation, LoginWithPassword, Register, PasswordReset, RedeemPasswordReset |
-| Manual `$state` + native `enhance` | RequestMagicLogin (explicitly opted out — comment on lines 1-5) |
+| Manual `$state` + native `enhance`                    | RequestMagicLogin (explicitly opted out — comment on lines 1-5)                                                        |
 
 **Issue:** RequestMagicLogin intentionally avoids superforms but creates inconsistency with the identical LoginWithPassword form.
 
@@ -1383,12 +1410,12 @@ EditOrCreateMap should migrate to `Form.*` components.
 
 #### C2.4 Form reset patterns (MEDIUM)
 
-| Pattern | Used In |
-|---------|---------|
-| `Object.assign($formData, getInitialData())` | EditOrCreateMap |
-| `form.reset()` (superforms built-in) | CreateInvitation |
-| No reset at all | EditOrCreateDriver |
-| Manual field clearing `code = ''` | RequestMagicLogin |
+| Pattern                                      | Used In            |
+| -------------------------------------------- | ------------------ |
+| `Object.assign($formData, getInitialData())` | EditOrCreateMap    |
+| `form.reset()` (superforms built-in)         | CreateInvitation   |
+| No reset at all                              | EditOrCreateDriver |
+| Manual field clearing `code = ''`            | RequestMagicLogin  |
 
 **Standard:** Use `form.reset()` for superforms-based forms.
 
@@ -1402,25 +1429,25 @@ Auth pages set `novalidate` on forms (to prevent browser validation conflicting 
 
 #### C3.1 Variable naming (MEDIUM)
 
-| Name | Used In |
-|------|---------|
-| `isSubmitting` | 13+ components (forms) |
-| `isLoading` | DriverPicker, ConfirmDeleteDialog, BillingModal, CreditPurchaseModal |
-| `isSyncing` | admin/organizations/[id] |
-| `isResetting` | OptimizationFooter |
-| `isChangingDepot` | OptimizationFooter |
-| `isDeleting` | admin/organizations/[id] |
-| `$submitting` | Superforms-based forms (auto-managed) |
+| Name              | Used In                                                              |
+| ----------------- | -------------------------------------------------------------------- |
+| `isSubmitting`    | 13+ components (forms)                                               |
+| `isLoading`       | DriverPicker, ConfirmDeleteDialog, BillingModal, CreditPurchaseModal |
+| `isSyncing`       | admin/organizations/[id]                                             |
+| `isResetting`     | OptimizationFooter                                                   |
+| `isChangingDepot` | OptimizationFooter                                                   |
+| `isDeleting`      | admin/organizations/[id]                                             |
+| `$submitting`     | Superforms-based forms (auto-managed)                                |
 
 **Standard:** `isSubmitting` for form submissions, `isLoading` for data fetching, specific names (`isResetting`, `isDeleting`) for disambiguating multiple actions in one component.
 
 #### C3.2 Three different spinner icons (MEDIUM)
 
-| Icon | Used In |
-|------|---------|
-| `Loader2` (lucide) | 15+ components — OptimizationFooter, auth pages, EditOrCreateDriver |
-| `LoaderCircle` (lucide) | EditOrCreateDepot, EditOrCreateStop, ConfirmDeleteDialog |
-| `Spinner` (custom) | BillingModal, CreditPurchaseModal |
+| Icon                    | Used In                                                             |
+| ----------------------- | ------------------------------------------------------------------- |
+| `Loader2` (lucide)      | 15+ components — OptimizationFooter, auth pages, EditOrCreateDriver |
+| `LoaderCircle` (lucide) | EditOrCreateDepot, EditOrCreateStop, ConfirmDeleteDialog            |
+| `Spinner` (custom)      | BillingModal, CreditPurchaseModal                                   |
 
 **Standard:** Use `Loader2` everywhere.
 
@@ -1437,11 +1464,11 @@ All other forms pair text changes with spinner icons.
 
 #### C4.1 Response wrapping inconsistency (HIGH)
 
-| Pattern | Routes |
-|---------|--------|
-| Bare data: `json(drivers)` | `/drivers`, `/depots`, `/stops` |
-| Wrapped: `json({ map })` | `/maps/[mapId]` GET, PATCH |
-| Wrapped: `json({ shares })` | `/routes/[routeId]/shares` |
+| Pattern                     | Routes                          |
+| --------------------------- | ------------------------------- |
+| Bare data: `json(drivers)`  | `/drivers`, `/depots`, `/stops` |
+| Wrapped: `json({ map })`    | `/maps/[mapId]` GET, PATCH      |
+| Wrapped: `json({ shares })` | `/routes/[routeId]/shares`      |
 
 POST 201 responses are similarly split — some return bare objects, some wrap them.
 
@@ -1495,13 +1522,13 @@ Some routes destructure params before the try block, some inside it. Some valida
 
 #### C5.2 Callback naming inconsistency (MEDIUM)
 
-| Pattern | Used In |
-|---------|---------|
-| `onSuccess(entity)` — returns created/updated entity | EditOrCreate* components |
-| `onCreateSuccess(stop)` — prefixed with action | TempPinMarker, TempPinPopup |
-| `onCreateInvitation(invitation)` — full action name | CreateInvitationPopover |
+| Pattern                                                 | Used In                      |
+| ------------------------------------------------------- | ---------------------------- |
+| `onSuccess(entity)` — returns created/updated entity    | EditOrCreate\* components    |
+| `onCreateSuccess(stop)` — prefixed with action          | TempPinMarker, TempPinPopup  |
+| `onCreateInvitation(invitation)` — full action name     | CreateInvitationPopover      |
 | `onUpdate() / onCreate() / onDelete()` — void callbacks | StopsTab, EditStopsDataTable |
-| `onDeleteInvitation()` — full action name, void | InvitationsCard |
+| `onDeleteInvitation()` — full action name, void         | InvitationsCard              |
 
 **Standard:** Use `onSuccess(entity)` for creation/edit in popovers. Use `onDelete`/`onCreate`/`onUpdate` void callbacks for table row actions. Keep naming short.
 
@@ -1559,11 +1586,11 @@ These are structurally identical components with different snippet interfaces.
 
 #### C7.3 Empty state patterns (MEDIUM)
 
-| Pattern | Used In |
-|---------|---------|
+| Pattern                                                    | Used In                        |
+| ---------------------------------------------------------- | ------------------------------ |
 | `<Empty.Root>` with `Empty.Header/Media/Title/Description` | EditStopsDataTable, DriversTab |
-| Custom `<div>` with icon + text | maps/+page.svelte, DepotsCard |
-| Inline `<p>` text | MapCard |
+| Custom `<div>` with icon + text                            | maps/+page.svelte, DepotsCard  |
+| Inline `<p>` text                                          | MapCard                        |
 
 **Standard:** Use the `Empty.*` component system everywhere.
 
@@ -1579,23 +1606,23 @@ These are structurally identical components with different snippet interfaces.
 
 #### C8.1 Success message format inconsistency (MEDIUM)
 
-| Format | Examples |
-|--------|---------|
-| "[Entity] [past-tense verb]" | "Driver removed", "Map deleted", "Depot deleted" |
-| "[Entity] [past-tense verb] [adverb]" | "Routes reset successfully", "Credits adjusted successfully" |
-| "[Past-tense verb] to [noun]!" | "Upgraded to Pro!" |
-| "Capitalization issues" | "Stop Deleted" (capital D), "Map ID copied" vs "Map ID copied to clipboard" |
+| Format                                | Examples                                                                    |
+| ------------------------------------- | --------------------------------------------------------------------------- |
+| "[Entity] [past-tense verb]"          | "Driver removed", "Map deleted", "Depot deleted"                            |
+| "[Entity] [past-tense verb] [adverb]" | "Routes reset successfully", "Credits adjusted successfully"                |
+| "[Past-tense verb] to [noun]!"        | "Upgraded to Pro!"                                                          |
+| "Capitalization issues"               | "Stop Deleted" (capital D), "Map ID copied" vs "Map ID copied to clipboard" |
 
 **Standard:** `"[Entity] [past-tense verb]"` — "Driver removed", "Routes reset", "Stop deleted".
 
 #### C8.2 Error message format inconsistency (MEDIUM)
 
-| Pattern | Examples |
-|---------|---------|
-| Simple string | `toast.error('Failed to reset routes')` |
-| Title + description | `toast.error('Optimization failed', { description: error })` |
-| Variable message only | `toast.error(message)` |
-| Generic "Error" title | `toast.error('Error', { description: message })` |
+| Pattern               | Examples                                                     |
+| --------------------- | ------------------------------------------------------------ |
+| Simple string         | `toast.error('Failed to reset routes')`                      |
+| Title + description   | `toast.error('Optimization failed', { description: error })` |
+| Variable message only | `toast.error(message)`                                       |
+| Generic "Error" title | `toast.error('Error', { description: message })`             |
 
 **Standard:** Use `toast.error('Failed to [action]')` for simple cases. Use `toast.error('Action failed', { description })` when the error message from the server is useful to show.
 
@@ -1619,7 +1646,7 @@ The codebase never uses `toast.promise()` for async operations. This could impro
 
 #### C9.1 Error message styling inconsistency (MEDIUM)
 
-- EditOrCreate* popovers: `rounded-md bg-destructive/10 p-3 text-sm text-destructive`
+- EditOrCreate\* popovers: `rounded-md bg-destructive/10 p-3 text-sm text-destructive`
 - OptimizationFooter: `px-2.5 py-1.5 text-xs text-destructive`
 
 Different padding and text size for the same visual pattern.
@@ -1757,12 +1784,12 @@ Defined in both `src/lib/schemas/route.ts` (private, uses raw array) and `src/li
 
 #### C13.5 Schema naming convention inconsistency (LOW)
 
-| Convention | Examples |
-|-----------|---------|
-| `{action}{Noun}Schema` | `createStopSchema`, `createMapSchema` |
-| `{noun}Schema` (base) | `mapSchema`, `stopSchema`, `routeSchema` |
-| `{noun}Schema` (enum) | `roleEnum`, `jobStatusEnum` |
-| Exception | `geocodeConfidenceSchema` (should be `geocodeConfidenceEnum`) |
+| Convention             | Examples                                                      |
+| ---------------------- | ------------------------------------------------------------- |
+| `{action}{Noun}Schema` | `createStopSchema`, `createMapSchema`                         |
+| `{noun}Schema` (base)  | `mapSchema`, `stopSchema`, `routeSchema`                      |
+| `{noun}Schema` (enum)  | `roleEnum`, `jobStatusEnum`                                   |
+| Exception              | `geocodeConfidenceSchema` (should be `geocodeConfidenceEnum`) |
 
 The naming is more consistent than initially assessed. Base schemas use `{noun}Schema`, CRUD schemas use `{action}{Noun}Schema`. The main inconsistency is between `$lib/schemas/` (follows a clear pattern) and inline optimization schemas (follow their own pattern — addressed in C13.2).
 
@@ -1780,10 +1807,10 @@ All API routes use `.parse()` except `maps/[mapId]/optimize/+server.ts:34` which
 
 #### C14.1 Parameter destructuring style (LOW — acceptable variation)
 
-| Style | Files |
-|-------|-------|
-| No parameters (closure over locals) | routes/, maps/, auth/account, admin/* |
-| Full `event` object | auth/login, auth/register, auth/redeem/* |
+| Style                                          | Files                                                    |
+| ---------------------------------------------- | -------------------------------------------------------- |
+| No parameters (closure over locals)            | routes/, maps/, auth/account, admin/\*                   |
+| Full `event` object                            | auth/login, auth/register, auth/redeem/\*                |
 | Destructured `{ params }` or `{ params, url }` | maps/[mapId], routes/[routeId], admin/organizations/[id] |
 
 Each style matches its use case: destructure when accessing specific properties, use full `event` when passing through or accessing many properties, omit when nothing is needed. This variation is practical, not problematic — no fix needed.
@@ -1794,12 +1821,12 @@ Each style matches its use case: destructure when accessing specific properties,
 
 #### C14.3 Error handling in load functions (MEDIUM)
 
-| Pattern | Used In |
-|---------|---------|
-| catch + check `ServiceError` + throw `error()` | maps/[mapId], routes/[routeId] |
-| catch + check redirect status + re-throw | auth/redeem/login-token, auth/redeem/invitation |
-| catch + silently continue | maps/import |
-| No try/catch at all | most simple pages |
+| Pattern                                        | Used In                                         |
+| ---------------------------------------------- | ----------------------------------------------- |
+| catch + check `ServiceError` + throw `error()` | maps/[mapId], routes/[routeId]                  |
+| catch + check redirect status + re-throw       | auth/redeem/login-token, auth/redeem/invitation |
+| catch + silently continue                      | maps/import                                     |
+| No try/catch at all                            | most simple pages                               |
 
 The redirect-in-catch pattern (`if (err.status === 302) throw err`) is needed because SvelteKit throws redirects as errors, but only 2 of the pages that use `redirect()` in their load function have this guard.
 

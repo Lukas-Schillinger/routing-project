@@ -8,7 +8,12 @@
 	import { Input } from '$lib/components/ui/input';
 	import * as Select from '$lib/components/ui/select';
 	import * as Table from '$lib/components/ui/table';
-	import type { Organization, Permission, PublicUser, Role } from '$lib/schemas';
+	import type {
+		Organization,
+		Permission,
+		PublicUser,
+		Role
+	} from '$lib/schemas';
 	import { roleDescriptions } from '$lib/schemas/permissions';
 	import { organizationApi, usersApi } from '$lib/services/api/auth';
 	import { checkPermission, formatDate } from '$lib/utils';
