@@ -5,22 +5,22 @@ import { matrixResponseSchema, type MatrixResponse } from './types';
 /**
  * Coordinates data for distance matrix computation
  */
-export interface CoordinatesData {
+export type CoordinatesData = {
 	/** Ordered coordinates array (depot first, then stops) */
 	coordinates: [number, number][];
 	/** Ordered array of location IDs corresponding to addresses */
 	locationIds: string[];
-}
+};
 
 /**
  * Result returned from distance matrix service
  */
-export interface DistanceMatrixResult {
+export type DistanceMatrixResult = {
 	/** Distance matrix in seconds (row-major: [source][destination]) */
 	matrix: number[][];
 	/** Ordered array of location IDs corresponding to addresses */
 	locationIds: string[];
-}
+};
 
 /**
  * Mapbox Distance Matrix API service

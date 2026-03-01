@@ -2,13 +2,13 @@
  * Apple Maps external service for generating directions URLs
  */
 
-export interface AppleMapsDirectionsOptions {
+export type AppleMapsDirectionsOptions = {
 	destination: {
 		lat: number;
 		lng: number;
 		address?: string;
 	};
-}
+};
 
 export class AppleMapsService {
 	/**

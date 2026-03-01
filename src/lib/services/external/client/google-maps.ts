@@ -2,13 +2,13 @@
  * Google Maps external service for generating directions URLs
  */
 
-export interface GoogleMapsDirectionsOptions {
+export type GoogleMapsDirectionsOptions = {
 	destination: {
 		lat: number;
 		lng: number;
 		address?: string;
 	};
-}
+};
 
 export class GoogleMapsService {
 	/**

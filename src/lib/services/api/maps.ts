@@ -11,7 +11,7 @@ import type { StopWithLocation } from '$lib/schemas/stop';
 import type { OptimizationResult } from '$lib/services/server/optimization.service';
 import { apiClient } from './base';
 
-export interface DriverMembership {
+export type DriverMembership = {
 	membership: {
 		id: string;
 		driver_id: string;
@@ -20,7 +20,7 @@ export interface DriverMembership {
 		updated_at: Date;
 	};
 	driver: Driver;
-}
+};
 
 class MapApiService {
 	/**
