@@ -232,11 +232,11 @@ export class StopService {
 				updated_by: userId,
 				map_id: data.map_id,
 				location_id: locationId,
-				contact_name: data.contact_name || null,
-				contact_phone: data.contact_phone || null,
-				notes: data.notes || null,
-				driver_id: data.driver_id || null,
-				delivery_index: data.delivery_index || null
+				contact_name: data.contact_name ?? null,
+				contact_phone: data.contact_phone ?? null,
+				notes: data.notes ?? null,
+				driver_id: data.driver_id ?? null,
+				delivery_index: data.delivery_index ?? null
 			})
 			.returning();
 

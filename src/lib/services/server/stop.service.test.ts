@@ -382,6 +382,31 @@ describe('StopService', () => {
 			});
 		});
 
+		it('preserves delivery_index of 0', async () => {
+			await withTestTransaction(async () => {
+				const { organization, user } = await createTestEnvironment();
+				const map = await createMap({
+					organization_id: organization.id,
+					created_by: user.id
+				});
+				const location = await createLocation({
+					organization_id: organization.id
+				});
+
+				const result = await stopService.createStop(
+					{
+						map_id: map.id,
+						location_id: location.id,
+						delivery_index: 0
+					},
+					organization.id,
+					user.id
+				);
+
+				expect(result.stop.delivery_index).toBe(0);
+			});
+		});
+
 		it('creates stop with inline location data', async () => {
 			await withTestTransaction(async () => {
 				const { organization, user } = await createTestEnvironment();

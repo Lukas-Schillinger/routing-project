@@ -182,9 +182,9 @@ export class MapService {
 						updated_by: userId,
 						map_id: newMap.id,
 						location_id: locationIds[index],
-						contact_name: stop.contact_name || null,
-						contact_phone: stop.contact_phone || null,
-						notes: stop.notes || null,
+						contact_name: stop.contact_name ?? null,
+						contact_phone: stop.contact_phone ?? null,
+						notes: stop.notes ?? null,
 						driver_id: null,
 						delivery_index: null
 					}))

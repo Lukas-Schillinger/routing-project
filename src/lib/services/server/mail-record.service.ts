@@ -22,7 +22,7 @@ export class MailRecordService {
 				type: data.type,
 				to_email: data.to_email,
 				from_email: data.from_email,
-				subject: data.subject || null,
+				subject: data.subject ?? null,
 				status: 'sent'
 			})
 			.returning();
@@ -40,7 +40,7 @@ export class MailRecordService {
 			.where(eq(mailRecords.resend_id, resendId))
 			.limit(1);
 
-		return mailRecord || null;
+		return mailRecord ?? null;
 	}
 
 	/**

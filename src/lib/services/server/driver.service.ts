@@ -56,8 +56,8 @@ export class DriverService {
 				updated_by: userId,
 				name: data.name.trim(),
 				color: data.color,
-				phone: data.phone || null,
-				notes: data.notes || null,
+				phone: data.phone ?? null,
+				notes: data.notes ?? null,
 				active: data.active ?? true,
 				temporary: data.temporary ?? false
 			})
