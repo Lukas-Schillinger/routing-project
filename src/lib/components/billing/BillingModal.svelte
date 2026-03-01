@@ -7,7 +7,7 @@
 	import { billingApi } from '$lib/services/api/billing';
 	import type { CreditBalance } from '$lib/schemas/billing';
 	import { Check, RocketLaunch } from 'phosphor-svelte';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 
 	type Props = {
 		open: boolean;
@@ -96,7 +96,7 @@
 		try {
 			const response = await billingApi.createCreditsCheckout({
 				amount: creditAmount,
-				returnUrl: $page.url.pathname
+				returnUrl: page.url.pathname
 			});
 			window.location.href = response.url;
 			onSuccess?.();

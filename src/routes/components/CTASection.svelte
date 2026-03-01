@@ -78,8 +78,9 @@
 		>
 			<Button
 				href={resolve('/auth/register')}
+				variant="landing-secondary"
 				size="lg"
-				class="h-11 gap-2 rounded-sm bg-landing-secondary px-8 text-sm font-medium tracking-wide text-landing-secondary-foreground hover:bg-landing-secondary-hover dark:bg-landing-primary dark:text-landing-primary-foreground dark:hover:bg-landing-primary-hover"
+				class="h-11 gap-2 rounded-sm px-8 text-sm tracking-wide"
 			>
 				Start for free
 				<ArrowRight class="h-4 w-4" />

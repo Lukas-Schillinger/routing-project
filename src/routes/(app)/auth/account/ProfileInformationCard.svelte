@@ -22,8 +22,8 @@
 		user: PublicUser;
 	} = $props();
 
-	// Form state
-	let nameValue = $derived(user.name ?? '');
+	// Form state — $state so bind:value can write to it
+	let nameValue = $state(user.name ?? '');
 	let isSavingName = $state(false);
 	let nameTimeout: ReturnType<typeof setTimeout> | null = null;
 

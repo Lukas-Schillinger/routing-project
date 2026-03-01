@@ -19,6 +19,7 @@
 	import SidebarPanel from './components/SidebarPanel.svelte';
 	import DriversTab from './components/tabs/DriversTab.svelte';
 	import StopsTab from './components/tabs/StopsTab.svelte';
+	import { createOptimizationPoller } from './optimization-poller.svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -38,21 +39,20 @@
 
 	// Page state
 	let isLoading = $state(false);
-	let isOptimizing = $state(false);
 	let focusedStopId = $state<string | null>(null);
 	let hiddenDrivers = $state<Driver[]>([]);
 
-	// Polling state
-	let pollInterval: ReturnType<typeof setInterval> | null = null;
-	let pollCount = 0;
-	const MAX_POLL_COUNT = 150; // 5 minutes at 2 second intervals
-	let optimizationStartTime = $state<Date>(new Date());
+	// Optimization polling
+	const poller = createOptimizationPoller(data.map.id, data.stops.length, {
+		onComplete: () => invalidate(INVALIDATION_KEYS.MAP_DATA),
+		onCancelled: () => invalidate(INVALIDATION_KEYS.MAP_DATA)
+	});
 
 	// Derive page state
 	type PageState = 'normal' | 'optimizing';
 	let debugPageStateOverride = $state<PageState | null>(null);
 	let pageState: PageState = $derived(
-		debugPageStateOverride ?? (isOptimizing ? 'optimizing' : 'normal')
+		debugPageStateOverride ?? (poller.isOptimizing ? 'optimizing' : 'normal')
 	);
 
 	// Derive selected depot from map's depot_id
@@ -70,73 +70,13 @@
 			activeJob &&
 			['pending', 'running', 'completing'].includes(activeJob.status)
 		) {
-			isOptimizing = true;
-			optimizationStartTime = activeJob.created_at
-				? new Date(activeJob.created_at)
-				: new Date();
-			startPolling();
+			poller.start(
+				activeJob.created_at ? new Date(activeJob.created_at) : undefined
+			);
 		} else {
-			isOptimizing = false;
-			stopPolling();
+			poller.stop();
 		}
 	});
-
-	function startPolling() {
-		if (pollInterval) return;
-		pollCount = 0;
-		pollInterval = setInterval(pollOptimizationStatus, 2000);
-	}
-
-	function stopPolling() {
-		if (pollInterval) {
-			clearInterval(pollInterval);
-			pollInterval = null;
-		}
-		pollCount = 0;
-	}
-
-	async function pollOptimizationStatus() {
-		pollCount++;
-
-		if (pollCount >= MAX_POLL_COUNT) {
-			stopPolling();
-			isOptimizing = false;
-			toast.error('Optimization timed out. Please try again.');
-			return;
-		}
-
-		try {
-			const { job } = await mapApi.getOptimizationStatus(data.map.id);
-
-			if (!job || job.status === 'completed') {
-				stopPolling();
-				isOptimizing = false;
-				await invalidate(INVALIDATION_KEYS.MAP_DATA);
-			} else if (job.status === 'failed') {
-				stopPolling();
-				isOptimizing = false;
-				toast.error(job.error_message || 'Optimization failed');
-				await invalidate(INVALIDATION_KEYS.MAP_DATA);
-			} else if (job.status === 'cancelled') {
-				stopPolling();
-				isOptimizing = false;
-				await invalidate(INVALIDATION_KEYS.MAP_DATA);
-			}
-		} catch (err) {
-			console.error('Error polling optimization status:', err);
-		}
-	}
-
-	function handleOptimizationStarted() {
-		isOptimizing = true;
-		optimizationStartTime = new Date();
-		startPolling();
-	}
-
-	function handleOptimizationCancelled() {
-		stopPolling();
-		isOptimizing = false;
-	}
 
 	async function handleDepotChange(depotId: string) {
 		try {
@@ -150,7 +90,7 @@
 	}
 
 	onDestroy(() => {
-		stopPolling();
+		poller.destroy();
 	});
 
 	async function removeDriver(driverId: string) {
@@ -209,7 +149,7 @@
 				/>
 
 				{#if pageState === 'optimizing'}
-					<OptimizationOverlay startTime={optimizationStartTime} />
+					<OptimizationOverlay startTime={poller.startTime} />
 				{/if}
 			</div>
 		{/snippet}
@@ -263,8 +203,9 @@
 				credits={data.credits}
 				{pageState}
 				onDepotChange={handleDepotChange}
-				onOptimize={handleOptimizationStarted}
-				onCancel={handleOptimizationCancelled}
+				pollerError={poller.error}
+				onOptimize={() => poller.start()}
+				onCancel={() => poller.stop()}
 			/>
 		{/snippet}
 	</MapDetailLayout>
@@ -299,7 +240,7 @@
 			{/if}
 		</div>
 		<div class="border-t border-border pt-2 text-xs text-muted-foreground">
-			<div>Actual: {isOptimizing ? 'optimizing' : 'normal'}</div>
+			<div>Actual: {poller.isOptimizing ? 'optimizing' : 'normal'}</div>
 			<div>Override: {debugPageStateOverride ?? 'none'}</div>
 		</div>
 	</div>

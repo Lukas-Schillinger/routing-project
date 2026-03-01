@@ -7,7 +7,7 @@
 	import { createMapSchema, type Map } from '$lib/schemas/map';
 	import { mapApi } from '$lib/services/api/maps';
 	import { Check, Loader2 } from 'lucide-svelte';
-	import { defaults, superForm } from 'sveltekit-superforms';
+	import { defaults, setMessage, superForm } from 'sveltekit-superforms';
 	import { zod4 } from 'sveltekit-superforms/adapters';
 
 	let {
@@ -49,11 +49,11 @@
 				onSuccess(result.map);
 				open = false;
 			} catch (err) {
-				if (err instanceof ServiceError) {
-					form.message = err.message;
-				} else {
-					form.message = 'An unexpected error occurred';
-				}
+				const message =
+					err instanceof ServiceError
+						? err.message
+						: 'An unexpected error occurred';
+				setMessage(form, message);
 			}
 		}
 	});

@@ -166,7 +166,7 @@
 		currentVariant = 'idle';
 	}
 
-	const acceptHint = $derived(() => {
+	const acceptHint = $derived.by(() => {
 		if (hint) return hint;
 		if (accept === '*') return 'Any file type';
 		return accept
@@ -247,7 +247,7 @@
 
 			<!-- Hint -->
 			<p class="text-xs text-muted-foreground/70">
-				{acceptHint()}
+				{acceptHint}
 			</p>
 		</div>
 	{/if}
@@ -334,10 +334,10 @@
 	@keyframes pulse-border {
 		0%,
 		100% {
-			border-color: hsl(var(--primary));
+			border-color: var(--primary);
 		}
 		50% {
-			border-color: hsl(var(--primary) / 0.4);
+			border-color: color-mix(in oklab, var(--primary) 40%, transparent);
 		}
 	}
 

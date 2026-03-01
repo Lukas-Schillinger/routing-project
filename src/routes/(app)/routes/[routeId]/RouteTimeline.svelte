@@ -73,7 +73,7 @@
 		completedStops = getCompletedStops();
 	}
 
-	// Listen for storage changes (when other tabs/components update)
+	// Listen for storage changes (cross-tab native events + same-tab synthetic events)
 	$effect(() => {
 		if (browser) {
 			const handleStorageChange = (e: StorageEvent) => {
@@ -84,12 +84,8 @@
 
 			window.addEventListener('storage', handleStorageChange);
 
-			// Also check periodically for updates from same tab
-			const interval = setInterval(updateCompletedStops, 1000);
-
 			return () => {
 				window.removeEventListener('storage', handleStorageChange);
-				clearInterval(interval);
 			};
 		}
 	});

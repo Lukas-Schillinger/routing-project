@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import * as Sidebar from '$lib/components/ui/sidebar';
 	import { Building2, Coins, CreditCard, LayoutDashboard } from 'lucide-svelte';
 	import type { Snippet } from 'svelte';
@@ -15,7 +15,7 @@
 		{ href: '/admin/credits', label: 'Credits', icon: Coins }
 	] as const;
 
-	let currentPath = $derived($page.url.pathname);
+	let currentPath = $derived(page.url.pathname);
 
 	function isActive(href: string): boolean {
 		if (href === '/admin') {

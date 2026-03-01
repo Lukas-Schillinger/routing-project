@@ -125,7 +125,7 @@
 		importState.step === 2 || importState.step === 3
 	);
 
-	const nextButtonDisabled = $derived(() => {
+	const nextButtonDisabled = $derived.by(() => {
 		if (importState.step === 2) {
 			return !step2CanProceed || importState.isProcessing;
 		}
@@ -137,7 +137,7 @@
 		return true;
 	});
 
-	const nextButtonLabel = $derived(() => {
+	const nextButtonLabel = $derived.by(() => {
 		if (importState.step === 2) {
 			if (importState.isProcessing) return 'Geocoding...';
 			return 'Next';
@@ -171,25 +171,11 @@
 
 	<!-- Step Header with Progress -->
 	<div class="rounded-lg border border-border bg-card p-4">
-		<div class="flex items-center justify-between">
-			<!-- Back Button -->
-			<div class="w-20">
-				{#if showBackButton}
-					<Button
-						variant="ghost"
-						size="sm"
-						onclick={handleBack}
-						disabled={isProcessing}
-						class="gap-1.5"
-					>
-						<ArrowLeft class="h-4 w-4" />
-						Back
-					</Button>
-				{/if}
-			</div>
-
+		<div class="grid grid-cols-3 items-center gap-y-3">
 			<!-- Step Indicators -->
-			<div class="flex items-center">
+			<div
+				class="col-span-3 flex items-center md:col-span-1 md:col-start-2 md:row-start-1"
+			>
 				{#each steps as step, index (step.number)}
 					{@const isCompleted = importState.step > step.number}
 					{@const isCurrent = importState.step === step.number}
@@ -198,7 +184,7 @@
 					<!-- Connector Line -->
 					{#if index > 0}
 						<div
-							class="mb-5 h-0.5 w-12 transition-colors duration-300
+							class="mb-5 h-0.5 flex-1 transition-colors duration-300
 								{importState.step > step.number ? 'bg-primary' : ''}
 								{importState.step === step.number ? 'bg-primary/50' : ''}
 								{importState.step < step.number ? 'bg-muted' : ''}"
@@ -229,7 +215,7 @@
 							{/if}
 						</div>
 						<span
-							class="text-xs font-medium transition-colors
+							class="text-xs font-medium whitespace-nowrap transition-colors
 								{isCurrent ? 'text-foreground' : ''}
 								{isCompleted ? 'text-muted-foreground group-hover:text-foreground' : ''}
 								{!isCompleted && !isCurrent ? 'text-muted-foreground/50' : ''}"
@@ -240,25 +226,43 @@
 				{/each}
 			</div>
 
-			<!-- Next/Import Button -->
-			<div class="flex w-20 justify-end">
-				{#if showNextButton}
-					<Button
-						size="sm"
-						onclick={handleNext}
-						disabled={nextButtonDisabled()}
-						class="gap-1.5"
-					>
-						{#if isProcessing}
-							<Loader2 class="h-4 w-4 animate-spin" />
-						{/if}
-						{nextButtonLabel()}
-						{#if !isProcessing}
-							<ArrowRight class="h-4 w-4" />
-						{/if}
-					</Button>
-				{/if}
-			</div>
+			{#if showBackButton || showNextButton}
+				<!-- Back Button -->
+				<div class="col-start-1 row-start-2 md:row-start-1">
+					{#if showBackButton}
+						<Button
+							variant="ghost"
+							size="sm"
+							onclick={handleBack}
+							disabled={isProcessing}
+							class="gap-1.5"
+						>
+							<ArrowLeft class="h-4 w-4" />
+							Back
+						</Button>
+					{/if}
+				</div>
+
+				<!-- Next/Import Button -->
+				<div class="col-start-3 row-start-2 flex justify-end md:row-start-1">
+					{#if showNextButton}
+						<Button
+							size="sm"
+							onclick={handleNext}
+							disabled={nextButtonDisabled}
+							class="gap-1.5"
+						>
+							{#if isProcessing}
+								<Loader2 class="h-4 w-4 animate-spin" />
+							{/if}
+							{nextButtonLabel}
+							{#if !isProcessing}
+								<ArrowRight class="h-4 w-4" />
+							{/if}
+						</Button>
+					{/if}
+				</div>
+			{/if}
 		</div>
 	</div>
 

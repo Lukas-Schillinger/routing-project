@@ -59,9 +59,17 @@
 	function saveCompletedStops(completedStops: Set<string>) {
 		if (!browser || !route?.id) return;
 		try {
-			localStorage.setItem(
-				getStorageKey(route?.id),
-				JSON.stringify([...completedStops])
+			const storageKey = getStorageKey(route.id);
+			const newValue = JSON.stringify([...completedStops]);
+			localStorage.setItem(storageKey, newValue);
+
+			// Notify same-tab listeners (storage events only fire cross-tab)
+			window.dispatchEvent(
+				new StorageEvent('storage', {
+					key: storageKey,
+					newValue,
+					storageArea: localStorage
+				})
 			);
 		} catch (error) {
 			console.error('Failed to save completed stops:', error);
