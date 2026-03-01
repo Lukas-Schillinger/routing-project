@@ -45,6 +45,11 @@ const requiredSchema = z.object({
 	STRIPE_PRO_PLAN_PRICE_ID: z.string().min(1),
 	STRIPE_CREDIT_PRICE_ID: z.string().min(1),
 
+	// Webhook secrets
+	RESEND_WEBHOOK_SECRET: z.string().min(1),
+	OPTIMIZATION_WEBHOOK_SECRET: z.string().min(1),
+	STRIPE_WEBHOOK_SECRET: z.string().min(1),
+
 	// Maps (public)
 	PUBLIC_MAPTILER_KEY: z.string().min(1),
 	PUBLIC_MAPBOX_STATIC_MAP_TOKEN: z.string().min(1),
@@ -57,11 +62,6 @@ const requiredSchema = z.object({
 const optionalSchema = z.object({
 	// Admin
 	ADMIN_EMAILS: z.string().optional(), // Comma-separated list of admin emails
-
-	// Webhook secrets
-	RESEND_WEBHOOK_SECRET: z.string().optional(),
-	OPTIMIZATION_WEBHOOK_SECRET: z.string().optional(),
-	STRIPE_WEBHOOK_SECRET: z.string().optional(),
 
 	// Infrastructure
 	CF_TUNNEL_URL: z.string().optional(),
