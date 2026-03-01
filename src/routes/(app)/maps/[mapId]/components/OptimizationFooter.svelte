@@ -44,6 +44,7 @@
 		credits,
 		monthlyCredits,
 		onDepotChange,
+		pollerError,
 		onOptimize,
 		onCancel,
 		onUpgrade
@@ -57,6 +58,7 @@
 		planSlug?: 'free' | 'pro';
 		credits?: CreditBalance;
 		monthlyCredits?: number;
+		pollerError?: string | null;
 		onDepotChange: (depotId: string) => Promise<void>;
 		onOptimize: () => void;
 		onCancel: () => void;
@@ -74,9 +76,12 @@
 	let fairness = $state<'high' | 'medium' | 'low'>('medium');
 	let isSubmitting = $state(false);
 	let isResetting = $state(false);
-	let error = $state('');
+	let error = $state<string | null>(null);
 
 	const hasRoutes = $derived(routes.length > 0);
+
+	// Combine submission errors and polling errors into a single displayed message
+	const displayError = $derived(error || pollerError || null);
 
 	// Count unassigned stops
 	const unassignedStopsCount = $derived(
@@ -107,7 +112,7 @@
 		if (!canOptimize || !selectedDepotId) return;
 
 		isSubmitting = true;
-		error = '';
+		error = null;
 
 		try {
 			await mapApi.queueOptimization(map.id, {
@@ -117,7 +122,6 @@
 			onOptimize();
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to optimize routes';
-			toast.error('Optimization failed', { description: error });
 		} finally {
 			isSubmitting = false;
 		}
@@ -201,12 +205,12 @@
 		</div>
 	{:else}
 		<!-- Normal Mode - Optimization Controls -->
-		{#if error}
+		{#if displayError}
 			<div
 				class="mb-2 flex items-center gap-2 rounded-md bg-destructive/10 px-2.5 py-1.5 text-xs text-destructive"
 			>
 				<AlertCircle class="h-3.5 w-3.5 shrink-0" />
-				<span class="truncate">{error}</span>
+				<span class="truncate">{displayError}</span>
 			</div>
 		{/if}
 
