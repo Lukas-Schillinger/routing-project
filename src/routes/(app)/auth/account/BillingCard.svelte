@@ -140,7 +140,7 @@
 						disabled={portalLoading}
 					>
 						{#if portalLoading}
-							<Spinner class="mr-2" />
+							<Spinner />
 						{/if}
 						Manage subscription
 					</Button>
@@ -173,7 +173,7 @@
 							disabled={actionLoading}
 						>
 							{#if actionLoading}
-								<Spinner class="mr-2" />
+								<Spinner />
 							{/if}
 							Keep Pro
 						</Button>

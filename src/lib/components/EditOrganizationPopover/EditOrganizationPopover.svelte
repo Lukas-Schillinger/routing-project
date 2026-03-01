@@ -33,7 +33,7 @@
 				{@render children()}
 			{:else}
 				<Button variant="outline" size="sm">
-					<Pencil class="mr-2 h-4 w-4" />
+					<Pencil class="h-4 w-4" />
 					Edit Organization
 				</Button>
 			{/if}
@@ -56,7 +56,7 @@
 				{@render children()}
 			{:else}
 				<Button variant="outline" size="sm">
-					<Pencil class="mr-2 h-4 w-4" />
+					<Pencil class="h-4 w-4" />
 					Edit Organization
 				</Button>
 			{/if}

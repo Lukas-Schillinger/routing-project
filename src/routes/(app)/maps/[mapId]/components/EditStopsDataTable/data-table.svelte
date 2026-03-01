@@ -429,7 +429,11 @@
 				<div class="h-px flex-1 bg-border"></div>
 			</div>
 
-			<EditOrCreateStopPopover mode="create" {mapId} onSuccess={() => invalidate(INVALIDATION_KEYS.MAP_DATA)}>
+			<EditOrCreateStopPopover
+				mode="create"
+				{mapId}
+				onSuccess={() => invalidate(INVALIDATION_KEYS.MAP_DATA)}
+			>
 				<Button variant="outline"><Plus />Add Stop</Button>
 			</EditOrCreateStopPopover>
 		</div>
@@ -523,7 +527,7 @@
 					triggerClass="w-full flex"
 				>
 					<Button class="w-full" variant="secondary" size="sm">
-						<MapPin class="mr-2 h-4 w-4" />
+						<MapPin class="h-4 w-4" />
 						Create Stop
 					</Button>
 				</EditOrCreateStopPopover>

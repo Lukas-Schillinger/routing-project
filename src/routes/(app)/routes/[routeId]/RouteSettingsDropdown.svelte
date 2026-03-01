@@ -84,7 +84,7 @@
 		{/snippet}
 	</ConfirmDeleteDialog>
 	<DropdownMenu.Item onclick={toggleMode}>
-		<div class="mr-2">
+		<div>
 			{#if mode.current == 'dark'}
 				<Moon />
 			{:else}

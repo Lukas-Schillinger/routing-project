@@ -151,7 +151,7 @@
 			{/snippet}
 		</EditOrCreateMapPopover>
 		<DropdownMenu.Item onclick={handleCopyId}>
-			<Copy class="mr-2 h-4 w-4" />
+			<Copy class="h-4 w-4" />
 			<div class="text-muted-foreground">Copy ID</div>
 		</DropdownMenu.Item>
 		<DropdownMenu.Separator />

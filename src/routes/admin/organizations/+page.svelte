@@ -116,7 +116,7 @@
 			<Dialog.Trigger>
 				{#snippet child({ props })}
 					<Button {...props}>
-						<Plus class="mr-2 h-4 w-4" />
+						<Plus class="h-4 w-4" />
 						Create Test Account
 					</Button>
 				{/snippet}

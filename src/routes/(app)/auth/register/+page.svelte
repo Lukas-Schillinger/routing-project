@@ -93,10 +93,10 @@
 					disabled={$submitting}
 				>
 					{#if $submitting}
-						<Loader2 class="mr-2 h-4 w-4 animate-spin" />
+						<Loader2 class="h-4 w-4 animate-spin" />
 						Creating account...
 					{:else}
-						<UserPlus class="mr-2 h-4 w-4" />
+						<UserPlus class="h-4 w-4" />
 						Create account
 					{/if}
 				</Button>

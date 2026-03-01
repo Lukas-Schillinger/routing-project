@@ -253,7 +253,7 @@
 					disabled={isLoading || creditAmount < 100}
 				>
 					{#if isLoading}
-						<Spinner class="mr-2" />
+						<Spinner />
 						Processing...
 					{:else}
 						Purchase Credits

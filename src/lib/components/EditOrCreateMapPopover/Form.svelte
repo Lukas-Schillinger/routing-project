@@ -126,10 +126,10 @@
 		</Button>
 		<Button type="submit" class="flex-1" disabled={$submitting}>
 			{#if $submitting}
-				<Loader2 class="mr-2 h-4 w-4 animate-spin" />
+				<Loader2 class="h-4 w-4 animate-spin" />
 				{mode === 'create' ? 'Creating...' : 'Updating...'}
 			{:else}
-				<Check class="mr-2 h-4 w-4" />
+				<Check class="h-4 w-4" />
 				{mode === 'create' ? 'Create Map' : 'Update Map'}
 			{/if}
 		</Button>

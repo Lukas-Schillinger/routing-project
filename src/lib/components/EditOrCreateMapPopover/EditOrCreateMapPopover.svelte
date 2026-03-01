@@ -43,7 +43,7 @@
 					{@render children({ props })}
 				{:else if mode === 'create'}
 					<Button {...props} size="sm" variant="secondary">
-						<MapIcon class="mr-2 h-4 w-4" />
+						<MapIcon class="h-4 w-4" />
 						Create Map
 					</Button>
 				{:else}
@@ -73,7 +73,7 @@
 					{@render children({ props })}
 				{:else if mode === 'create'}
 					<Button {...props} size="sm" variant="secondary">
-						<MapIcon class="mr-2 h-4 w-4" />
+						<MapIcon class="h-4 w-4" />
 						Create Map
 					</Button>
 				{:else}

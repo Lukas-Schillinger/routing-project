@@ -27,7 +27,7 @@
 					</p>
 				</div>
 				<Button variant="outline" size="sm" disabled>
-					<Settings class="mr-2 h-4 w-4" />
+					<Settings class="h-4 w-4" />
 					Configure
 				</Button>
 			</div>
@@ -42,7 +42,7 @@
 					</p>
 				</div>
 				<Button variant="outline" size="sm" disabled>
-					<Key class="mr-2 h-4 w-4" />
+					<Key class="h-4 w-4" />
 					Manage Keys
 				</Button>
 			</div>
@@ -57,7 +57,7 @@
 					</p>
 				</div>
 				<Button variant="outline" size="sm" disabled>
-					<Calendar class="mr-2 h-4 w-4" />
+					<Calendar class="h-4 w-4" />
 					Export Data
 				</Button>
 			</div>
