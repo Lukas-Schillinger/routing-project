@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance as nativeEnhance } from '$app/forms';
+	import { resolve } from '$app/paths';
 	import { AuthAlert } from '$lib/components/auth';
 	import { Button } from '$lib/components/ui/button';
 	import * as Form from '$lib/components/ui/form';
@@ -45,10 +46,6 @@
 
 	let isResending = $state(false);
 	let resendSuccess = $state(false);
-
-	const passwordResetUrl = $derived(
-		`/auth/password-reset?email=${encodeURIComponent($formData.email)}`
-	);
 </script>
 
 {#if parsed}
@@ -146,17 +143,15 @@
 				</div>
 			{/snippet}
 		</Form.Control>
-		<!-- Resolve doesn't support query parameters. The ignore comment only works when
-		 directly above the line and prettier wraps the anchor element when the full URL
-		 is present. -->
 		<div class="text-xs text-muted-foreground">
-			<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+			<!-- eslint-disable svelte/no-navigation-without-resolve -- resolve() is used; rule can't parse template concatenation on <a> -->
 			<a
-				href={passwordResetUrl}
+				href={`${resolve('/auth/password-reset')}?email=${encodeURIComponent($formData.email)}`}
 				class="transition-colors hover:text-foreground"
 			>
 				Reset password
 			</a>
+			<!-- eslint-enable svelte/no-navigation-without-resolve -->
 		</div>
 		<Form.FieldErrors />
 	</Form.Field>
