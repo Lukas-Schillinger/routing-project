@@ -509,23 +509,19 @@ export class OptimizationService {
 		if (updates.length === 0) return;
 
 		// Bulk UPDATE using VALUES join — single query instead of N individual updates
-		const valuesClause = updates
-			.map(
-				(u) =>
-					`('${u.stopId}'::uuid, '${u.driverId}'::uuid, ${u.deliveryIndex})`
-			)
-			.join(', ');
-
-		await db.execute(
-			sql.raw(`
-				UPDATE stops SET
-					driver_id = v.driver_id,
-					delivery_index = v.delivery_index,
-					updated_at = NOW()
-				FROM (VALUES ${valuesClause}) AS v(stop_id, driver_id, delivery_index)
-				WHERE stops.id = v.stop_id
-			`)
+		const valuesRows = updates.map(
+			(u) =>
+				sql`(${u.stopId}::uuid, ${u.driverId}::uuid, ${u.deliveryIndex}::integer)`
 		);
+
+		await db.execute(sql`
+			UPDATE stops SET
+				driver_id = v.driver_id,
+				delivery_index = v.delivery_index,
+				updated_at = NOW()
+			FROM (VALUES ${sql.join(valuesRows, sql`, `)}) AS v(stop_id, driver_id, delivery_index)
+			WHERE stops.id = v.stop_id
+		`);
 	}
 
 	private async computeAndSaveRoutes(
