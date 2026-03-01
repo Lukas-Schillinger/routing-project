@@ -50,7 +50,7 @@
 				{@render children()}
 			{:else if mode === 'create'}
 				<Button size="sm" variant="secondary">
-					<Garage class="mr-2 h-4 w-4" />
+					<Garage class="h-4 w-4" />
 					Create Depot
 				</Button>
 			{:else}
@@ -79,7 +79,7 @@
 				{@render children()}
 			{:else if mode === 'create'}
 				<Button size="sm" variant="secondary">
-					<Garage class="mr-2 h-4 w-4" />
+					<Garage class="h-4 w-4" />
 					Create Depot
 				</Button>
 			{:else}

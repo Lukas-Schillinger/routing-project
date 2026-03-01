@@ -121,10 +121,10 @@
 				disabled={isSubmitting}
 			>
 				{#if isSubmitting}
-					<Loader2 class="mr-2 h-4 w-4 animate-spin" />
+					<Loader2 class="h-4 w-4 animate-spin" />
 					Sending...
 				{:else}
-					<Sparkles class="mr-2 h-4 w-4" />
+					<Sparkles class="h-4 w-4" />
 					Send magic link
 				{/if}
 			</Button>
@@ -213,7 +213,7 @@
 				disabled={isSubmitting || code.length !== 6}
 			>
 				{#if isSubmitting}
-					<Loader2 class="mr-2 h-4 w-4 animate-spin" />
+					<Loader2 class="h-4 w-4 animate-spin" />
 					Verifying...
 				{:else}
 					Verify code
@@ -227,7 +227,7 @@
 				onclick={handleBack}
 				disabled={isSubmitting}
 			>
-				<ArrowLeft class="mr-2 h-4 w-4" />
+				<ArrowLeft class="h-4 w-4" />
 				Back
 			</Button>
 		</div>

@@ -29,7 +29,7 @@
 	<Popover.Root bind:open onOpenChange={handleOpenChange}>
 		<Popover.Trigger>
 			<Button variant="outline">
-				<Plus class="mr-2 h-4 w-4" />
+				<Plus class="h-4 w-4" />
 				Invite User
 			</Button>
 		</Popover.Trigger>
@@ -41,7 +41,7 @@
 	<Drawer.Root bind:open onOpenChange={handleOpenChange}>
 		<Drawer.Trigger>
 			<Button variant="outline">
-				<Plus class="mr-2 h-4 w-4" />
+				<Plus class="h-4 w-4" />
 				Invite User
 			</Button>
 		</Drawer.Trigger>

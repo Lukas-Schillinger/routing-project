@@ -133,7 +133,7 @@
 						>
 							{#snippet trigger({ props })}
 								<Button {...props} variant="destructive">
-									<Trash2 class="mr-2 h-4 w-4" />
+									<Trash2 class="h-4 w-4" />
 									Delete Account
 								</Button>
 							{/snippet}

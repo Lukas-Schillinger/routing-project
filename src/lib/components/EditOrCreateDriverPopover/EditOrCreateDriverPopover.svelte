@@ -53,7 +53,7 @@
 		{@render children({ props })}
 	{:else if mode === 'create'}
 		<Button {...props} size="sm" variant="secondary">
-			<Truck class="mr-2 h-4 w-4" />
+			<Truck class="h-4 w-4" />
 			Create Driver
 		</Button>
 	{:else}

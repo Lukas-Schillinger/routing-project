@@ -132,10 +132,10 @@
 		</Button>
 		<Form.Button class="flex-1" disabled={$submitting}>
 			{#if $submitting}
-				<LoaderCircle class="mr-2 h-4 w-4 animate-spin" />
+				<LoaderCircle class="h-4 w-4 animate-spin" />
 				Sending...
 			{:else}
-				<Check class="mr-2 h-4 w-4" />
+				<Check class="h-4 w-4" />
 				Send Invitation
 			{/if}
 		</Form.Button>

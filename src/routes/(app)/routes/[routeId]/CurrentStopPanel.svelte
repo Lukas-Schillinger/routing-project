@@ -159,10 +159,10 @@
 						class="col-span-2 mb-0"
 					>
 						{#if isCompleted}
-							<Check class="mr-2 h-4 w-4" />
+							<Check class="h-4 w-4" />
 							Delivered
 						{:else}
-							<Package class="mr-2 h-4 w-4" />
+							<Package class="h-4 w-4" />
 							Mark Delivered
 						{/if}
 					</Button>
@@ -176,7 +176,7 @@
 							variant="outline"
 							class="w-full"
 						>
-							<Navigation class="mr-2 h-4" />
+							<Navigation class="h-4" />
 							Directions
 						</Button>
 					{/if}

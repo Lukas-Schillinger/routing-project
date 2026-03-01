@@ -235,10 +235,10 @@
 		</Button>
 		<Button type="submit" class="flex-1" disabled={isSubmitting}>
 			{#if isSubmitting}
-				<LoaderCircle class="mr-2 h-4 w-4 animate-spin" />
+				<LoaderCircle class="h-4 w-4 animate-spin" />
 				{mode === 'create' ? 'Creating...' : 'Updating...'}
 			{:else}
-				<Check class="mr-2 h-4 w-4" />
+				<Check class="h-4 w-4" />
 				{mode === 'create' ? 'Create Stop' : 'Update Stop'}
 			{/if}
 		</Button>

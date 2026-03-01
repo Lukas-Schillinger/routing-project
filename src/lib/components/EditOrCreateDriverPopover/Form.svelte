@@ -237,10 +237,10 @@
 				{/if}
 				<Form.Button size="sm" disabled={$submitting}>
 					{#if $submitting}
-						<Loader2 class="mr-2 h-4 w-4 animate-spin" />
+						<Loader2 class="h-4 w-4 animate-spin" />
 						Updating...
 					{:else}
-						<Check class="mr-2 h-4 w-4" />
+						<Check class="h-4 w-4" />
 						Update Driver
 					{/if}
 				</Form.Button>
@@ -250,10 +250,10 @@
 		<div class="flex justify-end">
 			<Form.Button disabled={$submitting}>
 				{#if $submitting}
-					<Loader2 class="mr-2 h-4 w-4 animate-spin" />
+					<Loader2 class="h-4 w-4 animate-spin" />
 					Creating...
 				{:else}
-					<Check class="mr-2 h-4 w-4" />
+					<Check class="h-4 w-4" />
 					Create Driver
 				{/if}
 			</Form.Button>

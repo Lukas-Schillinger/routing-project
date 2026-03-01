@@ -76,7 +76,7 @@
 				{/snippet}
 			</EditOrCreateMapPopover>
 			<DropdownMenu.Item onclick={handleCopyId}>
-				<Copy class="mr-2 h-4 w-4" />
+				<Copy class="h-4 w-4" />
 				<span class="text-muted-foreground">Copy Map ID</span>
 			</DropdownMenu.Item>
 			{#if onDelete}

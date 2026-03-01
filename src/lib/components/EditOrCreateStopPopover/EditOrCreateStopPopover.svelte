@@ -62,7 +62,7 @@
 				{@render children()}
 			{:else if mode === 'create'}
 				<Button variant="default">
-					<Plus class="mr-2 h-4 w-4" />
+					<Plus class="h-4 w-4" />
 					Add Stop
 				</Button>
 			{:else}
@@ -92,7 +92,7 @@
 				{@render children()}
 			{:else if mode === 'create'}
 				<Button variant="default">
-					<Plus class="mr-2 h-4 w-4" />
+					<Plus class="h-4 w-4" />
 					Add Stop
 				</Button>
 			{:else}

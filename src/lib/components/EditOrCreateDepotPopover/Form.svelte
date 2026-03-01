@@ -229,10 +229,10 @@
 				{/if}
 				<Button type="submit" size="sm" disabled={isSubmitting}>
 					{#if isSubmitting}
-						<LoaderCircle class="mr-2 h-4 w-4 animate-spin" />
+						<LoaderCircle class="h-4 w-4 animate-spin" />
 						Updating...
 					{:else}
-						<Check class="mr-2 h-4 w-4" />
+						<Check class="h-4 w-4" />
 						Update Depot
 					{/if}
 				</Button>
@@ -242,10 +242,10 @@
 		<div class="flex justify-end">
 			<Button type="submit" disabled={isSubmitting}>
 				{#if isSubmitting}
-					<LoaderCircle class="mr-2 h-4 w-4 animate-spin" />
+					<LoaderCircle class="h-4 w-4 animate-spin" />
 					Creating...
 				{:else}
-					<Check class="mr-2 h-4 w-4" />
+					<Check class="h-4 w-4" />
 					Create Depot
 				{/if}
 			</Button>
