@@ -187,16 +187,15 @@ describe('InvitationService', () => {
 			});
 		});
 
-		it('throws notFound when invitation does not exist', async () => {
+		it('silently succeeds when invitation does not exist', async () => {
 			await withTestTransaction(async () => {
 				const { organization } = await createTestEnvironment();
 
-				await expect(
-					invitationService.deleteInvitation(
-						'00000000-0000-0000-0000-000000000000',
-						organization.id
-					)
-				).rejects.toMatchObject({ statusCode: 404 });
+				const result = await invitationService.deleteInvitation(
+					'00000000-0000-0000-0000-000000000000',
+					organization.id
+				);
+				expect(result.success).toBe(true);
 			});
 		});
 	});

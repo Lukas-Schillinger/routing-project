@@ -188,7 +188,14 @@ export class UserService {
 			);
 
 		// delete their invitations so they can be invited again
-		await db.delete(invitations).where(eq(invitations.email, user.email));
+		await db
+			.delete(invitations)
+			.where(
+				and(
+					eq(invitations.email, user.email),
+					eq(invitations.organization_id, organizationId)
+				)
+			);
 
 		return { success: true };
 	}

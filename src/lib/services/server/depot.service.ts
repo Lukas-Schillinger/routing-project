@@ -203,7 +203,11 @@ export class DepotService {
 			);
 		}
 
-		await db.delete(depots).where(eq(depots.id, depotId));
+		await db
+			.delete(depots)
+			.where(
+				and(eq(depots.id, depotId), eq(depots.organization_id, organizationId))
+			);
 
 		return { success: true };
 	}

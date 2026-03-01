@@ -613,13 +613,13 @@ describe('RouteShareService', () => {
 			});
 		});
 
-		it('throws NOT_FOUND for non-existent share', async () => {
+		it('silently succeeds for non-existent share', async () => {
 			await withTestTransaction(async () => {
 				const { organization } = await createProRouteEnvironment();
 
 				await expect(
 					routeShareService.deleteShare(NON_EXISTENT_UUID, organization.id)
-				).rejects.toMatchObject({ code: 'NOT_FOUND' });
+				).resolves.toBeUndefined();
 			});
 		});
 
@@ -633,9 +633,15 @@ describe('RouteShareService', () => {
 					route_id: env1.route.id
 				});
 
-				await expect(
-					routeShareService.deleteShare(share.id, env2.organization.id)
-				).rejects.toMatchObject({ code: 'NOT_FOUND' });
+				// Should not throw, but should not delete the share either
+				await routeShareService.deleteShare(share.id, env2.organization.id);
+
+				// Verify share still exists for the owning org
+				const existing = await routeShareService.getShare(
+					share.id,
+					env1.organization.id
+				);
+				expect(existing).toBeDefined();
 			});
 		});
 	});

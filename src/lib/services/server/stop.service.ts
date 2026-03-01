@@ -328,7 +328,11 @@ export class StopService {
 		// Capture assignment info before deletion
 		const { driver_id, map_id } = stop;
 
-		await db.delete(stops).where(eq(stops.id, stopId));
+		await db
+			.delete(stops)
+			.where(
+				and(eq(stops.id, stopId), eq(stops.organization_id, organizationId))
+			);
 
 		// Trigger route recalculation if stop was assigned to a driver
 		if (driver_id) {

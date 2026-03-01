@@ -259,9 +259,14 @@ export class RouteShareService {
 	 * Delete a share entirely
 	 */
 	async deleteShare(shareId: string, organizationId: string): Promise<void> {
-		await this.getShare(shareId, organizationId); // Verify existence
-
-		await db.delete(routeShares).where(eq(routeShares.id, shareId));
+		await db
+			.delete(routeShares)
+			.where(
+				and(
+					eq(routeShares.id, shareId),
+					eq(routeShares.organization_id, organizationId)
+				)
+			);
 	}
 
 	/**

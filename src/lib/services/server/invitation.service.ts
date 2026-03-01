@@ -54,8 +54,14 @@ export class InvitationService {
 	}
 
 	async deleteInvitation(invitationId: string, organizationId: string) {
-		await this.getInvitation(invitationId, organizationId);
-		await db.delete(invitations).where(eq(invitations.id, invitationId));
+		await db
+			.delete(invitations)
+			.where(
+				and(
+					eq(invitations.id, invitationId),
+					eq(invitations.organization_id, organizationId)
+				)
+			);
 
 		return { success: true };
 	}

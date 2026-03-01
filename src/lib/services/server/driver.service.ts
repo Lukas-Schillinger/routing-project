@@ -1,7 +1,7 @@
 import type { Driver, DriverCreate, DriverUpdate } from '$lib/schemas/driver';
 import { db } from '$lib/server/db';
 import { drivers, stops } from '$lib/server/db/schema';
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import { ServiceError } from './errors';
 
 export class DriverService {
@@ -118,7 +118,14 @@ export class DriverService {
 			);
 		}
 
-		await db.delete(drivers).where(eq(drivers.id, driverId));
+		await db
+			.delete(drivers)
+			.where(
+				and(
+					eq(drivers.id, driverId),
+					eq(drivers.organization_id, organizationId)
+				)
+			);
 
 		return { success: true };
 	}

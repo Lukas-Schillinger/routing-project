@@ -337,7 +337,14 @@ export class MapService {
 				})
 				.where(eq(stops.map_id, mapId));
 
-			await tx.delete(routes).where(eq(routes.map_id, mapId));
+			await tx
+				.delete(routes)
+				.where(
+					and(
+						eq(routes.map_id, mapId),
+						eq(routes.organization_id, organizationId)
+					)
+				);
 		});
 
 		return { success: true };

@@ -101,7 +101,14 @@ export class FileService {
 
 		try {
 			await this.storage.deleteFile(fileRecord.r2_key);
-			await db.delete(files).where(eq(files.id, fileId));
+			await db
+				.delete(files)
+				.where(
+					and(
+						eq(files.id, fileId),
+						eq(files.organization_id, user.organization_id!)
+					)
+				);
 		} catch (error) {
 			throw ServiceError.internal('Failed to delete file', { cause: error });
 		}
