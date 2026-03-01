@@ -1,6 +1,5 @@
 <script lang="ts">
 	import SphereGridLoader from '$lib/components/SphereGridLoader.svelte';
-	import { onDestroy } from 'svelte';
 
 	interface Props {
 		startTime?: Date;
@@ -9,7 +8,6 @@
 	let { startTime = new Date() }: Props = $props();
 
 	let elapsedSeconds = $state(0);
-	let timerInterval: ReturnType<typeof setInterval> | null = null;
 
 	function formatTime(seconds: number): string {
 		const mins = Math.floor(seconds / 60);
@@ -21,22 +19,11 @@
 		// Calculate initial elapsed time
 		elapsedSeconds = Math.floor((Date.now() - startTime.getTime()) / 1000);
 
-		// Start the timer
-		timerInterval = setInterval(() => {
+		const timerInterval = setInterval(() => {
 			elapsedSeconds = Math.floor((Date.now() - startTime.getTime()) / 1000);
 		}, 1000);
 
-		return () => {
-			if (timerInterval) {
-				clearInterval(timerInterval);
-			}
-		};
-	});
-
-	onDestroy(() => {
-		if (timerInterval) {
-			clearInterval(timerInterval);
-		}
+		return () => clearInterval(timerInterval);
 	});
 </script>
 
