@@ -1,14 +1,17 @@
 import { env } from '$env/dynamic/private';
 import { handleWebhookError, ServiceError } from '$lib/errors';
-import { resendWebhookPayloadSchema } from '$lib/schemas/mail-record.js';
-import { mailRecordService } from '$lib/services/server/mail-record.service.js';
+import { resendWebhookPayloadSchema } from '$lib/schemas/mail-record';
+import { mailRecordService } from '$lib/services/server/mail-record.service';
 import { json } from '@sveltejs/kit';
 import { Resend } from 'resend';
 import type { RequestHandler } from './$types';
 
 const resend = new Resend(env.RESEND_API_KEY);
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, locals }) => {
+	const log = locals.log;
+	let emailId: string | undefined;
+
 	try {
 		// Get raw body for signature verification
 		const payload = await request.text();
@@ -48,13 +51,21 @@ export const POST: RequestHandler = async ({ request }) => {
 
 		// Parse and validate payload
 		const validatedPayload = resendWebhookPayloadSchema.parse(verifiedPayload);
+		emailId = validatedPayload.data.email_id;
+
+		log.info(
+			{ emailId, eventType: validatedPayload.type },
+			'Mail webhook received'
+		);
 
 		// Process the webhook event
 		await mailRecordService.processWebhookEvent(validatedPayload);
 
+		log.info({ emailId, eventType: validatedPayload.type }, 'Mail webhook processed');
 		return json({ success: true });
 	} catch (error) {
-		const { body, status } = handleWebhookError(error, 'mail');
+		log.error({ error, emailId }, 'Mail webhook error');
+		const { body, status } = handleWebhookError(error, 'mail', { emailId });
 		return json(body, { status });
 	}
 };
