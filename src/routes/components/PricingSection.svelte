@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { Button } from '$lib/components/ui/button';
+	import * as Tabs from '$lib/components/ui/tabs';
 	import { Check } from 'lucide-svelte';
 	import { browser } from '$app/environment';
 	import { inView } from 'motion';
@@ -106,33 +107,28 @@
 
 		<!-- Billing Toggle -->
 		<div class="mb-10 flex items-center justify-center">
-			<div
-				class="inline-flex items-center gap-0 overflow-hidden rounded-sm border border-foreground/10"
-			>
-				<button
-					class="px-5 py-2.5 text-sm font-medium transition-colors duration-150
-						{billingPeriod === 'monthly'
-						? 'bg-foreground text-background'
-						: 'bg-card text-muted-foreground hover:text-foreground'}"
-					onclick={() => (billingPeriod = 'monthly')}
+			<Tabs.Root bind:value={billingPeriod}>
+				<Tabs.List
+					class="h-auto gap-0 overflow-hidden rounded-sm border border-foreground/10 bg-card p-0"
 				>
-					Monthly
-				</button>
-				<button
-					class="flex items-center gap-2 px-5 py-2.5 text-sm font-medium transition-colors duration-150
-						{billingPeriod === 'annual'
-						? 'bg-foreground text-background'
-						: 'bg-card text-muted-foreground hover:text-foreground'}"
-					onclick={() => (billingPeriod = 'annual')}
-				>
-					Annual
-					<span
-						class="rounded-sm bg-landing-primary px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-landing-primary-foreground"
+					<Tabs.Trigger
+						value="monthly"
+						class="h-auto rounded-none px-5 py-2.5 text-sm font-medium data-[state=active]:bg-foreground data-[state=active]:text-background data-[state=active]:shadow-none"
 					>
-						-25%
-					</span>
-				</button>
-			</div>
+						Monthly
+					</Tabs.Trigger>
+					<Tabs.Trigger
+						value="annual"
+						class="h-auto rounded-none px-5 py-2.5 text-sm font-medium data-[state=active]:bg-foreground data-[state=active]:text-background data-[state=active]:shadow-none"
+					>
+						Annual
+						<span
+							class="rounded-sm bg-landing-primary px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-landing-primary-foreground"
+							>-25%</span
+						>
+					</Tabs.Trigger>
+				</Tabs.List>
+			</Tabs.Root>
 		</div>
 
 		<!-- Pricing Cards -->
