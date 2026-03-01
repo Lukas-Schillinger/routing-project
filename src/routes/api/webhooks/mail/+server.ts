@@ -61,7 +61,10 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		// Process the webhook event
 		await mailRecordService.processWebhookEvent(validatedPayload);
 
-		log.info({ emailId, eventType: validatedPayload.type }, 'Mail webhook processed');
+		log.info(
+			{ emailId, eventType: validatedPayload.type },
+			'Mail webhook processed'
+		);
 		return json({ success: true });
 	} catch (error) {
 		log.error({ error, emailId }, 'Mail webhook error');
