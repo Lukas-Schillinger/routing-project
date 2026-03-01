@@ -1,10 +1,11 @@
 // POST /api/webhooks/stripe - Handle Stripe webhook events
 
 import { env } from '$env/dynamic/private';
-import { handleWebhookError, ServiceError } from '$lib/errors';
+import { handleWebhookError } from '$lib/errors';
 import { stripeClient } from '$lib/services/external/stripe/client';
 import { billingService } from '$lib/services/server/billing.service';
 import { subscriptionService } from '$lib/services/server/subscription.service';
+import * as Sentry from '@sentry/sveltekit';
 import { json } from '@sveltejs/kit';
 import type Stripe from 'stripe';
 import type { RequestHandler } from './$types';
@@ -12,36 +13,39 @@ import type { RequestHandler } from './$types';
 export const POST: RequestHandler = async ({ request, locals }) => {
 	const log = locals.log;
 
+	// Phase 1: Verify signature — return non-2xx on failure
+	const webhookSecret = env.STRIPE_WEBHOOK_SECRET;
+	if (!webhookSecret) {
+		Sentry.captureException(new Error('STRIPE_WEBHOOK_SECRET not configured'));
+		return json({ error: 'Webhook not configured' }, { status: 500 });
+	}
+
+	const signature = request.headers.get('stripe-signature');
+	if (!signature) {
+		return json({ error: 'Missing signature' }, { status: 401 });
+	}
+
+	const rawBody = await request.text();
+
+	let event: Stripe.Event;
 	try {
-		const webhookSecret = env.STRIPE_WEBHOOK_SECRET;
-		if (!webhookSecret) {
-			throw ServiceError.internal('STRIPE_WEBHOOK_SECRET not configured');
-		}
-
-		const signature = request.headers.get('stripe-signature');
-		if (!signature) {
-			throw ServiceError.unauthorized('Missing Stripe signature');
-		}
-
-		const rawBody = await request.text();
-
-		let event: Stripe.Event;
-		try {
-			event = stripeClient.constructWebhookEvent(
-				rawBody,
-				signature,
-				webhookSecret
-			);
-		} catch (err) {
-			log.warn({ err }, 'Stripe webhook signature verification failed');
-			throw ServiceError.unauthorized('Invalid Stripe signature');
-		}
-
-		log.info(
-			{ eventType: event.type, eventId: event.id },
-			'Stripe webhook received'
+		event = stripeClient.constructWebhookEvent(
+			rawBody,
+			signature,
+			webhookSecret
 		);
+	} catch (err) {
+		log.warn({ err }, 'Stripe webhook signature verification failed');
+		return json({ error: 'Invalid signature' }, { status: 401 });
+	}
 
+	// Phase 2: Process event — always return 200
+	log.info(
+		{ eventType: event.type, eventId: event.id },
+		'Stripe webhook received'
+	);
+
+	try {
 		switch (event.type) {
 			case 'checkout.session.completed': {
 				const session = event.data.object as Stripe.Checkout.Session;
@@ -107,11 +111,17 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			default:
 				log.info({ eventType: event.type }, 'Unhandled Stripe event');
 		}
-
-		return json({ received: true });
 	} catch (error) {
-		log.error({ err: error }, 'Stripe webhook handler error');
-		const { body, status } = handleWebhookError(error, 'stripe');
-		return json(body, { status });
+		log.error(
+			{ err: error, eventType: event.type, eventId: event.id },
+			'Stripe webhook processing failed'
+		);
+		// Report to Sentry if unexpected (return value intentionally discarded — always return 200)
+		handleWebhookError(error, 'stripe', {
+			eventType: event.type,
+			eventId: event.id
+		});
 	}
+
+	return json({ received: true });
 };
