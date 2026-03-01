@@ -334,10 +334,10 @@
 	@keyframes pulse-border {
 		0%,
 		100% {
-			border-color: hsl(var(--primary));
+			border-color: var(--primary);
 		}
 		50% {
-			border-color: hsl(var(--primary) / 0.4);
+			border-color: color-mix(in oklab, var(--primary) 40%, transparent);
 		}
 	}
 
