@@ -96,6 +96,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Generate SvelteKit types
+        run: npx svelte-kit sync
+
       - name: Push schema to test database
         run: npx drizzle-kit push --force
         env:
