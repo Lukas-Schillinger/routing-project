@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
-	import * as Field from '$lib/components/ui/field';
+	import * as Form from '$lib/components/ui/form';
 	import { Input } from '$lib/components/ui/input';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { ServiceError } from '$lib/errors';
@@ -8,7 +8,7 @@
 	import { mapApi } from '$lib/services/api/maps';
 	import { Check, Loader2 } from 'lucide-svelte';
 	import { defaults, setMessage, superForm } from 'sveltekit-superforms';
-	import { zod4 } from 'sveltekit-superforms/adapters';
+	import { zod4, zod4Client } from 'sveltekit-superforms/adapters';
 
 	let {
 		mode = 'create',
@@ -30,7 +30,7 @@
 
 	const form = superForm(defaults(getInitialData(), zod4(createMapSchema)), {
 		SPA: true,
-		validators: zod4(createMapSchema),
+		validators: zod4Client(createMapSchema),
 		onUpdate: async ({ form }) => {
 			if (!form.valid) return;
 
@@ -58,7 +58,7 @@
 		}
 	});
 
-	const { form: formData, errors, message, enhance, submitting } = form;
+	const { form: formData, message, enhance, submitting } = form;
 
 	// Reset form when dialog closes
 	$effect(() => {
@@ -67,15 +67,17 @@
 </script>
 
 <form method="POST" use:enhance class="space-y-4">
-	<Field.Set>
-		<Field.Legend
-			>{mode === 'create' ? 'Create New Map' : 'Edit Map'}</Field.Legend
-		>
-		<Field.Description>
-			{mode === 'create'
-				? 'Add a new map for your organization'
-				: 'Update map details'}
-		</Field.Description>
+	<div class="space-y-4">
+		<div>
+			<h3 class="text-sm leading-none font-medium">
+				{mode === 'create' ? 'Create New Map' : 'Edit Map'}
+			</h3>
+			<p class="mt-1 text-sm text-muted-foreground">
+				{mode === 'create'
+					? 'Add a new map for your organization'
+					: 'Update map details'}
+			</p>
+		</div>
 
 		{#if $message}
 			<div class="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
@@ -83,38 +85,43 @@
 			</div>
 		{/if}
 
-		<Field.Group>
-			<Field.Field data-invalid={$errors.title ? true : undefined}>
-				<Field.Label for="map-title">Title</Field.Label>
-				<Input
-					id="map-title"
-					bind:value={$formData.title}
-					placeholder="e.g., Monday Deliveries"
-					disabled={$submitting}
-					aria-invalid={$errors.title ? true : undefined}
-					required
-				/>
-				{#if $errors.title}<Field.Error>{$errors.title[0]}</Field.Error>{/if}
-			</Field.Field>
+		<div class="space-y-3">
+			<Form.Field {form} name="title">
+				<Form.Control>
+					{#snippet children({ props })}
+						<Form.Label>Title</Form.Label>
+						<Input
+							{...props}
+							bind:value={$formData.title}
+							placeholder="e.g., Monday Deliveries"
+							disabled={$submitting}
+							required
+						/>
+					{/snippet}
+				</Form.Control>
+				<Form.FieldErrors />
+			</Form.Field>
 
-			<Field.Field data-invalid={$errors.description ? true : undefined}>
-				<Field.Label for="map-description">Description</Field.Label>
-				<Textarea
-					id="map-description"
-					bind:value={$formData.description}
-					placeholder="Optional description…"
-					disabled={$submitting}
-					rows={3}
-					class="resize-none"
-				/>
-				{#if $errors.description}<Field.Error
-						>{$errors.description[0]}</Field.Error
-					>{/if}
-			</Field.Field>
-		</Field.Group>
-	</Field.Set>
+			<Form.Field {form} name="description">
+				<Form.Control>
+					{#snippet children({ props })}
+						<Form.Label>Description</Form.Label>
+						<Textarea
+							{...props}
+							bind:value={$formData.description}
+							placeholder="Optional description…"
+							disabled={$submitting}
+							rows={3}
+							class="resize-none"
+						/>
+					{/snippet}
+				</Form.Control>
+				<Form.FieldErrors />
+			</Form.Field>
+		</div>
+	</div>
 
-	<Field.Field orientation="horizontal">
+	<div class="flex gap-2">
 		<Button
 			type="button"
 			variant="outline"
@@ -124,7 +131,7 @@
 		>
 			Cancel
 		</Button>
-		<Button type="submit" class="flex-1" disabled={$submitting}>
+		<Form.Button class="flex-1" disabled={$submitting}>
 			{#if $submitting}
 				<Loader2 class="h-4 w-4 animate-spin" />
 				{mode === 'create' ? 'Creating...' : 'Updating...'}
@@ -132,6 +139,6 @@
 				<Check class="h-4 w-4" />
 				{mode === 'create' ? 'Create Map' : 'Update Map'}
 			{/if}
-		</Button>
-	</Field.Field>
+		</Form.Button>
+	</div>
 </form>

@@ -7,68 +7,72 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import * as Dialog from '$lib/components/ui/dialog';
+	import * as Form from '$lib/components/ui/form';
 	import { Input } from '$lib/components/ui/input';
-	import { Label } from '$lib/components/ui/label';
+	import { createTestAccountSchema } from '$lib/schemas';
+	import { ServiceError } from '$lib/errors';
+	import { adminApi } from '$lib/services/api';
 	import * as Table from '$lib/components/ui/table';
 	import { formatDate } from '$lib/utils';
 	import { Plus } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
+	import { defaults, setMessage, superForm } from 'sveltekit-superforms';
+	import { zod4, zod4Client } from 'sveltekit-superforms/adapters';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 
 	// Create account dialog state
 	let dialogOpen = $state(false);
-	let email = $state('');
-	let name = $state('');
-	let organizationName = $state('');
-	let isCreating = $state(false);
 
 	function generateTestData() {
 		const id = Math.random().toString(36).substring(2, 8);
-		email = `test-${id}@example.com`;
-		name = `Test User ${id}`;
-		organizationName = `Test Org ${id}`;
+		return {
+			email: `test-${id}@example.com`,
+			name: `Test User ${id}`,
+			organizationName: `Test Org ${id}`
+		};
 	}
+
+	const accountForm = superForm(
+		defaults(generateTestData(), zod4(createTestAccountSchema)),
+		{
+			SPA: true,
+			validators: zod4Client(createTestAccountSchema),
+			onUpdate: async ({ form }) => {
+				if (!form.valid) return;
+
+				try {
+					const result = await adminApi.createTestAccount(form.data);
+					toast.success('Test account created');
+					dialogOpen = false;
+					await invalidate(INVALIDATION_KEYS.ADMIN);
+					goto(resolve(`/admin/organizations/${result.organization.id}`));
+				} catch (err) {
+					const message =
+						err instanceof ServiceError
+							? err.message
+							: 'Failed to create account';
+					setMessage(form, message);
+				}
+			}
+		}
+	);
+
+	const {
+		form: accountFormData,
+		message: accountMessage,
+		enhance: accountEnhance,
+		submitting: accountSubmitting
+	} = accountForm;
 
 	function handleDialogOpen(open: boolean) {
 		dialogOpen = open;
 		if (open) {
-			generateTestData();
-		}
-	}
-
-	async function handleCreateAccount(event: SubmitEvent) {
-		event.preventDefault();
-		isCreating = true;
-
-		try {
-			const response = await fetch('/api/admin/accounts', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					email,
-					name: name || undefined,
-					organizationName: organizationName || undefined
-				})
-			});
-
-			if (!response.ok) {
-				const error = await response.json();
-				throw new Error(error.message || 'Failed to create account');
-			}
-
-			const result = await response.json();
-			toast.success('Test account created');
-			dialogOpen = false;
-			await invalidate(INVALIDATION_KEYS.ADMIN);
-			goto(resolve(`/admin/organizations/${result.organization.id}`));
-		} catch (error) {
-			toast.error(
-				error instanceof Error ? error.message : 'Failed to create account'
-			);
-		} finally {
-			isCreating = false;
+			const testData = generateTestData();
+			$accountFormData.email = testData.email;
+			$accountFormData.name = testData.name;
+			$accountFormData.organizationName = testData.organizationName;
 		}
 	}
 
@@ -128,46 +132,71 @@
 						Create a new organization with admin user on Free tier.
 					</Dialog.Description>
 				</Dialog.Header>
-				<form onsubmit={handleCreateAccount} class="space-y-4">
-					<div class="space-y-2">
-						<Label for="email">Email *</Label>
-						<Input
-							id="email"
-							type="email"
-							placeholder="test@example.com"
-							bind:value={email}
-							required
-						/>
+				{#if $accountMessage}
+					<div
+						class="rounded-md bg-destructive/10 p-3 text-sm text-destructive"
+					>
+						{$accountMessage}
 					</div>
-					<div class="space-y-2">
-						<Label for="name">User Name</Label>
-						<Input
-							id="name"
-							type="text"
-							placeholder="Test User"
-							bind:value={name}
-						/>
-					</div>
-					<div class="space-y-2">
-						<Label for="organizationName">Organization Name</Label>
-						<Input
-							id="organizationName"
-							type="text"
-							placeholder="Test Organization"
-							bind:value={organizationName}
-						/>
-					</div>
+				{/if}
+				<form method="POST" use:accountEnhance class="space-y-4">
+					<Form.Field form={accountForm} name="email">
+						<Form.Control>
+							{#snippet children({ props })}
+								<Form.Label>Email *</Form.Label>
+								<Input
+									{...props}
+									type="email"
+									placeholder="test@example.com"
+									bind:value={$accountFormData.email}
+									disabled={$accountSubmitting}
+								/>
+							{/snippet}
+						</Form.Control>
+						<Form.FieldErrors />
+					</Form.Field>
+					<Form.Field form={accountForm} name="name">
+						<Form.Control>
+							{#snippet children({ props })}
+								<Form.Label>User Name</Form.Label>
+								<Input
+									{...props}
+									type="text"
+									placeholder="Test User"
+									bind:value={$accountFormData.name}
+									disabled={$accountSubmitting}
+								/>
+							{/snippet}
+						</Form.Control>
+						<Form.FieldErrors />
+					</Form.Field>
+					<Form.Field form={accountForm} name="organizationName">
+						<Form.Control>
+							{#snippet children({ props })}
+								<Form.Label>Organization Name</Form.Label>
+								<Input
+									{...props}
+									type="text"
+									placeholder="Test Organization"
+									bind:value={$accountFormData.organizationName}
+									disabled={$accountSubmitting}
+								/>
+							{/snippet}
+						</Form.Control>
+						<Form.FieldErrors />
+					</Form.Field>
 					<Dialog.Footer>
 						<Button
 							type="button"
 							variant="outline"
 							onclick={() => (dialogOpen = false)}
+							disabled={$accountSubmitting}
 						>
 							Cancel
 						</Button>
-						<Button type="submit" disabled={isCreating || !email}>
-							{isCreating ? 'Creating...' : 'Create Account'}
-						</Button>
+						<Form.Button disabled={$accountSubmitting}>
+							{$accountSubmitting ? 'Creating...' : 'Create Account'}
+						</Form.Button>
 					</Dialog.Footer>
 				</form>
 			</Dialog.Content>

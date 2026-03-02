@@ -2,7 +2,7 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import * as Sidebar from '$lib/components/ui/sidebar';
-	import { Building2, Coins, CreditCard, LayoutDashboard } from 'lucide-svelte';
+	import { Building2, CreditCard, LayoutDashboard } from 'lucide-svelte';
 	import type { Snippet } from 'svelte';
 	import type { LayoutData } from './$types';
 
@@ -11,8 +11,7 @@
 	const navItems = [
 		{ href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
 		{ href: '/admin/organizations', label: 'Organizations', icon: Building2 },
-		{ href: '/admin/subscriptions', label: 'Subscriptions', icon: CreditCard },
-		{ href: '/admin/credits', label: 'Credits', icon: Coins }
+		{ href: '/admin/subscriptions', label: 'Subscriptions', icon: CreditCard }
 	] as const;
 
 	let currentPath = $derived(page.url.pathname);
