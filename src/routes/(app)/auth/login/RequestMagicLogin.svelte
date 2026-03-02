@@ -11,6 +11,7 @@
 	import { Input } from '$lib/components/ui/input';
 	import * as InputOTP from '$lib/components/ui/input-otp';
 	import { Label } from '$lib/components/ui/label';
+	import { emailSchema } from '$lib/schemas/common';
 	import { untrack } from 'svelte';
 	import {
 		ArrowLeft,
@@ -67,9 +68,15 @@
 
 {#if !otpSent}
 	<form
-		method="post"
+		method="POST"
 		action="?/requestOTP"
-		use:enhance={() => {
+		use:enhance={({ cancel }) => {
+			const parsed = emailSchema.safeParse(email);
+			if (!parsed.success) {
+				errorMessage = parsed.error.issues[0].message;
+				cancel();
+				return;
+			}
 			isSubmitting = true;
 			errorMessage = null;
 			return async ({ result, update }) => {
@@ -175,7 +182,7 @@
 			>
 				Enter your 6-digit code
 			</Label>
-			<div class=" flex justify-center py-2">
+			<div class="flex justify-center py-2">
 				<InputOTP.Root
 					autofocus
 					maxlength={6}
