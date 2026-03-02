@@ -7,22 +7,60 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
+	import * as Form from '$lib/components/ui/form';
+	import { ServiceError } from '$lib/errors';
 	import { Input } from '$lib/components/ui/input';
-	import { Label } from '$lib/components/ui/label';
+	import { adjustCreditsSchema } from '$lib/schemas';
+	import { adminApi } from '$lib/services/api';
 	import * as Select from '$lib/components/ui/select';
 	import * as Table from '$lib/components/ui/table';
 	import { formatDate } from '$lib/utils';
 	import { LogIn, RefreshCw, Trash2 } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
+	import { defaults, setMessage, superForm } from 'sveltekit-superforms';
+	import { zod4, zod4Client } from 'sveltekit-superforms/adapters';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 
-	// Form state for credit adjustment
-	let creditAmount = $state('');
-	let creditType = $state<'adjustment' | 'refund'>('adjustment');
-	let creditDescription = $state('');
-	let isSubmittingCredits = $state(false);
+	// Credit adjustment superform
+	const creditForm = superForm(
+		defaults(
+			{ amount: 0, type: 'adjustment' as const, description: '' },
+			zod4(adjustCreditsSchema)
+		),
+		{
+			SPA: true,
+			validators: zod4Client(adjustCreditsSchema),
+			onUpdate: async ({ form }) => {
+				if (!form.valid) return;
+
+				try {
+					await adminApi.adjustCredits({
+						organizationId: data.organization.id,
+						...form.data
+					});
+
+					toast.success('Credits adjusted successfully');
+					creditForm.reset();
+					await invalidate(INVALIDATION_KEYS.ADMIN);
+				} catch (err) {
+					const message =
+						err instanceof ServiceError
+							? err.message
+							: 'Failed to adjust credits';
+					setMessage(form, message);
+				}
+			}
+		}
+	);
+
+	const {
+		form: creditFormData,
+		message: creditMessage,
+		enhance: creditEnhance,
+		submitting: creditSubmitting
+	} = creditForm;
 
 	// Sync state
 	let isSyncing = $state(false);
@@ -36,24 +74,13 @@
 	async function handleLoginAs(userId: string) {
 		impersonatingUserId = userId;
 		try {
-			const response = await fetch('/api/admin/impersonate/start', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ userId })
-			});
-
-			if (!response.ok) {
-				const error = await response.json();
-				throw new Error(
-					error.error || error.message || 'Failed to start impersonation'
-				);
-			}
-
-			const result = await response.json();
-			goto(resolve(result.redirectUrl || '/maps'));
+			await adminApi.startImpersonation(userId);
+			goto(resolve('/maps'));
 		} catch (error) {
 			toast.error(
-				error instanceof Error ? error.message : 'Failed to login as user'
+				error instanceof ServiceError
+					? error.message
+					: 'Failed to login as user'
 			);
 		} finally {
 			impersonatingUserId = null;
@@ -97,65 +124,17 @@
 	async function handleSyncFromStripe() {
 		isSyncing = true;
 		try {
-			const response = await fetch('/api/admin/subscriptions/sync', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ organizationId: data.organization.id })
-			});
-
-			if (!response.ok) {
-				const error = await response.json();
-				throw new Error(error.message || 'Failed to sync');
-			}
-
+			await adminApi.syncSubscription(data.organization.id);
 			toast.success('Subscription synced from Stripe');
 			await invalidate(INVALIDATION_KEYS.ADMIN);
 		} catch (error) {
 			toast.error(
-				error instanceof Error ? error.message : 'Failed to sync from Stripe'
+				error instanceof ServiceError
+					? error.message
+					: 'Failed to sync from Stripe'
 			);
 		} finally {
 			isSyncing = false;
-		}
-	}
-
-	async function handleAdjustCredits(event: SubmitEvent) {
-		event.preventDefault();
-		isSubmittingCredits = true;
-
-		try {
-			const amount = parseInt(creditAmount, 10);
-			if (isNaN(amount)) {
-				throw new Error('Invalid amount');
-			}
-
-			const response = await fetch('/api/admin/credits/adjust', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					organizationId: data.organization.id,
-					amount,
-					type: creditType,
-					description: creditDescription || undefined
-				})
-			});
-
-			if (!response.ok) {
-				const error = await response.json();
-				throw new Error(error.message || 'Failed to adjust credits');
-			}
-
-			toast.success('Credits adjusted successfully');
-			creditAmount = '';
-			creditDescription = '';
-			creditType = 'adjustment';
-			await invalidate(INVALIDATION_KEYS.ADMIN);
-		} catch (error) {
-			toast.error(
-				error instanceof Error ? error.message : 'Failed to adjust credits'
-			);
-		} finally {
-			isSubmittingCredits = false;
 		}
 	}
 
@@ -170,21 +149,14 @@
 	async function handleDeleteOrganization() {
 		isDeleting = true;
 		try {
-			const response = await fetch(
-				`/api/admin/organizations/${data.organization.id}`,
-				{ method: 'DELETE' }
-			);
-
-			if (!response.ok) {
-				const error = await response.json();
-				throw new Error(error.message || 'Failed to delete organization');
-			}
-
+			await adminApi.deleteOrganization(data.organization.id);
 			toast.success('Organization deleted');
 			goto(resolve('/admin/organizations'));
 		} catch (error) {
 			toast.error(
-				error instanceof Error ? error.message : 'Failed to delete organization'
+				error instanceof ServiceError
+					? error.message
+					: 'Failed to delete organization'
 			);
 		} finally {
 			isDeleting = false;
@@ -477,49 +449,75 @@
 			<Card.Description>Adjust credits for this organization</Card.Description>
 		</Card.Header>
 		<Card.Content>
-			<form onsubmit={handleAdjustCredits} class="space-y-4">
-				<div class="grid gap-4 sm:grid-cols-3">
-					<div class="space-y-2">
-						<Label for="credit-amount">Amount</Label>
-						<Input
-							id="credit-amount"
-							type="number"
-							placeholder="Enter amount…"
-							bind:value={creditAmount}
-							required
-						/>
-					</div>
-					<div class="space-y-2">
-						<Label for="credit-type">Type</Label>
-						<Select.Root
-							type="single"
-							value={creditType}
-							onValueChange={(value) => {
-								if (value) creditType = value as 'adjustment' | 'refund';
-							}}
-						>
-							<Select.Trigger id="credit-type" class="w-full">
-								{creditType === 'adjustment' ? 'Adjustment' : 'Refund'}
-							</Select.Trigger>
-							<Select.Content>
-								<Select.Item value="adjustment">Adjustment</Select.Item>
-								<Select.Item value="refund">Refund</Select.Item>
-							</Select.Content>
-						</Select.Root>
-					</div>
-					<div class="space-y-2">
-						<Label for="credit-description">Description</Label>
-						<Input
-							id="credit-description"
-							type="text"
-							placeholder="Optional description…"
-							bind:value={creditDescription}
-						/>
-					</div>
+			{#if $creditMessage}
+				<div
+					class="mb-4 rounded-md bg-destructive/10 p-3 text-sm text-destructive"
+				>
+					{$creditMessage}
 				</div>
-				<Button type="submit" disabled={isSubmittingCredits || !creditAmount}>
-					{isSubmittingCredits ? 'Adjusting...' : 'Adjust Credits'}
-				</Button>
+			{/if}
+			<form method="POST" use:creditEnhance class="space-y-4">
+				<div class="grid gap-4 sm:grid-cols-3">
+					<Form.Field form={creditForm} name="amount">
+						<Form.Control>
+							{#snippet children({ props })}
+								<Form.Label>Amount</Form.Label>
+								<Input
+									{...props}
+									type="number"
+									placeholder="Enter amount…"
+									bind:value={$creditFormData.amount}
+									disabled={$creditSubmitting}
+								/>
+							{/snippet}
+						</Form.Control>
+						<Form.FieldErrors />
+					</Form.Field>
+					<Form.Field form={creditForm} name="type">
+						<Form.Control>
+							{#snippet children({ props })}
+								<Form.Label>Type</Form.Label>
+								<Select.Root
+									type="single"
+									value={$creditFormData.type}
+									onValueChange={(value) => {
+										if (value)
+											$creditFormData.type = value as 'adjustment' | 'refund';
+									}}
+								>
+									<Select.Trigger {...props} class="w-full">
+										{$creditFormData.type === 'adjustment'
+											? 'Adjustment'
+											: 'Refund'}
+									</Select.Trigger>
+									<Select.Content>
+										<Select.Item value="adjustment">Adjustment</Select.Item>
+										<Select.Item value="refund">Refund</Select.Item>
+									</Select.Content>
+								</Select.Root>
+							{/snippet}
+						</Form.Control>
+						<Form.FieldErrors />
+					</Form.Field>
+					<Form.Field form={creditForm} name="description">
+						<Form.Control>
+							{#snippet children({ props })}
+								<Form.Label>Description</Form.Label>
+								<Input
+									{...props}
+									type="text"
+									placeholder="Reason for adjustment…"
+									bind:value={$creditFormData.description}
+									disabled={$creditSubmitting}
+								/>
+							{/snippet}
+						</Form.Control>
+						<Form.FieldErrors />
+					</Form.Field>
+				</div>
+				<Form.Button disabled={$creditSubmitting}>
+					{$creditSubmitting ? 'Adjusting...' : 'Adjust Credits'}
+				</Form.Button>
 			</form>
 		</Card.Content>
 	</Card.Root>

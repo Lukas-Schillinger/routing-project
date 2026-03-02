@@ -1,9 +1,11 @@
 <script lang="ts">
 	import { goto, invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import { ServiceError } from '$lib/errors';
 	import favicon from '$lib/assets/favicon.svg';
 	import Footer from '$lib/components/Footer.svelte';
 	import Header from '$lib/components/Header.svelte';
+	import { adminApi } from '$lib/services/api';
 	import type { Snippet } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import type { LayoutData } from './$types';
@@ -15,21 +17,14 @@
 	async function handleReturnToAdmin() {
 		isReturning = true;
 		try {
-			const response = await fetch('/api/admin/impersonate/stop', {
-				method: 'POST'
-			});
-
-			if (!response.ok) {
-				const error = await response.json();
-				throw new Error(error.error || 'Failed to return to admin');
-			}
-
-			const result = await response.json();
+			await adminApi.stopImpersonation();
 			await invalidateAll();
-			goto(resolve(result.redirectUrl || '/admin/organizations'));
+			goto(resolve('/admin/organizations'));
 		} catch (error) {
 			toast.error(
-				error instanceof Error ? error.message : 'Failed to return to admin'
+				error instanceof ServiceError
+					? error.message
+					: 'Failed to return to admin'
 			);
 		} finally {
 			isReturning = false;

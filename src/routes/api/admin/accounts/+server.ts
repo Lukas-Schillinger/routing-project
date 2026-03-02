@@ -1,28 +1,18 @@
 import { handleApiError } from '$lib/errors';
-import { adminService } from '$lib/services/server/admin.service';
+import { createTestAccountSchema } from '$lib/schemas';
 import { requireAdminApi } from '$lib/services/server/admin';
+import { adminService } from '$lib/services/server/admin.service';
 import { json } from '@sveltejs/kit';
-import { z } from 'zod';
 import type { RequestHandler } from './$types';
-
-const createAccountSchema = z.object({
-	email: z.string().email(),
-	name: z.string().max(200).optional(),
-	organizationName: z.string().max(200).optional()
-});
 
 export const POST: RequestHandler = async ({ request }) => {
 	requireAdminApi();
 
 	try {
 		const body = await request.json();
-		const data = createAccountSchema.parse(body);
+		const data = createTestAccountSchema.parse(body);
 
-		const result = await adminService.createTestAccount({
-			email: data.email,
-			name: data.name,
-			organizationName: data.organizationName
-		});
+		const result = await adminService.createTestAccount(data);
 
 		return json({
 			success: true,

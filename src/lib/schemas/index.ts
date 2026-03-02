@@ -1,4 +1,5 @@
 // Re-export all schemas for easy importing
+export * from './admin.js';
 export * from './auth.js';
 export * from './common.js';
 export * from './depot.js';
