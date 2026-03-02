@@ -275,7 +275,8 @@ export function createMockRenderClient() {
 		renderConfirmEmail: vi.fn().mockImplementation(mockRender),
 		renderMagicInvite: vi.fn().mockImplementation(mockRender),
 		renderRouteShare: vi.fn().mockImplementation(mockRender),
-		renderPasswordReset: vi.fn().mockImplementation(mockRender)
+		renderPasswordReset: vi.fn().mockImplementation(mockRender),
+		renderBillingNotification: vi.fn().mockImplementation(mockRender)
 	};
 }
 

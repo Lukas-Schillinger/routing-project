@@ -19,7 +19,10 @@ import {
 export function getOrgPlan(org: {
 	subscription_status: SubscriptionStatus | null;
 }): 'free' | 'pro' {
-	return org.subscription_status === 'active' ? 'pro' : 'free';
+	return org.subscription_status === 'active' ||
+		org.subscription_status === 'past_due'
+		? 'pro'
+		: 'free';
 }
 
 const id = uuid('id').defaultRandom().primaryKey();
@@ -37,7 +40,6 @@ export type SubscriptionStatus =
 	| 'incomplete_expired'
 	| 'past_due'
 	| 'paused'
-	| 'trialing'
 	| 'unpaid';
 
 export type CreditTransactionType =
@@ -560,7 +562,14 @@ export const mailRecords = pgTable(
 
 		resend_id: varchar('resend_id', { length: 64 }).notNull().unique(),
 		type: varchar('type', { length: 32 })
-			.$type<'invitation' | 'login_token' | 'route_share' | 'password_reset'>()
+			.$type<
+				| 'invitation'
+				| 'login_token'
+				| 'route_share'
+				| 'password_reset'
+				| 'payment_failed'
+				| 'payment_action_required'
+			>()
 			.notNull(),
 		to_email: text('to_email').notNull(),
 		from_email: text('from_email').notNull(),

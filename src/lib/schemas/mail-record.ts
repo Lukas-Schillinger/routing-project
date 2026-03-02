@@ -6,7 +6,9 @@ export const mailRecordTypeEnum = z.enum([
 	'invitation',
 	'login_token',
 	'route_share',
-	'password_reset'
+	'password_reset',
+	'payment_failed',
+	'payment_action_required'
 ]);
 export type MailRecordType = z.infer<typeof mailRecordTypeEnum>;
 

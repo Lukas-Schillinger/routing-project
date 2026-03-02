@@ -204,6 +204,44 @@ export class MailService {
 		await loginTokenService.setMailRecordId(loginToken.id, mailRecordId);
 	}
 
+	async sendBillingNotificationEmails(
+		organizationId: string,
+		adminEmails: string[],
+		type: 'payment_failed' | 'payment_action_required',
+		context: { hostedInvoiceUrl?: string | null }
+	): Promise<void> {
+		const { html, text } = await this.renderer.renderBillingNotification({
+			type,
+			hosted_invoice_url: context.hostedInvoiceUrl ?? undefined
+		});
+		const subject =
+			type === 'payment_failed'
+				? 'Action required: payment failed'
+				: 'Action required: payment needs authentication';
+
+		const results = await Promise.allSettled(
+			adminEmails.map((email) =>
+				this.sendEmail({
+					organizationId,
+					type,
+					to: email,
+					subject,
+					html,
+					text
+				})
+			)
+		);
+
+		for (const result of results) {
+			if (result.status === 'rejected') {
+				log.error(
+					{ err: result.reason, type, organizationId },
+					'Failed to send billing notification to one admin'
+				);
+			}
+		}
+	}
+
 	async sendRouteShareEmail(
 		share: RouteShare,
 		recipientEmail: string,

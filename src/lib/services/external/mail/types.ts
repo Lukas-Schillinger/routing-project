@@ -61,6 +61,19 @@ type ConfirmEmailRequest = {
 };
 
 // ============================================================================
+// Billing Notification
+// ============================================================================
+export type BillingNotificationData = {
+	type: 'payment_failed' | 'payment_action_required';
+	hosted_invoice_url?: string;
+};
+
+type BillingNotificationRequest = {
+	template_id: 'billing_notification';
+	props: BillingNotificationData;
+};
+
+// ============================================================================
 // Render Request Types
 // ============================================================================
 export type RenderRequest =
@@ -68,7 +81,8 @@ export type RenderRequest =
 	| MagicInviteRequest
 	| RouteShareRequest
 	| ConfirmEmailRequest
-	| PasswordResetRequest;
+	| PasswordResetRequest
+	| BillingNotificationRequest;
 
 // ============================================================================
 // Render Response Types

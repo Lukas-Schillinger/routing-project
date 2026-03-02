@@ -4,7 +4,9 @@ import { env } from '$env/dynamic/private';
 import { handleWebhookError } from '$lib/errors';
 import { stripeClient } from '$lib/services/external/stripe/client';
 import { billingService } from '$lib/services/server/billing.service';
+import { mailService } from '$lib/services/server/mail.service';
 import { subscriptionService } from '$lib/services/server/subscription.service';
+import { userService } from '$lib/services/server/user.service';
 import * as Sentry from '@sentry/sveltekit';
 import { json } from '@sveltejs/kit';
 import type Stripe from 'stripe';
@@ -105,6 +107,56 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 						'Subscription deleted - org reverted to Free'
 					);
 				}
+				break;
+			}
+
+			case 'invoice.payment_failed':
+			case 'invoice.payment_action_required': {
+				const invoice = event.data.object as Stripe.Invoice;
+				const organizationId =
+					invoice.parent?.subscription_details?.metadata?.organization_id;
+				if (!organizationId) {
+					log.info(
+						{ invoiceId: invoice.id },
+						'Skipping invoice event - missing organization_id in subscription metadata'
+					);
+					break;
+				}
+
+				const users = await userService.getPublicUsers(organizationId);
+				const adminEmails = users
+					.filter((u) => u.role === 'admin')
+					.map((u) => u.email);
+
+				if (adminEmails.length === 0) {
+					log.warn(
+						{ organizationId, invoiceId: invoice.id },
+						'No admin users found to notify about billing issue'
+					);
+					break;
+				}
+
+				const notificationType =
+					event.type === 'invoice.payment_failed'
+						? 'payment_failed'
+						: 'payment_action_required';
+
+				await mailService.sendBillingNotificationEmails(
+					organizationId,
+					adminEmails,
+					notificationType,
+					{ hostedInvoiceUrl: invoice.hosted_invoice_url }
+				);
+
+				log.info(
+					{
+						organizationId,
+						invoiceId: invoice.id,
+						eventType: event.type,
+						adminCount: adminEmails.length
+					},
+					'Billing notification sent to admins'
+				);
 				break;
 			}
 

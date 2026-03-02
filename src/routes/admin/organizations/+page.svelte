@@ -82,7 +82,7 @@
 	function getStatusBadgeVariant(
 		status: string
 	): 'default' | 'secondary' | 'destructive' | 'outline' {
-		const activeStatuses = ['active', 'trialing'];
+		const activeStatuses = ['active'];
 		const warningStatuses = ['past_due', 'unpaid'];
 		const inactiveStatuses = [
 			'canceled',

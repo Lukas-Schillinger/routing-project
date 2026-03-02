@@ -116,6 +116,7 @@ export {
 	createCheckoutCompletedEvent,
 	createInvoicePaidEvent,
 	createInvoicePaymentFailedEvent,
+	createInvoicePaymentActionRequiredEvent,
 	createSubscriptionCreatedEvent,
 	createSubscriptionUpdatedEvent,
 	createSubscriptionDeletedEvent

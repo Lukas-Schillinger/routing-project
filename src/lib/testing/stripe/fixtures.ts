@@ -75,10 +75,13 @@ type MockStripeInvoiceOptions = {
 	id?: string;
 	customerId?: string;
 	subscriptionId?: string;
+	organizationId?: string;
 	status?: Stripe.Invoice.Status;
 	amountDue?: number;
 	amountPaid?: number;
 	billingReason?: Stripe.Invoice.BillingReason;
+	hostedInvoiceUrl?: string;
+	customerEmail?: string;
 };
 
 /**
@@ -91,10 +94,13 @@ export function createMockStripeInvoice(
 		id: `in_mock_${Date.now()}`,
 		customerId: `cus_mock_${Date.now()}`,
 		subscriptionId: `sub_mock_${Date.now()}`,
+		organizationId: randomUUID(),
 		status: 'paid' as const,
 		amountDue: 4900,
 		amountPaid: 4900,
-		billingReason: 'subscription_cycle' as const
+		billingReason: 'subscription_cycle' as const,
+		hostedInvoiceUrl: 'https://invoice.stripe.com/i/mock',
+		customerEmail: 'customer@example.com'
 	};
 	const config = { ...defaults, ...options };
 
@@ -102,14 +108,17 @@ export function createMockStripeInvoice(
 		id: config.id,
 		object: 'invoice',
 		customer: config.customerId,
+		customer_email: config.customerEmail,
 		status: config.status,
 		amount_due: config.amountDue,
 		amount_paid: config.amountPaid,
 		currency: 'usd',
 		billing_reason: config.billingReason,
+		hosted_invoice_url: config.hostedInvoiceUrl,
 		parent: {
 			subscription_details: {
-				subscription: config.subscriptionId
+				subscription: config.subscriptionId,
+				metadata: { organization_id: config.organizationId }
 			}
 		}
 	} as unknown as Stripe.Invoice;
@@ -192,6 +201,20 @@ export function createInvoicePaymentFailedEvent(
 		id: `evt_mock_${Date.now()}`,
 		object: 'event',
 		type: 'invoice.payment_failed',
+		data: { object: invoice }
+	} as Stripe.Event;
+}
+
+/**
+ * Create a mock invoice.payment_action_required event.
+ */
+export function createInvoicePaymentActionRequiredEvent(
+	invoice: Stripe.Invoice
+): Stripe.Event {
+	return {
+		id: `evt_mock_${Date.now()}`,
+		object: 'event',
+		type: 'invoice.payment_action_required',
 		data: { object: invoice }
 	} as Stripe.Event;
 }
