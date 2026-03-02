@@ -14,10 +14,12 @@ import {
 	createLocation,
 	createMap,
 	createMatrix,
+	createMockStripeInvoice,
 	createMockStripeSubscription,
 	createOptimizationJob,
 	createOrganization,
 	createTestEnvironment,
+	createUser,
 	mockStripeClient,
 	mockStripeState,
 	withTestTransaction
@@ -33,6 +35,7 @@ vi.mock('$lib/services/external/stripe/client', () => ({
 // Import the services after mocking
 import { billingService } from '$lib/services/server/billing.service';
 import { subscriptionService } from '$lib/services/server/subscription.service';
+import { userService } from '$lib/services/server/user.service';
 
 beforeEach(() => {
 	mockStripeState.clear();
@@ -312,6 +315,54 @@ describe('Stripe Webhook - Credit Balance Verification', () => {
 			// Credits should immediately reflect Pro plan allowance
 			const balance = await billingService.getAvailableCredits(organization.id);
 			expect(balance).toBe(billingConfig.proMonthlyCredits);
+		});
+	});
+});
+
+describe('Stripe Webhook - Invoice Events', () => {
+	describe('invoice.payment_failed / invoice.payment_action_required', () => {
+		it('finds admin users for an organization to notify', async () => {
+			await withTestTransaction(async () => {
+				const { organization } = await createTestEnvironment();
+
+				// Create additional admin and non-admin users
+				await createUser({
+					organization_id: organization.id,
+					role: 'admin',
+					email: 'admin2@example.com'
+				});
+				await createUser({
+					organization_id: organization.id,
+					role: 'member',
+					email: 'member@example.com'
+				});
+
+				const users = await userService.getPublicUsers(organization.id);
+				const adminEmails = users
+					.filter((u) => u.role === 'admin')
+					.map((u) => u.email);
+
+				// Should include original admin from createTestEnvironment + admin2
+				expect(adminEmails).toHaveLength(2);
+				expect(adminEmails).toContain('admin2@example.com');
+				expect(adminEmails).not.toContain('member@example.com');
+			});
+		});
+
+		it('extracts organization_id from invoice subscription metadata', () => {
+			const orgId = 'test-org-id';
+			const invoice = createMockStripeInvoice({ organizationId: orgId });
+
+			// Verify the fixture structure matches what the webhook handler expects
+			const metadata = (
+				invoice as unknown as {
+					parent?: {
+						subscription_details?: { metadata?: Record<string, string> };
+					};
+				}
+			).parent?.subscription_details?.metadata;
+
+			expect(metadata?.organization_id).toBe(orgId);
 		});
 	});
 });

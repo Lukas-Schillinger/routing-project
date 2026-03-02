@@ -417,6 +417,130 @@ describe('MailService', () => {
 	});
 
 	// ============================================================================
+	// sendBillingNotificationEmails
+	// ============================================================================
+	describe('sendBillingNotificationEmails()', () => {
+		const orgId = 'org-1';
+		const adminEmails = ['admin1@example.com', 'admin2@example.com'];
+
+		it('sends with correct subject for payment_failed type', async () => {
+			await service.sendBillingNotificationEmails(
+				orgId,
+				adminEmails,
+				'payment_failed',
+				{
+					hostedInvoiceUrl: 'https://invoice.stripe.com/i/test'
+				}
+			);
+
+			expect(mockResend.emails.send).toHaveBeenCalledTimes(2);
+			expect(mockResend.emails.send).toHaveBeenCalledWith(
+				expect.objectContaining({
+					to: 'admin1@example.com',
+					subject: 'Action required: payment failed'
+				})
+			);
+		});
+
+		it('sends with correct subject for payment_action_required type', async () => {
+			await service.sendBillingNotificationEmails(
+				orgId,
+				adminEmails,
+				'payment_action_required',
+				{ hostedInvoiceUrl: 'https://invoice.stripe.com/i/test' }
+			);
+
+			expect(mockResend.emails.send).toHaveBeenCalledWith(
+				expect.objectContaining({
+					subject: 'Action required: payment needs authentication'
+				})
+			);
+		});
+
+		it('sends to multiple admin emails independently', async () => {
+			await service.sendBillingNotificationEmails(
+				orgId,
+				adminEmails,
+				'payment_failed',
+				{
+					hostedInvoiceUrl: null
+				}
+			);
+
+			expect(mockResend.emails.send).toHaveBeenCalledTimes(2);
+			const calls = mockResend.emails.send.mock.calls;
+			expect(calls[0][0].to).toBe('admin1@example.com');
+			expect(calls[1][0].to).toBe('admin2@example.com');
+		});
+
+		it('creates mail record with correct type', async () => {
+			await service.sendBillingNotificationEmails(
+				orgId,
+				['admin@example.com'],
+				'payment_failed',
+				{ hostedInvoiceUrl: null }
+			);
+
+			expect(mockMailRecordService.createMailRecord).toHaveBeenCalledWith(
+				expect.objectContaining({
+					organization_id: orgId,
+					type: 'payment_failed',
+					to_email: 'admin@example.com'
+				})
+			);
+		});
+
+		it('continues sending to other admins if one send fails', async () => {
+			mockResend.emails.send
+				.mockResolvedValueOnce({
+					data: null,
+					error: { message: 'Rate limited' }
+				})
+				.mockResolvedValueOnce({ data: { id: 'resend-2' }, error: null });
+
+			// Should not throw even though first email fails
+			await service.sendBillingNotificationEmails(
+				orgId,
+				adminEmails,
+				'payment_failed',
+				{
+					hostedInvoiceUrl: null
+				}
+			);
+
+			expect(mockResend.emails.send).toHaveBeenCalledTimes(2);
+		});
+
+		it('renders billing notification template with correct data', async () => {
+			await service.sendBillingNotificationEmails(
+				orgId,
+				['admin@example.com'],
+				'payment_failed',
+				{ hostedInvoiceUrl: 'https://invoice.stripe.com/i/test123' }
+			);
+
+			expect(mockRenderer.renderBillingNotification).toHaveBeenCalledWith({
+				type: 'payment_failed',
+				hosted_invoice_url: 'https://invoice.stripe.com/i/test123'
+			});
+		});
+
+		it('omits hosted_invoice_url from render data when null', async () => {
+			await service.sendBillingNotificationEmails(
+				orgId,
+				['admin@example.com'],
+				'payment_action_required',
+				{ hostedInvoiceUrl: null }
+			);
+
+			expect(mockRenderer.renderBillingNotification).toHaveBeenCalledWith({
+				type: 'payment_action_required',
+				hosted_invoice_url: undefined
+			});
+		});
+	});
+
+	// ============================================================================
 	// Error handling
 	// ============================================================================
 	describe('error handling', () => {

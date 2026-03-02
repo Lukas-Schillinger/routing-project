@@ -1,5 +1,6 @@
 import { env } from '$env/dynamic/private';
 import type {
+	BillingNotificationData,
 	MagicInviteData,
 	MagicLinkData,
 	PasswordResetData,
@@ -10,6 +11,7 @@ import type {
 } from './types';
 
 export type {
+	BillingNotificationData,
 	MagicInviteData,
 	MagicLinkData,
 	PasswordResetData,
@@ -114,6 +116,15 @@ export class RenderClient {
 	async renderPasswordReset(data: PasswordResetData): Promise<RenderedEmail> {
 		return this.post({
 			template_id: 'password_reset',
+			props: data
+		});
+	}
+
+	async renderBillingNotification(
+		data: BillingNotificationData
+	): Promise<RenderedEmail> {
+		return this.post({
+			template_id: 'billing_notification',
 			props: data
 		});
 	}

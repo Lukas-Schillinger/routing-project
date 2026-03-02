@@ -30,7 +30,6 @@ export const organizationSchema = z.object({
 			'incomplete_expired',
 			'past_due',
 			'paused',
-			'trialing',
 			'unpaid'
 		])
 		.nullable(),
