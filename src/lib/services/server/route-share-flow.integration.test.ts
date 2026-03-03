@@ -290,7 +290,7 @@ describe('Route Share Flow Tests', () => {
 
 				await routeShareService.revokeShare(share.id, organization.id);
 
-				const revokedShare = await routeShareService.getShare(
+				const revokedShare = await routeShareService.getShareById(
 					share.id,
 					organization.id
 				);
@@ -396,7 +396,7 @@ describe('Route Share Flow Tests', () => {
 				);
 
 				// Old share should be revoked
-				const oldShare = await routeShareService.getShare(
+				const oldShare = await routeShareService.getShareById(
 					initialShare.id,
 					organization.id
 				);

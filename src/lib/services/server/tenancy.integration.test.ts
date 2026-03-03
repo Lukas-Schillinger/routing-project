@@ -132,13 +132,13 @@ describe('Multi-Tenancy Isolation Tests', () => {
 			});
 		});
 
-		it('org A cannot read org B locations - throws FORBIDDEN', async () => {
+		it('org A cannot read org B locations - throws NOT_FOUND', async () => {
 			await withTestTransaction(async () => {
 				const { org1, location2 } = await createTwoTenants();
 
 				await expect(
 					locationService.getLocationById(location2.id, org1.id)
-				).rejects.toMatchObject({ code: 'FORBIDDEN' });
+				).rejects.toMatchObject({ code: 'NOT_FOUND' });
 			});
 		});
 
@@ -167,17 +167,7 @@ describe('Multi-Tenancy Isolation Tests', () => {
 
 				await expect(
 					locationService.deleteLocation(location2.id, org1.id)
-				).rejects.toMatchObject({ code: 'FORBIDDEN' });
-			});
-		});
-
-		it('verifyLocationOwnership blocks cross-tenant access', async () => {
-			await withTestTransaction(async () => {
-				const { org1, location2 } = await createTwoTenants();
-
-				await expect(
-					locationService.verifyLocationOwnership(location2.id, org1.id)
-				).rejects.toMatchObject({ code: 'FORBIDDEN' });
+				).rejects.toMatchObject({ code: 'NOT_FOUND' });
 			});
 		});
 	});
@@ -195,13 +185,13 @@ describe('Multi-Tenancy Isolation Tests', () => {
 			});
 		});
 
-		it('org A cannot read org B depots - throws FORBIDDEN', async () => {
+		it('org A cannot read org B depots - throws NOT_FOUND', async () => {
 			await withTestTransaction(async () => {
 				const { org1, depot2 } = await createTwoTenants();
 
 				await expect(
 					depotService.getDepotById(depot2.id, org1.id)
-				).rejects.toMatchObject({ code: 'FORBIDDEN' });
+				).rejects.toMatchObject({ code: 'NOT_FOUND' });
 			});
 		});
 
@@ -235,7 +225,7 @@ describe('Multi-Tenancy Isolation Tests', () => {
 						org1.id,
 						user1.id
 					)
-				).rejects.toMatchObject({ code: 'FORBIDDEN' });
+				).rejects.toMatchObject({ code: 'NOT_FOUND' });
 			});
 		});
 
@@ -245,7 +235,7 @@ describe('Multi-Tenancy Isolation Tests', () => {
 
 				await expect(
 					depotService.deleteDepot(depot2.id, org1.id)
-				).rejects.toMatchObject({ code: 'FORBIDDEN' });
+				).rejects.toMatchObject({ code: 'NOT_FOUND' });
 			});
 		});
 
@@ -263,7 +253,7 @@ describe('Multi-Tenancy Isolation Tests', () => {
 						org1.id,
 						user1.id
 					)
-				).rejects.toMatchObject({ code: 'FORBIDDEN' });
+				).rejects.toMatchObject({ code: 'NOT_FOUND' });
 			});
 		});
 	});
@@ -281,13 +271,13 @@ describe('Multi-Tenancy Isolation Tests', () => {
 			});
 		});
 
-		it('org A cannot read org B stops - throws FORBIDDEN', async () => {
+		it('org A cannot read org B stops - throws NOT_FOUND', async () => {
 			await withTestTransaction(async () => {
 				const { org1, stop2 } = await createTwoTenants();
 
 				await expect(
 					stopService.getStopById(stop2.id, org1.id)
-				).rejects.toMatchObject({ code: 'FORBIDDEN' });
+				).rejects.toMatchObject({ code: 'NOT_FOUND' });
 			});
 		});
 
@@ -321,7 +311,7 @@ describe('Multi-Tenancy Isolation Tests', () => {
 						org1.id,
 						user1.id
 					)
-				).rejects.toMatchObject({ code: 'FORBIDDEN' });
+				).rejects.toMatchObject({ code: 'NOT_FOUND' });
 			});
 		});
 
@@ -331,7 +321,7 @@ describe('Multi-Tenancy Isolation Tests', () => {
 
 				await expect(
 					stopService.deleteStop(stop2.id, org1.id)
-				).rejects.toMatchObject({ code: 'FORBIDDEN' });
+				).rejects.toMatchObject({ code: 'NOT_FOUND' });
 			});
 		});
 
@@ -369,7 +359,7 @@ describe('Multi-Tenancy Isolation Tests', () => {
 						org1.id,
 						user1.id
 					)
-				).rejects.toMatchObject({ code: 'FORBIDDEN' });
+				).rejects.toMatchObject({ code: 'NOT_FOUND' });
 			});
 		});
 	});
@@ -387,13 +377,13 @@ describe('Multi-Tenancy Isolation Tests', () => {
 			});
 		});
 
-		it('org A cannot read org B maps - throws FORBIDDEN', async () => {
+		it('org A cannot read org B maps - throws NOT_FOUND', async () => {
 			await withTestTransaction(async () => {
 				const { org1, map2 } = await createTwoTenants();
 
 				await expect(
 					mapService.getMapById(map2.id, org1.id)
-				).rejects.toMatchObject({ code: 'FORBIDDEN' });
+				).rejects.toMatchObject({ code: 'NOT_FOUND' });
 			});
 		});
 
@@ -448,7 +438,7 @@ describe('Multi-Tenancy Isolation Tests', () => {
 
 				await expect(
 					mapService.addDriverToMap(driver1.id, map2.id, org1.id)
-				).rejects.toMatchObject({ code: 'FORBIDDEN' });
+				).rejects.toMatchObject({ code: 'NOT_FOUND' });
 			});
 		});
 	});
@@ -466,13 +456,13 @@ describe('Multi-Tenancy Isolation Tests', () => {
 			});
 		});
 
-		it('org A cannot read org B routes - throws FORBIDDEN', async () => {
+		it('org A cannot read org B routes - throws NOT_FOUND', async () => {
 			await withTestTransaction(async () => {
 				const { org1, route2 } = await createTwoTenants();
 
 				await expect(
 					routeService.getRouteById(route2.id, org1.id)
-				).rejects.toMatchObject({ code: 'FORBIDDEN' });
+				).rejects.toMatchObject({ code: 'NOT_FOUND' });
 			});
 		});
 
@@ -494,16 +484,6 @@ describe('Multi-Tenancy Isolation Tests', () => {
 				expect(routesOrg2.length).toBeGreaterThanOrEqual(1);
 			});
 		});
-
-		it('verifyRouteOwnership blocks cross-tenant access', async () => {
-			await withTestTransaction(async () => {
-				const { org1, route2 } = await createTwoTenants();
-
-				await expect(
-					routeService.verifyRouteOwnership(route2.id, org1.id)
-				).rejects.toMatchObject({ code: 'FORBIDDEN' });
-			});
-		});
 	});
 
 	// ============================================================================
@@ -514,7 +494,7 @@ describe('Multi-Tenancy Isolation Tests', () => {
 			await withTestTransaction(async () => {
 				const { org1, share1 } = await createTwoTenants();
 
-				const share = await routeShareService.getShare(share1.id, org1.id);
+				const share = await routeShareService.getShareById(share1.id, org1.id);
 				expect(share.id).toBe(share1.id);
 			});
 		});
@@ -524,7 +504,7 @@ describe('Multi-Tenancy Isolation Tests', () => {
 				const { org1, share2 } = await createTwoTenants();
 
 				await expect(
-					routeShareService.getShare(share2.id, org1.id)
+					routeShareService.getShareById(share2.id, org1.id)
 				).rejects.toMatchObject({ code: 'NOT_FOUND' });
 			});
 		});
@@ -555,7 +535,7 @@ describe('Multi-Tenancy Isolation Tests', () => {
 
 				await expect(
 					routeShareService.getSharesForRoute(route2.id, org1.id)
-				).rejects.toMatchObject({ code: 'FORBIDDEN' });
+				).rejects.toMatchObject({ code: 'NOT_FOUND' });
 			});
 		});
 	});
@@ -570,7 +550,7 @@ describe('Multi-Tenancy Isolation Tests', () => {
 
 				await expect(
 					mapService.getDriversForMap(map2.id, org1.id)
-				).rejects.toMatchObject({ code: 'FORBIDDEN' });
+				).rejects.toMatchObject({ code: 'NOT_FOUND' });
 			});
 		});
 
@@ -598,13 +578,13 @@ describe('Multi-Tenancy Isolation Tests', () => {
 			});
 		});
 
-		it('org A cannot read org B drivers - throws FORBIDDEN', async () => {
+		it('org A cannot read org B drivers - throws NOT_FOUND', async () => {
 			await withTestTransaction(async () => {
 				const { org1, driver2 } = await createTwoTenants();
 
 				await expect(
 					driverService.getDriverById(driver2.id, org1.id)
-				).rejects.toMatchObject({ code: 'FORBIDDEN' });
+				).rejects.toMatchObject({ code: 'NOT_FOUND' });
 			});
 		});
 
@@ -638,7 +618,7 @@ describe('Multi-Tenancy Isolation Tests', () => {
 						org1.id,
 						user1.id
 					)
-				).rejects.toMatchObject({ code: 'FORBIDDEN' });
+				).rejects.toMatchObject({ code: 'NOT_FOUND' });
 			});
 		});
 
@@ -648,7 +628,7 @@ describe('Multi-Tenancy Isolation Tests', () => {
 
 				await expect(
 					driverService.deleteDriver(driver2.id, org1.id)
-				).rejects.toMatchObject({ code: 'FORBIDDEN' });
+				).rejects.toMatchObject({ code: 'NOT_FOUND' });
 			});
 		});
 	});
@@ -661,7 +641,7 @@ describe('Multi-Tenancy Isolation Tests', () => {
 			await withTestTransaction(async () => {
 				const { org1, user1 } = await createTwoTenants();
 
-				const user = await userService.getUser(user1.id, org1.id);
+				const user = await userService.getUserById(user1.id, org1.id);
 				expect(user.id).toBe(user1.id);
 			});
 		});
@@ -674,7 +654,7 @@ describe('Multi-Tenancy Isolation Tests', () => {
 					const { org1, user2 } = await createTwoTenants();
 
 					await expect(
-						userService.getUser(user2.id, org1.id)
+						userService.getUserById(user2.id, org1.id)
 					).rejects.toMatchObject({ code: 'NOT_FOUND' });
 				});
 			}
@@ -731,7 +711,7 @@ describe('Multi-Tenancy Isolation Tests', () => {
 			await withTestTransaction(async () => {
 				const { org1, invitation1 } = await createTwoTenants();
 
-				const invitation = await invitationService.getInvitation(
+				const invitation = await invitationService.getInvitationById(
 					invitation1.id,
 					org1.id
 				);
@@ -747,7 +727,7 @@ describe('Multi-Tenancy Isolation Tests', () => {
 					const { org1, invitation2 } = await createTwoTenants();
 
 					await expect(
-						invitationService.getInvitation(invitation2.id, org1.id)
+						invitationService.getInvitationById(invitation2.id, org1.id)
 					).rejects.toMatchObject({ code: 'NOT_FOUND' });
 				});
 			}

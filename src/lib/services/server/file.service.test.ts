@@ -160,7 +160,10 @@ describe('FileService', () => {
 				).rejects.toMatchObject({ code: 'NOT_FOUND' });
 
 				// File still exists for original owner
-				const result = await fileService.getFileById(uploaded.id, user1);
+				const result = await fileService.getFileById(
+					uploaded.id,
+					user1.organization_id!
+				);
 				expect(result.id).toBe(uploaded.id);
 			});
 		});
@@ -228,7 +231,10 @@ describe('FileService', () => {
 					user
 				);
 
-				const result = await fileService.getFileById(uploaded.id, user);
+				const result = await fileService.getFileById(
+					uploaded.id,
+					user.organization_id!
+				);
 
 				expect(result.id).toBe(uploaded.id);
 				expect(result.original_filename).toBe('lookup.pdf');
@@ -240,7 +246,7 @@ describe('FileService', () => {
 		it('throws NOT_FOUND for non-existent file', async () => {
 			await withFileTest(async ({ user }) => {
 				await expect(
-					fileService.getFileById(NON_EXISTENT_UUID, user)
+					fileService.getFileById(NON_EXISTENT_UUID, user.organization_id!)
 				).rejects.toMatchObject({ code: 'NOT_FOUND' });
 			});
 		});
@@ -254,7 +260,7 @@ describe('FileService', () => {
 				);
 
 				await expect(
-					fileService.getFileById(uploaded.id, user2)
+					fileService.getFileById(uploaded.id, user2.organization_id!)
 				).rejects.toMatchObject({ code: 'NOT_FOUND' });
 			});
 		});

@@ -17,12 +17,12 @@ import { organizationService, userService } from './user.service';
 const NON_EXISTENT_UUID = '00000000-0000-0000-0000-000000000000';
 
 describe('UserService', () => {
-	describe('getUser()', () => {
+	describe('getUserById()', () => {
 		it('returns user when found', async () => {
 			await withTestTransaction(async () => {
 				const { organization, user } = await createTestEnvironment();
 
-				const result = await userService.getUser(user.id, organization.id);
+				const result = await userService.getUserById(user.id, organization.id);
 
 				expect(result.id).toBe(user.id);
 				expect(result.email).toBe(user.email);
@@ -34,7 +34,7 @@ describe('UserService', () => {
 				const { organization } = await createTestEnvironment();
 
 				await expect(
-					userService.getUser(NON_EXISTENT_UUID, organization.id)
+					userService.getUserById(NON_EXISTENT_UUID, organization.id)
 				).rejects.toMatchObject({ code: 'NOT_FOUND' });
 			});
 		});
@@ -199,7 +199,7 @@ describe('UserService', () => {
 					name: 'Temp Name'
 				});
 
-				const updated = await userService.getUser(user.id, organization.id);
+				const updated = await userService.getUserById(user.id, organization.id);
 				expect(updated.updated_at!.getTime()).toBeGreaterThanOrEqual(
 					beforeUpdate.getTime()
 				);
@@ -269,7 +269,10 @@ describe('UserService', () => {
 					user.id
 				);
 
-				const updated = await userService.getUser(member.id, organization.id);
+				const updated = await userService.getUserById(
+					member.id,
+					organization.id
+				);
 				expect(updated.updated_at!.getTime()).toBeGreaterThanOrEqual(
 					beforeUpdate.getTime()
 				);
@@ -321,7 +324,7 @@ describe('UserService', () => {
 
 				await userService.updatePasswordHash(user.id, organization.id, newHash);
 
-				const updated = await userService.getUser(user.id, organization.id);
+				const updated = await userService.getUserById(user.id, organization.id);
 				expect(updated.passwordHash).toBe(newHash);
 			});
 		});
@@ -337,7 +340,7 @@ describe('UserService', () => {
 					'temp-hash'
 				);
 
-				const updated = await userService.getUser(user.id, organization.id);
+				const updated = await userService.getUserById(user.id, organization.id);
 				expect(updated.updated_at!.getTime()).toBeGreaterThanOrEqual(
 					beforeUpdate.getTime()
 				);

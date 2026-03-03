@@ -20,27 +20,6 @@ export type StopCoordinate = {
 };
 
 export class StopService {
-	/**
-	 * Verify stop ownership
-	 */
-	private async verifyStopOwnership(stopId: string, organizationId: string) {
-		const [stop] = await db
-			.select()
-			.from(stops)
-			.where(eq(stops.id, stopId))
-			.limit(1);
-
-		if (!stop) {
-			throw ServiceError.notFound('Stop not found');
-		}
-
-		if (stop.organization_id !== organizationId) {
-			throw ServiceError.forbidden('Access denied');
-		}
-
-		return stop;
-	}
-
 	async getStops(organizationId: string): Promise<Stop[]> {
 		const results = await db
 			.select()
@@ -162,8 +141,6 @@ export class StopService {
 		stopId: string,
 		organizationId: string
 	): Promise<StopWithLocation> {
-		await this.verifyStopOwnership(stopId, organizationId);
-
 		const [result] = await db
 			.select({
 				stop: stops,
@@ -171,7 +148,9 @@ export class StopService {
 			})
 			.from(stops)
 			.innerJoin(locations, eq(stops.location_id, locations.id))
-			.where(eq(stops.id, stopId))
+			.where(
+				and(eq(stops.id, stopId), eq(stops.organization_id, organizationId))
+			)
 			.limit(1);
 
 		if (!result) {
@@ -208,8 +187,7 @@ export class StopService {
 			);
 		}
 
-		// Verify location ownership
-		await locationService.verifyLocationOwnership(locationId, organizationId);
+		await locationService.getLocationById(locationId, organizationId);
 
 		// Verify map ownership
 		const [map] = await db
@@ -249,7 +227,7 @@ export class StopService {
 		organizationId: string,
 		userId: string
 	): Promise<StopWithLocation> {
-		const stop = await this.verifyStopOwnership(stopId, organizationId);
+		const { stop } = await this.getStopById(stopId, organizationId);
 
 		const oldDriverId = stop.driver_id;
 		const driverChanged = 'driver_id' in data && data.driver_id !== oldDriverId;
@@ -266,10 +244,7 @@ export class StopService {
 			locationId = location.id;
 			locationChanged = true;
 		} else if (data.location_id && data.location_id !== stop.location_id) {
-			await locationService.verifyLocationOwnership(
-				data.location_id,
-				organizationId
-			);
+			await locationService.getLocationById(data.location_id, organizationId);
 			locationId = data.location_id;
 			locationChanged = true;
 		}
@@ -323,7 +298,7 @@ export class StopService {
 		stopId: string,
 		organizationId: string
 	): Promise<{ success: boolean }> {
-		const stop = await this.verifyStopOwnership(stopId, organizationId);
+		const { stop } = await this.getStopById(stopId, organizationId);
 
 		// Capture assignment info before deletion
 		const { driver_id, map_id } = stop;

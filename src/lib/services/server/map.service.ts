@@ -39,27 +39,6 @@ export class MapService {
 	}
 
 	/**
-	 * Verify map ownership
-	 */
-	private async verifyMapOwnership(mapId: string, organizationId: string) {
-		const [map] = await db
-			.select()
-			.from(maps)
-			.where(eq(maps.id, mapId))
-			.limit(1);
-
-		if (!map) {
-			throw ServiceError.notFound('Map not found');
-		}
-
-		if (map.organization_id !== organizationId) {
-			throw ServiceError.forbidden('Access denied');
-		}
-
-		return map;
-	}
-
-	/**
 	 * Get all maps for an organization
 	 */
 	async getMaps(organizationId: string) {
@@ -118,7 +97,16 @@ export class MapService {
 	 * Get a single map with optional statistics
 	 */
 	async getMapById(mapId: string, organizationId: string) {
-		const map = await this.verifyMapOwnership(mapId, organizationId);
+		const [map] = await db
+			.select()
+			.from(maps)
+			.where(and(eq(maps.id, mapId), eq(maps.organization_id, organizationId)))
+			.limit(1);
+
+		if (!map) {
+			throw ServiceError.notFound('Map not found');
+		}
+
 		return map;
 	}
 
@@ -257,7 +245,7 @@ export class MapService {
 		organizationId: string,
 		userId: string
 	): Promise<Map> {
-		const map = await this.verifyMapOwnership(mapId, organizationId);
+		const map = await this.getMapById(mapId, organizationId);
 
 		if (depotId) {
 			await depotService.getDepotById(depotId, organizationId);
@@ -302,15 +290,11 @@ export class MapService {
 	 * Delete a map (cascades to stops and driver memberships)
 	 */
 	async deleteMap(mapId: string, organizationId: string) {
-		// Atomic delete with tenancy check in WHERE clause
-		const deleted = await db
-			.delete(maps)
-			.where(and(eq(maps.id, mapId), eq(maps.organization_id, organizationId)))
-			.returning();
+		await this.getMapById(mapId, organizationId);
 
-		if (deleted.length === 0) {
-			throw ServiceError.notFound('Map not found');
-		}
+		await db
+			.delete(maps)
+			.where(and(eq(maps.id, mapId), eq(maps.organization_id, organizationId)));
 
 		return { success: true };
 	}
@@ -323,7 +307,7 @@ export class MapService {
 		organizationId: string,
 		userId: string
 	) {
-		await this.verifyMapOwnership(mapId, organizationId);
+		await this.getMapById(mapId, organizationId);
 
 		// Use transaction to ensure both operations succeed or both fail
 		await db.transaction(async (tx) => {
@@ -353,35 +337,10 @@ export class MapService {
 	// Driver-Map Membership Methods
 
 	/**
-	 * Verify driver ownership
-	 */
-	private async verifyDriverOwnership(
-		driverId: string,
-		organizationId: string
-	) {
-		const [driver] = await db
-			.select()
-			.from(drivers)
-			.where(
-				and(
-					eq(drivers.id, driverId),
-					eq(drivers.organization_id, organizationId)
-				)
-			)
-			.limit(1);
-
-		if (!driver) {
-			throw ServiceError.notFound('Driver not found');
-		}
-
-		return driver;
-	}
-
-	/**
 	 * Get all drivers assigned to a map
 	 */
 	async getDriversForMap(mapId: string, organizationId: string) {
-		await this.verifyMapOwnership(mapId, organizationId);
+		await this.getMapById(mapId, organizationId);
 
 		const results = await db
 			.select({
@@ -404,7 +363,7 @@ export class MapService {
 	 * Get all maps a driver is assigned to
 	 */
 	async getMapsForDriver(driverId: string, organizationId: string) {
-		await this.verifyDriverOwnership(driverId, organizationId);
+		await driverService.getDriverById(driverId, organizationId);
 
 		const results = await db
 			.select({
@@ -431,8 +390,8 @@ export class MapService {
 		mapId: string,
 		organizationId: string
 	) {
-		await this.verifyDriverOwnership(driverId, organizationId);
-		await this.verifyMapOwnership(mapId, organizationId);
+		await driverService.getDriverById(driverId, organizationId);
+		await this.getMapById(mapId, organizationId);
 
 		// Check if membership already exists
 		const [existing] = await db
@@ -470,8 +429,8 @@ export class MapService {
 		mapId: string,
 		organizationId: string
 	) {
-		const driver = await this.verifyDriverOwnership(driverId, organizationId);
-		await this.verifyMapOwnership(mapId, organizationId);
+		const driver = await driverService.getDriverById(driverId, organizationId);
+		await this.getMapById(mapId, organizationId);
 
 		// Delete membership first
 		// Note: Not using transaction because driverService.deleteDriver uses its own db connection,

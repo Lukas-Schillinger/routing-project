@@ -30,7 +30,7 @@ export class FileService {
 		this.storage = storage;
 	}
 
-	private async findFileByIdAndOrg(
+	async getFileById(
 		fileId: string,
 		organizationId: string
 	): Promise<FileSchema> {
@@ -94,10 +94,7 @@ export class FileService {
 	}
 
 	async deleteFile(fileId: string, user: User): Promise<void> {
-		const fileRecord = await this.findFileByIdAndOrg(
-			fileId,
-			user.organization_id!
-		);
+		const fileRecord = await this.getFileById(fileId, user.organization_id!);
 
 		try {
 			await this.storage.deleteFile(fileRecord.r2_key);
@@ -115,16 +112,9 @@ export class FileService {
 	}
 
 	async getFileUrl(fileId: string, user: User): Promise<string> {
-		const fileRecord = await this.findFileByIdAndOrg(
-			fileId,
-			user.organization_id!
-		);
+		const fileRecord = await this.getFileById(fileId, user.organization_id!);
 
 		return this.storage.getSignedDownloadUrl(fileRecord.r2_key);
-	}
-
-	async getFileById(fileId: string, user: User): Promise<FileSchema> {
-		return this.findFileByIdAndOrg(fileId, user.organization_id!);
 	}
 
 	async getFilesByOrganization(user: User): Promise<FileSchema[]> {

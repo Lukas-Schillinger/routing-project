@@ -257,7 +257,7 @@ describe('RouteService', () => {
 	});
 
 	describe('Tenancy Isolation', () => {
-		it('throws FORBIDDEN when accessing route from another org', async () => {
+		it('throws NOT_FOUND when accessing route from another org', async () => {
 			await withTestTransaction(async () => {
 				const { org1, org2, map2, driver2, depot2 } =
 					await createRouteTestSetup();
@@ -272,7 +272,7 @@ describe('RouteService', () => {
 				await expect(
 					routeService.getRouteById(route2.id, org1.id)
 				).rejects.toMatchObject({
-					code: 'FORBIDDEN'
+					code: 'NOT_FOUND'
 				});
 			});
 		});

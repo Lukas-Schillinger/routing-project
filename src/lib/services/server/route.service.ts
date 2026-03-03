@@ -22,27 +22,17 @@ import { ServiceError } from './errors';
 import { stopService } from './stop.service';
 
 export class RouteService {
-	/**
-	 * Verify that a route exists and belongs to the given organization
-	 */
-	async verifyRouteOwnership(
-		routeId: string,
-		organizationId: string
-	): Promise<Route> {
+	async getRouteById(routeId: string, organizationId: string): Promise<Route> {
 		const [route] = await db
 			.select()
 			.from(routes)
-			.where(eq(routes.id, routeId))
+			.where(
+				and(eq(routes.id, routeId), eq(routes.organization_id, organizationId))
+			)
 			.limit(1);
 
 		if (!route) {
 			throw ServiceError.notFound('Route not found');
-		}
-
-		if (route.organization_id !== organizationId) {
-			throw ServiceError.forbidden(
-				'Route does not belong to your organization'
-			);
 		}
 
 		return route as Route;
@@ -216,10 +206,6 @@ export class RouteService {
 			});
 	}
 
-	async getRouteById(routeId: string, organizationId: string): Promise<Route> {
-		return this.verifyRouteOwnership(routeId, organizationId);
-	}
-
 	async getRoutes(organizationId: string) {
 		return (await db
 			.select()
@@ -260,6 +246,8 @@ export class RouteService {
 	 * Delete a specific route
 	 */
 	async deleteRoute(routeId: string, organizationId: string) {
+		await this.getRouteById(routeId, organizationId);
+
 		await db
 			.delete(routes)
 			.where(
@@ -310,10 +298,7 @@ export class RouteService {
 	 * Get a route with role-based access check
 	 */
 	async getRouteByIdForUser(routeId: string, user: PublicUser): Promise<Route> {
-		const route = await this.verifyRouteOwnership(
-			routeId,
-			user.organization_id
-		);
+		const route = await this.getRouteById(routeId, user.organization_id);
 
 		if (user.role === 'driver') {
 			const driver = await this.getDriverForUser(user.id, user.organization_id);

@@ -6,26 +6,25 @@ import { ServiceError } from './errors';
 
 export class LocationService {
 	/**
-	 * Verify a location exists and belongs to the organization
+	 * Get a specific location by ID
 	 */
-	async verifyLocationOwnership(
+	async getLocationById(
 		locationId: string,
 		organizationId: string
 	): Promise<Location> {
 		const [location] = await db
 			.select()
 			.from(locations)
-			.where(eq(locations.id, locationId))
+			.where(
+				and(
+					eq(locations.id, locationId),
+					eq(locations.organization_id, organizationId)
+				)
+			)
 			.limit(1);
 
 		if (!location) {
 			throw ServiceError.notFound('Location not found');
-		}
-
-		if (location.organization_id !== organizationId) {
-			throw ServiceError.forbidden(
-				'Location does not belong to your organization'
-			);
 		}
 
 		return location;
@@ -40,16 +39,6 @@ export class LocationService {
 			.from(locations)
 			.where(eq(locations.organization_id, organizationId))
 			.orderBy(desc(locations.updated_at));
-	}
-
-	/**
-	 * Get a specific location by ID
-	 */
-	async getLocationById(
-		locationId: string,
-		organizationId: string
-	): Promise<Location> {
-		return this.verifyLocationOwnership(locationId, organizationId);
 	}
 
 	/**
@@ -101,7 +90,7 @@ export class LocationService {
 			return newLocation.id;
 		} else if (locationId) {
 			// Verify existing location
-			await this.verifyLocationOwnership(locationId, organizationId);
+			await this.getLocationById(locationId, organizationId);
 			return locationId;
 		} else {
 			throw ServiceError.validation(
@@ -129,7 +118,7 @@ export class LocationService {
 			)
 			.limit(1);
 
-		return location || null;
+		return location ?? null;
 	}
 
 	/**
@@ -139,8 +128,7 @@ export class LocationService {
 		locationId: string,
 		organizationId: string
 	): Promise<{ success: boolean }> {
-		// Verify location ownership
-		await this.verifyLocationOwnership(locationId, organizationId);
+		await this.getLocationById(locationId, organizationId);
 
 		await db
 			.delete(locations)
