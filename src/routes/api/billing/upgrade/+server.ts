@@ -16,7 +16,7 @@ export const POST: RequestHandler = async ({ url }) => {
 			url.origin
 		);
 
-		return json({ url: checkoutUrl });
+		return json(checkoutUrl);
 	} catch (err) {
 		handleApiError(err, 'Failed to create upgrade checkout session');
 	}

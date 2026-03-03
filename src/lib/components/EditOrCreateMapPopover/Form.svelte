@@ -41,12 +41,12 @@
 					description: form.data.description || null
 				};
 
-				const result =
+				const resultMap =
 					mode === 'create'
-						? await mapApi.create(payload)
+						? (await mapApi.create(payload)).map
 						: await mapApi.update(map!.id, payload);
 
-				onSuccess(result.map);
+				onSuccess(resultMap);
 				open = false;
 			} catch (err) {
 				const message =

@@ -21,7 +21,7 @@ export const POST: RequestHandler = async ({ request, url }) => {
 			returnUrl
 		);
 
-		return json({ url: checkoutUrl });
+		return json(checkoutUrl);
 	} catch (err) {
 		handleApiError(err, 'Failed to create checkout session');
 	}

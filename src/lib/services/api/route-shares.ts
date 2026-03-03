@@ -22,8 +22,8 @@ class RouteShareApiService {
 	async createEmailShare(
 		routeId: string,
 		data: CreateEmailShare
-	): Promise<{ share: RouteShareWithMailRecord }> {
-		return apiClient.post<{ share: RouteShareWithMailRecord }>(
+	): Promise<RouteShareWithMailRecord> {
+		return apiClient.post<RouteShareWithMailRecord>(
 			`/routes/${routeId}/shares`,
 			data
 		);
@@ -59,8 +59,8 @@ class RouteShareApiService {
 	async resendShare(
 		routeId: string,
 		shareId: string
-	): Promise<{ share: RouteShareWithMailRecord }> {
-		return apiClient.post<{ share: RouteShareWithMailRecord }>(
+	): Promise<RouteShareWithMailRecord> {
+		return apiClient.post<RouteShareWithMailRecord>(
 			`/routes/${routeId}/shares/${shareId}/resend`
 		);
 	}

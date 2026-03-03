@@ -39,8 +39,8 @@
 		}
 		isUpgrading = true;
 		try {
-			const response = await billingApi.createUpgradeCheckout();
-			window.location.href = response.url;
+			const url = await billingApi.createUpgradeCheckout();
+			window.location.href = url;
 		} catch {
 			isUpgrading = false;
 		}

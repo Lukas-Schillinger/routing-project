@@ -76,8 +76,8 @@
 		}
 		isLoading = true;
 		try {
-			const response = await billingApi.createUpgradeCheckout();
-			window.location.href = response.url;
+			const url = await billingApi.createUpgradeCheckout();
+			window.location.href = url;
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Failed to start upgrade';
 			isLoading = false;
@@ -94,11 +94,11 @@
 		isLoading = true;
 
 		try {
-			const response = await billingApi.createCreditsCheckout({
+			const url = await billingApi.createCreditsCheckout({
 				amount: creditAmount,
 				returnUrl: page.url.pathname
 			});
-			window.location.href = response.url;
+			window.location.href = url;
 			onSuccess?.();
 		} catch (e) {
 			error =

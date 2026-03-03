@@ -34,8 +34,8 @@ class MapApiService {
 	/**
 	 * Get a specific map by ID with optional stats
 	 */
-	async getById(mapId: string): Promise<{ map: Map | MapWithStats }> {
-		return apiClient.get<{ map: Map | MapWithStats }>(`/maps/${mapId}`);
+	async getById(mapId: string): Promise<Map | MapWithStats> {
+		return apiClient.get<Map | MapWithStats>(`/maps/${mapId}`);
 	}
 
 	/**
@@ -53,8 +53,8 @@ class MapApiService {
 	/**
 	 * Update a map
 	 */
-	async update(mapId: string, data: UpdateMap): Promise<{ map: Map }> {
-		return apiClient.patch<{ map: Map }>(`/maps/${mapId}`, data);
+	async update(mapId: string, data: UpdateMap): Promise<Map> {
+		return apiClient.patch<Map>(`/maps/${mapId}`, data);
 	}
 
 	/**
@@ -70,10 +70,7 @@ class MapApiService {
 	 * Get all drivers assigned to a map
 	 */
 	async getDrivers(mapId: string): Promise<DriverMembership[]> {
-		const result = await apiClient.get<{ memberships: DriverMembership[] }>(
-			`/maps/${mapId}/drivers`
-		);
-		return result.memberships;
+		return apiClient.get<DriverMembership[]>(`/maps/${mapId}/drivers`);
 	}
 
 	/**
@@ -83,10 +80,10 @@ class MapApiService {
 		mapId: string,
 		driverId: string
 	): Promise<DriverMembership['membership']> {
-		const result = await apiClient.post<{
-			membership: DriverMembership['membership'];
-		}>(`/maps/${mapId}/drivers`, { driver_id: driverId });
-		return result.membership;
+		return apiClient.post<DriverMembership['membership']>(
+			`/maps/${mapId}/drivers`,
+			{ driver_id: driverId }
+		);
 	}
 
 	/**
@@ -106,12 +103,8 @@ class MapApiService {
 	/**
 	 * Get current optimization job status for a map
 	 */
-	async getOptimizationStatus(
-		mapId: string
-	): Promise<{ job: OptimizationJob | null }> {
-		return apiClient.get<{ job: OptimizationJob | null }>(
-			`/maps/${mapId}/optimize`
-		);
+	async getOptimizationStatus(mapId: string): Promise<OptimizationJob | null> {
+		return apiClient.get<OptimizationJob | null>(`/maps/${mapId}/optimize`);
 	}
 
 	/**

@@ -27,7 +27,7 @@ export const POST: RequestHandler = async ({ request, params }) => {
 			user.id
 		);
 
-		return json({ stops }, { status: 201 });
+		return json(stops, { status: 201 });
 	} catch (err) {
 		handleApiError(err, 'Failed to create stops');
 	}

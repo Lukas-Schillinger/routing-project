@@ -1,5 +1,6 @@
 import { mapApi } from '$lib/services/api';
 import type { OptimizationJob } from '$lib/schemas/map';
+import { SvelteDate } from 'svelte/reactivity';
 
 const BASE_INTERVAL = 2000;
 const MAX_INTERVAL = 30_000;
@@ -44,7 +45,7 @@ export function createOptimizationPoller(
 		if (pollTimeout) return;
 		isOptimizing = true;
 		error = null;
-		startTime = fromTime ?? new Date();
+		startTime = fromTime ?? new SvelteDate();
 		consecutiveErrors = 0;
 		currentInterval = BASE_INTERVAL;
 		schedulePoll();
@@ -87,7 +88,7 @@ export function createOptimizationPoller(
 		}
 
 		try {
-			const { job } = await mapApi.getOptimizationStatus(mapId);
+			const job = await mapApi.getOptimizationStatus(mapId);
 			consecutiveErrors = 0;
 			currentInterval = BASE_INTERVAL;
 			await handleJobStatus(job);
@@ -115,7 +116,7 @@ export function createOptimizationPoller(
 			return error;
 		},
 		get startTime() {
-			return startTime ?? new Date();
+			return startTime ?? new SvelteDate();
 		},
 		start,
 		stop,

@@ -18,7 +18,7 @@ export const GET: RequestHandler = async ({ url }) => {
 	const proximityParam = url.searchParams.get('proximity');
 
 	if (!q || q.length < 2) {
-		return json({ features: [] });
+		return json([]);
 	}
 
 	try {
@@ -37,7 +37,7 @@ export const GET: RequestHandler = async ({ url }) => {
 			proximity
 		});
 
-		return json({ features: results });
+		return json(results);
 	} catch (err) {
 		handleApiError(err, 'Failed to geocode address');
 	}
