@@ -91,7 +91,7 @@ describe('LocationService', () => {
 			});
 		});
 
-		it('throws FORBIDDEN when location belongs to different organization', async () => {
+		it('throws NOT_FOUND when location belongs to different organization', async () => {
 			await withTestTransaction(async () => {
 				const { organization } = await createTestEnvironment();
 				const otherOrg = await createOrganization();
@@ -101,7 +101,7 @@ describe('LocationService', () => {
 
 				await expect(
 					locationService.getLocationById(location.id, otherOrg.id)
-				).rejects.toMatchObject({ code: 'FORBIDDEN' });
+				).rejects.toMatchObject({ code: 'NOT_FOUND' });
 			});
 		});
 	});
@@ -158,52 +158,6 @@ describe('LocationService', () => {
 				expect(result.updated_at).toBeInstanceOf(Date);
 				expect(result.created_at.getTime()).toBeLessThanOrEqual(Date.now());
 				expect(result.updated_at.getTime()).toBeLessThanOrEqual(Date.now());
-			});
-		});
-	});
-
-	describe('verifyLocationOwnership()', () => {
-		it('returns location when ownership is valid', async () => {
-			await withTestTransaction(async () => {
-				const { organization } = await createTestEnvironment();
-				const location = await createLocation({
-					organization_id: organization.id
-				});
-
-				const result = await locationService.verifyLocationOwnership(
-					location.id,
-					organization.id
-				);
-
-				expect(result.id).toBe(location.id);
-				expect(result.organization_id).toBe(organization.id);
-			});
-		});
-
-		it('throws NOT_FOUND when location does not exist', async () => {
-			await withTestTransaction(async () => {
-				const { organization } = await createTestEnvironment();
-
-				await expect(
-					locationService.verifyLocationOwnership(
-						NON_EXISTENT_UUID,
-						organization.id
-					)
-				).rejects.toMatchObject({ code: 'NOT_FOUND' });
-			});
-		});
-
-		it('throws FORBIDDEN when location belongs to different organization', async () => {
-			await withTestTransaction(async () => {
-				const { organization } = await createTestEnvironment();
-				const otherOrg = await createOrganization();
-				const location = await createLocation({
-					organization_id: organization.id
-				});
-
-				await expect(
-					locationService.verifyLocationOwnership(location.id, otherOrg.id)
-				).rejects.toMatchObject({ code: 'FORBIDDEN' });
 			});
 		});
 	});
@@ -286,7 +240,7 @@ describe('LocationService', () => {
 			});
 		});
 
-		it('throws FORBIDDEN when verifying location from different organization', async () => {
+		it('throws NOT_FOUND when verifying location from different organization', async () => {
 			await withTestTransaction(async () => {
 				const { organization, user } = await createTestEnvironment();
 				const otherOrg = await createOrganization();
@@ -301,7 +255,7 @@ describe('LocationService', () => {
 						otherOrg.id,
 						user.id
 					)
-				).rejects.toMatchObject({ code: 'FORBIDDEN' });
+				).rejects.toMatchObject({ code: 'NOT_FOUND' });
 			});
 		});
 	});
@@ -388,7 +342,7 @@ describe('LocationService', () => {
 			});
 		});
 
-		it('throws FORBIDDEN when attempting to delete location from different organization', async () => {
+		it('throws NOT_FOUND when attempting to delete location from different organization', async () => {
 			await withTestTransaction(async () => {
 				const { organization } = await createTestEnvironment();
 				const otherOrg = await createOrganization();
@@ -398,7 +352,7 @@ describe('LocationService', () => {
 
 				await expect(
 					locationService.deleteLocation(location.id, otherOrg.id)
-				).rejects.toMatchObject({ code: 'FORBIDDEN' });
+				).rejects.toMatchObject({ code: 'NOT_FOUND' });
 
 				// Verify the location was NOT deleted
 				const stillExists = await locationService.getLocationById(

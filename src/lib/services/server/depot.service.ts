@@ -121,15 +121,13 @@ export class DepotService {
 			})
 			.from(depots)
 			.innerJoin(locations, eq(depots.location_id, locations.id))
-			.where(eq(depots.id, depotId))
+			.where(
+				and(eq(depots.id, depotId), eq(depots.organization_id, organizationId))
+			)
 			.limit(1);
 
 		if (!depot) {
 			throw ServiceError.notFound('Depot not found');
-		}
-
-		if (depot.depot.organization_id !== organizationId) {
-			throw ServiceError.forbidden('Access denied');
 		}
 
 		return depot;
@@ -144,7 +142,6 @@ export class DepotService {
 		organizationId: string,
 		userId: string
 	): Promise<DepotWithLocationJoin> {
-		// Verify depot ownership
 		const existingDepot = await this.getDepotById(depotId, organizationId);
 
 		// Handle location update if provided
@@ -184,7 +181,6 @@ export class DepotService {
 	 * Delete a depot
 	 */
 	async deleteDepot(depotId: string, organizationId: string) {
-		// Verify depot ownership
 		await this.getDepotById(depotId, organizationId);
 
 		const usedInRoutes = await db

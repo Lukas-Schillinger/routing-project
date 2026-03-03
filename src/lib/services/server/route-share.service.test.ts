@@ -284,7 +284,7 @@ describe('RouteShareService', () => {
 	// ============================================================================
 	// getShare
 	// ============================================================================
-	describe('getShare()', () => {
+	describe('getShareById()', () => {
 		it('returns share by id and organization', async () => {
 			await withTestTransaction(async () => {
 				const { organization, user, route } = await createProRouteEnvironment();
@@ -295,7 +295,7 @@ describe('RouteShareService', () => {
 					created_by: user.id
 				});
 
-				const result = await routeShareService.getShare(
+				const result = await routeShareService.getShareById(
 					share.id,
 					organization.id
 				);
@@ -311,7 +311,7 @@ describe('RouteShareService', () => {
 				const { organization } = await createProRouteEnvironment();
 
 				await expect(
-					routeShareService.getShare(NON_EXISTENT_UUID, organization.id)
+					routeShareService.getShareById(NON_EXISTENT_UUID, organization.id)
 				).rejects.toMatchObject({ code: 'NOT_FOUND' });
 			});
 		});
@@ -327,7 +327,7 @@ describe('RouteShareService', () => {
 				});
 
 				await expect(
-					routeShareService.getShare(share.id, env2.organization.id)
+					routeShareService.getShareById(share.id, env2.organization.id)
 				).rejects.toMatchObject({ code: 'NOT_FOUND' });
 			});
 		});
@@ -608,18 +608,18 @@ describe('RouteShareService', () => {
 				await routeShareService.deleteShare(share.id, organization.id);
 
 				await expect(
-					routeShareService.getShare(share.id, organization.id)
+					routeShareService.getShareById(share.id, organization.id)
 				).rejects.toMatchObject({ code: 'NOT_FOUND' });
 			});
 		});
 
-		it('silently succeeds for non-existent share', async () => {
+		it('throws NOT_FOUND for non-existent share', async () => {
 			await withTestTransaction(async () => {
 				const { organization } = await createProRouteEnvironment();
 
 				await expect(
 					routeShareService.deleteShare(NON_EXISTENT_UUID, organization.id)
-				).resolves.toBeUndefined();
+				).rejects.toMatchObject({ code: 'NOT_FOUND' });
 			});
 		});
 
@@ -633,11 +633,13 @@ describe('RouteShareService', () => {
 					route_id: env1.route.id
 				});
 
-				// Should not throw, but should not delete the share either
-				await routeShareService.deleteShare(share.id, env2.organization.id);
+				// Should throw NOT_FOUND for cross-org access
+				await expect(
+					routeShareService.deleteShare(share.id, env2.organization.id)
+				).rejects.toMatchObject({ code: 'NOT_FOUND' });
 
 				// Verify share still exists for the owning org
-				const existing = await routeShareService.getShare(
+				const existing = await routeShareService.getShareById(
 					share.id,
 					env1.organization.id
 				);
@@ -667,7 +669,7 @@ describe('RouteShareService', () => {
 				);
 
 				// Old share revoked
-				const oldShare = await routeShareService.getShare(
+				const oldShare = await routeShareService.getShareById(
 					initialShare.id,
 					organization.id
 				);

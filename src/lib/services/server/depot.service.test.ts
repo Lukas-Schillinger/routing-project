@@ -123,7 +123,7 @@ describe('DepotService', () => {
 				});
 			});
 
-			it('throws FORBIDDEN for depot in different organization', async () => {
+			it('throws NOT_FOUND for depot in different organization', async () => {
 				await withTestTransaction(async () => {
 					const { organization } = await createTestEnvironment();
 					const otherOrg = await createOrganization();
@@ -137,7 +137,7 @@ describe('DepotService', () => {
 
 					await expect(
 						depotService.getDepotById(depot.id, organization.id)
-					).rejects.toMatchObject({ code: 'FORBIDDEN' });
+					).rejects.toMatchObject({ code: 'NOT_FOUND' });
 				});
 			});
 		});

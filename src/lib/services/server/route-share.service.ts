@@ -44,7 +44,7 @@ export class RouteShareService {
 		await this.requireFleetManagement(organizationId);
 
 		// Verify the route exists and belongs to the organization
-		await routeService.verifyRouteOwnership(routeId, organizationId);
+		await routeService.getRouteById(routeId, organizationId);
 
 		const token = TokenUtils.generateHex();
 		const tokenHash = TokenUtils.hash(token);
@@ -120,8 +120,7 @@ export class RouteShareService {
 		routeId: string,
 		organizationId: string
 	): Promise<RouteShareWithMailRecord[]> {
-		// Verify ownership
-		await routeService.verifyRouteOwnership(routeId, organizationId);
+		await routeService.getRouteById(routeId, organizationId);
 
 		const results = await db
 			.select({ share: routeShares, mailRecord: mailRecords })
@@ -143,7 +142,10 @@ export class RouteShareService {
 	/**
 	 * Get a single share by ID
 	 */
-	async getShare(shareId: string, organizationId: string): Promise<RouteShare> {
+	async getShareById(
+		shareId: string,
+		organizationId: string
+	): Promise<RouteShare> {
 		const [share] = await db
 			.select()
 			.from(routeShares)
@@ -211,7 +213,7 @@ export class RouteShareService {
 	 * Revoke a share
 	 */
 	async revokeShare(shareId: string, organizationId: string): Promise<void> {
-		const share = await this.getShare(shareId, organizationId);
+		const share = await this.getShareById(shareId, organizationId);
 
 		if (share.revoked_at) {
 			throw ServiceError.badRequest('Share is already revoked');
@@ -233,7 +235,7 @@ export class RouteShareService {
 		createdBy: string,
 		origin: string
 	): Promise<RouteShareWithMailRecord> {
-		const existingShare = await this.getShare(shareId, organizationId);
+		const existingShare = await this.getShareById(shareId, organizationId);
 		const mailRecord = await this.getMailRecordForShare(shareId);
 
 		if (!mailRecord?.to_email) {
@@ -259,6 +261,8 @@ export class RouteShareService {
 	 * Delete a share entirely
 	 */
 	async deleteShare(shareId: string, organizationId: string): Promise<void> {
+		await this.getShareById(shareId, organizationId);
+
 		await db
 			.delete(routeShares)
 			.where(

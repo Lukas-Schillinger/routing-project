@@ -30,7 +30,7 @@ export const GET: RequestHandler = async ({ url }) => {
 
 	try {
 		const feature = await mapboxGeocoding.reverse(lon, lat);
-		return json({ feature });
+		return json(feature);
 	} catch (err) {
 		handleApiError(err, 'Failed to reverse geocode coordinates');
 	}

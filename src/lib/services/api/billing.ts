@@ -1,21 +1,19 @@
 import type { CreditPurchaseInput } from '$lib/schemas/billing';
 import { apiClient } from './base';
 
-type CheckoutResponse = { url: string };
-
 class BillingApiService {
 	/**
 	 * Create Stripe Checkout session for upgrading to Pro
 	 */
-	async createUpgradeCheckout(): Promise<CheckoutResponse> {
-		return apiClient.post<CheckoutResponse>('/billing/upgrade');
+	async createUpgradeCheckout(): Promise<string> {
+		return apiClient.post<string>('/billing/upgrade');
 	}
 
 	/**
 	 * Schedule downgrade to Free at end of billing period
 	 */
-	async scheduleDowngrade(): Promise<{ effectiveDate: string }> {
-		return apiClient.post<{ effectiveDate: string }>('/billing/downgrade');
+	async scheduleDowngrade(): Promise<string> {
+		return apiClient.post<string>('/billing/downgrade');
 	}
 
 	/**
@@ -28,13 +26,8 @@ class BillingApiService {
 	/**
 	 * Create Stripe Billing Portal session for managing payment methods
 	 */
-	async createPortalSession(
-		flow?: 'payment_method_update'
-	): Promise<CheckoutResponse> {
-		return apiClient.post<CheckoutResponse>(
-			'/billing/portal',
-			flow ? { flow } : {}
-		);
+	async createPortalSession(flow?: 'payment_method_update'): Promise<string> {
+		return apiClient.post<string>('/billing/portal', flow ? { flow } : {});
 	}
 
 	/**
@@ -42,10 +35,8 @@ class BillingApiService {
 	 * @param data.amount - Number of credits to purchase
 	 * @param data.returnUrl - Optional URL to redirect to after checkout (defaults to /maps)
 	 */
-	async createCreditsCheckout(
-		data: CreditPurchaseInput
-	): Promise<CheckoutResponse> {
-		return apiClient.post<CheckoutResponse>('/billing/checkout/credits', data);
+	async createCreditsCheckout(data: CreditPurchaseInput): Promise<string> {
+		return apiClient.post<string>('/billing/checkout/credits', data);
 	}
 }
 

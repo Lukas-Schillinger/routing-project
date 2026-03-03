@@ -26,15 +26,16 @@ export class DriverService {
 		const [driver] = await db
 			.select()
 			.from(drivers)
-			.where(eq(drivers.id, driverId))
+			.where(
+				and(
+					eq(drivers.id, driverId),
+					eq(drivers.organization_id, organizationId)
+				)
+			)
 			.limit(1);
 
 		if (!driver) {
 			throw ServiceError.notFound('Driver not found');
-		}
-
-		if (driver.organization_id !== organizationId) {
-			throw ServiceError.forbidden('Access denied');
 		}
 
 		return driver;
@@ -75,7 +76,6 @@ export class DriverService {
 		organizationId: string,
 		userId: string
 	): Promise<Driver> {
-		// Verify driver ownership
 		await this.getDriverById(driverId, organizationId);
 
 		// Update driver
@@ -104,7 +104,6 @@ export class DriverService {
 		driverId: string,
 		organizationId: string
 	): Promise<{ success: boolean }> {
-		// Verify driver ownership
 		await this.getDriverById(driverId, organizationId);
 
 		// Check if the driver is assigned to any maps

@@ -18,7 +18,7 @@ export const GET: RequestHandler = async ({ params }) => {
 			mapId,
 			user.organization_id
 		);
-		return json({ job });
+		return json(job);
 	} catch (err) {
 		handleApiError(err, 'Failed to get optimization status');
 	}

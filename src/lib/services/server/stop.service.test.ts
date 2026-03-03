@@ -323,7 +323,7 @@ describe('StopService', () => {
 			});
 		});
 
-		it('throws FORBIDDEN when stop belongs to different organization', async () => {
+		it('throws NOT_FOUND when stop belongs to different organization', async () => {
 			await withTestTransaction(async () => {
 				const { organization: org1, user } = await createTestEnvironment();
 				const { organization: org2 } = await createTestEnvironment();
@@ -343,7 +343,7 @@ describe('StopService', () => {
 
 				await expect(
 					stopService.getStopById(stop.id, org2.id)
-				).rejects.toMatchObject({ code: 'FORBIDDEN' });
+				).rejects.toMatchObject({ code: 'NOT_FOUND' });
 			});
 		});
 	});
@@ -756,7 +756,7 @@ describe('StopService', () => {
 			});
 		});
 
-		it('throws FORBIDDEN for stop from different organization', async () => {
+		it('throws NOT_FOUND for stop from different organization', async () => {
 			await withTestTransaction(async () => {
 				const { organization: org1, user } = await createTestEnvironment();
 				const { organization: org2 } = await createTestEnvironment();
@@ -776,7 +776,7 @@ describe('StopService', () => {
 
 				await expect(
 					stopService.deleteStop(stop.id, org2.id)
-				).rejects.toMatchObject({ code: 'FORBIDDEN' });
+				).rejects.toMatchObject({ code: 'NOT_FOUND' });
 
 				// Verify stop was NOT deleted
 				const retrieved = await stopService.getStopById(stop.id, org1.id);

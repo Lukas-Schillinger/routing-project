@@ -13,7 +13,7 @@ import { TokenUtils } from './token.utils';
 import { userService } from './user.service';
 
 export class InvitationService {
-	async getInvitation(
+	async getInvitationById(
 		invitationId: string,
 		organizationId: string
 	): Promise<Invitation> {
@@ -54,6 +54,8 @@ export class InvitationService {
 	}
 
 	async deleteInvitation(invitationId: string, organizationId: string) {
+		await this.getInvitationById(invitationId, organizationId);
+
 		await db
 			.delete(invitations)
 			.where(

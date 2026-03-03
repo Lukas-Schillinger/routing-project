@@ -26,11 +26,7 @@ class GeocodingApiService {
 		if (options.limit) params.limit = String(options.limit);
 		if (options.proximity) params.proximity = options.proximity.join(',');
 
-		const response = await apiClient.get<{ features: GeocodingFeature[] }>(
-			'/geocoding/autocomplete',
-			params
-		);
-		return response.features;
+		return apiClient.get<GeocodingFeature[]>('/geocoding/autocomplete', params);
 	}
 
 	/**
@@ -39,21 +35,19 @@ class GeocodingApiService {
 	async batch(
 		addresses: string[]
 	): Promise<Array<{ original: string; geocoded: GeocodingFeature | null }>> {
-		const response = await apiClient.post<
+		return apiClient.post<
 			Array<{ original: string; geocoded: GeocodingFeature | null }>
 		>('/geocoding/batch', { addresses });
-		return response;
 	}
 
 	/**
 	 * Reverse geocoding - convert coordinates to an address
 	 */
 	async reverse(lon: number, lat: number): Promise<GeocodingFeature | null> {
-		const response = await apiClient.get<{ feature: GeocodingFeature | null }>(
-			'/geocoding/reverse',
-			{ lon: String(lon), lat: String(lat) }
-		);
-		return response.feature;
+		return apiClient.get<GeocodingFeature | null>('/geocoding/reverse', {
+			lon: String(lon),
+			lat: String(lat)
+		});
 	}
 }
 

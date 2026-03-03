@@ -4,15 +4,12 @@ import { mapService } from '$lib/services/server';
 import { requirePermissionApi } from '$lib/services/server/permissions';
 import { json, type RequestHandler } from '@sveltejs/kit';
 
-export const GET: RequestHandler = async ({ url }) => {
+export const GET: RequestHandler = async () => {
 	const user = requirePermissionApi('resources:read');
 	try {
-		// Parse query parameters
-		const includeStats = url.searchParams.get('includeStats') === 'true';
-
 		const maps = await mapService.getMaps(user.organization_id);
 
-		return json({ maps, includeStats });
+		return json(maps);
 	} catch (err) {
 		handleApiError(err, 'Failed to fetch maps');
 	}

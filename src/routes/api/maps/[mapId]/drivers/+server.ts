@@ -17,7 +17,7 @@ export const GET: RequestHandler = async ({ params }) => {
 			user.organization_id
 		);
 
-		return json({ memberships });
+		return json(memberships);
 	} catch (err) {
 		handleApiError(err, 'Failed to fetch driver memberships');
 	}
@@ -38,7 +38,7 @@ export const POST: RequestHandler = async ({ params, request }) => {
 			user.organization_id
 		);
 
-		return json({ membership }, { status: 201 });
+		return json(membership, { status: 201 });
 	} catch (err) {
 		handleApiError(err, 'Failed to create driver membership');
 	}

@@ -24,7 +24,7 @@ export const POST: RequestHandler = async ({ url, request }) => {
 			flow
 		);
 
-		return json({ url: portalUrl });
+		return json(portalUrl);
 	} catch (err) {
 		handleApiError(err, 'Failed to create billing portal session');
 	}

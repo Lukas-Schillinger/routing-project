@@ -411,7 +411,7 @@ describe('MapService', () => {
 	});
 
 	describe('Tenancy Isolation', () => {
-		it('throws FORBIDDEN accessing map from another org', async () => {
+		it('throws NOT_FOUND accessing map from another org', async () => {
 			await withTestTransaction(async () => {
 				const { organization: org1 } = await createTestEnvironment();
 				const { organization: org2 } = await createTestEnvironment();
@@ -419,7 +419,7 @@ describe('MapService', () => {
 
 				await expect(
 					mapService.getMapById(map.id, org1.id)
-				).rejects.toMatchObject({ code: 'FORBIDDEN' });
+				).rejects.toMatchObject({ code: 'NOT_FOUND' });
 			});
 		});
 
@@ -828,7 +828,7 @@ describe('MapService', () => {
 			});
 		});
 
-		it('throws FORBIDDEN for depot from another org', async () => {
+		it('throws NOT_FOUND for depot from another org', async () => {
 			await withTestTransaction(async () => {
 				const { organization: org1, user: user1 } =
 					await createTestEnvironment();
@@ -842,7 +842,7 @@ describe('MapService', () => {
 
 				await expect(
 					mapService.setMapDepot(map.id, depot.id, org1.id, user1.id)
-				).rejects.toMatchObject({ code: 'FORBIDDEN' });
+				).rejects.toMatchObject({ code: 'NOT_FOUND' });
 			});
 		});
 	});

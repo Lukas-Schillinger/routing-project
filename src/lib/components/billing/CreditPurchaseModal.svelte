@@ -37,11 +37,11 @@
 		isLoading = true;
 
 		try {
-			const response = await billingApi.createCreditsCheckout({
+			const url = await billingApi.createCreditsCheckout({
 				amount: creditAmount,
 				returnUrl: page.url.pathname
 			});
-			window.location.href = response.url;
+			window.location.href = url;
 			onSuccess?.();
 		} catch (e) {
 			error =

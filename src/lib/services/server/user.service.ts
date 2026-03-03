@@ -34,7 +34,7 @@ export const _columnCheck: Record<keyof PublicUser, unknown> =
 	publicUserColumns;
 
 export class UserService {
-	async getUser(userId: string, organizationId: string): Promise<User> {
+	async getUserById(userId: string, organizationId: string): Promise<User> {
 		const [user] = await db
 			.select()
 			.from(users)
@@ -64,7 +64,7 @@ export class UserService {
 		userId: string,
 		organization_id: string
 	): Promise<PublicUser> {
-		const user = await this.getUser(userId, organization_id);
+		const user = await this.getUserById(userId, organization_id);
 		return this.toPublicUser(user);
 	}
 
@@ -114,7 +114,7 @@ export class UserService {
 		organizationId: string,
 		data: UpdateUser
 	): Promise<PublicUser> {
-		const user = await this.getUser(userId, organizationId);
+		const user = await this.getUserById(userId, organizationId);
 
 		const [updatedUser] = await db
 			.update(users)
@@ -137,7 +137,7 @@ export class UserService {
 		data: UpdateUserRole,
 		updatedByUserId: string
 	): Promise<PublicUser> {
-		await this.getUser(userId, organizationId);
+		await this.getUserById(userId, organizationId);
 
 		const [updatedUser] = await db
 			.update(users)
@@ -160,7 +160,7 @@ export class UserService {
 		organizationId: string,
 		passwordHash: string
 	): Promise<void> {
-		await this.getUser(userId, organizationId);
+		await this.getUserById(userId, organizationId);
 
 		await db
 			.update(users)
@@ -178,8 +178,7 @@ export class UserService {
 		userId: string,
 		organizationId: string
 	): Promise<{ success: true }> {
-		// Verify user exists and belongs to organization
-		const user = await this.getUser(userId, organizationId);
+		const user = await this.getUserById(userId, organizationId);
 
 		await db
 			.delete(users)

@@ -70,8 +70,8 @@
 		portalLoading = true;
 		actionError = null;
 		try {
-			const result = await billingApi.createPortalSession(flow);
-			window.location.href = result.url;
+			const url = await billingApi.createPortalSession(flow);
+			window.location.href = url;
 		} catch (e) {
 			actionError =
 				e instanceof Error ? e.message : 'Failed to open billing portal';

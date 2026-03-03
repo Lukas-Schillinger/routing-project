@@ -14,7 +14,7 @@ export const POST: RequestHandler = async () => {
 		const effectiveDate = await subscriptionService.scheduleDowngrade(
 			user.organization_id
 		);
-		return json({ effectiveDate });
+		return json(effectiveDate);
 	} catch (err) {
 		handleApiError(err, 'Failed to schedule downgrade');
 	}
@@ -25,7 +25,7 @@ export const DELETE: RequestHandler = async () => {
 
 	try {
 		await subscriptionService.cancelScheduledDowngrade(user.organization_id);
-		return json({ ok: true });
+		return json({ success: true });
 	} catch (err) {
 		handleApiError(err, 'Failed to cancel scheduled downgrade');
 	}

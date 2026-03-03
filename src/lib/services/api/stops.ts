@@ -42,11 +42,8 @@ class StopApiService {
 	async bulkCreate(
 		mapId: string,
 		data: BulkCreateStops
-	): Promise<{ stops: StopWithLocation[] }> {
-		return apiClient.post<{ stops: StopWithLocation[] }>(
-			`/maps/${mapId}/stops`,
-			data
-		);
+	): Promise<StopWithLocation[]> {
+		return apiClient.post<StopWithLocation[]>(`/maps/${mapId}/stops`, data);
 	}
 
 	/**
@@ -55,11 +52,10 @@ class StopApiService {
 	async reorder(
 		mapId: string,
 		updates: ReorderStops['updates']
-	): Promise<{ stops: StopWithLocation[] }> {
-		return apiClient.post<{ stops: StopWithLocation[] }>(
-			`/maps/${mapId}/stops/reorder`,
-			{ updates }
-		);
+	): Promise<StopWithLocation[]> {
+		return apiClient.post<StopWithLocation[]>(`/maps/${mapId}/stops/reorder`, {
+			updates
+		});
 	}
 }
 

@@ -13,7 +13,7 @@ import { TokenUtils } from './token.utils';
  */
 
 describe('InvitationService', () => {
-	describe('getInvitation', () => {
+	describe('getInvitationById', () => {
 		it('returns invitation when found with matching org', async () => {
 			await withTestTransaction(async () => {
 				const { organization, user } = await createTestEnvironment();
@@ -31,7 +31,7 @@ describe('InvitationService', () => {
 					})
 					.returning();
 
-				const result = await invitationService.getInvitation(
+				const result = await invitationService.getInvitationById(
 					invitation.id,
 					organization.id
 				);
@@ -46,7 +46,7 @@ describe('InvitationService', () => {
 				const { organization } = await createTestEnvironment();
 
 				await expect(
-					invitationService.getInvitation(
+					invitationService.getInvitationById(
 						'00000000-0000-0000-0000-000000000000',
 						organization.id
 					)
@@ -187,15 +187,16 @@ describe('InvitationService', () => {
 			});
 		});
 
-		it('silently succeeds when invitation does not exist', async () => {
+		it('throws NOT_FOUND when invitation does not exist', async () => {
 			await withTestTransaction(async () => {
 				const { organization } = await createTestEnvironment();
 
-				const result = await invitationService.deleteInvitation(
-					'00000000-0000-0000-0000-000000000000',
-					organization.id
-				);
-				expect(result.success).toBe(true);
+				await expect(
+					invitationService.deleteInvitation(
+						'00000000-0000-0000-0000-000000000000',
+						organization.id
+					)
+				).rejects.toMatchObject({ code: 'NOT_FOUND' });
 			});
 		});
 	});

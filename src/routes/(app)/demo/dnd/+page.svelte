@@ -119,8 +119,8 @@
 		console.log('[dnd] saving', updates.length, 'updates', updates);
 		saving = true;
 		try {
-			const result = await stopApi.reorder(data.mapId, updates);
-			console.log('[dnd] server responded with', result.stops.length, 'stops');
+			const stops = await stopApi.reorder(data.mapId, updates);
+			console.log('[dnd] server responded with', stops.length, 'stops');
 			await invalidate(INVALIDATION_KEYS.DEMO);
 			console.log('[dnd] invalidated, rebuilding lists from server data');
 			lists = buildLists();

@@ -27,7 +27,7 @@ export const POST: RequestHandler = async ({ request, params }) => {
 			user.id
 		);
 
-		return json({ stops });
+		return json(stops);
 	} catch (err) {
 		handleApiError(err, 'Failed to reorder stops');
 	}

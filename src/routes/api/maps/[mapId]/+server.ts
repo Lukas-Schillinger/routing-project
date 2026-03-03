@@ -15,7 +15,7 @@ export const GET: RequestHandler = async ({ params }) => {
 	try {
 		const map = await mapService.getMapById(mapId, user.organization_id);
 
-		return json({ map });
+		return json(map);
 	} catch (err) {
 		handleApiError(err, 'Failed to fetch map');
 	}
@@ -40,7 +40,7 @@ export const PATCH: RequestHandler = async ({ request, params }) => {
 			user.id
 		);
 
-		return json({ map });
+		return json(map);
 	} catch (err) {
 		handleApiError(err, 'Failed to update map');
 	}
