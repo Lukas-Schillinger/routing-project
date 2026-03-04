@@ -11,27 +11,6 @@ import { ServiceError } from './errors';
 
 type CreditTransaction = typeof creditTransactions.$inferSelect;
 
-type IdempotencyColumn =
-	| typeof creditTransactions.stripe_payment_intent_id
-	| typeof creditTransactions.optimization_job_id;
-
-/**
- * Check if a transaction already exists by idempotency key.
- * Returns true if transaction exists (should skip), false if new.
- */
-async function transactionExists(
-	column: IdempotencyColumn,
-	value: string
-): Promise<boolean> {
-	const existing = await db
-		.select({ id: creditTransactions.id })
-		.from(creditTransactions)
-		.where(eq(column, value))
-		.limit(1);
-
-	return existing.length > 0;
-}
-
 /**
  * Get the start of the current calendar month (UTC).
  */
@@ -173,23 +152,25 @@ export class BillingService {
 		stripePaymentIntentId: string,
 		description?: string
 	): Promise<void> {
-		if (
-			await transactionExists(
-				creditTransactions.stripe_payment_intent_id,
-				stripePaymentIntentId
-			)
-		) {
-			return;
-		}
+		const rows = await db
+			.insert(creditTransactions)
+			.values({
+				organization_id: organizationId,
+				type: 'purchase',
+				amount,
+				stripe_payment_intent_id: stripePaymentIntentId,
+				description: description ?? `Purchased ${amount} credits`
+			})
+			.onConflictDoNothing({
+				target: creditTransactions.stripe_payment_intent_id
+			})
+			.returning({ id: creditTransactions.id });
 
-		await db.insert(creditTransactions).values({
-			organization_id: organizationId,
-			type: 'purchase',
-			amount,
-			expires_at: null,
-			stripe_payment_intent_id: stripePaymentIntentId,
-			description: description ?? `Purchased ${amount} credits`
-		});
+		if (rows.length === 0) {
+			throw ServiceError.conflict(
+				`Duplicate credit grant for payment intent ${stripePaymentIntentId}`
+			);
+		}
 	}
 
 	/**
@@ -201,23 +182,25 @@ export class BillingService {
 		optimizationJobId: string,
 		description?: string
 	): Promise<void> {
-		if (
-			await transactionExists(
-				creditTransactions.optimization_job_id,
-				optimizationJobId
-			)
-		) {
-			return;
-		}
+		const rows = await db
+			.insert(creditTransactions)
+			.values({
+				organization_id: organizationId,
+				type: 'usage',
+				amount: -Math.abs(amount),
+				optimization_job_id: optimizationJobId,
+				description: description ?? 'Route optimization'
+			})
+			.onConflictDoNothing({
+				target: creditTransactions.optimization_job_id
+			})
+			.returning({ id: creditTransactions.id });
 
-		await db.insert(creditTransactions).values({
-			organization_id: organizationId,
-			type: 'usage',
-			amount: -Math.abs(amount),
-			expires_at: null,
-			optimization_job_id: optimizationJobId,
-			description: description ?? 'Route optimization'
-		});
+		if (rows.length === 0) {
+			throw ServiceError.conflict(
+				`Duplicate usage record for optimization job ${optimizationJobId}`
+			);
+		}
 	}
 
 	/**
@@ -248,7 +231,6 @@ export class BillingService {
 			organization_id: organizationId,
 			type,
 			amount,
-			expires_at: null,
 			description
 		});
 	}

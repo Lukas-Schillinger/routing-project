@@ -183,6 +183,20 @@
       "when": 1772229104526,
       "tag": "0025_orange_dazzler",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1772625534538,
+      "tag": "0026_mixed_shotgun",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1772625982294,
+      "tag": "0027_cheerful_puppet_master",
+      "breakpoints": true
     }
   ]
 }

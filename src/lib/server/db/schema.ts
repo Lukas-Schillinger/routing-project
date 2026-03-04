@@ -80,8 +80,9 @@ export const creditTransactions = pgTable(
 			t.organization_id,
 			t.created_at
 		),
-		index('credit_transactions_optimization_job_idx').on(t.optimization_job_id),
-		index('credit_transactions_invoice_idx').on(t.stripe_invoice_id)
+		index('credit_transactions_invoice_idx').on(t.stripe_invoice_id),
+		uniqueIndex('credit_tx_payment_intent_uidx').on(t.stripe_payment_intent_id),
+		uniqueIndex('credit_tx_optimization_job_uidx').on(t.optimization_job_id)
 	]
 );
 

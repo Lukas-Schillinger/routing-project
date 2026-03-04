@@ -1,0 +1,3 @@
+DROP INDEX "credit_transactions_optimization_job_idx";--> statement-breakpoint
+CREATE UNIQUE INDEX "credit_tx_payment_intent_uidx" ON "credit_transactions" USING btree ("stripe_payment_intent_id") WHERE "credit_transactions"."stripe_payment_intent_id" IS NOT NULL;--> statement-breakpoint
+CREATE UNIQUE INDEX "credit_tx_optimization_job_uidx" ON "credit_transactions" USING btree ("optimization_job_id") WHERE "credit_transactions"."optimization_job_id" IS NOT NULL;

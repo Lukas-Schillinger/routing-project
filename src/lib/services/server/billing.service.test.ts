@@ -207,7 +207,7 @@ describe('BillingService', () => {
 			});
 		});
 
-		it('is idempotent - does not double-grant for same payment intent', async () => {
+		it('is idempotent - throws conflict for same payment intent', async () => {
 			await withTestTransaction(async () => {
 				const { organization } = await createTestEnvironment();
 
@@ -216,11 +216,14 @@ describe('BillingService', () => {
 					500,
 					'pi_test_456'
 				);
-				await billingService.grantPurchasedCredits(
-					organization.id,
-					500,
-					'pi_test_456'
-				);
+
+				await expect(
+					billingService.grantPurchasedCredits(
+						organization.id,
+						500,
+						'pi_test_456'
+					)
+				).rejects.toThrow('Duplicate credit grant');
 
 				const transactions = await db
 					.select()
@@ -320,7 +323,7 @@ describe('BillingService', () => {
 			});
 		});
 
-		it('is idempotent - does not double-charge for same job', async () => {
+		it('is idempotent - throws conflict for same job', async () => {
 			await withTestTransaction(async () => {
 				const { organization, user } = await createTestEnvironment();
 				const map = await createMap({
@@ -349,7 +352,10 @@ describe('BillingService', () => {
 				});
 
 				await billingService.recordUsage(organization.id, 25, job.id);
-				await billingService.recordUsage(organization.id, 25, job.id);
+
+				await expect(
+					billingService.recordUsage(organization.id, 25, job.id)
+				).rejects.toThrow('Duplicate usage record');
 
 				const transactions = await db
 					.select()
