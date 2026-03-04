@@ -171,20 +171,22 @@
 							<Avatar.Image src={getIdenticon(driver)} alt="Driver avatar" />
 							<Avatar.Fallback><User class="h-4 w-4" /></Avatar.Fallback>
 						</Avatar.Root>
-						<div>
-							<h1 class="text-lg font-semibold">{driver.name}</h1>
+						<div class="min-w-0">
+							<h1 class="truncate text-lg font-semibold">{driver.name}</h1>
 							<div
 								class="flex items-center gap-2 text-sm text-muted-foreground"
 							>
-								<Map class="size-4" />
-								<span>{map.title}</span>
+								<Map class="size-4 shrink-0" />
+								<span class="truncate">{map.title}</span>
 							</div>
 						</div>
 					</div>
 				{:else}
 					<div class="flex items-center gap-2">
 						<Route class="h-5 w-5" />
-						<h1 class="text-xl font-semibold">Driver Route - {map.title}</h1>
+						<h1 class="truncate text-xl font-semibold">
+							Driver Route - {map.title}
+						</h1>
 					</div>
 				{/if}
 			</div>

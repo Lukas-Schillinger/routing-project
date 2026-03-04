@@ -55,10 +55,12 @@
 				src="https://storage-public.wend-routing.com/logo/logo_black.svg"
 				alt=""
 			/>
-			<div>
-				<h1 class="m-0 text-2xl font-bold">{map.title}</h1>
+			<div class="min-w-0">
+				<h1 class="m-0 truncate text-2xl font-bold">{map.title}</h1>
 				{#if driver}
-					<h2 class="m-0 text-lg font-medium text-gray-600">{driver.name}</h2>
+					<h2 class="m-0 truncate text-lg font-medium text-gray-600">
+						{driver.name}
+					</h2>
 				{/if}
 			</div>
 		</div>

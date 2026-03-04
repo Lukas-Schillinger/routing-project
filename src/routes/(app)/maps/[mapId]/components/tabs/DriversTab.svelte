@@ -377,8 +377,8 @@
 										onSelect={() => addExistingDriver(driver.id)}
 										disabled={localIsLoading}
 									>
-										<div class="flex items-center gap-2">
-											<Avatar.Root class="h-6 w-6">
+										<div class="flex min-w-0 items-center gap-2">
+											<Avatar.Root class="h-6 w-6 shrink-0">
 												<Avatar.Image
 													src={getIdenticon(driver)}
 													alt={driver.name}
