@@ -4,6 +4,7 @@
 	import { INVALIDATION_KEYS } from '$lib/invalidation-keys';
 	import { resolve } from '$app/paths';
 	import { ConfirmDeleteDialog } from '$lib/components/ConfirmDeleteDialog';
+	import * as Alert from '$lib/components/ui/alert';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
@@ -450,11 +451,9 @@
 		</Card.Header>
 		<Card.Content>
 			{#if $creditMessage}
-				<div
-					class="mb-4 rounded-md bg-destructive/10 p-3 text-sm text-destructive"
-				>
-					{$creditMessage}
-				</div>
+				<Alert.Root variant="destructive" class="mb-4">
+					<Alert.Description>{$creditMessage}</Alert.Description>
+				</Alert.Root>
 			{/if}
 			<form method="POST" use:creditEnhance class="space-y-4">
 				<div class="grid gap-4 sm:grid-cols-3">

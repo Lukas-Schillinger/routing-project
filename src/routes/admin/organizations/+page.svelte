@@ -3,6 +3,7 @@
 	import { goto, invalidate } from '$app/navigation';
 	import { INVALIDATION_KEYS } from '$lib/invalidation-keys';
 	import { resolve } from '$app/paths';
+	import * as Alert from '$lib/components/ui/alert';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
@@ -133,11 +134,9 @@
 					</Dialog.Description>
 				</Dialog.Header>
 				{#if $accountMessage}
-					<div
-						class="rounded-md bg-destructive/10 p-3 text-sm text-destructive"
-					>
-						{$accountMessage}
-					</div>
+					<Alert.Root variant="destructive">
+						<Alert.Description>{$accountMessage}</Alert.Description>
+					</Alert.Root>
 				{/if}
 				<form method="POST" use:accountEnhance class="space-y-4">
 					<Form.Field form={accountForm} name="email">

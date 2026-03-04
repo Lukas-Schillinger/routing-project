@@ -1,4 +1,5 @@
 <script lang="ts">
+	import * as Alert from '$lib/components/ui/alert';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
@@ -87,9 +88,9 @@
 	</div>
 
 	{#if error}
-		<div class="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-			{error}
-		</div>
+		<Alert.Root variant="destructive">
+			<Alert.Description>{error}</Alert.Description>
+		</Alert.Root>
 	{/if}
 
 	<div class="space-y-2">

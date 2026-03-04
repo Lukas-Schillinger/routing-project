@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { ConfirmDeleteDialog } from '$lib/components/ConfirmDeleteDialog';
 	import PhoneInput from '$lib/components/PhoneInput.svelte';
+	import * as Alert from '$lib/components/ui/alert';
 	import { Button } from '$lib/components/ui/button';
 	import { ColorInput } from '$lib/components/ui/color-input';
 	import * as Form from '$lib/components/ui/form';
@@ -122,9 +123,9 @@
 		</div>
 
 		{#if $message}
-			<div class="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-				{$message}
-			</div>
+			<Alert.Root variant="destructive">
+				<Alert.Description>{$message}</Alert.Description>
+			</Alert.Root>
 		{/if}
 
 		<div class="space-y-3">

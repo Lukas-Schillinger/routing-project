@@ -4,6 +4,7 @@
 	import CreditBadge from '$lib/components/billing/CreditBadge.svelte';
 	import { ConfirmDeleteDialog } from '$lib/components/ConfirmDeleteDialog';
 	import EditOrCreateDepotPopover from '$lib/components/EditOrCreateDepotPopover';
+	import * as Alert from '$lib/components/ui/alert';
 	import { Button, buttonVariants } from '$lib/components/ui/button';
 	import * as ButtonGroup from '$lib/components/ui/button-group';
 	import * as Dialog from '$lib/components/ui/dialog';
@@ -207,12 +208,10 @@
 	{:else}
 		<!-- Normal Mode - Optimization Controls -->
 		{#if displayError}
-			<div
-				class="mb-2 flex items-center gap-2 rounded-md bg-destructive/10 px-2.5 py-1.5 text-xs text-destructive"
-			>
+			<Alert.Root variant="destructive" class="mb-2 px-2.5 py-1.5">
 				<AlertCircle class="h-3.5 w-3.5 shrink-0" />
-				<span class="truncate">{displayError}</span>
-			</div>
+				<Alert.Description class="truncate">{displayError}</Alert.Description>
+			</Alert.Root>
 		{/if}
 
 		<div class="flex flex-col gap-2 @2xl:flex-row">
