@@ -163,7 +163,7 @@ describe('Cascading Operations Tests', () => {
 	describe('Temporary Driver Cleanup', () => {
 		it('temporary driver is deleted when removed from map', async () => {
 			await withTestTransaction(async () => {
-				const { organization } = await createTestEnvironment();
+				const { organization, user } = await createTestEnvironment();
 				const testMap = await createMap({ organization_id: organization.id });
 				const testTempDriver = await createDriver({
 					organization_id: organization.id,
@@ -181,7 +181,8 @@ describe('Cascading Operations Tests', () => {
 				await mapService.removeDriverFromMap(
 					testTempDriver.id,
 					testMap.id,
-					organization.id
+					organization.id,
+					user.id
 				);
 
 				// Verify temp driver is deleted
@@ -195,7 +196,7 @@ describe('Cascading Operations Tests', () => {
 
 		it('permanent driver is NOT deleted when removed from map', async () => {
 			await withTestTransaction(async () => {
-				const { organization } = await createTestEnvironment();
+				const { organization, user } = await createTestEnvironment();
 				const testMap = await createMap({ organization_id: organization.id });
 				const testDriver = await createDriver({
 					organization_id: organization.id,
@@ -213,7 +214,8 @@ describe('Cascading Operations Tests', () => {
 				await mapService.removeDriverFromMap(
 					testDriver.id,
 					testMap.id,
-					organization.id
+					organization.id,
+					user.id
 				);
 
 				// Verify permanent driver still exists

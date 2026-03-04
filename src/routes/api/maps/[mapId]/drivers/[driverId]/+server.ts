@@ -9,11 +9,14 @@ import type { RequestHandler } from './$types';
 export const DELETE: RequestHandler = async ({ params }) => {
 	const user = requirePermissionApi('resources:delete');
 
+	const { mapId, driverId } = params;
+
 	try {
 		await mapService.removeDriverFromMap(
-			params.driverId,
-			params.mapId,
-			user.organization_id
+			driverId,
+			mapId,
+			user.organization_id,
+			user.id
 		);
 
 		return json({ success: true });

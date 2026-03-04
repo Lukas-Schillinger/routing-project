@@ -427,32 +427,62 @@ export class MapService {
 	async removeDriverFromMap(
 		driverId: string,
 		mapId: string,
-		organizationId: string
+		organizationId: string,
+		userId: string
 	) {
 		const driver = await driverService.getDriverById(driverId, organizationId);
 		await this.getMapById(mapId, organizationId);
 
-		// Delete membership first
-		// Note: Not using transaction because driverService.deleteDriver uses its own db connection,
-		// which causes deadlock when called inside a transaction. Risk of orphaned temp driver is acceptable.
-		const [deleted] = await db
-			.delete(driverMapMemberships)
-			.where(
-				and(
-					eq(driverMapMemberships.driver_id, driverId),
-					eq(driverMapMemberships.map_id, mapId)
+		await db.transaction(async (tx) => {
+			// Unassign this driver's stops on this map
+			await tx
+				.update(stops)
+				.set({
+					driver_id: null,
+					delivery_index: null,
+					updated_at: new Date(),
+					updated_by: userId
+				})
+				.where(and(eq(stops.map_id, mapId), eq(stops.driver_id, driverId)));
+
+			// Delete the route for this driver on this map
+			await tx
+				.delete(routes)
+				.where(
+					and(
+						eq(routes.map_id, mapId),
+						eq(routes.driver_id, driverId),
+						eq(routes.organization_id, organizationId)
+					)
+				);
+
+			// Delete the membership
+			const [deleted] = await tx
+				.delete(driverMapMemberships)
+				.where(
+					and(
+						eq(driverMapMemberships.driver_id, driverId),
+						eq(driverMapMemberships.map_id, mapId)
+					)
 				)
-			)
-			.returning();
+				.returning();
 
-		if (!deleted) {
-			throw ServiceError.notFound('Driver is not assigned to this map');
-		}
+			if (!deleted) {
+				throw ServiceError.notFound('Driver is not assigned to this map');
+			}
 
-		// Temporary drivers are deleted when removed from the map they were created for
-		if (driver.temporary) {
-			await driverService.deleteDriver(driverId, organizationId);
-		}
+			// Temp drivers are deleted when removed from their map
+			if (driver.temporary) {
+				await tx
+					.delete(drivers)
+					.where(
+						and(
+							eq(drivers.id, driverId),
+							eq(drivers.organization_id, organizationId)
+						)
+					);
+			}
+		});
 
 		return { success: true };
 	}

@@ -1,5 +1,10 @@
 import { db } from '$lib/server/db';
-import { driverMapMemberships, drivers, stops } from '$lib/server/db/schema';
+import {
+	driverMapMemberships,
+	drivers,
+	routes,
+	stops
+} from '$lib/server/db/schema';
 import {
 	createDepot,
 	createDriver,
@@ -10,7 +15,7 @@ import {
 	createTestEnvironment,
 	withTestTransaction
 } from '$lib/testing';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 import { mapService } from './map.service';
 
@@ -535,7 +540,7 @@ describe('MapService', () => {
 
 		it('removes driver from map', async () => {
 			await withTestTransaction(async () => {
-				const { organization } = await createTestEnvironment();
+				const { organization, user } = await createTestEnvironment();
 				const driver = await createDriver({
 					organization_id: organization.id,
 					active: true
@@ -546,7 +551,8 @@ describe('MapService', () => {
 				await mapService.removeDriverFromMap(
 					driver.id,
 					map.id,
-					organization.id
+					organization.id,
+					user.id
 				);
 
 				const results = await mapService.getDriversForMap(
@@ -559,7 +565,7 @@ describe('MapService', () => {
 
 		it('throws NOT_FOUND removing unassigned driver', async () => {
 			await withTestTransaction(async () => {
-				const { organization } = await createTestEnvironment();
+				const { organization, user } = await createTestEnvironment();
 				const driver = await createDriver({
 					organization_id: organization.id,
 					active: true
@@ -567,14 +573,19 @@ describe('MapService', () => {
 				const map = await createMap({ organization_id: organization.id });
 
 				await expect(
-					mapService.removeDriverFromMap(driver.id, map.id, organization.id)
+					mapService.removeDriverFromMap(
+						driver.id,
+						map.id,
+						organization.id,
+						user.id
+					)
 				).rejects.toMatchObject({ code: 'NOT_FOUND' });
 			});
 		});
 
 		it('deletes temporary driver when removed from map', async () => {
 			await withTestTransaction(async () => {
-				const { organization } = await createTestEnvironment();
+				const { organization, user } = await createTestEnvironment();
 				const tempDriver = await createDriver({
 					organization_id: organization.id,
 					temporary: true
@@ -585,7 +596,8 @@ describe('MapService', () => {
 				await mapService.removeDriverFromMap(
 					tempDriver.id,
 					map.id,
-					organization.id
+					organization.id,
+					user.id
 				);
 
 				const remainingDrivers = await db
@@ -593,6 +605,82 @@ describe('MapService', () => {
 					.from(drivers)
 					.where(eq(drivers.id, tempDriver.id));
 				expect(remainingDrivers.length).toBe(0);
+			});
+		});
+
+		it('unassigns stops when driver is removed from map', async () => {
+			await withTestTransaction(async () => {
+				const { organization, user } = await createTestEnvironment();
+				const driver = await createDriver({
+					organization_id: organization.id,
+					active: true
+				});
+				const map = await createMap({ organization_id: organization.id });
+				const location = await createLocation({
+					organization_id: organization.id
+				});
+				const stop = await createStop({
+					organization_id: organization.id,
+					map_id: map.id,
+					location_id: location.id,
+					driver_id: driver.id,
+					delivery_index: 1
+				});
+
+				await mapService.addDriverToMap(driver.id, map.id, organization.id);
+				await mapService.removeDriverFromMap(
+					driver.id,
+					map.id,
+					organization.id,
+					user.id
+				);
+
+				const [updated] = await db
+					.select()
+					.from(stops)
+					.where(eq(stops.id, stop.id));
+				expect(updated.driver_id).toBeNull();
+				expect(updated.delivery_index).toBeNull();
+			});
+		});
+
+		it('deletes route when driver is removed from map', async () => {
+			await withTestTransaction(async () => {
+				const { organization, user } = await createTestEnvironment();
+				const driver = await createDriver({
+					organization_id: organization.id,
+					active: true
+				});
+				const map = await createMap({ organization_id: organization.id });
+				const location = await createLocation({
+					organization_id: organization.id
+				});
+				const depot = await createDepot({
+					organization_id: organization.id,
+					location_id: location.id
+				});
+				await createRoute({
+					organization_id: organization.id,
+					map_id: map.id,
+					driver_id: driver.id,
+					depot_id: depot.id
+				});
+
+				await mapService.addDriverToMap(driver.id, map.id, organization.id);
+				await mapService.removeDriverFromMap(
+					driver.id,
+					map.id,
+					organization.id,
+					user.id
+				);
+
+				const remainingRoutes = await db
+					.select()
+					.from(routes)
+					.where(
+						and(eq(routes.map_id, map.id), eq(routes.driver_id, driver.id))
+					);
+				expect(remainingRoutes.length).toBe(0);
 			});
 		});
 

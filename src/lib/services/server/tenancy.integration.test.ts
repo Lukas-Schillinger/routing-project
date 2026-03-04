@@ -556,10 +556,10 @@ describe('Multi-Tenancy Isolation Tests', () => {
 
 		it('cannot remove driver from another org map', async () => {
 			await withTestTransaction(async () => {
-				const { org1, map2, driver2 } = await createTwoTenants();
+				const { org1, user1, map2, driver2 } = await createTwoTenants();
 
 				await expect(
-					mapService.removeDriverFromMap(driver2.id, map2.id, org1.id)
+					mapService.removeDriverFromMap(driver2.id, map2.id, org1.id, user1.id)
 				).rejects.toMatchObject({ code: 'NOT_FOUND' });
 			});
 		});
