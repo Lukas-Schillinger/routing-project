@@ -10,6 +10,7 @@ import {
 	createSession,
 	validateSessionToken,
 	invalidateSession,
+	invalidateAllUserSessions,
 	setSessionTokenCookie,
 	deleteSessionTokenCookie,
 	sessionCookieName
@@ -186,6 +187,93 @@ describe('Session Service', () => {
 					.from(session)
 					.where(eq(session.id, createdSession.id));
 				expect(gone).toBeUndefined();
+			});
+		});
+	});
+
+	describe('invalidateAllUserSessions', () => {
+		it('removes all sessions for a user', async () => {
+			await withTestTransaction(async () => {
+				const { user } = await createTestEnvironment();
+
+				const token1 = generateSessionToken();
+				const token2 = generateSessionToken();
+				const token3 = generateSessionToken();
+				await createSession(token1, user.id);
+				await createSession(token2, user.id);
+				await createSession(token3, user.id);
+
+				const before = await db
+					.select()
+					.from(session)
+					.where(eq(session.user_id, user.id));
+				expect(before).toHaveLength(3);
+
+				await invalidateAllUserSessions(user.id);
+
+				const after = await db
+					.select()
+					.from(session)
+					.where(eq(session.user_id, user.id));
+				expect(after).toHaveLength(0);
+			});
+		});
+
+		it('does not affect other users sessions', async () => {
+			await withTestTransaction(async () => {
+				const { user, organization } = await createTestEnvironment();
+
+				// Create a second user in the same org
+				const [otherUser] = await db
+					.insert((await import('$lib/server/db/schema')).users)
+					.values({
+						email: 'other@test.local',
+						organization_id: organization.id,
+						role: 'member'
+					})
+					.returning();
+
+				const userToken = generateSessionToken();
+				const otherToken = generateSessionToken();
+				await createSession(userToken, user.id);
+				await createSession(otherToken, otherUser.id);
+
+				await invalidateAllUserSessions(user.id);
+
+				const userSessions = await db
+					.select()
+					.from(session)
+					.where(eq(session.user_id, user.id));
+				expect(userSessions).toHaveLength(0);
+
+				const otherSessions = await db
+					.select()
+					.from(session)
+					.where(eq(session.user_id, otherUser.id));
+				expect(otherSessions).toHaveLength(1);
+			});
+		});
+
+		it('allows creating a new session after invalidation', async () => {
+			await withTestTransaction(async () => {
+				const { user } = await createTestEnvironment();
+
+				const oldToken = generateSessionToken();
+				await createSession(oldToken, user.id);
+
+				await invalidateAllUserSessions(user.id);
+
+				const newToken = generateSessionToken();
+				const newSession = await createSession(newToken, user.id);
+
+				// Old session gone
+				const oldResult = await validateSessionToken(oldToken);
+				expect(oldResult.session).toBeNull();
+
+				// New session works
+				const newResult = await validateSessionToken(newToken);
+				expect(newResult.session).not.toBeNull();
+				expect(newResult.session!.id).toBe(newSession.id);
 			});
 		});
 	});

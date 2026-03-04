@@ -4,6 +4,7 @@ import { resetPasswordSchema } from '$lib/schemas';
 import {
 	createSession,
 	generateSessionToken,
+	invalidateAllUserSessions,
 	setSessionTokenCookie
 } from '$lib/services/server/auth';
 import { loginTokenService } from '$lib/services/server/login-token.service';
@@ -77,6 +78,8 @@ export const actions: Actions = {
 				user.organization_id,
 				passwordHash
 			);
+
+			await invalidateAllUserSessions(user.id);
 
 			const sessionToken = generateSessionToken();
 			const session = await createSession(sessionToken, user.id);

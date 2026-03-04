@@ -197,6 +197,13 @@
       "when": 1772625982294,
       "tag": "0027_cheerful_puppet_master",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1772627373258,
+      "tag": "0028_foamy_the_watchers",
+      "breakpoints": true
     }
   ]
 }

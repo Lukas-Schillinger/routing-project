@@ -137,16 +137,20 @@ export const users = pgTable(
 	]
 );
 
-export const session = pgTable('session', {
-	id: text('id').primaryKey(),
-	user_id: uuid().references(() => users.id, { onDelete: 'cascade' }),
-	expires_at: timestamp('expires_at', {
-		withTimezone: true,
-		mode: 'date'
-	}).notNull(),
-	created_at: ts('created_at'),
-	updated_at: ts('updated_at')
-});
+export const session = pgTable(
+	'session',
+	{
+		id: text('id').primaryKey(),
+		user_id: uuid().references(() => users.id, { onDelete: 'cascade' }),
+		expires_at: timestamp('expires_at', {
+			withTimezone: true,
+			mode: 'date'
+		}).notNull(),
+		created_at: ts('created_at'),
+		updated_at: ts('updated_at')
+	},
+	(t) => [index('session_user_id_idx').on(t.user_id)]
+);
 
 export const invitations = pgTable(
 	'invitations',

@@ -81,9 +81,14 @@ export type SessionValidationResult = Awaited<
 	ReturnType<typeof validateSessionToken>
 >;
 
-export async function invalidateSession(sessionId: string) {
+export async function invalidateSession(sessionId: string): Promise<void> {
 	await db.delete(table.session).where(eq(table.session.id, sessionId));
 	log.info({ sessionId }, 'Session invalidated');
+}
+
+export async function invalidateAllUserSessions(userId: string): Promise<void> {
+	await db.delete(table.session).where(eq(table.session.user_id, userId));
+	log.info({ userId }, 'All sessions invalidated for user');
 }
 
 export function setSessionTokenCookie(
