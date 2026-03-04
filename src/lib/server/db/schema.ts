@@ -1,6 +1,7 @@
 // src/lib/server/db/schema.ts
 import { relations, sql } from 'drizzle-orm';
 import {
+	type AnyPgColumn,
 	boolean,
 	doublePrecision,
 	index,
@@ -89,9 +90,13 @@ export const creditTransactions = pgTable(
 export const organizations = pgTable('organizations', {
 	id,
 	created_at: ts('created_at'),
-	created_by: uuid('created_by'),
+	created_by: uuid('created_by').references((): AnyPgColumn => users.id, {
+		onDelete: 'set null'
+	}),
 	updated_at: ts('updated_at'),
-	updated_by: uuid('updated_by'),
+	updated_by: uuid('updated_by').references((): AnyPgColumn => users.id, {
+		onDelete: 'set null'
+	}),
 
 	name: varchar('name', { length: 200 }).notNull(),
 
