@@ -1,9 +1,11 @@
 <script lang="ts">
+	import { dev } from '$app/environment';
+	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { Button } from '$lib/components/ui/button';
 	import type { PublicUser } from '$lib/schemas';
-	import { Map, User as UserIcon } from 'lucide-svelte';
+	import { DatabaseZap, Map, User as UserIcon } from 'lucide-svelte';
 	import { mode } from 'mode-watcher';
 
 	// Nav items with their active route prefixes
@@ -19,6 +21,21 @@
 		user?: PublicUser | null;
 		showLines?: boolean;
 	} = $props();
+
+	let provisioning = $state(false);
+
+	async function provision() {
+		provisioning = true;
+		try {
+			const response = await fetch(resolve('/api/dev/provision'), {
+				method: 'POST'
+			});
+			const data = await response.json();
+			await goto(resolve(data.redirectUrl));
+		} finally {
+			provisioning = false;
+		}
+	}
 
 	let isActive = $derived({
 		maps: page.url.pathname.startsWith(NAV_ACTIVE_PREFIXES.maps),
@@ -48,6 +65,18 @@
 					<span class="pb-0.5 text-xl font-bold tracking-tighter">wend</span>
 				</a>
 				<div class="flex gap-2">
+					{#if dev}
+						<Button
+							class="rounded-full border-dashed border-orange-500/50 text-orange-500 hover:border-orange-500 hover:bg-orange-500/10"
+							variant="outline"
+							size="sm"
+							onclick={provision}
+							disabled={provisioning}
+						>
+							<DatabaseZap />
+							{provisioning ? 'Seeding...' : 'Seed Dev Account'}
+						</Button>
+					{/if}
 					{#if user}
 						<Button
 							class="rounded-full"
