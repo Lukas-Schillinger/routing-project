@@ -7,7 +7,7 @@
 	import { ServiceError } from '$lib/errors';
 	import type { Driver } from '$lib/schemas';
 	import { mapApi } from '$lib/services/api';
-	import { onDestroy } from 'svelte';
+	import { onDestroy, untrack } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import { useSearchParams } from 'runed/kit';
 	import { z } from 'zod';
@@ -43,10 +43,14 @@
 	let hiddenDrivers = $state<Driver[]>([]);
 
 	// Optimization polling
-	const poller = createOptimizationPoller(data.map.id, data.stops.length, {
-		onComplete: () => invalidate(INVALIDATION_KEYS.MAP_DATA),
-		onCancelled: () => invalidate(INVALIDATION_KEYS.MAP_DATA)
-	});
+	const poller = createOptimizationPoller(
+		untrack(() => data.map.id),
+		untrack(() => data.stops.length),
+		{
+			onComplete: () => invalidate(INVALIDATION_KEYS.MAP_DATA),
+			onCancelled: () => invalidate(INVALIDATION_KEYS.MAP_DATA)
+		}
+	);
 
 	// Derive page state
 	type PageState = 'normal' | 'optimizing';

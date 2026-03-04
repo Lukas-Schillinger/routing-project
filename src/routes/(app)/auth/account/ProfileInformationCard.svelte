@@ -13,6 +13,7 @@
 	import { formatDate } from '$lib/utils';
 	import { MoonIcon, SunIcon } from 'lucide-svelte';
 	import { toggleMode } from 'mode-watcher';
+	import { untrack } from 'svelte';
 	import { toast } from 'svelte-sonner';
 
 	// Props
@@ -23,7 +24,7 @@
 	} = $props();
 
 	// Form state — $state so bind:value can write to it
-	let nameValue = $state(user.name ?? '');
+	let nameValue = $state(untrack(() => user.name ?? ''));
 	let isSavingName = $state(false);
 	let nameTimeout: ReturnType<typeof setTimeout> | null = null;
 
