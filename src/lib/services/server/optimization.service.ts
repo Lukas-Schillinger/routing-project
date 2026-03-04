@@ -84,9 +84,7 @@ function parseCoordinate(
 }
 
 export const optimizationConfigSchema = z.object({
-	fairness: z.enum(['high', 'medium', 'low']).default('medium'),
-	start_at_depot: z.boolean().default(true),
-	end_at_depot: z.boolean().default(false)
+	fairness: z.enum(['high', 'medium', 'low']).default('medium')
 });
 
 export const matrixPayloadSchema = z.object({
@@ -176,11 +174,6 @@ const VALID_TRANSITIONS: Record<JobStatus, JobStatus[]> = {
 export class OptimizationService {
 	private sqsClient: SQSClient;
 	private queueUrl: string;
-
-	private readonly DEFAULT_CONFIG = {
-		start_at_depot: true,
-		end_at_depot: true
-	} as const;
 
 	constructor(sqsClient?: SQSClient) {
 		this.sqsClient = sqsClient ?? this.createDefaultSQSClient();
@@ -313,10 +306,7 @@ export class OptimizationService {
 			matrix,
 			stop_ids: stopIds,
 			vehicle_ids: vehicleIds,
-			config: {
-				...this.DEFAULT_CONFIG,
-				fairness
-			}
+			config: { fairness }
 		};
 
 		const sqsPayloadSchema = matrixPayloadSchema.extend({ job_id: z.uuid() });
