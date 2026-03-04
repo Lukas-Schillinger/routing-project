@@ -55,7 +55,8 @@
 			<Button
 				variant="ghost"
 				href={resolve('/auth/login')}
-				class="mt-2 h-10 text-muted-foreground hover:text-foreground"
+				size="lg"
+				class="mt-2 text-muted-foreground hover:text-foreground"
 			>
 				Back to login
 			</Button>
@@ -95,11 +96,7 @@
 			</Form.Field>
 
 			<div class="flex flex-col gap-3 pt-2">
-				<Button
-					type="submit"
-					class="h-11 w-full font-medium"
-					disabled={$submitting}
-				>
+				<Button type="submit" size="lg" class="w-full" disabled={$submitting}>
 					{#if $submitting}
 						<Loader2 class="h-4 w-4 animate-spin" />
 						Sending...
@@ -111,7 +108,8 @@
 				<Button
 					variant="ghost"
 					href={resolve('/auth/login')}
-					class="h-10 w-full text-muted-foreground hover:text-foreground"
+					size="lg"
+					class="w-full text-muted-foreground hover:text-foreground"
 					disabled={$submitting}
 				>
 					Back to login

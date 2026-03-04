@@ -174,8 +174,8 @@
 									<Button
 										{...props}
 										variant="ghost"
-										size="icon"
-										class="h-8 w-8 text-muted-foreground hover:text-destructive"
+										size="icon-sm"
+										class="text-muted-foreground hover:text-destructive"
 										aria-label="Cancel invitation"
 									>
 										<Trash2 class="h-4 w-4" />

@@ -62,11 +62,7 @@
 		</Form.Field>
 
 		<div class="pt-2">
-			<Button
-				type="submit"
-				class="h-11 w-full font-medium"
-				disabled={$submitting}
-			>
+			<Button type="submit" size="lg" class="w-full" disabled={$submitting}>
 				{#if $submitting}
 					<Loader2 class="h-4 w-4 animate-spin" />
 					Resetting password...

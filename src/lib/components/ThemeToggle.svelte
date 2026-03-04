@@ -9,9 +9,8 @@
 
 <Button
 	variant={variant ? variant : 'default'}
-	size="sm"
+	size="icon"
 	onclick={toggleMode}
-	class="h-9 w-9 p-0"
 	aria-label="Toggle theme"
 >
 	{#if mode.current === 'dark'}

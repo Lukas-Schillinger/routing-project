@@ -123,11 +123,7 @@
 		</div>
 
 		<div class="flex flex-col gap-3 pt-2">
-			<Button
-				type="submit"
-				class="h-11 w-full font-medium"
-				disabled={isSubmitting}
-			>
+			<Button type="submit" size="lg" class="w-full" disabled={isSubmitting}>
 				{#if isSubmitting}
 					<Loader2 class="h-4 w-4 animate-spin" />
 					Sending...
@@ -140,7 +136,8 @@
 			<Button
 				variant="ghost"
 				type="button"
-				class="h-10 w-full text-muted-foreground hover:text-foreground"
+				size="lg"
+				class="w-full text-muted-foreground hover:text-foreground"
 				onclick={handleBack}
 				disabled={isSubmitting}
 			>
@@ -217,7 +214,8 @@
 		<div class="flex flex-col items-center gap-3 pt-2">
 			<Button
 				type="submit"
-				class="h-11 w-full"
+				size="lg"
+				class="w-full"
 				disabled={isSubmitting || code.length !== 6}
 			>
 				{#if isSubmitting}
@@ -231,7 +229,8 @@
 			<Button
 				variant="ghost"
 				type="button"
-				class="h-10 w-full text-muted-foreground hover:text-foreground"
+				size="lg"
+				class="w-full text-muted-foreground hover:text-foreground"
 				onclick={handleBack}
 				disabled={isSubmitting}
 			>

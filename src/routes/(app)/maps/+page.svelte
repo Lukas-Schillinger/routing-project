@@ -352,8 +352,8 @@
 							<!-- First page -->
 							<Button
 								variant="ghost"
-								size="icon"
-								class="hidden h-8 w-8 sm:flex"
+								size="icon-sm"
+								class="hidden sm:flex"
 								disabled={currentPage === 1}
 								onclick={() => goToPage(1)}
 								aria-label="First page"
@@ -363,8 +363,7 @@
 							<!-- Previous -->
 							<Button
 								variant="ghost"
-								size="icon"
-								class="h-8 w-8"
+								size="icon-sm"
 								disabled={currentPage === 1}
 								onclick={() => goToPage(currentPage - 1)}
 								aria-label="Previous page"
@@ -378,8 +377,8 @@
 							{#each getVisiblePageNumbers() as page (page)}
 								<Button
 									variant={currentPage === page ? 'secondary' : 'ghost'}
-									size="icon"
-									class="h-8 w-8 text-sm"
+									size="icon-sm"
+									class="text-sm"
 									onclick={() => goToPage(page)}
 									aria-label="Page {page}"
 								>
@@ -392,8 +391,7 @@
 							<!-- Next -->
 							<Button
 								variant="ghost"
-								size="icon"
-								class="h-8 w-8"
+								size="icon-sm"
 								disabled={currentPage === totalPages}
 								onclick={() => goToPage(currentPage + 1)}
 								aria-label="Next page"
@@ -403,8 +401,8 @@
 							<!-- Last page -->
 							<Button
 								variant="ghost"
-								size="icon"
-								class="hidden h-8 w-8 sm:flex"
+								size="icon-sm"
+								class="hidden sm:flex"
 								disabled={currentPage === totalPages}
 								onclick={() => goToPage(totalPages)}
 								aria-label="Last page"
