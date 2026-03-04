@@ -25,6 +25,7 @@
 		Eye,
 		EyeOff,
 		GripVertical,
+		Loader2,
 		MapPin,
 		Pencil,
 		Plus,
@@ -345,9 +346,19 @@
 			<Popover.Root bind:open={addPopoverOpen}>
 				<Popover.Trigger>
 					{#snippet child({ props })}
-						<Button {...props} variant="outline" class="gap-1.5 px-2">
-							<Plus class="h-3.5 w-3.5" />
-							Add Driver
+						<Button
+							{...props}
+							variant="outline"
+							class="gap-1.5 px-2"
+							disabled={localIsLoading}
+						>
+							{#if localIsLoading}
+								<Loader2 class="h-3.5 w-3.5 animate-spin" />
+								Adding…
+							{:else}
+								<Plus class="h-3.5 w-3.5" />
+								Add Driver
+							{/if}
 						</Button>
 					{/snippet}
 				</Popover.Trigger>
