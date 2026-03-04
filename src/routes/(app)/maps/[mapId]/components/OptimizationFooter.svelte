@@ -21,16 +21,14 @@
 		StopWithLocation
 	} from '$lib/schemas';
 	import { mapApi } from '$lib/services/api';
-	import {
-		AlertCircle,
-		Building2,
-		Loader2,
-		Plus,
-		RotateCcw,
-		Sparkles,
-		TriangleAlert,
-		X
-	} from 'lucide-svelte';
+	import AlertCircle from '@lucide/svelte/icons/alert-circle';
+	import Building2 from '@lucide/svelte/icons/building-2';
+	import Loader2 from '@lucide/svelte/icons/loader-2';
+	import Plus from '@lucide/svelte/icons/plus';
+	import RotateCcw from '@lucide/svelte/icons/rotate-ccw';
+	import Sparkles from '@lucide/svelte/icons/sparkles';
+	import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
+	import X from '@lucide/svelte/icons/x';
 	import { toast } from 'svelte-sonner';
 
 	type PageState = 'normal' | 'optimizing';

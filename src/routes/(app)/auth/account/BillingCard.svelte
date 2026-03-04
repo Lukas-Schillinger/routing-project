@@ -17,7 +17,7 @@
 	} from '$lib/server/db/schema';
 	import { billingApi } from '$lib/services/api/billing';
 	import { formatDate } from '$lib/utils';
-	import { ChevronDown } from 'lucide-svelte';
+	import ChevronDown from '@lucide/svelte/icons/chevron-down';
 	import { slide } from 'svelte/transition';
 
 	type Props = {

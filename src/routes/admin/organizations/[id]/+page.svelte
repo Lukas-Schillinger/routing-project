@@ -16,7 +16,9 @@
 	import * as Select from '$lib/components/ui/select';
 	import * as Table from '$lib/components/ui/table';
 	import { formatDate } from '$lib/utils';
-	import { LogIn, RefreshCw, Trash2 } from 'lucide-svelte';
+	import LogIn from '@lucide/svelte/icons/log-in';
+	import RefreshCw from '@lucide/svelte/icons/refresh-cw';
+	import Trash2 from '@lucide/svelte/icons/trash-2';
 	import { toast } from 'svelte-sonner';
 	import { defaults, setMessage, superForm } from 'sveltekit-superforms';
 	import { zod4, zod4Client } from 'sveltekit-superforms/adapters';

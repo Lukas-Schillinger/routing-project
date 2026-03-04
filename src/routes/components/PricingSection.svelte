@@ -2,7 +2,7 @@
 	import { resolve } from '$app/paths';
 	import { Button } from '$lib/components/ui/button';
 	import * as Tabs from '$lib/components/ui/tabs';
-	import { Check } from 'lucide-svelte';
+	import Check from '@lucide/svelte/icons/check';
 	import { browser } from '$app/environment';
 	import { inView } from 'motion';
 

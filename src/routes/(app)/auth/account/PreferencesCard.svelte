@@ -4,7 +4,9 @@
 	import * as Card from '$lib/components/ui/card';
 	import { Label } from '$lib/components/ui/label';
 	import { Separator } from '$lib/components/ui/separator';
-	import { Calendar, Key, Settings } from 'lucide-svelte';
+	import Calendar from '@lucide/svelte/icons/calendar';
+	import Key from '@lucide/svelte/icons/key';
+	import Settings from '@lucide/svelte/icons/settings';
 </script>
 
 <Card.Root>

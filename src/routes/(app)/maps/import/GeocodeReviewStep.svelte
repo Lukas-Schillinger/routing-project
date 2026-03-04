@@ -4,8 +4,7 @@
 	import type { ImportRecord, ImportState } from '$lib/schemas/import';
 	import type { LocationCreate } from '$lib/schemas/location';
 	import { cn } from '$lib/utils';
-	import { Pencil } from 'lucide-svelte';
-
+	import Pencil from '@lucide/svelte/icons/pencil';
 	let {
 		importState = $bindable(),
 		onImport,

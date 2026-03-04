@@ -1,6 +1,6 @@
 <script>
 	import { Button } from '$lib/components/ui/button';
-	import { ArrowRight } from 'lucide-svelte';
+	import ArrowRight from '@lucide/svelte/icons/arrow-right';
 </script>
 
 <div class="flex">

@@ -2,8 +2,11 @@
 	import { browser } from '$app/environment';
 	import { inView } from 'motion';
 	import { SvelteSet } from 'svelte/reactivity';
-	import { ChevronDown, Clock, MapPin, Plus, Truck } from 'lucide-svelte';
-
+	import ChevronDown from '@lucide/svelte/icons/chevron-down';
+	import Clock from '@lucide/svelte/icons/clock';
+	import MapPin from '@lucide/svelte/icons/map-pin';
+	import Plus from '@lucide/svelte/icons/plus';
+	import Truck from '@lucide/svelte/icons/truck';
 	const driverData = [
 		{
 			initials: 'MR',

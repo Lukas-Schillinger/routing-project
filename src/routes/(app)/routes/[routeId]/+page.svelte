@@ -5,7 +5,10 @@
 	import MapView from '$lib/components/map/MapView.svelte';
 	import * as Avatar from '$lib/components/ui/avatar';
 	import { getIdenticon } from '$lib/utils';
-	import { Map, Menu, Route, User } from 'lucide-svelte';
+	import Map from '@lucide/svelte/icons/map';
+	import Menu from '@lucide/svelte/icons/menu';
+	import Route from '@lucide/svelte/icons/route';
+	import User from '@lucide/svelte/icons/user';
 	import type { PageData } from './$types';
 	import CurrentStopPanel from './CurrentStopPanel.svelte';
 	import RouteSettingsDropdown from './RouteSettingsDropdown.svelte';

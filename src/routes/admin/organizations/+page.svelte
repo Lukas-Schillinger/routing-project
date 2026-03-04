@@ -15,7 +15,7 @@
 	import { adminApi } from '$lib/services/api';
 	import * as Table from '$lib/components/ui/table';
 	import { formatDate } from '$lib/utils';
-	import { Plus } from 'lucide-svelte';
+	import Plus from '@lucide/svelte/icons/plus';
 	import { toast } from 'svelte-sonner';
 	import { defaults, setMessage, superForm } from 'sveltekit-superforms';
 	import { zod4, zod4Client } from 'sveltekit-superforms/adapters';

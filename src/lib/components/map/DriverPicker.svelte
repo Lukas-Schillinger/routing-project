@@ -7,7 +7,9 @@
 	import type { StopWithLocation } from '$lib/schemas/stop';
 	import { stopApi } from '$lib/services/api';
 	import { getIdenticon } from '$lib/utils';
-	import { Check, Minus, Plus } from 'lucide-svelte';
+	import Check from '@lucide/svelte/icons/check';
+	import Minus from '@lucide/svelte/icons/minus';
+	import Plus from '@lucide/svelte/icons/plus';
 	import { toast } from 'svelte-sonner';
 
 	interface Props {

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import * as Tabs from '$lib/components/ui/tabs';
-	import { MapPin, Truck } from 'lucide-svelte';
-
+	import MapPin from '@lucide/svelte/icons/map-pin';
+	import Truck from '@lucide/svelte/icons/truck';
 	type PageState = 'normal' | 'optimizing';
 
 	let {

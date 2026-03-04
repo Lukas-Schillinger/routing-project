@@ -1,7 +1,8 @@
 <script lang="ts">
 	import * as Alert from '$lib/components/ui/alert';
-	import { CircleCheck, Info, TriangleAlert } from 'lucide-svelte';
-
+	import CircleCheck from '@lucide/svelte/icons/circle-check';
+	import Info from '@lucide/svelte/icons/info';
+	import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
 	interface Props {
 		message: string | null | undefined;
 		variant?: 'error' | 'success' | 'info';

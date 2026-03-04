@@ -12,7 +12,10 @@
 	import { driverApi } from '$lib/services/api/drivers';
 	import { mapApi } from '$lib/services/api/maps';
 	import { formatDate, generateRandomColor } from '$lib/utils';
-	import { Check, Loader2, RefreshCw, Trash2 } from 'lucide-svelte';
+	import Check from '@lucide/svelte/icons/check';
+	import Loader2 from '@lucide/svelte/icons/loader-2';
+	import RefreshCw from '@lucide/svelte/icons/refresh-cw';
+	import Trash2 from '@lucide/svelte/icons/trash-2';
 	import { untrack } from 'svelte';
 	import {
 		defaults,

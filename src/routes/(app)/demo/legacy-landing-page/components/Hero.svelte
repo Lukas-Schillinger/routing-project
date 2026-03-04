@@ -2,7 +2,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import type { Route } from '$lib/schemas';
 	import type { StopWithLocation } from '$lib/schemas/stop';
-	import { ArrowRight } from 'lucide-svelte';
+	import ArrowRight from '@lucide/svelte/icons/arrow-right';
 	import JSONData from './landing-data.json';
 	import RouteAnimation from './RouteAnimation.svelte';
 

@@ -6,7 +6,10 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import type { Map } from '$lib/schemas/map';
-	import { Copy, Ellipsis, Pencil, Trash2 } from 'lucide-svelte';
+	import Copy from '@lucide/svelte/icons/copy';
+	import Ellipsis from '@lucide/svelte/icons/ellipsis';
+	import Pencil from '@lucide/svelte/icons/pencil';
+	import Trash2 from '@lucide/svelte/icons/trash-2';
 	import { toast } from 'svelte-sonner';
 
 	type PageState = 'normal' | 'optimizing';

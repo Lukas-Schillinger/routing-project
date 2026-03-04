@@ -9,7 +9,8 @@
 	import { ServiceError } from '$lib/errors';
 	import { invitationsApi } from '$lib/services/api/auth';
 	import { formatDate } from '$lib/utils';
-	import { Mail, Trash2 } from 'lucide-svelte';
+	import Mail from '@lucide/svelte/icons/mail';
+	import Trash2 from '@lucide/svelte/icons/trash-2';
 	import { toast } from 'svelte-sonner';
 	import CreateInvitationPopover from './CreateInvitationPopover/CreateInvitationPopover.svelte';
 

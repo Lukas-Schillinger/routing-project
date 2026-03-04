@@ -3,8 +3,8 @@
 	import * as Drawer from '$lib/components/ui/drawer';
 	import * as Popover from '$lib/components/ui/popover';
 	import type { DepotWithLocationJoin } from '$lib/schemas/depot';
-	import { Pencil } from 'lucide-svelte';
-	import { Garage } from 'phosphor-svelte';
+	import Pencil from '@lucide/svelte/icons/pencil';
+	import Warehouse from '@lucide/svelte/icons/warehouse';
 	import type { Snippet } from 'svelte';
 	import { MediaQuery } from 'svelte/reactivity';
 	import Form from './Form.svelte';
@@ -50,7 +50,7 @@
 				{@render children()}
 			{:else if mode === 'create'}
 				<Button size="sm" variant="secondary">
-					<Garage class="h-4 w-4" />
+					<Warehouse class="h-4 w-4" />
 					Create Depot
 				</Button>
 			{:else}
@@ -79,7 +79,7 @@
 				{@render children()}
 			{:else if mode === 'create'}
 				<Button size="sm" variant="secondary">
-					<Garage class="h-4 w-4" />
+					<Warehouse class="h-4 w-4" />
 					Create Depot
 				</Button>
 			{:else}

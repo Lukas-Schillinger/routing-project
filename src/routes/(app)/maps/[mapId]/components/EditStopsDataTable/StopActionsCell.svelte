@@ -6,7 +6,10 @@
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import type { StopWithLocation } from '$lib/schemas/stop';
 	import { stopApi } from '$lib/services/api';
-	import { Copy, Eye, Pencil, Trash2 } from 'lucide-svelte';
+	import Copy from '@lucide/svelte/icons/copy';
+	import Eye from '@lucide/svelte/icons/eye';
+	import Pencil from '@lucide/svelte/icons/pencil';
+	import Trash2 from '@lucide/svelte/icons/trash-2';
 	import { toast } from 'svelte-sonner';
 
 	interface Props {

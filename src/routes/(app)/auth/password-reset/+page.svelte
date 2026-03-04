@@ -5,7 +5,9 @@
 	import * as Form from '$lib/components/ui/form';
 	import { Input } from '$lib/components/ui/input';
 	import { requestPasswordResetSchema } from '$lib/schemas';
-	import { CheckCircle, Loader2, Mail } from 'lucide-svelte';
+	import CheckCircle from '@lucide/svelte/icons/check-circle';
+	import Loader2 from '@lucide/svelte/icons/loader-2';
+	import Mail from '@lucide/svelte/icons/mail';
 	import { untrack } from 'svelte';
 	import { superForm } from 'sveltekit-superforms';
 	import { zod4Client } from 'sveltekit-superforms/adapters';

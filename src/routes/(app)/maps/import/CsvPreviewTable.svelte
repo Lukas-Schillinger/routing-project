@@ -6,8 +6,8 @@
 		CardTitle
 	} from '$lib/components/ui/card';
 	import * as Select from '$lib/components/ui/select';
-	import { Ban, Settings } from 'lucide-svelte';
-
+	import Ban from '@lucide/svelte/icons/ban';
+	import Settings from '@lucide/svelte/icons/settings';
 	let {
 		csvData,
 		csvHeaders,

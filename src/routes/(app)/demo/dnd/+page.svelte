@@ -4,7 +4,9 @@
 	import * as Avatar from '$lib/components/ui/avatar';
 	import { stopApi } from '$lib/services/api';
 	import { addressDisplay, getIdenticon } from '$lib/utils';
-	import { ChevronDown, GripVertical, Package } from 'lucide-svelte';
+	import ChevronDown from '@lucide/svelte/icons/chevron-down';
+	import GripVertical from '@lucide/svelte/icons/grip-vertical';
+	import Package from '@lucide/svelte/icons/package';
 	import { dndzone, type DndEvent } from 'svelte-dnd-action';
 	import { flip } from 'svelte/animate';
 	import { untrack } from 'svelte';

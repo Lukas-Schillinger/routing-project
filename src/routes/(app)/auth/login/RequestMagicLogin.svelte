@@ -13,14 +13,11 @@
 	import { Label } from '$lib/components/ui/label';
 	import { emailSchema } from '$lib/schemas/common';
 	import { untrack } from 'svelte';
-	import {
-		ArrowLeft,
-		ArrowRight,
-		Loader2,
-		Mail,
-		Sparkles
-	} from 'lucide-svelte';
-
+	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
+	import ArrowRight from '@lucide/svelte/icons/arrow-right';
+	import Loader2 from '@lucide/svelte/icons/loader-2';
+	import Mail from '@lucide/svelte/icons/mail';
+	import Sparkles from '@lucide/svelte/icons/sparkles';
 	interface Props {
 		onBack: () => void;
 		debugOtpSent?: boolean;

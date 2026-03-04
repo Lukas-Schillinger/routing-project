@@ -7,7 +7,8 @@
 	import type { Driver, StopWithLocation } from '$lib/schemas';
 	import { stopApi } from '$lib/services/api/stops';
 	import { addressDisplay } from '$lib/utils';
-	import { LoaderCircle, Trash2 } from 'lucide-svelte';
+	import LoaderCircle from '@lucide/svelte/icons/loader-circle';
+	import Trash2 from '@lucide/svelte/icons/trash-2';
 	import { toast } from 'svelte-sonner';
 
 	let {

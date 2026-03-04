@@ -3,7 +3,9 @@
 	import PrintableRoute from '$lib/components/PrintableRoute.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import * as Select from '$lib/components/ui/select';
-	import { Map, Printer, Route } from 'lucide-svelte';
+	import Map from '@lucide/svelte/icons/map';
+	import Printer from '@lucide/svelte/icons/printer';
+	import Route from '@lucide/svelte/icons/route';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();

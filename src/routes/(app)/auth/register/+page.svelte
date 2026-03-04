@@ -5,7 +5,10 @@
 	import * as Form from '$lib/components/ui/form';
 	import { Input } from '$lib/components/ui/input';
 	import { registerSchema } from '$lib/schemas/auth';
-	import { Loader2, Lock, Mail, UserPlus } from 'lucide-svelte';
+	import Loader2 from '@lucide/svelte/icons/loader-2';
+	import Lock from '@lucide/svelte/icons/lock';
+	import Mail from '@lucide/svelte/icons/mail';
+	import UserPlus from '@lucide/svelte/icons/user-plus';
 	import { untrack } from 'svelte';
 	import { superForm } from 'sveltekit-superforms';
 	import { zod4Client } from 'sveltekit-superforms/adapters';

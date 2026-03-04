@@ -17,7 +17,7 @@
 	import { roleDescriptions } from '$lib/schemas/permissions';
 	import { organizationApi, usersApi } from '$lib/services/api/auth';
 	import { checkPermission, formatDate } from '$lib/utils';
-	import { Trash2 } from 'lucide-svelte';
+	import Trash2 from '@lucide/svelte/icons/trash-2';
 	import { toast } from 'svelte-sonner';
 
 	// Props

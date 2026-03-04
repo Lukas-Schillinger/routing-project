@@ -3,7 +3,11 @@
 	import type { Route as RouteType } from '$lib/schemas';
 	import type { StopWithLocation } from '$lib/schemas/stop';
 	import { formatDate } from '$lib/utils';
-	import { Calendar, Check, Clock, MapPin, Route } from 'lucide-svelte';
+	import Calendar from '@lucide/svelte/icons/calendar';
+	import Check from '@lucide/svelte/icons/check';
+	import Clock from '@lucide/svelte/icons/clock';
+	import MapPin from '@lucide/svelte/icons/map-pin';
+	import Route from '@lucide/svelte/icons/route';
 	import { onMount } from 'svelte';
 
 	interface Props {

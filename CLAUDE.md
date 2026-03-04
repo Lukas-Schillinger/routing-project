@@ -55,6 +55,7 @@ Multiple Claude agents can work in parallel, each in its own worktree. Each agen
 - This is a Svelte 5 application! Make sure not to use any Svelte 4 conventions like `$store()` or `export let...`
 - Use shadcn-svelte components with Tailwind CSS for styling.
 - Code should be functional and avoid functions with side effects where possible.
+- Icons: Use `@lucide/svelte` with individual imports for tree-shaking: `import Check from '@lucide/svelte/icons/check'`. Never use barrel imports from `lucide-svelte`. `phosphor-svelte` is only used for filled map pin icons.
 - Ensure all pages are mobile compatible.
 - Prefer type over interface. Use string literals instead of enums.
 - All URLs must use `resolve()` from `$app/paths`. Enforced by the linter.

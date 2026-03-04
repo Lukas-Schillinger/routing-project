@@ -7,7 +7,10 @@
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import { ServiceError } from '$lib/errors';
 	import type { Route as RouteType } from '$lib/schemas';
-	import { Moon, RotateCcw, Settings, Sun } from 'lucide-svelte';
+	import Moon from '@lucide/svelte/icons/moon';
+	import RotateCcw from '@lucide/svelte/icons/rotate-ccw';
+	import Settings from '@lucide/svelte/icons/settings';
+	import Sun from '@lucide/svelte/icons/sun';
 	import { mode, toggleMode } from 'mode-watcher';
 	import { toast } from 'svelte-sonner';
 

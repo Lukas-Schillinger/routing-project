@@ -2,7 +2,9 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import * as Sidebar from '$lib/components/ui/sidebar';
-	import { Building2, CreditCard, LayoutDashboard } from 'lucide-svelte';
+	import Building2 from '@lucide/svelte/icons/building-2';
+	import CreditCard from '@lucide/svelte/icons/credit-card';
+	import LayoutDashboard from '@lucide/svelte/icons/layout-dashboard';
 	import type { Snippet } from 'svelte';
 	import type { LayoutData } from './$types';
 

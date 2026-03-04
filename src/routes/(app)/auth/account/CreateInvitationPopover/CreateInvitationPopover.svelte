@@ -4,7 +4,7 @@
 	import * as Drawer from '$lib/components/ui/drawer';
 	import * as Popover from '$lib/components/ui/popover';
 	import type { Invitation } from '$lib/schemas';
-	import { Plus } from 'lucide-svelte';
+	import Plus from '@lucide/svelte/icons/plus';
 	import { MediaQuery } from 'svelte/reactivity';
 	import Form from './Form.svelte';
 

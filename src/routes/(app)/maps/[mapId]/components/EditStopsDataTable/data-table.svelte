@@ -41,14 +41,12 @@
 		type SortingState,
 		type VisibilityState
 	} from '@tanstack/table-core';
-	import {
-		ArrowDown,
-		Check,
-		ChevronDown,
-		MapPin,
-		Plus,
-		Search
-	} from 'lucide-svelte';
+	import ArrowDown from '@lucide/svelte/icons/arrow-down';
+	import Check from '@lucide/svelte/icons/check';
+	import ChevronDown from '@lucide/svelte/icons/chevron-down';
+	import MapPin from '@lucide/svelte/icons/map-pin';
+	import Plus from '@lucide/svelte/icons/plus';
+	import Search from '@lucide/svelte/icons/search';
 	import { MediaQuery } from 'svelte/reactivity';
 	import AddressCell from './AddressCell.svelte';
 	import DateCell from './DateCell.svelte';

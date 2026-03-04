@@ -3,7 +3,7 @@
 	import * as Drawer from '$lib/components/ui/drawer';
 	import * as Popover from '$lib/components/ui/popover';
 	import type { Organization } from '$lib/schemas/organization';
-	import { Pencil } from 'lucide-svelte';
+	import Pencil from '@lucide/svelte/icons/pencil';
 	import type { Snippet } from 'svelte';
 	import { MediaQuery } from 'svelte/reactivity';
 	import Form from './Form.svelte';

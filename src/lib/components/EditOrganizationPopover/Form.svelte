@@ -6,8 +6,8 @@
 	import { ServiceError } from '$lib/errors';
 	import type { Organization } from '$lib/schemas/organization';
 	import { organizationApi } from '$lib/services/api/auth';
-	import { Check, LoaderCircle } from 'lucide-svelte';
-
+	import Check from '@lucide/svelte/icons/check';
+	import LoaderCircle from '@lucide/svelte/icons/loader-circle';
 	// Props
 	let {
 		organization,

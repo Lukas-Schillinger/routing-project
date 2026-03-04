@@ -14,19 +14,17 @@
 	import { mapApi } from '$lib/services/api';
 	import { pendingImport } from '$lib/stores/pending-import';
 	import { parseCsvFile } from '$lib/utils';
-	import {
-		ChevronLeft,
-		ChevronRight,
-		ChevronsLeft,
-		ChevronsRight,
-		CloudUpload,
-		Grid3x3,
-		List,
-		Loader2,
-		MapPin,
-		Plus,
-		Search
-	} from 'lucide-svelte';
+	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
+	import ChevronRight from '@lucide/svelte/icons/chevron-right';
+	import ChevronsLeft from '@lucide/svelte/icons/chevrons-left';
+	import ChevronsRight from '@lucide/svelte/icons/chevrons-right';
+	import CloudUpload from '@lucide/svelte/icons/cloud-upload';
+	import Grid3x3 from '@lucide/svelte/icons/grid-3x3';
+	import List from '@lucide/svelte/icons/list';
+	import Loader2 from '@lucide/svelte/icons/loader-2';
+	import MapPin from '@lucide/svelte/icons/map-pin';
+	import Plus from '@lucide/svelte/icons/plus';
+	import Search from '@lucide/svelte/icons/search';
 	import { toast } from 'svelte-sonner';
 	import { MediaQuery } from 'svelte/reactivity';
 	import { useSearchParams } from 'runed/kit';

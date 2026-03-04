@@ -4,8 +4,9 @@
 	import type { LocationCreate } from '$lib/schemas';
 	import type { StopWithLocation } from '$lib/schemas/stop';
 	import { addressDisplay } from '$lib/utils';
-	import { LoaderCircle, Plus, Trash2 } from 'lucide-svelte';
-
+	import LoaderCircle from '@lucide/svelte/icons/loader-circle';
+	import Plus from '@lucide/svelte/icons/plus';
+	import Trash2 from '@lucide/svelte/icons/trash-2';
 	let {
 		mapId,
 		location,

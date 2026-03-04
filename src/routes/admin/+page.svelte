@@ -4,7 +4,9 @@
 	import * as Card from '$lib/components/ui/card';
 	import * as Table from '$lib/components/ui/table';
 	import { formatDate } from '$lib/utils';
-	import { Building2, CreditCard, TrendingUp } from 'lucide-svelte';
+	import Building2 from '@lucide/svelte/icons/building-2';
+	import CreditCard from '@lucide/svelte/icons/credit-card';
+	import TrendingUp from '@lucide/svelte/icons/trending-up';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();

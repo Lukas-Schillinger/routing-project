@@ -1,5 +1,8 @@
 <script lang="ts">
-	import { Mail, MessageSquare, Printer, Smartphone } from 'lucide-svelte';
+	import Mail from '@lucide/svelte/icons/mail';
+	import MessageSquare from '@lucide/svelte/icons/message-square';
+	import Printer from '@lucide/svelte/icons/printer';
+	import Smartphone from '@lucide/svelte/icons/smartphone';
 	import CloudflareImage from '$lib/components/CloudflareImage.svelte';
 </script>
 

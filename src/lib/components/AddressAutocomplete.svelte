@@ -5,7 +5,10 @@
 	import { geocodingApi } from '$lib/services/api';
 	import type { GeocodingFeature } from '$lib/services/external/mapbox/types';
 	import { geocodingFeatureToLocation } from '$lib/utils';
-	import { Check, ChevronsUpDown, LoaderCircle, MapPin } from 'lucide-svelte';
+	import Check from '@lucide/svelte/icons/check';
+	import ChevronsUpDown from '@lucide/svelte/icons/chevrons-up-down';
+	import LoaderCircle from '@lucide/svelte/icons/loader-circle';
+	import MapPin from '@lucide/svelte/icons/map-pin';
 	import { onMount } from 'svelte';
 
 	// Props

@@ -4,7 +4,8 @@
 	import * as Popover from '$lib/components/ui/popover';
 	import type { LocationCreate } from '$lib/schemas/location';
 	import type { StopWithLocation } from '$lib/schemas/stop';
-	import { Pencil, Plus } from 'lucide-svelte';
+	import Pencil from '@lucide/svelte/icons/pencil';
+	import Plus from '@lucide/svelte/icons/plus';
 	import type { Snippet } from 'svelte';
 	import { MediaQuery } from 'svelte/reactivity';
 	import Form from './Form.svelte';

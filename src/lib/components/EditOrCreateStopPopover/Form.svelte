@@ -10,8 +10,8 @@
 	import type { LocationCreate } from '$lib/schemas/location';
 	import type { StopWithLocation, UpdateStop } from '$lib/schemas/stop';
 	import { stopApi } from '$lib/services/api/stops';
-	import { Check, LoaderCircle } from 'lucide-svelte';
-
+	import Check from '@lucide/svelte/icons/check';
+	import LoaderCircle from '@lucide/svelte/icons/loader-circle';
 	type InitialData = {
 		location?: LocationCreate;
 		contactName?: string;

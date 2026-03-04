@@ -4,7 +4,8 @@
 	import { geocodingApi } from '$lib/services/api';
 	import type { GeocodingFeature } from '$lib/services/external/mapbox/types';
 	import { cn, geocodingFeatureToLocation } from '$lib/utils';
-	import { LoaderCircle, MapPin } from 'lucide-svelte';
+	import LoaderCircle from '@lucide/svelte/icons/loader-circle';
+	import MapPin from '@lucide/svelte/icons/map-pin';
 	import { Debounced } from 'runed';
 
 	type Props = {

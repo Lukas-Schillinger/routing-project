@@ -5,7 +5,9 @@
 	import { page } from '$app/state';
 	import { Button } from '$lib/components/ui/button';
 	import type { PublicUser } from '$lib/schemas';
-	import { DatabaseZap, Map, User as UserIcon } from 'lucide-svelte';
+	import DatabaseZap from '@lucide/svelte/icons/database-zap';
+	import Map from '@lucide/svelte/icons/map';
+	import UserIcon from '@lucide/svelte/icons/user';
 	import { mode } from 'mode-watcher';
 
 	// Nav items with their active route prefixes

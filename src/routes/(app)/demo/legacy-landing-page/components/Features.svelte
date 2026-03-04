@@ -1,5 +1,8 @@
 <script lang="ts">
-	import { Cpu, FolderOpen, ListChecks, PaperPlaneTilt } from 'phosphor-svelte';
+	import Cpu from '@lucide/svelte/icons/cpu';
+	import FolderOpen from '@lucide/svelte/icons/folder-open';
+	import ListChecks from '@lucide/svelte/icons/list-checks';
+	import Send from '@lucide/svelte/icons/send';
 
 	const features = [
 		{
@@ -15,7 +18,7 @@
 		{
 			title: 'Share Routes',
 			desc: 'Send drivers their routes directly from the app using email or SMS (coming soon)',
-			icon: PaperPlaneTilt
+			icon: Send
 		},
 		{
 			title: 'Track & Complete',
@@ -41,7 +44,7 @@
 			{/if}
 			<div class="col-span-7 p-8 sm:col-span-2">
 				<div class="flex items-center gap-4 font-serif text-4xl">
-					<feature.icon class="shrink-0" weight="light" />
+					<feature.icon class="shrink-0" />
 					{feature.title}
 				</div>
 				<div class="pt-2 pl-14 text-xl font-light">

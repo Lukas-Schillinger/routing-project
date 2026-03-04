@@ -8,8 +8,7 @@
 	import { FileUpload } from '$lib/components/ui/file-upload';
 	import type { ImportState } from '$lib/schemas/import';
 	import { parseCsvFile } from '$lib/utils';
-	import { Upload } from 'lucide-svelte';
-
+	import Upload from '@lucide/svelte/icons/upload';
 	let { importState = $bindable() }: { importState: ImportState } = $props();
 
 	let parseError = $state<string | null>(null);

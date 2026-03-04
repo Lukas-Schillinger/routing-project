@@ -8,7 +8,10 @@
 	import type { Driver } from '$lib/schemas/driver';
 	import { driverApi } from '$lib/services/api/drivers';
 	import { formatPhoneNumber, getIdenticon } from '$lib/utils';
-	import { Phone, Plus, Truck, Users } from 'lucide-svelte';
+	import Phone from '@lucide/svelte/icons/phone';
+	import Plus from '@lucide/svelte/icons/plus';
+	import Truck from '@lucide/svelte/icons/truck';
+	import Users from '@lucide/svelte/icons/users';
 	import { toast } from 'svelte-sonner';
 
 	let { drivers = $bindable([]) }: { drivers: Driver[] } = $props();

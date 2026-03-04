@@ -1,13 +1,13 @@
 <script lang="ts">
 	import type { DepotWithLocationJoin } from '$lib/schemas';
-	import { Garage } from 'phosphor-svelte';
+	import Warehouse from '@lucide/svelte/icons/warehouse';
 
 	let { depot }: { depot: DepotWithLocationJoin } = $props();
 </script>
 
 <div class="min-w-48 p-1">
 	<div class="flex items-center gap-2 pb-2">
-		<Garage class="h-5 w-5 text-primary" />
+		<Warehouse class="h-5 w-5 text-primary" />
 		<h3 class="text-base font-medium">{depot.depot.name}</h3>
 	</div>
 	<div>

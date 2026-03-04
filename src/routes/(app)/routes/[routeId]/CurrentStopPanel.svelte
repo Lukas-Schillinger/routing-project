@@ -7,16 +7,14 @@
 	import type { StopWithLocation } from '$lib/schemas/stop';
 	import { AppleMapsService } from '$lib/services/external/client/apple-maps';
 	import { GoogleMapsService } from '$lib/services/external/client/google-maps';
-	import {
-		Check,
-		ChevronLeft,
-		ChevronRight,
-		Navigation,
-		Package,
-		Phone,
-		Route,
-		User
-	} from 'lucide-svelte';
+	import Check from '@lucide/svelte/icons/check';
+	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
+	import ChevronRight from '@lucide/svelte/icons/chevron-right';
+	import Navigation from '@lucide/svelte/icons/navigation';
+	import Package from '@lucide/svelte/icons/package';
+	import Phone from '@lucide/svelte/icons/phone';
+	import Route from '@lucide/svelte/icons/route';
+	import User from '@lucide/svelte/icons/user';
 	import { SvelteSet } from 'svelte/reactivity';
 
 	type DirectionsProvider = 'google' | 'apple';

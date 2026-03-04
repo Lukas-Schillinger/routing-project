@@ -20,9 +20,8 @@
 	import * as ButtonGroup from '$lib/components/ui/button-group';
 	import * as Select from '$lib/components/ui/select';
 	import { cn } from '$lib/utils';
-	import { ArrowDown } from 'lucide-svelte';
-
-	let {
+	import ArrowDown from '@lucide/svelte/icons/arrow-down';
+let {
 		options,
 		value = $bindable(),
 		direction = $bindable(),

@@ -1,18 +1,19 @@
 <script lang="ts">
 	import AddressAutocomplete from '$lib/components/AddressAutocomplete.svelte';
+	import { ConfirmDeleteDialog } from '$lib/components/ConfirmDeleteDialog';
 	import * as Alert from '$lib/components/ui/alert';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import { Switch } from '$lib/components/ui/switch';
-	import { ConfirmDeleteDialog } from '$lib/components/ConfirmDeleteDialog';
 	import { ServiceError } from '$lib/errors';
 	import type { DepotWithLocationJoin } from '$lib/schemas/depot';
 	import type { LocationCreate } from '$lib/schemas/location';
 	import { depotApi } from '$lib/services/api/depots';
 	import { formatDate } from '$lib/utils';
-	import { Check, LoaderCircle, Trash2 } from 'lucide-svelte';
-
+	import Check from '@lucide/svelte/icons/check';
+	import LoaderCircle from '@lucide/svelte/icons/loader-circle';
+	import Trash2 from '@lucide/svelte/icons/trash-2';
 	// Props
 	let {
 		mode = 'create',

@@ -15,9 +15,15 @@
 	import type { MapListStats } from '$lib/services/server/map.service';
 	import type { StopCoordinate } from '$lib/services/server/stop.service';
 	import { formatDate } from '$lib/utils';
-	import { Copy, Map, MoreHorizontal, Pencil, Trash2 } from 'lucide-svelte';
+	import Copy from '@lucide/svelte/icons/copy';
+	import Map from '@lucide/svelte/icons/map';
+	import MoreHorizontal from '@lucide/svelte/icons/more-horizontal';
+	import Pencil from '@lucide/svelte/icons/pencil';
+	import Trash2 from '@lucide/svelte/icons/trash-2';
 	import { mode } from 'mode-watcher';
-	import { CheckCircle, CircleDashed, WarningCircle } from 'phosphor-svelte';
+	import CircleAlert from '@lucide/svelte/icons/circle-alert';
+	import CircleCheck from '@lucide/svelte/icons/circle-check';
+	import CircleDashed from '@lucide/svelte/icons/circle-dashed';
 	import { toast } from 'svelte-sonner';
 
 	let {
@@ -123,15 +129,11 @@
 
 {#snippet statusIcon(size: number)}
 	{#if routingStatus === 'routed'}
-		<CheckCircle {size} weight="fill" class="shrink-0 text-muted-foreground" />
+		<CircleCheck class="size-[{size}px] shrink-0 text-muted-foreground" />
 	{:else if routingStatus === 'partial'}
-		<WarningCircle
-			{size}
-			weight="fill"
-			class="shrink-0 text-muted-foreground"
-		/>
+		<CircleAlert class="size-[{size}px] shrink-0 text-muted-foreground" />
 	{:else}
-		<CircleDashed {size} class="shrink-0 text-muted-foreground" />
+		<CircleDashed class="size-[{size}px] shrink-0 text-muted-foreground" />
 	{/if}
 {/snippet}
 

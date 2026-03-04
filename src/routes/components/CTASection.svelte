@@ -7,7 +7,7 @@
 		DitheringShapes,
 		DitheringTypes
 	} from '@paper-design/shaders';
-	import { ArrowRight } from 'lucide-svelte';
+	import ArrowRight from '@lucide/svelte/icons/arrow-right';
 	import { inView } from 'motion';
 	import ShaderCanvas from './ShaderCanvas.svelte';
 

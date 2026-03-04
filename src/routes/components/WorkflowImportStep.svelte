@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
-	import { ChevronDown, Settings } from 'lucide-svelte';
+	import ChevronDown from '@lucide/svelte/icons/chevron-down';
+	import Settings from '@lucide/svelte/icons/settings';
 	import { inView, scroll } from 'motion';
 
 	// Configurable: rows shown in the card table vs total rows on the paper

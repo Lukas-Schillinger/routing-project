@@ -3,7 +3,8 @@
 	import * as Drawer from '$lib/components/ui/drawer';
 	import * as Popover from '$lib/components/ui/popover';
 	import type { Driver } from '$lib/schemas/driver';
-	import { Pencil, Truck } from 'lucide-svelte';
+	import Pencil from '@lucide/svelte/icons/pencil';
+	import Truck from '@lucide/svelte/icons/truck';
 	import { IsMobile } from '$lib/hooks/is-mobile.svelte';
 	import type { Snippet } from 'svelte';
 	import Form from './Form.svelte';

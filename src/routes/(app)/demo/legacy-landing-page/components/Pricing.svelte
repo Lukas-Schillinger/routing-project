@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
 	import * as Tabs from '$lib/components/ui/tabs';
-	import { Check } from 'phosphor-svelte';
+	import Check from '@lucide/svelte/icons/check';
 
 	let pricingPeriod = $state<'annual' | 'monthly'>('annual');
 

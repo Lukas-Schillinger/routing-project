@@ -8,7 +8,10 @@
 	import type { Role } from '$lib/schemas/user';
 	import { invitationsApi } from '$lib/services/api/auth';
 	import { roleDescriptions } from '$lib/schemas/permissions';
-	import { Check, LoaderCircle, Mail, TriangleAlert } from 'lucide-svelte';
+	import Check from '@lucide/svelte/icons/check';
+	import LoaderCircle from '@lucide/svelte/icons/loader-circle';
+	import Mail from '@lucide/svelte/icons/mail';
+	import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
 	import { untrack } from 'svelte';
 	import { defaults, setMessage, superForm } from 'sveltekit-superforms';
 	import { zod4, zod4Client } from 'sveltekit-superforms/adapters';

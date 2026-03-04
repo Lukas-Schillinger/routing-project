@@ -6,7 +6,10 @@
 	import { Button } from '$lib/components/ui/button';
 	import type { DepotWithLocationJoin } from '$lib/schemas/depot';
 	import { depotApi } from '$lib/services/api/depots';
-	import { Building2, MapPin, Plus, Star } from 'lucide-svelte';
+	import Building2 from '@lucide/svelte/icons/building-2';
+	import MapPin from '@lucide/svelte/icons/map-pin';
+	import Plus from '@lucide/svelte/icons/plus';
+	import Star from '@lucide/svelte/icons/star';
 	import { toast } from 'svelte-sonner';
 
 	let { depots = $bindable([]) }: { depots: DepotWithLocationJoin[] } =

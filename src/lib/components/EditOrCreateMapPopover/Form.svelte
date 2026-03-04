@@ -7,7 +7,8 @@
 	import { ServiceError } from '$lib/errors';
 	import { createMapSchema, type Map } from '$lib/schemas/map';
 	import { mapApi } from '$lib/services/api/maps';
-	import { Check, Loader2 } from 'lucide-svelte';
+	import Check from '@lucide/svelte/icons/check';
+	import Loader2 from '@lucide/svelte/icons/loader-2';
 	import { defaults, setMessage, superForm } from 'sveltekit-superforms';
 	import { zod4, zod4Client } from 'sveltekit-superforms/adapters';
 

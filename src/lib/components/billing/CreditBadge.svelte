@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Badge } from '$lib/components/ui/badge';
 	import type { CreditBalance } from '$lib/schemas/billing';
-	import { CoinVertical } from 'phosphor-svelte';
+	import Coins from '@lucide/svelte/icons/coins';
 	import BillingModal from './BillingModal.svelte';
 
 	type Props = {
@@ -45,7 +45,7 @@
 			variant="outline"
 			class="relative cursor-pointer gap-0.5 bg-background px-2.5 py-1 text-sm font-medium tracking-tighter tabular-nums"
 		>
-			<CoinVertical class="size-4 {colorClass}" />
+			<Coins class="size-4 {colorClass}" />
 			<span class={colorClass}>{credits.available.toLocaleString()}</span>
 		</Badge>
 	</div>

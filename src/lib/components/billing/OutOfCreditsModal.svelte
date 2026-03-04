@@ -3,7 +3,8 @@
 	import { Button } from '$lib/components/ui/button';
 	import { billingApi } from '$lib/services/api/billing';
 	import type { PlanSlug } from '$lib/config/billing';
-	import { Check, RocketLaunch } from 'phosphor-svelte';
+	import Check from '@lucide/svelte/icons/check';
+	import Rocket from '@lucide/svelte/icons/rocket';
 
 	type Props = {
 		open: boolean;
@@ -64,7 +65,7 @@
 						<div
 							class="flex size-12 items-center justify-center rounded-lg bg-primary/10"
 						>
-							<RocketLaunch class="size-6 text-primary" weight="duotone" />
+							<Rocket class="size-6 text-primary" />
 						</div>
 					</div>
 
@@ -93,7 +94,7 @@
 								<li
 									class="flex items-center gap-2 text-sm text-muted-foreground"
 								>
-									<Check class="size-4 text-green-600" weight="bold" />
+									<Check class="size-4 text-green-600" />
 									{feature}
 								</li>
 							{/each}

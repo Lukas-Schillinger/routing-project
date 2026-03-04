@@ -11,7 +11,8 @@
 	import type { PublicUser } from '$lib/schemas';
 	import { authApi, usersApi } from '$lib/services/api/auth';
 	import { formatDate } from '$lib/utils';
-	import { MoonIcon, SunIcon } from 'lucide-svelte';
+	import MoonIcon from '@lucide/svelte/icons/moon';
+	import SunIcon from '@lucide/svelte/icons/sun';
 	import { toggleMode } from 'mode-watcher';
 	import { untrack } from 'svelte';
 	import { toast } from 'svelte-sonner';

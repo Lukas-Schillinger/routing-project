@@ -11,7 +11,8 @@
 	import { geocodingFeatureToLocation, getTextColor } from '$lib/utils';
 	import type maplibregl from 'maplibre-gl';
 	import { mode } from 'mode-watcher';
-	import { Garage, MapPin } from 'phosphor-svelte';
+	import Warehouse from '@lucide/svelte/icons/warehouse';
+	import { MapPin } from 'phosphor-svelte';
 	import type { Snippet } from 'svelte';
 	import { GeoJSON, LineLayer, MapLibre, Marker, Popup } from 'svelte-maplibre';
 	import DepotMapPopup from './DepotMapPopup.svelte';
@@ -327,10 +328,7 @@
 				class="cursor-pointer"
 			>
 				<div class="transition-transform duration-100 hover:scale-110">
-					<Garage
-						weight="fill"
-						class="size-7 text-forest-600 dark:text-white"
-					/>
+					<Warehouse class="size-7 text-forest-600 dark:text-white" />
 				</div>
 				<Popup openOn="click" offset={[0, -10]} closeOnClickOutside closeButton>
 					<DepotMapPopup {depot} />

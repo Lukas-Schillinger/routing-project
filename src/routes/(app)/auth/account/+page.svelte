@@ -10,7 +10,8 @@
 	import { Separator } from '$lib/components/ui/separator';
 	import type { SubscriptionStatus } from '$lib/server/db/schema';
 	import { usersApi } from '$lib/services/api/auth';
-	import { Settings, Trash2 } from 'lucide-svelte';
+	import Settings from '@lucide/svelte/icons/settings';
+	import Trash2 from '@lucide/svelte/icons/trash-2';
 	import { onMount } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import type { PageData } from './$types';

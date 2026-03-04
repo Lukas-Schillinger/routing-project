@@ -3,7 +3,7 @@
 	import * as InputGroup from '$lib/components/ui/input-group';
 	import { type WithElementRef } from '$lib/utils';
 	import { AsYouType, isValidPhoneNumber } from 'libphonenumber-js';
-	import { Phone } from 'lucide-svelte';
+	import Phone from '@lucide/svelte/icons/phone';
 	import { tick } from 'svelte';
 	import type { HTMLInputAttributes } from 'svelte/elements';
 

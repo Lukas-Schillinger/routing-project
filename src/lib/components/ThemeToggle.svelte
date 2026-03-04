@@ -1,7 +1,8 @@
 <script lang="ts">
 	import type { ButtonVariant } from '$lib/components/ui/button';
 	import { Button } from '$lib/components/ui/button';
-	import { Moon, Sun } from 'lucide-svelte';
+	import Moon from '@lucide/svelte/icons/moon';
+	import Sun from '@lucide/svelte/icons/sun';
 	import { mode, toggleMode } from 'mode-watcher';
 
 	let { variant = 'default' }: { variant?: ButtonVariant } = $props();

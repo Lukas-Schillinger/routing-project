@@ -4,8 +4,12 @@
 	import type { DepotWithLocationJoin, Route as RouteType } from '$lib/schemas';
 	import type { StopWithLocation } from '$lib/schemas/stop';
 	import { formatDate } from '$lib/utils';
-	import { Calendar, Check, Clock, MapPin, Route } from 'lucide-svelte';
-	import { Garage } from 'phosphor-svelte';
+	import Calendar from '@lucide/svelte/icons/calendar';
+	import Check from '@lucide/svelte/icons/check';
+	import Clock from '@lucide/svelte/icons/clock';
+	import MapPin from '@lucide/svelte/icons/map-pin';
+	import Route from '@lucide/svelte/icons/route';
+	import Warehouse from '@lucide/svelte/icons/warehouse';
 
 	interface Props {
 		route: RouteType;
@@ -136,7 +140,7 @@
 								<span
 									class="flex h-6 w-6 items-center justify-center rounded-full border bg-secondary text-xs font-medium"
 								>
-									<Garage class="h-3.5 w-3.5" />
+									<Warehouse class="h-3.5 w-3.5" />
 								</span>
 								<div>
 									<h4>{depot.depot.name}</h4>

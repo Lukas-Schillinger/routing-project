@@ -6,7 +6,10 @@
 	import { createImportState, type ImportState } from '$lib/schemas/import';
 	import { mapApi, stopApi } from '$lib/services/api';
 	import { pendingImport } from '$lib/stores/pending-import';
-	import { ArrowLeft, ArrowRight, Check, Loader2 } from 'lucide-svelte';
+	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
+	import ArrowRight from '@lucide/svelte/icons/arrow-right';
+	import Check from '@lucide/svelte/icons/check';
+	import Loader2 from '@lucide/svelte/icons/loader-2';
 	import { onMount } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import type { PageData } from './$types';

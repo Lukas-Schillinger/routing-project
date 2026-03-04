@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
-	import { Eye } from 'lucide-svelte';
-
+	import Eye from '@lucide/svelte/icons/eye';
 	interface Props {
 		stopId: string;
 		onZoomToStop: (stopId: string) => void;

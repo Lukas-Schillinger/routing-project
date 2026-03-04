@@ -17,24 +17,22 @@
 	import type { StopWithLocation } from '$lib/schemas/stop';
 	import { mapApi, stopApi } from '$lib/services/api';
 	import { addressDisplay, getIdenticon } from '$lib/utils';
-	import {
-		ChevronDown,
-		Clock,
-		Copy,
-		Ellipsis,
-		Eye,
-		EyeOff,
-		GripVertical,
-		Loader2,
-		MapPin,
-		Pencil,
-		Plus,
-		Printer,
-		Route,
-		Truck,
-		UserMinus,
-		UserPlus
-	} from 'lucide-svelte';
+	import ChevronDown from '@lucide/svelte/icons/chevron-down';
+	import Clock from '@lucide/svelte/icons/clock';
+	import Copy from '@lucide/svelte/icons/copy';
+	import Ellipsis from '@lucide/svelte/icons/ellipsis';
+	import Eye from '@lucide/svelte/icons/eye';
+	import EyeOff from '@lucide/svelte/icons/eye-off';
+	import GripVertical from '@lucide/svelte/icons/grip-vertical';
+	import Loader2 from '@lucide/svelte/icons/loader-2';
+	import MapPin from '@lucide/svelte/icons/map-pin';
+	import Pencil from '@lucide/svelte/icons/pencil';
+	import Plus from '@lucide/svelte/icons/plus';
+	import Printer from '@lucide/svelte/icons/printer';
+	import Route from '@lucide/svelte/icons/route';
+	import Truck from '@lucide/svelte/icons/truck';
+	import UserMinus from '@lucide/svelte/icons/user-minus';
+	import UserPlus from '@lucide/svelte/icons/user-plus';
 	import { untrack } from 'svelte';
 	import { dragHandle, dragHandleZone, type DndEvent } from 'svelte-dnd-action';
 	import { toast } from 'svelte-sonner';

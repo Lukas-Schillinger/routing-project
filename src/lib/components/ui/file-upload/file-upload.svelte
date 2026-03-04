@@ -41,7 +41,11 @@
 
 <script lang="ts">
 	import { cn } from '$lib/utils.js';
-	import { AlertCircle, CheckCircle2, FileText, Upload, X } from 'lucide-svelte';
+	import AlertCircle from '@lucide/svelte/icons/alert-circle';
+	import CheckCircle2 from '@lucide/svelte/icons/check-circle-2';
+	import FileText from '@lucide/svelte/icons/file-text';
+	import Upload from '@lucide/svelte/icons/upload';
+	import X from '@lucide/svelte/icons/x';
 	import { backOut, cubicOut } from 'svelte/easing';
 	import { fade, fly, scale } from 'svelte/transition';
 

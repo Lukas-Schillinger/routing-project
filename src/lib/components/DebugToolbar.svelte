@@ -1,7 +1,10 @@
 <script lang="ts">
 	import { dev } from '$app/environment';
 	import { Button } from '$lib/components/ui/button';
-	import { Bug, ChevronDown, ChevronUp, X } from 'lucide-svelte';
+	import Bug from '@lucide/svelte/icons/bug';
+	import ChevronDown from '@lucide/svelte/icons/chevron-down';
+	import ChevronUp from '@lucide/svelte/icons/chevron-up';
+	import X from '@lucide/svelte/icons/x';
 	import type { Snippet } from 'svelte';
 
 	interface Props {
