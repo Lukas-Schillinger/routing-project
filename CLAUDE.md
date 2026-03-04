@@ -29,7 +29,7 @@ Multiple Claude agents can work in parallel, each in its own worktree. Each agen
 - **Dev server:** `portless $(basename $PWD) vite dev` — derives the name from the worktree directory. Each agent gets a unique URL at `<worktree>.localhost:1355`. Must use `vite dev` directly (not `npm run dev`) so portless can inject `--port` and `--host` flags.
 - **Task picking:** Filter Linear backlog by your assigned area label. Claim by assigning to yourself and setting "In Progress". Work highest priority first.
 - **Commits:** Commit per issue. Don't push or create PRs — branches are reconciled by the user at end of day.
-- **Frontend verification:** After UI changes, use Claude in Chrome to verify the fix at your dev server URL.
+- **Frontend verification:** After UI changes, use Claude in Chrome to verify the fix at your dev server URL. Before verifying, provision a dev account by calling `POST <dev-server-url>/api/dev/provision` — this creates a pre-populated org with maps, routes, stops, and drivers, and sets the session cookie so you're logged in immediately. Navigate to the `redirectUrl` from the response to start browsing.
 - **Stay in your lane:** If an issue requires changes outside your area, comment on the issue and skip it.
 
 > **Source:** `.claude/review.md` and `.claude/best-practices-audit.md` contain full context for review items (Review ID in issue description).
