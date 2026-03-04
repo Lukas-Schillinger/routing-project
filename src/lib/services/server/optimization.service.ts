@@ -16,7 +16,7 @@ import {
 import { logger } from '$lib/server/logger';
 import { SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs';
 import { createHash } from 'crypto';
-import { and, eq, inArray, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { mapboxDistanceMatrix, mapboxNavigation } from '../external/mapbox';
 import type { CoordinatesData } from '../external/mapbox/distance-matrix';
@@ -206,7 +206,7 @@ export class OptimizationService {
 					inArray(optimizationJobs.status, activeStatuses)
 				)
 			)
-			.orderBy(optimizationJobs.created_at)
+			.orderBy(desc(optimizationJobs.created_at))
 			.limit(1);
 
 		return job ?? null;
