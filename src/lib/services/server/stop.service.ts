@@ -7,7 +7,7 @@ import type {
 } from '$lib/schemas/stop';
 import { db } from '$lib/server/db';
 import { locations, maps, stops } from '$lib/server/db/schema';
-import { and, eq, isNotNull } from 'drizzle-orm';
+import { and, count, eq, isNotNull } from 'drizzle-orm';
 import { ServiceError } from './errors';
 import { locationService } from './location.service';
 import { routeService } from './route.service';
@@ -65,6 +65,23 @@ export class StopService {
 			lat: Number(r.lat),
 			lon: Number(r.lon)
 		}));
+	}
+
+	/**
+	 * Get the number of stops for a map (lightweight count query)
+	 */
+	async getStopCountForMap(
+		mapId: string,
+		organizationId: string
+	): Promise<number> {
+		const [result] = await db
+			.select({ count: count() })
+			.from(stops)
+			.where(
+				and(eq(stops.map_id, mapId), eq(stops.organization_id, organizationId))
+			);
+
+		return result.count;
 	}
 
 	/**

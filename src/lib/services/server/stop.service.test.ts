@@ -111,6 +111,108 @@ describe('StopService', () => {
 		});
 	});
 
+	describe('getStopCountForMap()', () => {
+		it('returns 0 for a map with no stops', async () => {
+			await withTestTransaction(async () => {
+				const { organization, user } = await createTestEnvironment();
+				const map = await createMap({
+					organization_id: organization.id,
+					created_by: user.id
+				});
+
+				const result = await stopService.getStopCountForMap(
+					map.id,
+					organization.id
+				);
+
+				expect(result).toBe(0);
+			});
+		});
+
+		it('returns correct count for a map with stops', async () => {
+			await withTestTransaction(async () => {
+				const { organization, user } = await createTestEnvironment();
+				const map = await createMap({
+					organization_id: organization.id,
+					created_by: user.id
+				});
+				const location1 = await createLocation({
+					organization_id: organization.id
+				});
+				const location2 = await createLocation({
+					organization_id: organization.id
+				});
+				const location3 = await createLocation({
+					organization_id: organization.id
+				});
+				await createStop({
+					organization_id: organization.id,
+					map_id: map.id,
+					location_id: location1.id,
+					created_by: user.id
+				});
+				await createStop({
+					organization_id: organization.id,
+					map_id: map.id,
+					location_id: location2.id,
+					created_by: user.id
+				});
+				await createStop({
+					organization_id: organization.id,
+					map_id: map.id,
+					location_id: location3.id,
+					created_by: user.id
+				});
+
+				const result = await stopService.getStopCountForMap(
+					map.id,
+					organization.id
+				);
+
+				expect(result).toBe(3);
+			});
+		});
+
+		it('does not count stops from another organization', async () => {
+			await withTestTransaction(async () => {
+				const { organization: org1, user: user1 } =
+					await createTestEnvironment();
+				const { organization: org2, user: user2 } =
+					await createTestEnvironment();
+				const map1 = await createMap({
+					organization_id: org1.id,
+					created_by: user1.id
+				});
+				const map2 = await createMap({
+					organization_id: org2.id,
+					created_by: user2.id
+				});
+				const location1 = await createLocation({
+					organization_id: org1.id
+				});
+				const location2 = await createLocation({
+					organization_id: org2.id
+				});
+				await createStop({
+					organization_id: org1.id,
+					map_id: map1.id,
+					location_id: location1.id,
+					created_by: user1.id
+				});
+				await createStop({
+					organization_id: org2.id,
+					map_id: map2.id,
+					location_id: location2.id,
+					created_by: user2.id
+				});
+
+				const result = await stopService.getStopCountForMap(map1.id, org2.id);
+
+				expect(result).toBe(0);
+			});
+		});
+	});
+
 	describe('getStopsByMap()', () => {
 		it('returns all stops for a map with location data', async () => {
 			await withTestTransaction(async () => {

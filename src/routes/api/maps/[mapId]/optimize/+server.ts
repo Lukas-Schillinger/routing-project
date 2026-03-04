@@ -6,6 +6,7 @@ import { optimizationOptionsSchema } from '$lib/schemas/map';
 import { billingService } from '$lib/services/server/billing.service';
 import { optimizationService } from '$lib/services/server/optimization.service';
 import { requirePermissionApi } from '$lib/services/server/permissions';
+import { stopService } from '$lib/services/server/stop.service';
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
@@ -37,11 +38,17 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 			throw parsed.error;
 		}
 
-		// Check credit balance before queueing optimization
+		// Check credit balance covers the number of stops being optimized.
+		// Credits are debited on successful completion (not on queue) to avoid
+		// refund logic for failures, cancellations, and timeouts.
+		const stopCount = await stopService.getStopCountForMap(
+			mapId,
+			user.organization_id
+		);
 		const availableCredits = await billingService.getAvailableCredits(
 			user.organization_id
 		);
-		if (!(availableCredits > 0)) {
+		if (availableCredits < stopCount) {
 			throw ServiceError.forbidden(
 				'Insufficient credits. Please purchase more credits to continue optimizing routes.'
 			);
