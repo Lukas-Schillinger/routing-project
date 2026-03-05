@@ -1,3 +1,6 @@
+// For more info, see https://github.com/storybookjs/eslint-plugin-storybook#configuration-flat-config-format
+import storybook from 'eslint-plugin-storybook';
+
 import { includeIgnoreFile } from '@eslint/compat';
 import js from '@eslint/js';
 import prettier from 'eslint-config-prettier';
@@ -29,8 +32,8 @@ export default ts.config(
 			'no-undef': 'off',
 			'svelte/prefer-writable-derived': 'off',
 			/* I like this rule but there's currently no way to add URL query parameters to resolve links. 
-			see: https://github.com/sveltejs/kit/issues/14103  
-			*/
+        see: https://github.com/sveltejs/kit/issues/14103  
+        */
 			'svelte/no-navigation-without-resolve': 'warn'
 		}
 	},
@@ -44,5 +47,6 @@ export default ts.config(
 				svelteConfig
 			}
 		}
-	}
+	},
+	storybook.configs['flat/recommended']
 );

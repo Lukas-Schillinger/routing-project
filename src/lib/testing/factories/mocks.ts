@@ -1,18 +1,28 @@
 /**
- * Mock Factories
- * Generate test data for all major models.
+ * Mock Factories (browser-safe)
  *
- * Each model has two functions:
- * - `createMock<Model>(overrides?)` - returns plain object with fake data
- * - `create<Model>(overrides?)` - inserts into DB and returns with generated ID
+ * Pure data generators with no server/DB dependencies.
+ * Safe to import in Storybook, browser tests, and server tests alike.
  *
- * All create* functions use the context-aware `db` which automatically
- * participates in test transactions when called within withTestTransaction().
+ * - `createMock<Model>(overrides?)` — returns $inferInsert object (for DB insertion)
+ * - `createMock<Model>Row(overrides?)` — returns full Zod schema object (for components/stories)
  */
-import { db } from '$lib/server/db';
-import * as schema from '$lib/server/db/schema';
+import type * as schema from '$lib/server/db/schema';
+import type {
+	Organization,
+	PublicUser,
+	Invitation,
+	MailRecord,
+	Driver,
+	Stop,
+	Route,
+	Map,
+	Depot,
+	Permission
+} from '$lib/schemas';
+import type { Location } from '$lib/schemas/location';
 import { generateRandomColor } from '$lib/utils';
-import locationsData from './data/locations.json';
+import locationsData from '../data/locations.json';
 
 // ============================================================================
 // Helpers
@@ -41,15 +51,24 @@ export function createMockOrganization(
 	};
 }
 
-export async function createOrganization(
-	overrides?: Partial<MockOrganization>
-): Promise<typeof schema.organizations.$inferSelect> {
-	const data = createMockOrganization(overrides);
-	const [result] = await db
-		.insert(schema.organizations)
-		.values(data)
-		.returning();
-	return result;
+export function createMockOrganizationRow(
+	overrides?: Partial<Organization>
+): Organization {
+	return {
+		id: crypto.randomUUID(),
+		created_at: new Date(),
+		created_by: null,
+		updated_at: new Date(),
+		updated_by: null,
+		stripe_customer_id: null,
+		stripe_subscription_id: null,
+		subscription_status: null,
+		billing_period_starts_at: null,
+		billing_period_ends_at: null,
+		cancel_at_period_end: false,
+		...createMockOrganization(),
+		...overrides
+	};
 }
 
 // ============================================================================
@@ -69,12 +88,23 @@ export function createMockUser(overrides?: Partial<MockUser>): MockUser {
 	};
 }
 
-export async function createUser(
-	overrides: Partial<MockUser> & { organization_id: string }
-): Promise<typeof schema.users.$inferSelect> {
-	const data = createMockUser(overrides);
-	const [result] = await db.insert(schema.users).values(data).returning();
-	return result;
+export function createMockPublicUserRow(
+	overrides?: Partial<PublicUser>
+): PublicUser {
+	const id = uniqueId();
+	return {
+		id: crypto.randomUUID(),
+		organization_id: '',
+		created_at: new Date(),
+		created_by: null,
+		updated_at: new Date(),
+		updated_by: null,
+		name: `Test User ${id}`,
+		email: `test-user-${id}@example.com`,
+		role: 'member',
+		email_confirmed_at: null,
+		...overrides
+	};
 }
 
 // ============================================================================
@@ -96,12 +126,23 @@ export function createMockDriver(overrides?: Partial<MockDriver>): MockDriver {
 	};
 }
 
-export async function createDriver(
-	overrides: Partial<MockDriver> & { organization_id: string }
-): Promise<typeof schema.drivers.$inferSelect> {
-	const data = createMockDriver(overrides);
-	const [result] = await db.insert(schema.drivers).values(data).returning();
-	return result;
+export function createMockDriverRow(overrides?: Partial<Driver>): Driver {
+	const id = uniqueId();
+	return {
+		id: crypto.randomUUID(),
+		organization_id: '',
+		name: `Driver ${id}`,
+		phone: `555-${String(counter).padStart(4, '0')}`,
+		notes: null,
+		active: true,
+		temporary: false,
+		color: generateRandomColor(),
+		created_at: new Date(),
+		created_by: null,
+		updated_at: new Date(),
+		updated_by: null,
+		...overrides
+	};
 }
 
 // ============================================================================
@@ -136,12 +177,34 @@ export function createMockLocation(
 	};
 }
 
-export async function createLocation(
-	overrides: Partial<MockLocation> & { organization_id: string }
-): Promise<typeof schema.locations.$inferSelect> {
-	const data = createMockLocation(overrides);
-	const [result] = await db.insert(schema.locations).values(data).returning();
-	return result;
+export function createMockLocationRow(overrides?: Partial<Location>): Location {
+	const entry = locationsData[locationIndex++ % locationsData.length];
+	return {
+		id: crypto.randomUUID(),
+		organization_id: '',
+		created_at: new Date(),
+		created_by: null,
+		updated_at: new Date(),
+		updated_by: null,
+		address_line_1: entry.address_line_1,
+		address_line_2: entry.address_line_2,
+		address_number: entry.address_number,
+		street_name: entry.street_name,
+		city: entry.city,
+		region: entry.region,
+		postal_code: entry.postal_code,
+		country: entry.country,
+		lat: entry.lat,
+		lon: entry.lon,
+		geocode_raw: entry.geocode_raw,
+		geocode_confidence:
+			(entry.geocode_confidence as 'exact' | 'high' | 'medium' | 'low') ??
+			'high',
+		geocode_provider: entry.geocode_provider ?? 'mapbox',
+		geocode_place_id: null,
+		address_hash: null,
+		...overrides
+	};
 }
 
 // ============================================================================
@@ -159,12 +222,18 @@ export function createMockMap(overrides?: Partial<MockMap>): MockMap {
 	};
 }
 
-export async function createMap(
-	overrides: Partial<MockMap> & { organization_id: string }
-): Promise<typeof schema.maps.$inferSelect> {
-	const data = createMockMap(overrides);
-	const [result] = await db.insert(schema.maps).values(data).returning();
-	return result;
+export function createMockMapRow(overrides?: Partial<Map>): Map {
+	return {
+		id: crypto.randomUUID(),
+		organization_id: '',
+		title: `Test Map ${uniqueId()}`,
+		depot_id: null,
+		created_at: new Date(),
+		created_by: null,
+		updated_at: new Date(),
+		updated_by: null,
+		...overrides
+	};
 }
 
 // ============================================================================
@@ -188,16 +257,24 @@ export function createMockStop(overrides?: Partial<MockStop>): MockStop {
 	};
 }
 
-export async function createStop(
-	overrides: Partial<MockStop> & {
-		organization_id: string;
-		map_id: string;
-		location_id: string;
-	}
-): Promise<typeof schema.stops.$inferSelect> {
-	const data = createMockStop(overrides);
-	const [result] = await db.insert(schema.stops).values(data).returning();
-	return result;
+export function createMockStopRow(overrides?: Partial<Stop>): Stop {
+	const id = uniqueId();
+	return {
+		id: crypto.randomUUID(),
+		organization_id: '',
+		map_id: '',
+		location_id: '',
+		driver_id: null,
+		delivery_index: null,
+		contact_name: `Contact ${id}`,
+		contact_phone: `555-${String(counter).padStart(4, '0')}`,
+		notes: null,
+		created_at: new Date(),
+		created_by: null,
+		updated_at: new Date(),
+		updated_by: null,
+		...overrides
+	};
 }
 
 // ============================================================================
@@ -216,15 +293,19 @@ export function createMockDepot(overrides?: Partial<MockDepot>): MockDepot {
 	};
 }
 
-export async function createDepot(
-	overrides: Partial<MockDepot> & {
-		organization_id: string;
-		location_id: string;
-	}
-): Promise<typeof schema.depots.$inferSelect> {
-	const data = createMockDepot(overrides);
-	const [result] = await db.insert(schema.depots).values(data).returning();
-	return result;
+export function createMockDepotRow(overrides?: Partial<Depot>): Depot {
+	return {
+		id: crypto.randomUUID(),
+		organization_id: '',
+		location_id: '',
+		name: `Depot ${uniqueId()}`,
+		default_depot: false,
+		created_at: new Date(),
+		created_by: null,
+		updated_at: new Date(),
+		updated_by: null,
+		...overrides
+	};
 }
 
 // ============================================================================
@@ -252,17 +333,28 @@ export function createMockRoute(overrides?: Partial<MockRoute>): MockRoute {
 	};
 }
 
-export async function createRoute(
-	overrides: Partial<MockRoute> & {
-		organization_id: string;
-		map_id: string;
-		driver_id: string;
-		depot_id: string;
-	}
-): Promise<typeof schema.routes.$inferSelect> {
-	const data = createMockRoute(overrides);
-	const [result] = await db.insert(schema.routes).values(data).returning();
-	return result;
+export function createMockRouteRow(overrides?: Partial<Route>): Route {
+	return {
+		id: crypto.randomUUID(),
+		organization_id: '',
+		map_id: '',
+		driver_id: '',
+		depot_id: '',
+		geometry: {
+			type: 'LineString',
+			coordinates: [
+				[-81.9579, 28.0348],
+				[-81.955, 28.04],
+				[-81.95, 28.045]
+			]
+		},
+		duration: '3600',
+		created_at: new Date(),
+		created_by: null,
+		updated_at: new Date(),
+		updated_by: null,
+		...overrides
+	};
 }
 
 // ============================================================================
@@ -282,17 +374,6 @@ export function createMockLoginToken(
 		expires_at: new Date(Date.now() + 15 * 60 * 1000), // 15 minutes
 		...overrides
 	};
-}
-
-export async function createLoginToken(
-	overrides: Partial<MockLoginToken> & {
-		organization_id: string;
-		user_id: string;
-	}
-): Promise<typeof schema.loginTokens.$inferSelect> {
-	const data = createMockLoginToken(overrides);
-	const [result] = await db.insert(schema.loginTokens).values(data).returning();
-	return result;
 }
 
 // ============================================================================
@@ -315,12 +396,25 @@ export function createMockInvitation(
 	};
 }
 
-export async function createInvitation(
-	overrides: Partial<MockInvitation> & { organization_id: string }
-): Promise<typeof schema.invitations.$inferSelect> {
-	const data = createMockInvitation(overrides);
-	const [result] = await db.insert(schema.invitations).values(data).returning();
-	return result;
+export function createMockInvitationRow(
+	overrides?: Partial<Invitation>
+): Invitation {
+	const id = uniqueId();
+	return {
+		id: crypto.randomUUID(),
+		organization_id: '',
+		created_at: new Date(),
+		created_by: null,
+		updated_at: new Date(),
+		updated_by: null,
+		email: `invite-${id}@example.com`,
+		role: 'member',
+		token_hash: `test-invite-hash-${id}`,
+		expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+		used_at: null,
+		mail_record_id: null,
+		...overrides
+	};
 }
 
 // ============================================================================
@@ -344,12 +438,24 @@ export function createMockMailRecord(
 	};
 }
 
-export async function createMailRecord(
-	overrides: Partial<MockMailRecord> & { organization_id: string }
-): Promise<typeof schema.mailRecords.$inferSelect> {
-	const data = createMockMailRecord(overrides);
-	const [result] = await db.insert(schema.mailRecords).values(data).returning();
-	return result;
+export function createMockMailRecordRow(
+	overrides?: Partial<MailRecord>
+): MailRecord {
+	const id = uniqueId();
+	return {
+		id: crypto.randomUUID(),
+		organization_id: '',
+		created_at: new Date(),
+		resend_id: `resend-${id}`,
+		type: 'invitation',
+		to_email: `recipient-${id}@example.com`,
+		from_email: 'noreply@example.com',
+		subject: null,
+		status: 'sent',
+		delivered_at: null,
+		bounced_at: null,
+		...overrides
+	};
 }
 
 // ============================================================================
@@ -371,17 +477,6 @@ export function createMockRouteShare(
 	};
 }
 
-export async function createRouteShare(
-	overrides: Partial<MockRouteShare> & {
-		organization_id: string;
-		route_id: string;
-	}
-): Promise<typeof schema.routeShares.$inferSelect> {
-	const data = createMockRouteShare(overrides);
-	const [result] = await db.insert(schema.routeShares).values(data).returning();
-	return result;
-}
-
 // ============================================================================
 // DriverMapMembership
 // ============================================================================
@@ -398,21 +493,6 @@ export function createMockDriverMapMembership(
 		map_id: '', // Must be provided
 		...overrides
 	};
-}
-
-export async function createDriverMapMembership(
-	overrides: Partial<MockDriverMapMembership> & {
-		organization_id: string;
-		driver_id: string;
-		map_id: string;
-	}
-): Promise<typeof schema.driverMapMemberships.$inferSelect> {
-	const data = createMockDriverMapMembership(overrides);
-	const [result] = await db
-		.insert(schema.driverMapMemberships)
-		.values(data)
-		.returning();
-	return result;
 }
 
 // ============================================================================
@@ -435,17 +515,6 @@ export function createMockMatrix(overrides?: Partial<MockMatrix>): MockMatrix {
 	};
 }
 
-export async function createMatrix(
-	overrides: Partial<MockMatrix> & {
-		organization_id: string;
-		map_id: string;
-	}
-): Promise<typeof schema.matrices.$inferSelect> {
-	const data = createMockMatrix(overrides);
-	const [result] = await db.insert(schema.matrices).values(data).returning();
-	return result;
-}
-
 // ============================================================================
 // OptimizationJob
 // ============================================================================
@@ -462,86 +531,6 @@ export function createMockOptimizationJob(
 		depot_id: '', // Must be provided
 		status: 'pending',
 		...overrides
-	};
-}
-
-export async function createOptimizationJob(
-	overrides: Partial<MockOptimizationJob> & {
-		organization_id: string;
-		map_id: string;
-		matrix_id: string;
-		depot_id: string;
-	}
-): Promise<typeof schema.optimizationJobs.$inferSelect> {
-	const data = createMockOptimizationJob(overrides);
-	const [result] = await db
-		.insert(schema.optimizationJobs)
-		.values(data)
-		.returning();
-	return result;
-}
-
-// ============================================================================
-// Convenience: Full Test Setup
-// ============================================================================
-
-/**
- * Creates a complete test environment with an organization and admin user.
- * Useful as a starting point for most tests.
- */
-export async function createTestEnvironment() {
-	const organization = await createOrganization();
-	const user = await createUser({
-		organization_id: organization.id,
-		role: 'admin'
-	});
-
-	return { organization, user };
-}
-
-/**
- * Creates a complete route setup for testing optimization flows.
- * Includes: organization, user, driver, map, location, depot, route.
- */
-export async function createTestRouteSetup() {
-	const { organization, user } = await createBillingTestEnvironment();
-
-	const driver = await createDriver({
-		organization_id: organization.id,
-		created_by: user.id
-	});
-
-	const map = await createMap({
-		organization_id: organization.id,
-		created_by: user.id
-	});
-
-	const location = await createLocation({
-		organization_id: organization.id
-	});
-
-	const depot = await createDepot({
-		organization_id: organization.id,
-		location_id: location.id,
-		created_by: user.id,
-		default_depot: true
-	});
-
-	const route = await createRoute({
-		organization_id: organization.id,
-		map_id: map.id,
-		driver_id: driver.id,
-		depot_id: depot.id
-	});
-
-	return {
-		organization,
-		user,
-		driver,
-		map,
-		location,
-		depot,
-		route
 	};
 }
 
@@ -565,27 +554,20 @@ export function createMockCreditTransaction(
 	};
 }
 
-export async function createCreditTransaction(
-	overrides: Partial<MockCreditTransaction> & { organization_id: string }
-): Promise<typeof schema.creditTransactions.$inferSelect> {
-	const data = createMockCreditTransaction(overrides);
-	const [result] = await db
-		.insert(schema.creditTransactions)
-		.values(data)
-		.returning();
-	return result;
-}
-
 // ============================================================================
-// Convenience: Billing Test Environment
+// Constants
 // ============================================================================
 
-/**
- * Creates a complete billing test environment with an organization and admin user.
- * Billing fields (stripe_customer_id, subscription_status, etc.) live directly
- * on the organization and can be set via createOrganization overrides.
- */
-export async function createBillingTestEnvironment() {
-	const { organization, user } = await createTestEnvironment();
-	return { organization, user };
-}
+export const ALL_PERMISSIONS: Permission[] = [
+	'resources:read',
+	'resources:create',
+	'resources:update',
+	'resources:delete',
+	'users:read',
+	'users:create',
+	'users:update',
+	'users:delete',
+	'routes:read',
+	'billing:read',
+	'billing:update'
+];

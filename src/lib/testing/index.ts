@@ -72,6 +72,21 @@ export {
 	createBillingTestEnvironment
 } from './factories';
 
+// Select-type factories (for Storybook / component tests)
+export {
+	createMockOrganizationRow,
+	createMockPublicUserRow,
+	createMockInvitationRow,
+	createMockMailRecordRow,
+	createMockDriverRow,
+	createMockStopRow,
+	createMockLocationRow,
+	createMockRouteRow,
+	createMockMapRow,
+	createMockDepotRow,
+	ALL_PERMISSIONS
+} from './factories';
+
 // Mock factories - types
 export type {
 	MockOrganization,
