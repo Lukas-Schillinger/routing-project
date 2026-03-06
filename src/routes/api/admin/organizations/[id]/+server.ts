@@ -8,8 +8,8 @@ export const DELETE: RequestHandler = async ({ params }) => {
 	requireAdminApi();
 
 	try {
-		await adminService.deleteOrganization(params.id);
-		return json({ success: true });
+		const result = await adminService.deleteOrganization(params.id);
+		return json(result);
 	} catch (err) {
 		handleApiError(err, 'Failed to delete organization');
 	}

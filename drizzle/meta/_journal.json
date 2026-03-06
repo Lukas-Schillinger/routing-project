@@ -225,6 +225,13 @@
       "when": 1772821276995,
       "tag": "0031_narrow_human_robot",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1772836826109,
+      "tag": "0032_hesitant_victor_mancha",
+      "breakpoints": true
     }
   ]
 }

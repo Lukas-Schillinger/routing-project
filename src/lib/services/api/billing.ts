@@ -19,8 +19,8 @@ class BillingApiService {
 	/**
 	 * Cancel a scheduled downgrade, keeping Pro
 	 */
-	async cancelScheduledDowngrade(): Promise<void> {
-		await apiClient.delete('/billing/downgrade');
+	async cancelScheduledDowngrade(): Promise<{ success: boolean }> {
+		return apiClient.delete<{ success: boolean }>('/billing/downgrade');
 	}
 
 	/**

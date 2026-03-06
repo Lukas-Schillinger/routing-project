@@ -222,7 +222,9 @@ export class SubscriptionService {
 	/**
 	 * Cancel a scheduled downgrade, keeping Pro.
 	 */
-	async cancelScheduledDowngrade(organizationId: string): Promise<void> {
+	async cancelScheduledDowngrade(
+		organizationId: string
+	): Promise<{ success: true }> {
 		const org = await this.getOrg(organizationId);
 
 		if (!org.cancel_at_period_end) {
@@ -239,6 +241,8 @@ export class SubscriptionService {
 		);
 
 		await this.syncSubscription(updated);
+
+		return { success: true };
 	}
 
 	/**

@@ -127,7 +127,7 @@ export class LocationService {
 	async deleteLocation(
 		locationId: string,
 		organizationId: string
-	): Promise<{ success: boolean }> {
+	): Promise<{ success: true }> {
 		await this.getLocationById(locationId, organizationId);
 
 		await db

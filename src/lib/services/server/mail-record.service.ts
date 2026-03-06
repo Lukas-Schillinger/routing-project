@@ -4,7 +4,7 @@ import {
 	type ResendWebhookData,
 	type ResendWebhookEventType,
 	type ResendWebhookPayload
-} from '$lib/schemas/mail-record.js';
+} from '$lib/schemas/mail-record';
 import { db } from '$lib/server/db';
 import { mailRecords } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';

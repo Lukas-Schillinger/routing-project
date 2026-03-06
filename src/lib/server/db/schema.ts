@@ -1,4 +1,5 @@
 // src/lib/server/db/schema.ts
+import type { GeoJsonLineString } from '$lib/schemas/common';
 import { relations, sql } from 'drizzle-orm';
 import {
 	type AnyPgColumn,
@@ -446,7 +447,7 @@ export const routes = pgTable(
 		depot_id: uuid('depot_id')
 			.notNull()
 			.references(() => depots.id, { onDelete: 'cascade' }),
-		geometry: jsonb('geometry'), // GeoJSON LineString object { type: "LineString", coordinates: [[lon, lat], ...] } - nullable for failed recalculations
+		geometry: jsonb('geometry').$type<GeoJsonLineString | null>(), // GeoJSON LineString object { type: "LineString", coordinates: [[lon, lat], ...] } - nullable for failed recalculations
 		duration: numeric('duration', { precision: 12, scale: 2 }), // seconds
 		created_at: createdAt,
 		created_by: uuid('created_by').references(() => users.id, {
@@ -502,19 +503,25 @@ export const routeShares = pgTable(
 	]
 );
 
-export const matrices = pgTable('matrices', {
-	id,
-	organization_id: orgId.references(() => organizations.id, {
-		onDelete: 'cascade'
-	}),
-	map_id: uuid()
-		.references(() => maps.id, { onDelete: 'cascade' })
-		.notNull(),
-	inputs_hash: varchar('inputs_hash', { length: 64 }).notNull(),
-	matrix: doublePrecision('matrix').array().array().notNull(),
-	created_at: createdAt,
-	updated_at: updatedAt
-});
+export const matrices = pgTable(
+	'matrices',
+	{
+		id,
+		organization_id: orgId.references(() => organizations.id, {
+			onDelete: 'cascade'
+		}),
+		map_id: uuid()
+			.references(() => maps.id, { onDelete: 'cascade' })
+			.notNull(),
+		inputs_hash: varchar('inputs_hash', { length: 64 }).notNull(),
+		matrix: doublePrecision('matrix').array().array().notNull(),
+		created_at: createdAt,
+		updated_at: updatedAt
+	},
+	(t) => [
+		uniqueIndex('matrices_org_hash_uidx').on(t.organization_id, t.inputs_hash)
+	]
+);
 
 export const files = pgTable(
 	'files',

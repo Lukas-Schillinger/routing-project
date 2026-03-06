@@ -18,8 +18,11 @@ export const DELETE: RequestHandler = async ({ params }) => {
 	}
 
 	try {
-		await routeShareService.deleteShare(shareId, user.organization_id);
-		return json({ success: true });
+		const result = await routeShareService.deleteShare(
+			shareId,
+			user.organization_id
+		);
+		return json(result);
 	} catch (err) {
 		handleApiError(err, 'Failed to delete route share');
 	}

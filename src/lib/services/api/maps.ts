@@ -27,8 +27,10 @@ class MapApiService {
 	 * Get all maps for the authenticated user's organization
 	 */
 	async getAll(includeStats = false): Promise<Map[]> {
-		const params = includeStats ? '?includeStats=true' : '';
-		return apiClient.get<Map[]>(`/maps${params}`);
+		return apiClient.get<Map[]>(
+			'/maps',
+			includeStats ? { includeStats: 'true' } : undefined
+		);
 	}
 
 	/**

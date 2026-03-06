@@ -39,6 +39,7 @@ export const logger = pino({
 
 export type RequestLoggerContext = {
 	requestId: string;
+	ip?: string;
 	path?: string;
 	method?: string;
 };

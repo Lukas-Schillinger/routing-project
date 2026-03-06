@@ -362,7 +362,7 @@ export class AdminService {
 	 * Delete an organization and all related data.
 	 * Cancels Stripe subscription first if active.
 	 */
-	async deleteOrganization(organizationId: string): Promise<void> {
+	async deleteOrganization(organizationId: string): Promise<{ success: true }> {
 		const [org] = await db
 			.select()
 			.from(organizations)
@@ -387,6 +387,8 @@ export class AdminService {
 			{ organizationId, organizationName: org.name },
 			'Organization deleted'
 		);
+
+		return { success: true };
 	}
 
 	/**

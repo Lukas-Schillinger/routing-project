@@ -117,8 +117,9 @@ export class LoginTokenService {
 			.where(eq(loginTokens.id, loginTokenId));
 	}
 
-	async deleteLoginToken(tokenId: string): Promise<void> {
+	async deleteLoginToken(tokenId: string): Promise<{ success: true }> {
 		await db.delete(loginTokens).where(eq(loginTokens.id, tokenId));
+		return { success: true };
 	}
 }
 

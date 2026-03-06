@@ -1,21 +1,21 @@
 import { env } from '$env/dynamic/private';
-import type { Invitation, LoginToken } from '$lib/schemas/auth.js';
-import type { MailRecordType } from '$lib/schemas/mail-record.js';
-import type { Organization } from '$lib/schemas/organization.js';
-import type { RouteShare } from '$lib/schemas/route-share.js';
-import type { PublicUser } from '$lib/schemas/user.js';
+import type { Invitation, LoginToken } from '$lib/schemas/auth';
+import type { MailRecordType } from '$lib/schemas/mail-record';
+import type { Organization } from '$lib/schemas/organization';
+import type { RouteShare } from '$lib/schemas/route-share';
+import type { PublicUser } from '$lib/schemas/user';
 import { logger } from '$lib/server/logger';
-import { ServiceError } from '$lib/services/server/errors.js';
-import { invitationService } from '$lib/services/server/invitation.service.js';
-import { loginTokenService } from '$lib/services/server/login-token.service.js';
-import { mailRecordService } from '$lib/services/server/mail-record.service.js';
-import { routeShareService } from '$lib/services/server/route-share.service.js';
+import { ServiceError } from '$lib/services/server/errors';
+import { invitationService } from '$lib/services/server/invitation.service';
+import { loginTokenService } from '$lib/services/server/login-token.service';
+import { mailRecordService } from '$lib/services/server/mail-record.service';
+import { routeShareService } from '$lib/services/server/route-share.service';
 import { Resend } from 'resend';
 import {
 	type RenderClient,
 	renderClient as defaultRenderer
-} from '$lib/services/external/mail/render.js';
-import type { RenderedEmail } from '$lib/services/external/mail/types.js';
+} from '$lib/services/external/mail/render';
+import type { RenderedEmail } from '$lib/services/external/mail/types';
 
 const log = logger.child({ service: 'mail' });
 

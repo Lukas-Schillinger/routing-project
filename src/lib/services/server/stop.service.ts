@@ -313,7 +313,7 @@ export class StopService {
 	async deleteStop(
 		stopId: string,
 		organizationId: string
-	): Promise<{ success: boolean }> {
+	): Promise<{ success: true }> {
 		const { stop } = await this.getStopById(stopId, organizationId);
 
 		// Capture assignment info before deletion

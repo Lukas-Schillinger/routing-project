@@ -18,6 +18,7 @@ const handleRequestId: Handle = async ({ event, resolve }) => {
 	// Create base logger (userId not available yet - auth hasn't run)
 	event.locals.log = createRequestLogger({
 		requestId,
+		ip: event.getClientAddress(),
 		path: event.url.pathname,
 		method: event.request.method
 	});

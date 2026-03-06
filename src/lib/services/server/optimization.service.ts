@@ -1,8 +1,9 @@
 import { env } from '$env/dynamic/private';
-import type {
-	JobStatus,
-	OptimizationJob,
-	OptimizationOptions
+import {
+	optimizationJobSchema,
+	type JobStatus,
+	type OptimizationJob,
+	type OptimizationOptions
 } from '$lib/schemas/map';
 import { db } from '$lib/server/db';
 import {
@@ -358,7 +359,7 @@ export class OptimizationService {
 		const job = await this.getJobById(response.job_id);
 
 		const completableStatuses: JobStatus[] = ['pending', 'running'];
-		if (!completableStatuses.includes(job.status as JobStatus)) {
+		if (!completableStatuses.includes(job.status)) {
 			log.info({ status: job.status }, 'Job not in valid state, skipping');
 			return null;
 		}
@@ -384,7 +385,7 @@ export class OptimizationService {
 			throw ServiceError.validation(`Optimization job ${jobId} not found`);
 		}
 
-		return job;
+		return optimizationJobSchema.parse(job);
 	}
 
 	private async processCompletion(
@@ -601,7 +602,7 @@ export class OptimizationService {
 	async cancelOptimization(
 		mapId: string,
 		organizationId: string
-	): Promise<{ success: boolean }> {
+	): Promise<{ success: true }> {
 		const job = await this.getActiveJobForMap(mapId, organizationId);
 
 		if (!job) {
@@ -674,9 +675,32 @@ export class OptimizationService {
 				inputs_hash: inputHash,
 				matrix: matrixResult.matrix
 			})
+			.onConflictDoNothing({
+				target: [matrices.organization_id, matrices.inputs_hash]
+			})
 			.returning();
 
-		return newMatrix;
+		if (newMatrix) {
+			return newMatrix;
+		}
+
+		// Conflict: another request inserted first — fetch the winning row
+		const [existing] = await db
+			.select()
+			.from(matrices)
+			.where(
+				and(
+					eq(matrices.organization_id, organizationId),
+					eq(matrices.inputs_hash, inputHash)
+				)
+			)
+			.limit(1);
+
+		if (!existing) {
+			throw ServiceError.notFound('Distance matrix lost after conflict');
+		}
+
+		return existing;
 	}
 
 	private async fetchAssignedDrivers(

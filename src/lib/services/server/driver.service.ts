@@ -102,7 +102,7 @@ export class DriverService {
 	async deleteDriver(
 		driverId: string,
 		organizationId: string
-	): Promise<{ success: boolean }> {
+	): Promise<{ success: true }> {
 		await this.getDriverById(driverId, organizationId);
 
 		/**

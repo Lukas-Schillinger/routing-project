@@ -6,15 +6,13 @@ import {
 	setSessionTokenCookie,
 	validateSessionToken
 } from '$lib/services/server/auth';
-import { logger } from '$lib/server/logger';
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-
-const log = logger.child({ service: 'admin-impersonate' });
 
 const IMPERSONATION_COOKIE_NAME = 'admin-original-session';
 
 export const POST: RequestHandler = async ({ cookies, locals }) => {
+	const log = locals.log;
 	requireAdminApi();
 
 	try {

@@ -35,8 +35,8 @@ export const DELETE: RequestHandler = async () => {
 	const user = requirePermissionApi('users:delete');
 
 	try {
-		await userService.deleteUser(user.id, user.organization_id);
-		return json({ success: true });
+		const result = await userService.deleteUser(user.id, user.organization_id);
+		return json(result);
 	} catch (err) {
 		handleApiError(err, 'Failed to delete account');
 	}

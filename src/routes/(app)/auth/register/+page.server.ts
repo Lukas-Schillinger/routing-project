@@ -52,7 +52,7 @@ export const actions: Actions = {
 			if (err instanceof ServiceError) {
 				return setError(form, 'email', err.message);
 			}
-			console.error('Registration error:', err);
+			event.locals.log.error(err, 'Registration error');
 			return message(form, 'An unexpected error occurred', { status: 500 });
 		}
 

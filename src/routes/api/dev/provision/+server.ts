@@ -195,7 +195,10 @@ export const POST: RequestHandler = async (event) => {
 			map_id: mapId,
 			driver_id: driverId,
 			depot_id: depotId,
-			geometry: r.geometry as { type: string; coordinates: number[][] },
+			geometry: r.geometry as {
+				type: 'LineString';
+				coordinates: [number, number][];
+			},
 			duration: String(r.duration)
 		});
 	}

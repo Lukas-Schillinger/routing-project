@@ -1,7 +1,5 @@
 import type {
 	CreateRoute,
-	Driver,
-	Map,
 	PublicUser,
 	Route,
 	RouteWithDetails
@@ -35,7 +33,7 @@ export class RouteService {
 			throw ServiceError.notFound('Route not found');
 		}
 
-		return route as Route;
+		return route;
 	}
 	async upsertRoute(input: CreateRoute, userId?: string): Promise<Route> {
 		// Validate that map, driver, and depot all belong to the organization
@@ -101,7 +99,7 @@ export class RouteService {
 	): Promise<Route[]> {
 		if (inputs.length === 0) return [];
 
-		return (await db
+		return await db
 			.insert(routes)
 			.values(
 				inputs.map((input) => ({
@@ -125,37 +123,23 @@ export class RouteService {
 					updated_by: userId
 				}
 			})
-			.returning()) as Route[];
+			.returning();
 	}
 
 	async getRoutes(organizationId: string) {
-		return (await db
+		return await db
 			.select()
 			.from(routes)
-			.where(eq(routes.organization_id, organizationId))) as Route[];
+			.where(eq(routes.organization_id, organizationId));
 	}
 
 	/**
 	 * Get all routes for a map
 	 */
 	async getRoutesByMap(mapId: string, organizationId: string) {
-		return (await db
+		return await db
 			.select()
 			.from(routes)
-			.where(
-				and(
-					eq(routes.map_id, mapId),
-					eq(routes.organization_id, organizationId)
-				)
-			)) as Route[]; // little hack because drizzle can't type the LineString
-	}
-
-	/**
-	 * Delete all routes for a map
-	 */
-	async deleteRoutesByMap(mapId: string, organizationId: string) {
-		await db
-			.delete(routes)
 			.where(
 				and(
 					eq(routes.map_id, mapId),
@@ -165,9 +149,31 @@ export class RouteService {
 	}
 
 	/**
+	 * Delete all routes for a map
+	 */
+	async deleteRoutesByMap(
+		mapId: string,
+		organizationId: string
+	): Promise<{ success: true }> {
+		await db
+			.delete(routes)
+			.where(
+				and(
+					eq(routes.map_id, mapId),
+					eq(routes.organization_id, organizationId)
+				)
+			);
+
+		return { success: true };
+	}
+
+	/**
 	 * Delete a specific route
 	 */
-	async deleteRoute(routeId: string, organizationId: string) {
+	async deleteRoute(
+		routeId: string,
+		organizationId: string
+	): Promise<{ success: true }> {
 		await this.getRouteById(routeId, organizationId);
 
 		await db
@@ -175,6 +181,8 @@ export class RouteService {
 			.where(
 				and(eq(routes.id, routeId), eq(routes.organization_id, organizationId))
 			);
+
+		return { success: true };
 	}
 
 	/**
@@ -189,7 +197,7 @@ export class RouteService {
 			.where(and(eq(routes.id, routeId), eq(drivers.temporary, true)))
 			.limit(1);
 
-		return (result?.routes as Route) ?? null;
+		return result?.routes ?? null;
 	}
 
 	/**
@@ -199,7 +207,7 @@ export class RouteService {
 	 */
 	async getRoutesForUser(user: PublicUser): Promise<Route[]> {
 		if (user.role === 'driver') {
-			return (await db
+			return await db
 				.select({ routes })
 				.from(routes)
 				.innerJoin(drivers, eq(routes.driver_id, drivers.id))
@@ -209,7 +217,7 @@ export class RouteService {
 						eq(drivers.user_id, user.id)
 					)
 				)
-				.then((rows) => rows.map((r) => r.routes))) as Route[];
+				.then((rows) => rows.map((r) => r.routes));
 		}
 
 		// Non-driver roles see all org routes
@@ -291,9 +299,9 @@ export class RouteService {
 		);
 
 		return {
-			route: result.route as Route,
-			map: result.map as Map,
-			driver: result.driver as Driver,
+			route: result.route,
+			map: result.map,
+			driver: result.driver,
 			depot: { depot: result.depot, location: result.location },
 			stops
 		};
@@ -319,7 +327,7 @@ export class RouteService {
 			)
 			.limit(1);
 
-		return (route as Route) ?? null;
+		return route ?? null;
 	}
 
 	/**
@@ -329,7 +337,7 @@ export class RouteService {
 		mapId: string,
 		driverId: string,
 		organizationId: string
-	): Promise<void> {
+	): Promise<{ success: true }> {
 		await db
 			.delete(routes)
 			.where(
@@ -339,6 +347,8 @@ export class RouteService {
 					eq(routes.organization_id, organizationId)
 				)
 			);
+
+		return { success: true };
 	}
 
 	/**
