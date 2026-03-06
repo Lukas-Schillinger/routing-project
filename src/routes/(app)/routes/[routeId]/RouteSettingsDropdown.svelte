@@ -43,7 +43,7 @@
 				})
 			);
 
-			toast.success('Completed stops have been reset.');
+			toast.success('Completed stops reset');
 		} catch (error) {
 			console.error('Failed to reset completed stops:', error);
 			captureClientError(error);

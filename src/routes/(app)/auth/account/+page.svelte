@@ -43,7 +43,7 @@
 
 	onMount(() => {
 		if (page.url.searchParams.has('upgraded')) {
-			toast.success('Upgraded to Pro!');
+			toast.success('Plan upgraded');
 			const url = new URL(page.url);
 			url.searchParams.delete('upgraded');
 			history.replaceState({}, '', url.pathname + url.search);

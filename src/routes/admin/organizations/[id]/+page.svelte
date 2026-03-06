@@ -44,7 +44,7 @@
 						...form.data
 					});
 
-					toast.success('Credits adjusted successfully');
+					toast.success('Credits adjusted');
 					creditForm.reset();
 					await invalidate(INVALIDATION_KEYS.ADMIN);
 				} catch (err) {
@@ -128,7 +128,7 @@
 		isSyncing = true;
 		try {
 			await adminApi.syncSubscription(data.organization.id);
-			toast.success('Subscription synced from Stripe');
+			toast.success('Subscription synced');
 			await invalidate(INVALIDATION_KEYS.ADMIN);
 		} catch (error) {
 			toast.error(

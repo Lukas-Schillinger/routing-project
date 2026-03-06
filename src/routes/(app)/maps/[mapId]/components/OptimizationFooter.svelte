@@ -179,7 +179,7 @@
 		try {
 			await mapApi.resetOptimization(map.id);
 			await invalidate(INVALIDATION_KEYS.MAP_DATA);
-			toast.success('Routes reset successfully');
+			toast.success('Routes reset');
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to reset routes';
 		} finally {

@@ -117,7 +117,7 @@
 		e.preventDefault();
 		e.stopPropagation();
 		navigator.clipboard.writeText(map.id);
-		toast.success('Map ID copied to clipboard');
+		toast.success('Map ID copied');
 	}
 
 	async function handleDelete() {

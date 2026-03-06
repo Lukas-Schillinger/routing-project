@@ -23,13 +23,13 @@
 
 	const handleCopyId = () => {
 		navigator.clipboard.writeText(stop.stop.id);
-		toast.success('Copied to clipboard');
+		toast.success('ID copied');
 	};
 
 	const handleDelete = async () => {
 		await stopApi.delete(stop.stop.id);
 		await onDelete?.(stop.stop.id);
-		toast.success(`Stop Deleted`);
+		toast.success('Stop deleted');
 	};
 
 	const handleStopUpdate = (updatedStop: StopWithLocation) => {

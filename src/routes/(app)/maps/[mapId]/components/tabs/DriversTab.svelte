@@ -279,7 +279,7 @@
 
 	function handleCopyId(id: string): void {
 		navigator.clipboard.writeText(id);
-		toast.success('Copied to clipboard');
+		toast.success('ID copied');
 	}
 
 	async function handleDriverCreated(): Promise<void> {
