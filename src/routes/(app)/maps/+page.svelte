@@ -25,6 +25,7 @@
 	import MapPin from '@lucide/svelte/icons/map-pin';
 	import Plus from '@lucide/svelte/icons/plus';
 	import Search from '@lucide/svelte/icons/search';
+	import * as Empty from '$lib/components/ui/empty';
 	import { MediaQuery } from 'svelte/reactivity';
 	import { useSearchParams } from 'runed/kit';
 	import type { PageData } from './$types';
@@ -289,35 +290,30 @@
 		<!-- Maps Section (2/3 width on large screens) -->
 		<div class="min-w-0 md:col-span-2">
 			{#if filteredMaps.length === 0}
-				<div
-					class="flex flex-col items-center justify-center rounded-lg border border-dashed border-border/50 bg-card/50 py-16"
-				>
-					<div
-						class="flex h-12 w-12 items-center justify-center rounded-full bg-muted"
-					>
-						<MapPin class="h-6 w-6 text-muted-foreground" />
-					</div>
+				<Empty.Root>
+					<Empty.Header>
+						<Empty.Media variant="icon"><MapPin /></Empty.Media>
+						{#if params.q}
+							<Empty.Title>No maps found</Empty.Title>
+							<Empty.Description
+								>Try adjusting your search query</Empty.Description
+							>
+						{:else}
+							<Empty.Title>No maps yet</Empty.Title>
+							<Empty.Description
+								>Get started by creating your first map</Empty.Description
+							>
+						{/if}
+					</Empty.Header>
 					{#if params.q}
-						<h3 class="mt-4 font-medium">No maps found</h3>
-						<p class="mt-1 text-sm text-muted-foreground">
-							Try adjusting your search query
-						</p>
-						<Button
-							class="mt-4"
-							variant="outline"
-							onclick={() => (params.q = '')}
-						>
+						<Button variant="outline" onclick={() => (params.q = '')}>
 							Clear search
 						</Button>
 					{:else}
-						<h3 class="mt-4 font-medium">No maps yet</h3>
-						<p class="mt-1 text-sm text-muted-foreground">
-							Get started by creating your first map
-						</p>
 						<Button
 							onclick={handleCreateNewMap}
 							disabled={isCreatingMap}
-							class="mt-4 gap-2"
+							class="gap-2"
 							variant="outline"
 						>
 							{#if isCreatingMap}
@@ -329,7 +325,7 @@
 							{/if}
 						</Button>
 					{/if}
-				</div>
+				</Empty.Root>
 			{:else}
 				<!-- Maps Grid/List -->
 				<div

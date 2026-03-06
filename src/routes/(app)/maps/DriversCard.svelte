@@ -8,6 +8,7 @@
 	import type { Driver } from '$lib/schemas/driver';
 	import { driverApi } from '$lib/services/api/drivers';
 	import { formatPhoneNumber, getIdenticon } from '$lib/utils';
+	import * as Empty from '$lib/components/ui/empty';
 	import Phone from '@lucide/svelte/icons/phone';
 	import Plus from '@lucide/svelte/icons/plus';
 	import Truck from '@lucide/svelte/icons/truck';
@@ -59,28 +60,26 @@
 	<!-- Content -->
 	<div class="p-2">
 		{#if drivers.length === 0}
-			<div class="flex flex-col items-center justify-center py-8 text-center">
-				<div
-					class="flex h-10 w-10 items-center justify-center rounded-full bg-muted"
-				>
-					<Users class="h-5 w-5 text-muted-foreground" />
-				</div>
-				<p class="mt-3 text-sm font-medium">No drivers yet</p>
-				<p class="mt-1 text-xs text-muted-foreground">
-					Add drivers to assign them to routes
-				</p>
+			<Empty.Root>
+				<Empty.Header>
+					<Empty.Media variant="icon"><Users /></Empty.Media>
+					<Empty.Title>No drivers yet</Empty.Title>
+					<Empty.Description
+						>Add drivers to assign them to routes</Empty.Description
+					>
+				</Empty.Header>
 				<EditOrCreateDriverPopover
 					mode="create"
 					onSuccess={handleDriverSuccess}
 				>
 					{#snippet children({ props })}
-						<Button {...props} variant="outline" size="sm" class="mt-3 gap-1">
+						<Button {...props} variant="outline" size="sm" class="gap-1">
 							<Plus class="h-3.5 w-3.5" />
 							Add Driver
 						</Button>
 					{/snippet}
 				</EditOrCreateDriverPopover>
-			</div>
+			</Empty.Root>
 		{:else}
 			<div
 				class="flex flex-col gap-2 sm:grid sm:grid-cols-2 md:flex md:flex-col"

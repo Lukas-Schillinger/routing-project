@@ -6,6 +6,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import type { DepotWithLocationJoin } from '$lib/schemas/depot';
 	import { depotApi } from '$lib/services/api/depots';
+	import * as Empty from '$lib/components/ui/empty';
 	import Building2 from '@lucide/svelte/icons/building-2';
 	import MapPin from '@lucide/svelte/icons/map-pin';
 	import Plus from '@lucide/svelte/icons/plus';
@@ -64,23 +65,21 @@
 	<!-- Content -->
 	<div class="p-2">
 		{#if depots.length === 0}
-			<div class="flex flex-col items-center justify-center py-8 text-center">
-				<div
-					class="flex h-10 w-10 items-center justify-center rounded-full bg-muted"
-				>
-					<Building2 class="h-5 w-5 text-muted-foreground" />
-				</div>
-				<p class="mt-3 text-sm font-medium">No depots yet</p>
-				<p class="mt-1 text-xs text-muted-foreground">
-					Create a depot as a starting location for routes
-				</p>
+			<Empty.Root>
+				<Empty.Header>
+					<Empty.Media variant="icon"><Building2 /></Empty.Media>
+					<Empty.Title>No depots yet</Empty.Title>
+					<Empty.Description
+						>Create a depot as a starting location for routes</Empty.Description
+					>
+				</Empty.Header>
 				<EditOrCreateDepotPopover mode="create" onSuccess={handleDepotSuccess}>
-					<Button variant="outline" size="sm" class="mt-3 gap-1">
+					<Button variant="outline" size="sm" class="gap-1">
 						<Plus class="h-3.5 w-3.5" />
 						Add Depot
 					</Button>
 				</EditOrCreateDepotPopover>
-			</div>
+			</Empty.Root>
 		{:else}
 			<div
 				class="flex flex-col gap-2 sm:grid sm:grid-cols-2 md:flex md:flex-col"
