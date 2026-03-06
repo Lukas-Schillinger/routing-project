@@ -1,5 +1,6 @@
 <!-- @component Printable route page -->
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import PrintableRoute from '$lib/components/PrintableRoute.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import * as Select from '$lib/components/ui/select';
@@ -40,12 +41,12 @@
 		<Printer class="h-4 w-4" />
 		Print
 	</Button>
-	<Button href="/routes/{route.id}">
+	<Button href={resolve(`/routes/${route.id}`)}>
 		<Route />
 		Route
 	</Button>
 	{#if data.permissions.includes('resources:read')}
-		<Button href="/maps/{map.id}">
+		<Button href={resolve(`/maps/${map.id}`)}>
 			<Map />
 			Map
 		</Button>

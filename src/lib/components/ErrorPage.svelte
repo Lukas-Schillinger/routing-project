@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 	import Home from '@lucide/svelte/icons/home';
@@ -71,7 +72,7 @@
 				<ArrowLeft class="size-4" />
 				Go Back
 			</Button>
-			<Button variant="default" href="/" class="gap-2">
+			<Button variant="default" href={resolve('/')} class="gap-2">
 				<Home class="size-4" />
 				Go Home
 			</Button>

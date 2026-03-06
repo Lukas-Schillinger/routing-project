@@ -84,7 +84,7 @@
 					{#if user}
 						<Button
 							class="rounded-full"
-							href="/maps"
+							href={resolve('/maps')}
 							variant={isActive.maps ? 'secondary' : 'ghost'}
 							size="sm"
 						>
@@ -92,7 +92,7 @@
 						</Button>
 						<Button
 							class="rounded-full"
-							href="/auth/account"
+							href={resolve('/auth/account')}
 							variant={isActive.auth ? 'secondary' : 'ghost'}
 							size="sm"
 						>
@@ -101,11 +101,15 @@
 					{:else}
 						<Button
 							class="rounded-full"
-							href="/auth/login"
+							href={resolve('/auth/login')}
 							variant="ghost"
 							size="sm">Log in</Button
 						>
-						<Button class="rounded-full" href="/auth/account" size="sm">
+						<Button
+							class="rounded-full"
+							href={resolve('/auth/account')}
+							size="sm"
+						>
 							<UserIcon /> Create Account
 						</Button>
 					{/if}
