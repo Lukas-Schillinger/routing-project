@@ -93,7 +93,7 @@ export class FileService {
 		}
 	}
 
-	async deleteFile(fileId: string, user: User): Promise<void> {
+	async deleteFile(fileId: string, user: User): Promise<{ success: true }> {
 		const fileRecord = await this.getFileById(fileId, user.organization_id!);
 
 		try {
@@ -109,6 +109,8 @@ export class FileService {
 		} catch (error) {
 			throw ServiceError.internal('Failed to delete file', { cause: error });
 		}
+
+		return { success: true };
 	}
 
 	async getFileUrl(fileId: string, user: User): Promise<string> {

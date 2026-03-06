@@ -24,8 +24,10 @@ export const DELETE: RequestHandler = async () => {
 	const user = requirePermissionApi('billing:update');
 
 	try {
-		await subscriptionService.cancelScheduledDowngrade(user.organization_id);
-		return json({ success: true });
+		const result = await subscriptionService.cancelScheduledDowngrade(
+			user.organization_id
+		);
+		return json(result);
 	} catch (err) {
 		handleApiError(err, 'Failed to cancel scheduled downgrade');
 	}

@@ -151,7 +151,10 @@ export class RouteService {
 	/**
 	 * Delete all routes for a map
 	 */
-	async deleteRoutesByMap(mapId: string, organizationId: string) {
+	async deleteRoutesByMap(
+		mapId: string,
+		organizationId: string
+	): Promise<{ success: true }> {
 		await db
 			.delete(routes)
 			.where(
@@ -160,12 +163,17 @@ export class RouteService {
 					eq(routes.organization_id, organizationId)
 				)
 			);
+
+		return { success: true };
 	}
 
 	/**
 	 * Delete a specific route
 	 */
-	async deleteRoute(routeId: string, organizationId: string) {
+	async deleteRoute(
+		routeId: string,
+		organizationId: string
+	): Promise<{ success: true }> {
 		await this.getRouteById(routeId, organizationId);
 
 		await db
@@ -173,6 +181,8 @@ export class RouteService {
 			.where(
 				and(eq(routes.id, routeId), eq(routes.organization_id, organizationId))
 			);
+
+		return { success: true };
 	}
 
 	/**
@@ -327,7 +337,7 @@ export class RouteService {
 		mapId: string,
 		driverId: string,
 		organizationId: string
-	): Promise<void> {
+	): Promise<{ success: true }> {
 		await db
 			.delete(routes)
 			.where(
@@ -337,6 +347,8 @@ export class RouteService {
 					eq(routes.organization_id, organizationId)
 				)
 			);
+
+		return { success: true };
 	}
 
 	/**

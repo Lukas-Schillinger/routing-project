@@ -297,7 +297,7 @@ export class MapService {
 	async deleteMap(
 		mapId: string,
 		organizationId: string
-	): Promise<{ success: boolean }> {
+	): Promise<{ success: true }> {
 		await this.getMapById(mapId, organizationId);
 
 		await db
@@ -314,7 +314,7 @@ export class MapService {
 		mapId: string,
 		organizationId: string,
 		userId: string
-	): Promise<{ success: boolean }> {
+	): Promise<{ success: true }> {
 		await this.getMapById(mapId, organizationId);
 
 		// Use transaction to ensure both operations succeed or both fail
@@ -443,7 +443,7 @@ export class MapService {
 		mapId: string,
 		organizationId: string,
 		userId: string
-	): Promise<{ success: boolean }> {
+	): Promise<{ success: true }> {
 		const driver = await driverService.getDriverById(driverId, organizationId);
 		await this.getMapById(mapId, organizationId);
 

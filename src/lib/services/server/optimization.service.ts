@@ -603,7 +603,7 @@ export class OptimizationService {
 	async cancelOptimization(
 		mapId: string,
 		organizationId: string
-	): Promise<{ success: boolean }> {
+	): Promise<{ success: true }> {
 		const job = await this.getActiveJobForMap(mapId, organizationId);
 
 		if (!job) {
