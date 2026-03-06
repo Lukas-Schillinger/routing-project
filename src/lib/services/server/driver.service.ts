@@ -87,7 +87,6 @@ export class DriverService {
 				notes: data.notes,
 				active: data.active,
 				temporary: data.temporary,
-				updated_at: new Date(),
 				updated_by: userId,
 				color: data.color
 			})

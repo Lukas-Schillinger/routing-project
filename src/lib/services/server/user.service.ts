@@ -120,7 +120,6 @@ export class UserService {
 			.update(users)
 			.set({
 				name: data.name !== undefined ? data.name : user.name,
-				updated_at: new Date(),
 				updated_by: userId
 			})
 			.where(
@@ -143,7 +142,6 @@ export class UserService {
 			.update(users)
 			.set({
 				role: data.role,
-				updated_at: new Date(),
 				updated_by: updatedByUserId
 			})
 			.where(
@@ -166,7 +164,6 @@ export class UserService {
 			.update(users)
 			.set({
 				passwordHash,
-				updated_at: new Date(),
 				updated_by: userId
 			})
 			.where(
@@ -268,7 +265,6 @@ export class OrganizationService {
 			.update(organizations)
 			.set({
 				name: data.name ? data.name : organization.name,
-				updated_at: new Date(),
 				updated_by: userId
 			})
 			.where(eq(organizations.id, organizationId))

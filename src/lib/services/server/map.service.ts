@@ -225,7 +225,6 @@ export class MapService {
 			.update(maps)
 			.set({
 				...fieldsToUpdate,
-				updated_at: new Date(),
 				updated_by: userId
 			})
 			.where(and(eq(maps.id, mapId), eq(maps.organization_id, organizationId)))
@@ -267,7 +266,6 @@ export class MapService {
 			.update(maps)
 			.set({
 				depot_id: depotId,
-				updated_at: new Date(),
 				updated_by: userId
 			})
 			.where(and(eq(maps.id, mapId), eq(maps.organization_id, organizationId)))
@@ -319,7 +317,6 @@ export class MapService {
 				.set({
 					driver_id: null,
 					delivery_index: null,
-					updated_at: new Date(),
 					updated_by: userId
 				})
 				.where(eq(stops.map_id, mapId));
@@ -443,7 +440,6 @@ export class MapService {
 				.set({
 					driver_id: null,
 					delivery_index: null,
-					updated_at: new Date(),
 					updated_by: userId
 				})
 				.where(and(eq(stops.map_id, mapId), eq(stops.driver_id, driverId)));

@@ -43,7 +43,7 @@ export class SubscriptionService {
 			);
 			const [updated] = await db
 				.update(organizations)
-				.set({ stripe_customer_id: customer.id, updated_at: new Date() })
+				.set({ stripe_customer_id: customer.id })
 				.where(
 					and(
 						eq(organizations.id, organizationId),
@@ -170,8 +170,7 @@ export class SubscriptionService {
 				billing_period_ends_at: new Date(
 					subscriptionItem.current_period_end * 1000
 				),
-				cancel_at_period_end: stripeSubscription.cancel_at_period_end ?? false,
-				updated_at: new Date()
+				cancel_at_period_end: stripeSubscription.cancel_at_period_end ?? false
 			})
 			.where(eq(organizations.id, organizationId));
 	}
@@ -187,8 +186,7 @@ export class SubscriptionService {
 				subscription_status: null,
 				billing_period_starts_at: null,
 				billing_period_ends_at: null,
-				cancel_at_period_end: false,
-				updated_at: new Date()
+				cancel_at_period_end: false
 			})
 			.where(eq(organizations.id, organizationId));
 	}

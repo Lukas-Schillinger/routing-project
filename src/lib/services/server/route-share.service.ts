@@ -70,7 +70,7 @@ export class RouteShareService {
 	async setMailRecordId(shareId: string, mailRecordId: string): Promise<void> {
 		await db
 			.update(routeShares)
-			.set({ mail_record_id: mailRecordId, updated_at: new Date() })
+			.set({ mail_record_id: mailRecordId })
 			.where(eq(routeShares.id, shareId));
 	}
 
@@ -221,7 +221,7 @@ export class RouteShareService {
 
 		await db
 			.update(routeShares)
-			.set({ revoked_at: new Date(), updated_at: new Date() })
+			.set({ revoked_at: new Date() })
 			.where(eq(routeShares.id, shareId));
 	}
 

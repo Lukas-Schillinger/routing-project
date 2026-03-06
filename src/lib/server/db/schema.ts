@@ -28,8 +28,13 @@ export function getOrgPlan(org: {
 
 const id = uuid('id').defaultRandom().primaryKey();
 const orgId = uuid('organization_id').defaultRandom().notNull();
-const ts = (c: string) =>
-	timestamp(c, { withTimezone: true }).defaultNow().notNull();
+const createdAt = timestamp('created_at', { withTimezone: true })
+	.defaultNow()
+	.notNull();
+const updatedAt = timestamp('updated_at', { withTimezone: true })
+	.defaultNow()
+	.notNull()
+	.$onUpdate(() => new Date());
 
 // Billing types
 
@@ -56,7 +61,7 @@ export const creditTransactions = pgTable(
 		organization_id: orgId.references(() => organizations.id, {
 			onDelete: 'cascade'
 		}),
-		created_at: ts('created_at'),
+		created_at: createdAt,
 
 		type: varchar('type', { length: 32 })
 			.$type<CreditTransactionType>()
@@ -89,11 +94,11 @@ export const creditTransactions = pgTable(
 
 export const organizations = pgTable('organizations', {
 	id,
-	created_at: ts('created_at'),
+	created_at: createdAt,
 	created_by: uuid('created_by').references((): AnyPgColumn => users.id, {
 		onDelete: 'set null'
 	}),
-	updated_at: ts('updated_at'),
+	updated_at: updatedAt,
 	updated_by: uuid('updated_by').references((): AnyPgColumn => users.id, {
 		onDelete: 'set null'
 	}),
@@ -124,9 +129,9 @@ export const users = pgTable(
 		organization_id: orgId.references(() => organizations.id, {
 			onDelete: 'cascade'
 		}),
-		created_at: ts('created_at'),
+		created_at: createdAt,
 		created_by: uuid('created_by'),
-		updated_at: ts('updated_at'),
+		updated_at: updatedAt,
 		updated_by: uuid('updated_by'),
 
 		name: varchar('name', { length: 200 }),
@@ -153,8 +158,8 @@ export const session = pgTable(
 			withTimezone: true,
 			mode: 'date'
 		}).notNull(),
-		created_at: ts('created_at'),
-		updated_at: ts('updated_at')
+		created_at: createdAt,
+		updated_at: updatedAt
 	},
 	(t) => [index('session_user_id_idx').on(t.user_id)]
 );
@@ -166,11 +171,11 @@ export const invitations = pgTable(
 		organization_id: orgId.references(() => organizations.id, {
 			onDelete: 'cascade'
 		}),
-		created_at: ts('created_at'),
+		created_at: createdAt,
 		created_by: uuid('created_by').references(() => users.id, {
 			onDelete: 'set null'
 		}),
-		updated_at: ts('updated_at').$onUpdate(() => new Date()),
+		updated_at: updatedAt,
 		updated_by: uuid('updated_by').references(() => users.id, {
 			onDelete: 'set null'
 		}),
@@ -180,7 +185,9 @@ export const invitations = pgTable(
 			.$type<'admin' | 'member' | 'viewer' | 'driver'>()
 			.notNull(),
 		token_hash: text('token_hash').notNull(),
-		expires_at: ts('expires_at'),
+		expires_at: timestamp('expires_at', { withTimezone: true })
+			.defaultNow()
+			.notNull(),
 		used_at: timestamp('used_at', { withTimezone: true }),
 		mail_record_id: uuid('mail_record_id').references(() => mailRecords.id, {
 			onDelete: 'set null'
@@ -200,7 +207,7 @@ export const loginTokens = pgTable(
 		organization_id: orgId.references(() => organizations.id, {
 			onDelete: 'cascade'
 		}),
-		created_at: ts('created_at'),
+		created_at: createdAt,
 
 		user_id: uuid('user_id')
 			.references(() => users.id, { onDelete: 'cascade' })
@@ -210,7 +217,9 @@ export const loginTokens = pgTable(
 			.$type<'login_token' | 'password_reset'>()
 			.default('login_token')
 			.notNull(),
-		expires_at: ts('expires_at'),
+		expires_at: timestamp('expires_at', { withTimezone: true })
+			.defaultNow()
+			.notNull(),
 		used_at: timestamp('used_at', { withTimezone: true }),
 		mail_record_id: uuid('mail_record_id').references(() => mailRecords.id, {
 			onDelete: 'set null'
@@ -230,11 +239,11 @@ export const drivers = pgTable(
 		organization_id: orgId.references(() => organizations.id, {
 			onDelete: 'cascade'
 		}),
-		created_at: ts('created_at'),
+		created_at: createdAt,
 		created_by: uuid('created_by').references(() => users.id, {
 			onDelete: 'set null'
 		}),
-		updated_at: ts('updated_at'),
+		updated_at: updatedAt,
 		updated_by: uuid('updated_by').references(() => users.id, {
 			onDelete: 'set null'
 		}),
@@ -264,11 +273,11 @@ export const maps = pgTable(
 		organization_id: orgId.references(() => organizations.id, {
 			onDelete: 'cascade'
 		}),
-		created_at: ts('created_at'),
+		created_at: createdAt,
 		created_by: uuid('created_by').references(() => users.id, {
 			onDelete: 'set null'
 		}),
-		updated_at: ts('updated_at'),
+		updated_at: updatedAt,
 		updated_by: uuid('updated_by').references(() => users.id, {
 			onDelete: 'set null'
 		}),
@@ -292,11 +301,11 @@ export const locations = pgTable(
 		organization_id: orgId.references(() => organizations.id, {
 			onDelete: 'cascade'
 		}),
-		created_at: ts('created_at'),
+		created_at: createdAt,
 		created_by: uuid('created_by').references(() => users.id, {
 			onDelete: 'set null'
 		}),
-		updated_at: ts('updated_at'),
+		updated_at: updatedAt,
 		updated_by: uuid('updated_by').references(() => users.id, {
 			onDelete: 'set null'
 		}),
@@ -336,11 +345,11 @@ export const stops = pgTable(
 		organization_id: orgId.references(() => organizations.id, {
 			onDelete: 'cascade'
 		}),
-		created_at: ts('created_at'),
+		created_at: createdAt,
 		created_by: uuid('created_by').references(() => users.id, {
 			onDelete: 'set null'
 		}),
-		updated_at: ts('updated_at'),
+		updated_at: updatedAt,
 		updated_by: uuid('updated_by').references(() => users.id, {
 			onDelete: 'set null'
 		}),
@@ -372,11 +381,11 @@ export const depots = pgTable(
 		organization_id: orgId.references(() => organizations.id, {
 			onDelete: 'cascade'
 		}),
-		created_at: ts('created_at'),
+		created_at: createdAt,
 		created_by: uuid('created_by').references(() => users.id, {
 			onDelete: 'set null'
 		}),
-		updated_at: ts('updated_at'),
+		updated_at: updatedAt,
 		updated_by: uuid('updated_by').references(() => users.id, {
 			onDelete: 'set null'
 		}),
@@ -410,8 +419,8 @@ export const driverMapMemberships = pgTable(
 		map_id: uuid('map_id')
 			.notNull()
 			.references(() => maps.id, { onDelete: 'cascade' }),
-		created_at: ts('created_at'),
-		updated_at: ts('updated_at')
+		created_at: createdAt,
+		updated_at: updatedAt
 	},
 	(t) => [
 		uniqueIndex('driver_map_membership_uidx').on(t.driver_id, t.map_id),
@@ -439,11 +448,11 @@ export const routes = pgTable(
 			.references(() => depots.id, { onDelete: 'cascade' }),
 		geometry: jsonb('geometry'), // GeoJSON LineString object { type: "LineString", coordinates: [[lon, lat], ...] } - nullable for failed recalculations
 		duration: numeric('duration', { precision: 12, scale: 2 }), // seconds
-		created_at: ts('created_at'),
+		created_at: createdAt,
 		created_by: uuid('created_by').references(() => users.id, {
 			onDelete: 'set null'
 		}),
-		updated_at: ts('updated_at'),
+		updated_at: updatedAt,
 		updated_by: uuid('updated_by').references(() => users.id, {
 			onDelete: 'set null'
 		})
@@ -469,8 +478,8 @@ export const routeShares = pgTable(
 		created_by: uuid('created_by').references(() => users.id, {
 			onDelete: 'set null'
 		}),
-		created_at: ts('created_at'),
-		updated_at: ts('updated_at'),
+		created_at: createdAt,
+		updated_at: updatedAt,
 
 		share_type: varchar('share_type', { length: 16 })
 			.$type<'email' | 'sms'>()
@@ -503,8 +512,8 @@ export const matrices = pgTable('matrices', {
 		.notNull(),
 	inputs_hash: varchar('inputs_hash', { length: 64 }).notNull(),
 	matrix: doublePrecision('matrix').array().array().notNull(),
-	created_at: ts('created_at'),
-	updated_at: ts('updated_at')
+	created_at: createdAt,
+	updated_at: updatedAt
 });
 
 export const files = pgTable(
@@ -522,8 +531,8 @@ export const files = pgTable(
 		uploaded_by: uuid('uploaded_by')
 			.notNull()
 			.references(() => users.id),
-		created_at: ts('created_at'),
-		updated_at: ts('updated_at')
+		created_at: createdAt,
+		updated_at: updatedAt
 	},
 	(t) => [
 		index('files_org_idx').on(t.organization_id),
@@ -556,11 +565,11 @@ export const optimizationJobs = pgTable('optimization_jobs', {
 		.references(() => depots.id, { onDelete: 'cascade' })
 		.notNull(),
 	error_message: text('error_message'),
-	created_at: ts('created_at'),
+	created_at: createdAt,
 	created_by: uuid('created_by').references(() => users.id, {
 		onDelete: 'set null'
 	}),
-	updated_at: ts('updated_at'),
+	updated_at: updatedAt,
 	updated_by: uuid('updated_by').references(() => users.id, {
 		onDelete: 'set null'
 	})
@@ -573,7 +582,7 @@ export const mailRecords = pgTable(
 		organization_id: orgId.references(() => organizations.id, {
 			onDelete: 'cascade'
 		}),
-		created_at: ts('created_at'),
+		created_at: createdAt,
 
 		resend_id: varchar('resend_id', { length: 64 }).notNull().unique(),
 		type: varchar('type', { length: 32 })

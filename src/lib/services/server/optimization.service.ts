@@ -454,8 +454,7 @@ export class OptimizationService {
 			.update(stops)
 			.set({
 				driver_id: null,
-				delivery_index: null,
-				updated_at: new Date()
+				delivery_index: null
 			})
 			.where(eq(stops.map_id, mapId));
 	}
@@ -632,8 +631,7 @@ export class OptimizationService {
 			.update(optimizationJobs)
 			.set({
 				status,
-				...(errorMessage && { error_message: errorMessage }),
-				updated_at: new Date()
+				...(errorMessage && { error_message: errorMessage })
 			})
 			.where(
 				and(

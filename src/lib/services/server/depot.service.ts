@@ -16,7 +16,7 @@ export class DepotService {
 	private async unsetDefaultDepot(organizationId: string) {
 		await db
 			.update(depots)
-			.set({ default_depot: false, updated_at: new Date() })
+			.set({ default_depot: false })
 			.where(eq(depots.organization_id, organizationId));
 	}
 
@@ -167,7 +167,6 @@ export class DepotService {
 				name: data.name?.trim(),
 				location_id: locationId,
 				default_depot: data.default_depot,
-				updated_at: new Date(),
 				updated_by: userId
 			})
 			.where(eq(depots.id, depotId))

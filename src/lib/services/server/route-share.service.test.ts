@@ -95,7 +95,7 @@ async function createShareWithMailRecord(
 
 	await db
 		.update(routeShares)
-		.set({ mail_record_id: mailRecord.id, updated_at: new Date() })
+		.set({ mail_record_id: mailRecord.id })
 		.where(eq(routeShares.id, share.id));
 
 	return { share, mailRecord };

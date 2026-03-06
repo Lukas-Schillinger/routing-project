@@ -278,7 +278,6 @@ export class StopService {
 				contact_phone:
 					'contact_phone' in data ? data.contact_phone : stop.contact_phone,
 				notes: 'notes' in data ? data.notes : stop.notes,
-				updated_at: new Date(),
 				updated_by: userId
 			})
 			.where(eq(stops.id, stopId))
