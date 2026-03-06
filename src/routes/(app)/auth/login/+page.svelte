@@ -1,11 +1,14 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import { AuthAlert, AuthCard } from '$lib/components/auth';
+	import { AuthCard } from '$lib/components/auth';
+	import * as Alert from '$lib/components/ui/alert';
 	import DebugToolbar from '$lib/components/DebugToolbar.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import LoginWithPassword from './LoginWithPassword.svelte';
 	import RequestMagicLogin from './RequestMagicLogin.svelte';
+
+	import InfoIcon from '@lucide/svelte/icons/info';
 
 	let { data } = $props();
 
@@ -62,10 +65,13 @@
 <AuthCard title="Welcome back" {description}>
 	{#if isRegistrationFlow}
 		<div class="pb-4">
-			<AuthAlert
-				message="Check your email for a confirmation code to complete registration."
-				variant="info"
-			/>
+			<Alert.Root>
+				<InfoIcon />
+				<Alert.Title>Info</Alert.Title>
+				<Alert.Description>
+					Check your email for a confirmation code to complete registration.
+				</Alert.Description>
+			</Alert.Root>
 		</div>
 	{/if}
 

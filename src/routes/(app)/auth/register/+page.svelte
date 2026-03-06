@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { AuthAlert, AuthCard } from '$lib/components/auth';
+	import { AuthCard } from '$lib/components/auth';
+	import * as Alert from '$lib/components/ui/alert';
 	import { Button } from '$lib/components/ui/button';
 	import * as Form from '$lib/components/ui/form';
 	import { Input } from '$lib/components/ui/input';
@@ -8,6 +9,7 @@
 	import Loader2 from '@lucide/svelte/icons/loader-2';
 	import Lock from '@lucide/svelte/icons/lock';
 	import Mail from '@lucide/svelte/icons/mail';
+	import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
 	import UserPlus from '@lucide/svelte/icons/user-plus';
 	import { untrack } from 'svelte';
 	import { superForm } from 'sveltekit-superforms';
@@ -33,7 +35,11 @@
 >
 	<div class="space-y-6">
 		{#if $message}
-			<AuthAlert message={$message} />
+			<Alert.Root variant="destructive">
+				<TriangleAlert />
+				<Alert.Title>Error</Alert.Title>
+				<Alert.Description>{$message}</Alert.Description>
+			</Alert.Root>
 		{/if}
 
 		<form

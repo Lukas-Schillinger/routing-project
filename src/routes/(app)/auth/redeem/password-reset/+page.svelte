@@ -1,12 +1,14 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { AuthAlert, AuthCard } from '$lib/components/auth';
+	import { AuthCard } from '$lib/components/auth';
+	import * as Alert from '$lib/components/ui/alert';
 	import { Button } from '$lib/components/ui/button';
 	import * as Form from '$lib/components/ui/form';
 	import { Input } from '$lib/components/ui/input';
 	import { resetPasswordSchema } from '$lib/schemas';
 	import Loader2 from '@lucide/svelte/icons/loader-2';
 	import Lock from '@lucide/svelte/icons/lock';
+	import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
 	import { untrack } from 'svelte';
 	import { superForm } from 'sveltekit-superforms';
 	import { zod4Client } from 'sveltekit-superforms/adapters';
@@ -28,7 +30,11 @@
 <AuthCard title="Set new password" description="Enter your new password">
 	{#if $message}
 		<div class="pb-4">
-			<AuthAlert message={$message} />
+			<Alert.Root variant="destructive">
+				<TriangleAlert />
+				<Alert.Title>Error</Alert.Title>
+				<Alert.Description>{$message}</Alert.Description>
+			</Alert.Root>
 		</div>
 	{/if}
 

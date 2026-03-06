@@ -1,15 +1,17 @@
 <script lang="ts">
 	import { enhance as nativeEnhance } from '$app/forms';
 	import { resolve } from '$app/paths';
-	import { AuthAlert } from '$lib/components/auth';
+	import * as Alert from '$lib/components/ui/alert';
 	import { Button } from '$lib/components/ui/button';
 	import * as Form from '$lib/components/ui/form';
 	import { Input } from '$lib/components/ui/input';
 	import { loginSchema } from '$lib/schemas/auth';
 	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
+	import CircleCheck from '@lucide/svelte/icons/circle-check';
 	import Loader2 from '@lucide/svelte/icons/loader-2';
 	import Lock from '@lucide/svelte/icons/lock';
 	import Mail from '@lucide/svelte/icons/mail';
+	import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
 	import { untrack } from 'svelte';
 	import type { Infer, SuperValidated } from 'sveltekit-superforms';
 	import { superForm } from 'sveltekit-superforms';
@@ -53,7 +55,11 @@
 
 {#if parsed}
 	<div class="space-y-3 pb-4">
-		<AuthAlert message={parsed.text} />
+		<Alert.Root variant="destructive">
+			<TriangleAlert />
+			<Alert.Title>Error</Alert.Title>
+			<Alert.Description>{parsed.text}</Alert.Description>
+		</Alert.Root>
 		{#if parsed.unconfirmedEmail}
 			<form
 				method="post"
@@ -89,10 +95,13 @@
 
 {#if resendSuccess}
 	<div class="pb-4">
-		<AuthAlert
-			message="Confirmation email sent! Check your inbox."
-			variant="success"
-		/>
+		<Alert.Root>
+			<CircleCheck />
+			<Alert.Title>Success</Alert.Title>
+			<Alert.Description
+				>Confirmation email sent! Check your inbox.</Alert.Description
+			>
+		</Alert.Root>
 	</div>
 {/if}
 

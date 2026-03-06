@@ -6,7 +6,7 @@
 -->
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { AuthAlert } from '$lib/components/auth';
+	import * as Alert from '$lib/components/ui/alert';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import * as InputOTP from '$lib/components/ui/input-otp';
@@ -15,9 +15,11 @@
 	import { untrack } from 'svelte';
 	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 	import ArrowRight from '@lucide/svelte/icons/arrow-right';
+	import CircleCheck from '@lucide/svelte/icons/circle-check';
 	import Loader2 from '@lucide/svelte/icons/loader-2';
 	import Mail from '@lucide/svelte/icons/mail';
 	import Sparkles from '@lucide/svelte/icons/sparkles';
+	import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
 	interface Props {
 		onBack: () => void;
 		debugOtpSent?: boolean;
@@ -93,7 +95,13 @@
 		class="space-y-5"
 		novalidate
 	>
-		<AuthAlert message={displayError} />
+		{#if displayError}
+			<Alert.Root variant="destructive">
+				<TriangleAlert />
+				<Alert.Title>Error</Alert.Title>
+				<Alert.Description>{displayError}</Alert.Description>
+			</Alert.Root>
+		{/if}
 
 		<div class="space-y-1.5">
 			<Label
@@ -164,8 +172,20 @@
 		}}
 		class="space-y-5"
 	>
-		<AuthAlert message={displayError} />
-		<AuthAlert message={displaySuccess} variant="success" />
+		{#if displayError}
+			<Alert.Root variant="destructive">
+				<TriangleAlert />
+				<Alert.Title>Error</Alert.Title>
+				<Alert.Description>{displayError}</Alert.Description>
+			</Alert.Root>
+		{/if}
+		{#if displaySuccess}
+			<Alert.Root>
+				<CircleCheck />
+				<Alert.Title>Success</Alert.Title>
+				<Alert.Description>{displaySuccess}</Alert.Description>
+			</Alert.Root>
+		{/if}
 
 		<input type="hidden" name="email" value={displayEmail} />
 		<input type="hidden" name="code" value={code} />
