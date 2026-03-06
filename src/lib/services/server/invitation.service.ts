@@ -6,7 +6,7 @@ import type {
 	PublicUser
 } from '$lib/schemas';
 import { db } from '$lib/server/db';
-import { invitations, mailRecords } from '$lib/server/db/schema';
+import { invitations, mailRecords, users } from '$lib/server/db/schema';
 import { and, eq } from 'drizzle-orm';
 import { ServiceError } from './errors';
 import { TokenUtils } from './token.utils';
@@ -149,14 +149,19 @@ export class InvitationService {
 				.set({ used_at: new Date() })
 				.where(eq(invitations.id, invitation.id));
 
-			// Create user in the same organization as the invitation
-			const user = await userService.createUser({
-				email: invitation.email,
-				role: invitation.role,
-				organization_id: invitation.organization_id,
-				passwordHash: null,
-				name: null
-			});
+			// Insert user directly via tx instead of userService.createUser(),
+			// which uses db directly and would escape the transaction scope.
+			const [user] = await tx
+				.insert(users)
+				.values({
+					email: invitation.email,
+					role: invitation.role,
+					organization_id: invitation.organization_id,
+					passwordHash: null,
+					name: null,
+					email_confirmed_at: new Date()
+				})
+				.returning();
 
 			return userService.toPublicUser(user);
 		});

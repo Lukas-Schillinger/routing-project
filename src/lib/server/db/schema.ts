@@ -112,6 +112,8 @@ export const organizations = pgTable('organizations', {
 	billing_period_ends_at: timestamp('billing_period_ends_at', {
 		withTimezone: true
 	}),
+	// Stripe also has cancel_at (arbitrary future date), but the billing portal
+	// uses cancel_at_period_end, which is all we need.
 	cancel_at_period_end: boolean('cancel_at_period_end').default(false).notNull()
 });
 

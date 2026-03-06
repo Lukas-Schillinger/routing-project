@@ -433,7 +433,7 @@ describe('InvitationService', () => {
 				expect(newUser).toHaveProperty('role');
 				expect(newUser).toHaveProperty('created_at');
 				expect(newUser).toHaveProperty('updated_at');
-				expect(newUser).toHaveProperty('email_confirmed_at');
+				expect(newUser.email_confirmed_at).toBeInstanceOf(Date);
 				expect(newUser).not.toHaveProperty('password_hash');
 			});
 		});
