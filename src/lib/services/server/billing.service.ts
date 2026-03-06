@@ -6,7 +6,7 @@ import {
 	organizations
 } from '$lib/server/db/schema';
 import type { CreditBalance } from '$lib/schemas/billing';
-import { and, eq, gte, inArray, sql } from 'drizzle-orm';
+import { and, desc, eq, gte, inArray, sql } from 'drizzle-orm';
 import { ServiceError } from './errors';
 
 type CreditTransaction = typeof creditTransactions.$inferSelect;
@@ -214,7 +214,7 @@ export class BillingService {
 			.select()
 			.from(creditTransactions)
 			.where(eq(creditTransactions.organization_id, organizationId))
-			.orderBy(sql`${creditTransactions.created_at} DESC`)
+			.orderBy(desc(creditTransactions.created_at))
 			.limit(limit);
 	}
 

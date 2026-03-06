@@ -8,7 +8,7 @@ import {
 	routes,
 	stops
 } from '$lib/server/db/schema';
-import { and, eq, sql } from 'drizzle-orm';
+import { and, desc, eq, sql } from 'drizzle-orm';
 import { depotService } from './depot.service';
 import { driverService } from './driver.service';
 import { ServiceError } from './errors';
@@ -46,7 +46,7 @@ export class MapService {
 			.select()
 			.from(maps)
 			.where(eq(maps.organization_id, organizationId))
-			.orderBy(sql`${maps.created_at} DESC`);
+			.orderBy(desc(maps.created_at));
 	}
 
 	/**
