@@ -182,17 +182,18 @@ export class DepotService {
 	async deleteDepot(depotId: string, organizationId: string) {
 		await this.getDepotById(depotId, organizationId);
 
-		const usedInRoutes = await db
-			.select()
+		const [usedInRoute] = await db
+			.select({ id: routes.id })
 			.from(routes)
 			.where(
 				and(
 					eq(routes.depot_id, depotId),
 					eq(routes.organization_id, organizationId)
 				)
-			);
+			)
+			.limit(1);
 
-		if (usedInRoutes.length !== 0) {
+		if (usedInRoute) {
 			throw ServiceError.validation(
 				"Can't delete depots while assigned to a route. "
 			);

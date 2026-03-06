@@ -105,12 +105,18 @@ export class DriverService {
 	): Promise<{ success: boolean }> {
 		await this.getDriverById(driverId, organizationId);
 
-		// Check if the driver is assigned to any maps
-		const assignedStops = await db
-			.select()
+		/**
+		 * Check if the driver is assigned to any stops.
+		 * TODO: It'd be better UX if this was able to inform the user of what maps the
+		 * driver is assigned to. Or maybe a scary warning that this driver is assigned
+		 * to x number of stops?
+		 */
+		const [assignedStop] = await db
+			.select({ id: stops.id })
 			.from(stops)
-			.where(eq(stops.driver_id, driverId));
-		if (assignedStops.length > 0) {
+			.where(eq(stops.driver_id, driverId))
+			.limit(1);
+		if (assignedStop) {
 			throw ServiceError.validation(
 				'Drivers cannot be deleted when assigned to stops'
 			);
