@@ -74,7 +74,7 @@
 </svelte:head>
 
 <div class="flex justify-center">
-	<div class="w-3xl">
+	<div class="w-full max-w-3xl">
 		<div class="mb-6 flex items-center gap-3">
 			<Settings class="h-6 w-6" />
 			<h1 class="text-3xl font-bold">Account Settings</h1>
