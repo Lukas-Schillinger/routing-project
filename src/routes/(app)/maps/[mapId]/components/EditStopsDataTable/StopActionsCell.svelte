@@ -12,12 +12,12 @@
 	import Trash2 from '@lucide/svelte/icons/trash-2';
 	import { toast } from 'svelte-sonner';
 
-	interface Props {
+	type Props = {
 		stop: StopWithLocation;
 		onDelete?: (id: string) => Promise<void>;
 		onUpdate?: (stop: StopWithLocation) => void;
 		onZoomToStop?: (stopId: string) => void;
-	}
+	};
 
 	let { stop, onDelete, onUpdate, onZoomToStop }: Props = $props();
 

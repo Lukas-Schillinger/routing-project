@@ -1,9 +1,9 @@
 <script lang="ts">
 	import type { Location } from '$lib/schemas/location';
 
-	interface Props {
+	type Props = {
 		location: Location;
-	}
+	};
 
 	let { location }: Props = $props();
 

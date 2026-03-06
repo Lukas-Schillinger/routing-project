@@ -1,5 +1,5 @@
 <script lang="ts">
-	interface Props {
+	type Props = {
 		rows?: number;
 		cols?: number;
 		size?: number; // in pixels
@@ -7,7 +7,7 @@
 		color?: string; // tailwind class or css color
 		minDuration?: number; // seconds
 		maxDuration?: number; // seconds
-	}
+	};
 
 	let {
 		rows = 5,

@@ -53,7 +53,7 @@
 	import NotesCell from './NotesCell.svelte';
 	import StopActionsCell from './StopActionsCell.svelte';
 
-	interface Props {
+	type Props = {
 		stops: StopWithLocation[];
 		drivers: Driver[];
 		mapId: string;
@@ -63,7 +63,7 @@
 		onUpdate?: (stop: StopWithLocation) => void;
 		onCreate?: (stop: StopWithLocation) => void;
 		onZoomToStop: (stopId: string) => void;
-	}
+	};
 
 	let {
 		stops,

@@ -5,9 +5,9 @@
 	import Home from '@lucide/svelte/icons/home';
 	import RotateCcw from '@lucide/svelte/icons/rotate-ccw';
 
-	interface Props {
+	type Props = {
 		status: number;
-	}
+	};
 
 	let { status }: Props = $props();
 

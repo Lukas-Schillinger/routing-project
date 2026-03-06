@@ -19,7 +19,7 @@
 
 	type DirectionsProvider = 'google' | 'apple';
 
-	interface Props {
+	type Props = {
 		stop: StopWithLocation | undefined;
 		stopIndex: number;
 		totalStops: number;
@@ -27,7 +27,7 @@
 		onNext?: () => void;
 		route?: RouteType;
 		directionsProvider?: DirectionsProvider;
-	}
+	};
 
 	let {
 		stop,

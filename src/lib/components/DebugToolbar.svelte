@@ -7,12 +7,12 @@
 	import X from '@lucide/svelte/icons/x';
 	import type { Snippet } from 'svelte';
 
-	interface Props {
+	type Props = {
 		children: Snippet;
 		title?: string;
 		position?: 'bottom-left' | 'bottom-right' | 'top-left' | 'top-right';
 		showInProd?: boolean;
-	}
+	};
 
 	let {
 		children,

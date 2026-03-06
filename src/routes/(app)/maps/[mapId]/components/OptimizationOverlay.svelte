@@ -1,9 +1,9 @@
 <script lang="ts">
 	import SphereGridLoader from '$lib/components/SphereGridLoader.svelte';
 
-	interface Props {
+	type Props = {
 		startTime?: Date;
-	}
+	};
 
 	let { startTime = new Date() }: Props = $props();
 

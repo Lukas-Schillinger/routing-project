@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { formatDate } from '$lib/utils';
 
-	interface Props {
+	type Props = {
 		date: string | Date;
-	}
+	};
 
 	let { date }: Props = $props();
 </script>

@@ -10,7 +10,7 @@
 	import Route from '@lucide/svelte/icons/route';
 	import { onMount } from 'svelte';
 
-	interface Props {
+	type Props = {
 		route: RouteType;
 		stops: StopWithLocation[];
 		/** Time in milliseconds between completing each stop */
@@ -19,7 +19,7 @@
 		loop?: boolean;
 		/** Delay before restarting animation when looping (in ms) */
 		loopDelayMs?: number;
-	}
+	};
 
 	let {
 		route,

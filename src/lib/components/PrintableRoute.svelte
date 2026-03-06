@@ -7,13 +7,13 @@
 	import { formatDate } from '$lib/utils';
 	import QRCode from 'qrcode';
 
-	interface Props {
+	type Props = {
 		route: Route;
 		stops: StopWithLocation[];
 		driver?: Driver;
 		map: MapType;
 		mapsProvider?: 'google' | 'apple';
-	}
+	};
 
 	let { route, stops, driver, map, mapsProvider = 'google' }: Props = $props();
 

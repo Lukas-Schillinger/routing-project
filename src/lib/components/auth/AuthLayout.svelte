@@ -4,9 +4,9 @@
 	import type { Snippet } from 'svelte';
 	import CloudflareImage from '../CloudflareImage.svelte';
 
-	interface Props {
+	type Props = {
 		children: Snippet;
-	}
+	};
 
 	let { children }: Props = $props();
 </script>

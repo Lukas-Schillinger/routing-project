@@ -20,7 +20,7 @@
 	import Mail from '@lucide/svelte/icons/mail';
 	import Sparkles from '@lucide/svelte/icons/sparkles';
 	import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
-	interface Props {
+	type Props = {
 		onBack: () => void;
 		debugOtpSent?: boolean;
 		debugError?: string | null;
@@ -28,7 +28,7 @@
 		debugEmail?: string;
 		initialEmail?: string;
 		initialOtpSent?: boolean;
-	}
+	};
 
 	let {
 		onBack,

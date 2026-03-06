@@ -5,7 +5,7 @@
 	import type { Driver, StopWithLocation } from '$lib/schemas';
 	import { mode } from 'mode-watcher';
 
-	interface Props {
+	type Props = {
 		stops: StopWithLocation[];
 		mapId: string;
 		drivers?: Driver[];
@@ -13,7 +13,7 @@
 		height?: number;
 		style?: string;
 		padding?: number;
-	}
+	};
 
 	let { stops, mapId, drivers = [], ...restProps }: Props = $props();
 

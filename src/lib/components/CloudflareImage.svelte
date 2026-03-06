@@ -8,11 +8,11 @@ Component for resizing images using Cloudflare image transformations.
 
 	type Size = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 
-	interface Props extends Omit<HTMLImgAttributes, 'src' | 'srcset' | 'sizes'> {
+	type Props = Omit<HTMLImgAttributes, 'src' | 'srcset' | 'sizes'> & {
 		src: string;
 		alt: string;
 		size?: Size;
-	}
+	};
 
 	const sizeConfig: Record<Size, { widths: number[]; sizes: string }> = {
 		xs: { widths: [160, 320], sizes: '160px' },

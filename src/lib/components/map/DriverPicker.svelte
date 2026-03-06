@@ -12,12 +12,12 @@
 	import Plus from '@lucide/svelte/icons/plus';
 	import { toast } from 'svelte-sonner';
 
-	interface Props {
+	type Props = {
 		stop: StopWithLocation;
 		stops: StopWithLocation[];
 		drivers: Driver[];
 		onDriverChange?: (stop: StopWithLocation) => void;
-	}
+	};
 
 	let { stop, stops, drivers, onDriverChange }: Props = $props();
 

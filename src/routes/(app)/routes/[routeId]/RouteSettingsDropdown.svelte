@@ -16,11 +16,11 @@
 
 	type DirectionsProvider = 'google' | 'apple';
 
-	interface Props {
+	type Props = {
 		route: RouteType;
 		directionsProvider: DirectionsProvider;
 		onDirectionsProviderChange: (provider: DirectionsProvider) => void;
-	}
+	};
 
 	let { route, directionsProvider, onDirectionsProviderChange }: Props =
 		$props();

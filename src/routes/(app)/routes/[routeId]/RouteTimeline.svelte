@@ -11,7 +11,7 @@
 	import Route from '@lucide/svelte/icons/route';
 	import Warehouse from '@lucide/svelte/icons/warehouse';
 
-	interface Props {
+	type Props = {
 		route: RouteType;
 		stops: StopWithLocation[];
 		depot?: DepotWithLocationJoin | null;
@@ -19,7 +19,7 @@
 		onStopSelect?: (index: number) => void;
 		onStopFocus?: (stopId: string) => void;
 		onScrollToIndex?: (scrollFn: (index: number) => void) => void;
-	}
+	};
 
 	let {
 		route,
