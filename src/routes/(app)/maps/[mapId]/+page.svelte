@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { invalidate } from '$app/navigation';
+	import { goto, invalidate } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { INVALIDATION_KEYS } from '$lib/invalidation-keys';
 	import DebugToolbar from '$lib/components/DebugToolbar.svelte';
 	import MapView from '$lib/components/map/MapView.svelte';
@@ -118,7 +119,7 @@
 	async function handleDeleteMap() {
 		await mapApi.delete(data.map.id);
 		toast.success('Map deleted');
-		window.location.href = '/maps';
+		await goto(resolve('/maps'));
 	}
 </script>
 
