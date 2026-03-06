@@ -91,7 +91,7 @@ export const actions: Actions = {
 				});
 			}
 
-			console.error('Error resetting password:', err);
+			event.locals.log.error(err, 'Error resetting password');
 			return message(form, 'Failed to reset password', { status: 500 });
 		}
 

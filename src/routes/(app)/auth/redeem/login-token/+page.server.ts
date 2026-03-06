@@ -62,7 +62,7 @@ export const load: PageServerLoad = async (event) => {
 			throw err;
 		}
 
-		console.error('Error redeeming login token:', err);
+		event.locals.log.error(err, 'Error redeeming login token');
 		error(500, {
 			code: 'INTERNAL_ERROR',
 			message: 'Failed to redeem login token'

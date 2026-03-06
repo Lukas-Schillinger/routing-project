@@ -67,7 +67,7 @@ export const load: PageServerLoad = async (event) => {
 			throw err;
 		}
 
-		console.error('Error redeeming invitation:', err);
+		event.locals.log.error(err, 'Error redeeming invitation');
 		error(500, {
 			code: 'INTERNAL_ERROR',
 			message: 'Failed to redeem invitation'
