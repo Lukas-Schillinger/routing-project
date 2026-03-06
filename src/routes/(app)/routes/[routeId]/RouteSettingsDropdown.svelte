@@ -5,7 +5,7 @@
 	import DropdownMetadataLabel from '$lib/components/DropdownMetadataLabel.svelte';
 	import TableActionsDropdown from '$lib/components/TableActionsDropdown.svelte';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
-	import { ServiceError } from '$lib/errors';
+	import { captureClientError, ServiceError } from '$lib/errors';
 	import type { Route as RouteType } from '$lib/schemas';
 	import Moon from '@lucide/svelte/icons/moon';
 	import RotateCcw from '@lucide/svelte/icons/rotate-ccw';
@@ -46,6 +46,7 @@
 			toast.success('Completed stops have been reset.');
 		} catch (error) {
 			console.error('Failed to reset completed stops:', error);
+			captureClientError(error);
 			const message =
 				error instanceof ServiceError
 					? error.message

@@ -2,7 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { Button } from '$lib/components/ui/button';
-	import { ServiceError } from '$lib/errors';
+	import { captureClientError, ServiceError } from '$lib/errors';
 	import { createImportState, type ImportState } from '$lib/schemas/import';
 	import { mapApi, stopApi } from '$lib/services/api';
 	import { pendingImport } from '$lib/stores/pending-import';
@@ -60,6 +60,7 @@
 			await goto(resolve(`/maps/${map.id}`));
 		} catch (error) {
 			console.error('Failed to create map:', error);
+			captureClientError(error);
 			const message =
 				error instanceof ServiceError
 					? error.message

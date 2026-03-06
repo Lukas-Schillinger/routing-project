@@ -8,6 +8,7 @@
 	import * as Card from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input';
 	import Separator from '$lib/components/ui/separator/separator.svelte';
+	import { captureClientError } from '$lib/errors';
 	import type { PublicUser } from '$lib/schemas';
 	import { authApi, usersApi } from '$lib/services/api/auth';
 	import { formatDate } from '$lib/utils';
@@ -46,6 +47,7 @@
 			toast.success('Profile updated');
 		} catch (error) {
 			console.error('Failed to update profile:', error);
+			captureClientError(error);
 			toast.error('Failed to update profile');
 			nameValue = user.name ?? '';
 		} finally {

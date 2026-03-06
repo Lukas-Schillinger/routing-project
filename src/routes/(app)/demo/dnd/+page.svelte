@@ -2,6 +2,7 @@
 	import { invalidate } from '$app/navigation';
 	import { INVALIDATION_KEYS } from '$lib/invalidation-keys';
 	import * as Avatar from '$lib/components/ui/avatar';
+	import { captureClientError } from '$lib/errors';
 	import { stopApi } from '$lib/services/api';
 	import { addressDisplay, getIdenticon } from '$lib/utils';
 	import ChevronDown from '@lucide/svelte/icons/chevron-down';
@@ -129,6 +130,7 @@
 			console.log('[dnd] done');
 		} catch (err) {
 			console.error('[dnd] save failed, reverting to server state', err);
+			captureClientError(err);
 			await invalidate(INVALIDATION_KEYS.DEMO);
 			lists = buildLists();
 		} finally {

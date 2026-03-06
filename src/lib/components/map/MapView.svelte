@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { env } from '$env/dynamic/public';
+	import { captureClientError } from '$lib/errors';
 	import type {
 		DepotWithLocationJoin,
 		Driver,
@@ -105,6 +106,7 @@
 			}
 		} catch (error) {
 			console.error('Reverse geocoding failed:', error);
+			captureClientError(error);
 			tempPin = { lngLat, location: null, isLoading: false };
 		}
 	}

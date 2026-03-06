@@ -3,7 +3,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
-	import { ServiceError } from '$lib/errors';
+	import { captureClientError, ServiceError } from '$lib/errors';
 	import type { Organization } from '$lib/schemas/organization';
 	import { organizationApi } from '$lib/services/api/auth';
 	import Check from '@lucide/svelte/icons/check';
@@ -63,6 +63,7 @@
 			resetForm();
 		} catch (err) {
 			console.error('Error updating organization:', err);
+			captureClientError(err);
 
 			if (err instanceof ServiceError) {
 				if (err.statusCode === 403) {

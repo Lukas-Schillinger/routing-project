@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { captureClientError } from '$lib/errors';
 	import { createImportRecord, type ImportState } from '$lib/schemas/import';
 	import { geocodingApi } from '$lib/services/api';
 	import { geocodingFeatureToLocation } from '$lib/utils';
@@ -99,6 +100,7 @@
 			onNext?.();
 		} catch (error) {
 			console.error('Geocoding error:', error);
+			captureClientError(error);
 			alert('Failed to geocode addresses. Please try again.');
 		} finally {
 			importState.isProcessing = false;

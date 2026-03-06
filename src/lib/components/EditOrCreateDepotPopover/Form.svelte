@@ -6,7 +6,7 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import { Switch } from '$lib/components/ui/switch';
-	import { ServiceError } from '$lib/errors';
+	import { captureClientError, ServiceError } from '$lib/errors';
 	import type { DepotWithLocationJoin } from '$lib/schemas/depot';
 	import type { LocationCreate } from '$lib/schemas/location';
 	import { depotApi } from '$lib/services/api/depots';
@@ -132,6 +132,7 @@
 				`Error ${mode === 'create' ? 'creating' : 'updating'} depot:`,
 				err
 			);
+			captureClientError(err);
 
 			if (err instanceof ServiceError) {
 				if (err.statusCode === 409) {

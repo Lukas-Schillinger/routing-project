@@ -1,5 +1,6 @@
 <script lang="ts">
 	import * as Command from '$lib/components/ui/command';
+	import { captureClientError } from '$lib/errors';
 	import type { LocationCreate } from '$lib/schemas/location';
 	import { geocodingApi } from '$lib/services/api';
 	import type { GeocodingFeature } from '$lib/services/external/mapbox/types';
@@ -64,6 +65,7 @@
 			});
 		} catch (error) {
 			console.error('Address search error:', error);
+			captureClientError(error);
 			suggestions = [];
 		} finally {
 			isSearching = false;

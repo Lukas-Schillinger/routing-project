@@ -111,6 +111,17 @@ export class ServiceError extends Error {
 }
 
 /**
+ * Capture unexpected client-side errors to Sentry.
+ * Expected ServiceErrors (which the server already reported) are skipped.
+ */
+export function captureClientError(err: unknown): void {
+	if (err instanceof ServiceError && EXPECTED_CODES.includes(err.code)) {
+		return;
+	}
+	Sentry.captureException(err);
+}
+
+/**
  * Handle errors in API routes consistently.
  * - Expected errors (NOT_FOUND, VALIDATION, etc.) → return HTTP response, no Sentry
  * - Unexpected errors (INTERNAL_ERROR, unknown) → capture to Sentry, return 500

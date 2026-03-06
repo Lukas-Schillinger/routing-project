@@ -6,7 +6,7 @@
 	import { Input } from '$lib/components/ui/input';
 	import { SortButton, type SortOption } from '$lib/components/ui/sort-button';
 	import * as Tabs from '$lib/components/ui/tabs';
-	import { ServiceError } from '$lib/errors';
+	import { captureClientError, ServiceError } from '$lib/errors';
 	import {
 		mapListParamsSchema,
 		type SortColumn
@@ -48,6 +48,7 @@
 			await goto(resolve(`/maps/${map.id}`));
 		} catch (error) {
 			console.error('Failed to create map:', error);
+			captureClientError(error);
 			const message =
 				error instanceof ServiceError
 					? error.message

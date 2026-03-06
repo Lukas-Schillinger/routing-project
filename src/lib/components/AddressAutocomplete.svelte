@@ -1,6 +1,7 @@
 <script lang="ts">
 	import * as Command from '$lib/components/ui/command';
 	import * as Popover from '$lib/components/ui/popover';
+	import { captureClientError } from '$lib/errors';
 	import type { LocationCreate } from '$lib/schemas/location';
 	import { geocodingApi } from '$lib/services/api';
 	import type { GeocodingFeature } from '$lib/services/external/mapbox/types';
@@ -88,6 +89,7 @@
 			return await geocodingApi.autocomplete(query, options);
 		} catch (error) {
 			console.error('Address search error:', error);
+			captureClientError(error);
 			return [];
 		}
 	}

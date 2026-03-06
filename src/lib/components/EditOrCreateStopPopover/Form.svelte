@@ -6,7 +6,7 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import { Textarea } from '$lib/components/ui/textarea';
-	import { ServiceError } from '$lib/errors';
+	import { captureClientError, ServiceError } from '$lib/errors';
 	import type { LocationCreate } from '$lib/schemas/location';
 	import type { StopWithLocation, UpdateStop } from '$lib/schemas/stop';
 	import { stopApi } from '$lib/services/api/stops';
@@ -153,6 +153,7 @@
 				`Error ${mode === 'create' ? 'creating' : 'updating'} stop:`,
 				err
 			);
+			captureClientError(err);
 
 			if (err instanceof ServiceError) {
 				error = err.message;

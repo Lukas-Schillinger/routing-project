@@ -8,6 +8,7 @@
 	import { Input } from '$lib/components/ui/input';
 	import * as Select from '$lib/components/ui/select';
 	import * as Table from '$lib/components/ui/table';
+	import { captureClientError } from '$lib/errors';
 	import type {
 		Organization,
 		Permission,
@@ -61,6 +62,7 @@
 			toast.success('Organization updated');
 		} catch (error) {
 			console.error('Failed to update organization:', error);
+			captureClientError(error);
 			toast.error('Failed to update organization');
 			nameValue = organization.name;
 		} finally {
@@ -94,6 +96,7 @@
 			toast.success('Role updated');
 		} catch (error) {
 			console.error('Failed to update role:', error);
+			captureClientError(error);
 			toast.error('Failed to update role');
 			await invalidate(INVALIDATION_KEYS.ACCOUNT);
 		}

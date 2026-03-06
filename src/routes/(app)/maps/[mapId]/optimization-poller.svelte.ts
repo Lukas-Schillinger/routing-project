@@ -1,3 +1,4 @@
+import { captureClientError } from '$lib/errors';
 import { mapApi } from '$lib/services/api';
 import type { OptimizationJob } from '$lib/schemas/map';
 import { SvelteDate } from 'svelte/reactivity';
@@ -94,6 +95,7 @@ export function createOptimizationPoller(
 			await handleJobStatus(job);
 		} catch (err) {
 			console.error('Error polling optimization status:', err);
+			captureClientError(err);
 			consecutiveErrors++;
 
 			if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
