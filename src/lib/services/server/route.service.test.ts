@@ -461,59 +461,6 @@ describe('RouteService', () => {
 		});
 	});
 
-	describe('upsertRoutes()', () => {
-		it('creates multiple routes successfully', async () => {
-			await withTestTransaction(async () => {
-				const { org1, user1, map1, depot1 } = await createRouteTestSetup();
-
-				const driver1 = await createDriver({
-					organization_id: org1.id,
-					active: true
-				});
-
-				const driver2 = await createDriver({
-					organization_id: org1.id,
-					active: true
-				});
-
-				const results = await routeService.upsertRoutes(
-					[
-						{
-							organization_id: org1.id,
-							map_id: map1.id,
-							driver_id: driver1.id,
-							depot_id: depot1.id,
-							geometry: { type: 'LineString', coordinates: [[-81.95, 28.03]] },
-							duration: 300
-						},
-						{
-							organization_id: org1.id,
-							map_id: map1.id,
-							driver_id: driver2.id,
-							depot_id: depot1.id,
-							geometry: { type: 'LineString', coordinates: [[-81.96, 28.04]] },
-							duration: 400
-						}
-					],
-					user1.id
-				);
-
-				expect(results).toHaveLength(2);
-				expect(results[0].driver_id).toBe(driver1.id);
-				expect(results[1].driver_id).toBe(driver2.id);
-			});
-		});
-
-		it('returns empty array for empty input', async () => {
-			await withTestTransaction(async () => {
-				const { user1 } = await createRouteTestSetup();
-
-				const results = await routeService.upsertRoutes([], user1.id);
-				expect(results).toHaveLength(0);
-			});
-		});
-	});
-
 	describe('getRoutes()', () => {
 		it('returns all routes for an organization', async () => {
 			await withTestTransaction(async () => {

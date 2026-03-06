@@ -86,18 +86,35 @@ export class RouteService {
 			);
 		}
 
-		const [result] = await db
+		const [result] = await this.bulkUpsertRoutesInternal([input], userId);
+		return result;
+	}
+
+	/**
+	 * Bulk upsert routes in a single query using onConflictDoUpdate.
+	 * Skips per-row ownership validation — caller must ensure all inputs are valid.
+	 * Uses the unique index on (map_id, driver_id).
+	 */
+	async bulkUpsertRoutesInternal(
+		inputs: CreateRoute[],
+		userId?: string
+	): Promise<Route[]> {
+		if (inputs.length === 0) return [];
+
+		return (await db
 			.insert(routes)
-			.values({
-				organization_id: input.organization_id,
-				map_id: input.map_id,
-				driver_id: input.driver_id,
-				depot_id: input.depot_id,
-				geometry: input.geometry,
-				duration: input.duration?.toString(),
-				created_by: userId,
-				updated_by: userId
-			})
+			.values(
+				inputs.map((input) => ({
+					organization_id: input.organization_id,
+					map_id: input.map_id,
+					driver_id: input.driver_id,
+					depot_id: input.depot_id,
+					geometry: input.geometry,
+					duration: input.duration?.toString(),
+					created_by: userId,
+					updated_by: userId
+				}))
+			)
 			.onConflictDoUpdate({
 				target: [routes.map_id, routes.driver_id],
 				set: {
@@ -108,54 +125,7 @@ export class RouteService {
 					updated_by: userId
 				}
 			})
-			.returning();
-
-		return result as Route;
-	}
-
-	/**
-	 * Bulk upsert routes with transaction wrapping for atomicity
-	 */
-	async upsertRoutes(inputs: CreateRoute[], userId?: string): Promise<Route[]> {
-		return db.transaction(async () => {
-			const results: Route[] = [];
-			for (const input of inputs) {
-				const result = await this.upsertRoute(input, userId);
-				results.push(result);
-			}
-			return results;
-		});
-	}
-
-	/**
-	 * Bulk upsert routes in a single query using onConflictDoUpdate.
-	 * Skips per-row ownership validation — caller must ensure all inputs are valid.
-	 * Uses the unique index on (map_id, driver_id).
-	 */
-	async bulkUpsertRoutesInternal(inputs: CreateRoute[]): Promise<void> {
-		if (inputs.length === 0) return;
-
-		await db
-			.insert(routes)
-			.values(
-				inputs.map((input) => ({
-					organization_id: input.organization_id,
-					map_id: input.map_id,
-					driver_id: input.driver_id,
-					depot_id: input.depot_id,
-					geometry: input.geometry,
-					duration: input.duration?.toString()
-				}))
-			)
-			.onConflictDoUpdate({
-				target: [routes.map_id, routes.driver_id],
-				set: {
-					geometry: sql`excluded.geometry`,
-					duration: sql`excluded.duration`,
-					depot_id: sql`excluded.depot_id`,
-					updated_at: new Date()
-				}
-			});
+			.returning()) as Route[];
 	}
 
 	async getRoutes(organizationId: string) {

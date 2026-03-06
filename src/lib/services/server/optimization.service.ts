@@ -425,7 +425,8 @@ export class OptimizationService {
 			depotId,
 			result,
 			depotCoord,
-			locationCoordMap
+			locationCoordMap,
+			job.created_by ?? undefined
 		);
 
 		await this.updateJobStatus(jobId, 'completed');
@@ -520,7 +521,8 @@ export class OptimizationService {
 		depotId: string,
 		result: OptimizationResult,
 		depotCoord: ValidatedCoordinate,
-		locationCoordMap: Map<string, ValidatedCoordinate>
+		locationCoordMap: Map<string, ValidatedCoordinate>,
+		userId?: string
 	): Promise<void> {
 		type DirectionsResult = {
 			driverId: string;
@@ -591,7 +593,8 @@ export class OptimizationService {
 					depot_id: depotId,
 					geometry: r.geometry,
 					duration: r.duration
-				}))
+				})),
+				userId
 			);
 		}
 	}
