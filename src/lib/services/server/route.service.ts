@@ -39,126 +39,78 @@ export class RouteService {
 	}
 	async upsertRoute(input: CreateRoute, userId?: string): Promise<Route> {
 		// Validate that map, driver, and depot all belong to the organization
-		const [map] = await db
-			.select()
-			.from(maps)
-			.where(
-				and(
-					eq(maps.id, input.map_id),
-					eq(maps.organization_id, input.organization_id)
+		const [mapResult, driverResult, depotResult] = await Promise.all([
+			db
+				.select()
+				.from(maps)
+				.where(
+					and(
+						eq(maps.id, input.map_id),
+						eq(maps.organization_id, input.organization_id)
+					)
 				)
-			)
-			.limit(1);
+				.limit(1),
+			db
+				.select()
+				.from(drivers)
+				.where(
+					and(
+						eq(drivers.id, input.driver_id),
+						eq(drivers.organization_id, input.organization_id)
+					)
+				)
+				.limit(1),
+			db
+				.select()
+				.from(depots)
+				.where(
+					and(
+						eq(depots.id, input.depot_id),
+						eq(depots.organization_id, input.organization_id)
+					)
+				)
+				.limit(1)
+		]);
 
-		if (!map) {
+		if (!mapResult[0]) {
 			throw ServiceError.forbidden('Map does not belong to your organization');
 		}
-
-		const [driver] = await db
-			.select()
-			.from(drivers)
-			.where(
-				and(
-					eq(drivers.id, input.driver_id),
-					eq(drivers.organization_id, input.organization_id)
-				)
-			)
-			.limit(1);
-
-		if (!driver) {
+		if (!driverResult[0]) {
 			throw ServiceError.forbidden(
 				'Driver does not belong to your organization'
 			);
 		}
-
-		const [depot] = await db
-			.select()
-			.from(depots)
-			.where(
-				and(
-					eq(depots.id, input.depot_id),
-					eq(depots.organization_id, input.organization_id)
-				)
-			)
-			.limit(1);
-
-		if (!depot) {
+		if (!depotResult[0]) {
 			throw ServiceError.forbidden(
 				'Depot does not belong to your organization'
 			);
 		}
 
-		try {
-			// Check if route already exists
-			const existing = await db
-				.select()
-				.from(routes)
-				.where(
-					and(
-						eq(routes.map_id, input.map_id),
-						eq(routes.driver_id, input.driver_id)
-					)
-				)
-				.limit(1);
-
-			if (existing.length > 0) {
-				// Update existing route
-				const [updated] = await db
-					.update(routes)
-					.set({
-						geometry: input.geometry,
-						duration: input.duration?.toString(),
-						depot_id: input.depot_id,
-						updated_at: new Date(),
-						updated_by: userId
-					})
-					.where(eq(routes.id, existing[0].id))
-					.returning();
-
-				return updated as Route;
-			} else {
-				// Insert new route
-				const [created] = await db
-					.insert(routes)
-					.values({
-						organization_id: input.organization_id,
-						map_id: input.map_id,
-						driver_id: input.driver_id,
-						depot_id: input.depot_id,
-						geometry: input.geometry,
-						duration: input.duration?.toString(),
-						created_by: userId,
-						updated_by: userId
-					})
-					.returning();
-
-				return created as Route;
-			}
-		} catch (error) {
-			// Re-throw ServiceErrors as-is
-			if (error instanceof ServiceError) {
-				throw error;
-			}
-
-			// Handle specific PostgreSQL errors
-			if (error instanceof Error && 'code' in error) {
-				const pgError = error as { code: string };
-				if (pgError.code === '23503') {
-					throw ServiceError.validation('Referenced resource not found', {
-						cause: error
-					});
+		const [result] = await db
+			.insert(routes)
+			.values({
+				organization_id: input.organization_id,
+				map_id: input.map_id,
+				driver_id: input.driver_id,
+				depot_id: input.depot_id,
+				geometry: input.geometry,
+				duration: input.duration?.toString(),
+				created_by: userId,
+				updated_by: userId
+			})
+			.onConflictDoUpdate({
+				target: [routes.map_id, routes.driver_id],
+				set: {
+					geometry: sql`excluded.geometry`,
+					duration: sql`excluded.duration`,
+					depot_id: sql`excluded.depot_id`,
+					updated_at: new Date(),
+					updated_by: userId
 				}
-				if (pgError.code === '23505') {
-					throw ServiceError.conflict(
-						'Route already exists for this driver/map combination',
-						{ cause: error }
-					);
-				}
-			}
+			})
+			.returning();
 
-			// Unknown error - let it bubble up (will be caught by handleApiError)
-			throw error;
-		}
+		return result as Route;
 	}
 
 	/**
@@ -490,7 +442,7 @@ export class RouteService {
 
 			const route = directionsResponse.routes[0];
 			if (!route) {
-				throw new Error('No route returned from Mapbox');
+				throw ServiceError.internal('No route returned from Mapbox');
 			}
 
 			await this.upsertRoute(
