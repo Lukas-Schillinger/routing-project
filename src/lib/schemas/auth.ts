@@ -44,32 +44,32 @@ export const resetPasswordSchema = z.object({
 });
 
 export const invitationSchema = z.object({
-	id: z.string(),
-	organization_id: z.string(),
+	id: z.uuid(),
+	organization_id: z.uuid(),
 	created_at: z.date(),
-	created_by: z.string().nullable(),
+	created_by: z.uuid().nullable(),
 	updated_at: z.date(),
-	updated_by: z.string().nullable(),
+	updated_by: z.uuid().nullable(),
 
 	email: emailSchema,
 	role: roleEnum,
 	token_hash: z.string(),
 	expires_at: z.date(),
 	used_at: z.date().nullable(),
-	mail_record_id: z.string().nullable()
+	mail_record_id: z.uuid().nullable()
 });
 
 export const loginTokenSchema = z.object({
-	id: z.string(),
-	organization_id: z.string(),
+	id: z.uuid(),
+	organization_id: z.uuid(),
 	created_at: z.date(),
 
-	user_id: z.string(),
+	user_id: z.uuid(),
 	token_hash: z.string(),
 	type: loginTokenTypeEnum,
 	expires_at: z.date(),
 	used_at: z.date().nullable(),
-	mail_record_id: z.string().nullable()
+	mail_record_id: z.uuid().nullable()
 });
 
 // Type exports for convenience

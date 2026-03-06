@@ -2,7 +2,7 @@ import { billingConfig } from '$lib/config/billing';
 import { db } from '$lib/server/db';
 import { organizations, type SubscriptionStatus } from '$lib/server/db/schema';
 import { stripeClient } from '$lib/services/external/stripe/client';
-import { eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import type Stripe from 'stripe';
 import { ServiceError } from './errors';
 
@@ -30,18 +30,32 @@ export class SubscriptionService {
 			throw ServiceError.conflict('Already on Pro');
 		}
 
-		// Create Stripe customer lazily on first upgrade
+		/**
+		 * Create Stripe customer lazily on first upgrade.
+		 * Use a conditional UPDATE to avoid a race where two concurrent requests
+		 * both see null and both create Stripe customers.
+		 */
 		let customerId = org.stripe_customer_id;
 		if (!customerId) {
 			const customer = await this.stripe.createCustomer(
 				organizationId,
 				adminEmail
 			);
-			customerId = customer.id;
-			await db
+			const [updated] = await db
 				.update(organizations)
-				.set({ stripe_customer_id: customerId, updated_at: new Date() })
-				.where(eq(organizations.id, organizationId));
+				.set({ stripe_customer_id: customer.id, updated_at: new Date() })
+				.where(
+					and(
+						eq(organizations.id, organizationId),
+						isNull(organizations.stripe_customer_id)
+					)
+				)
+				.returning({ stripe_customer_id: organizations.stripe_customer_id });
+
+			// If 0 rows updated, another request already set the customer — use theirs
+			customerId =
+				updated?.stripe_customer_id ??
+				(await this.getOrg(organizationId)).stripe_customer_id!;
 		}
 
 		const session = await this.stripe.createCheckoutSession({

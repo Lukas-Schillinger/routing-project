@@ -61,7 +61,7 @@ export class MailService {
 		} else {
 			const key = deps?.apiKey || env.RESEND_API_KEY;
 			if (!key) {
-				throw new Error(
+				throw ServiceError.internal(
 					'Resend API key is required. Set RESEND_API_KEY environment variable.'
 				);
 			}

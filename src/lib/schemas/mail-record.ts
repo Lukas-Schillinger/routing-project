@@ -35,7 +35,8 @@ export const mailRecordSchema = z.object({
 	subject: z.string().nullable(),
 	status: mailRecordStatusEnum,
 	delivered_at: z.date().nullable(),
-	bounced_at: z.date().nullable()
+	bounced_at: z.date().nullable(),
+	error: z.string().nullable()
 });
 export type MailRecord = z.infer<typeof mailRecordSchema>;
 

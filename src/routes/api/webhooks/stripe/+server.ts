@@ -77,7 +77,10 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 			case 'customer.subscription.created':
 			case 'customer.subscription.updated': {
-				const subscription = event.data.object as Stripe.Subscription;
+				const eventSub = event.data.object as Stripe.Subscription;
+				// Fetch latest state from Stripe instead of trusting the event payload,
+				// since Stripe doesn't guarantee webhook delivery order.
+				const subscription = await stripeClient.getSubscription(eventSub.id);
 				const organizationId = subscription.metadata.organization_id;
 
 				if (!organizationId) {
@@ -97,6 +100,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			}
 
 			case 'customer.subscription.deleted': {
+				// No need to fetch latest — we unconditionally clear all subscription fields
 				const subscription = event.data.object as Stripe.Subscription;
 				const organizationId = subscription.metadata.organization_id;
 
