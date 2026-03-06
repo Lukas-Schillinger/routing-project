@@ -218,6 +218,13 @@
       "when": 1772807217783,
       "tag": "0030_high_korvac",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1772827735052,
+      "tag": "0031_happy_catseye",
+      "breakpoints": true
     }
   ]
 }

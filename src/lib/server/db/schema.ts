@@ -489,19 +489,25 @@ export const routeShares = pgTable(
 	]
 );
 
-export const matrices = pgTable('matrices', {
-	id,
-	organization_id: orgId.references(() => organizations.id, {
-		onDelete: 'cascade'
-	}),
-	map_id: uuid()
-		.references(() => maps.id, { onDelete: 'cascade' })
-		.notNull(),
-	inputsHash: varchar('inputs_hash', { length: 64 }).notNull(),
-	matrix: doublePrecision('matrix').array().array().notNull(),
-	created_at: ts('created_at'),
-	updated_at: ts('updated_at')
-});
+export const matrices = pgTable(
+	'matrices',
+	{
+		id,
+		organization_id: orgId.references(() => organizations.id, {
+			onDelete: 'cascade'
+		}),
+		map_id: uuid()
+			.references(() => maps.id, { onDelete: 'cascade' })
+			.notNull(),
+		inputsHash: varchar('inputs_hash', { length: 64 }).notNull(),
+		matrix: doublePrecision('matrix').array().array().notNull(),
+		created_at: ts('created_at'),
+		updated_at: ts('updated_at')
+	},
+	(t) => [
+		uniqueIndex('matrices_org_hash_uidx').on(t.organization_id, t.inputsHash)
+	]
+);
 
 export const files = pgTable(
 	'files',

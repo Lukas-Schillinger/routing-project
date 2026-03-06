@@ -676,9 +676,32 @@ export class OptimizationService {
 				inputsHash: inputHash,
 				matrix: matrixResult.matrix
 			})
+			.onConflictDoNothing({
+				target: [matrices.organization_id, matrices.inputsHash]
+			})
 			.returning();
 
-		return newMatrix;
+		if (newMatrix) {
+			return newMatrix;
+		}
+
+		// Conflict: another request inserted first — fetch the winning row
+		const [existing] = await db
+			.select()
+			.from(matrices)
+			.where(
+				and(
+					eq(matrices.organization_id, organizationId),
+					eq(matrices.inputsHash, inputHash)
+				)
+			)
+			.limit(1);
+
+		if (!existing) {
+			throw ServiceError.notFound('Distance matrix lost after conflict');
+		}
+
+		return existing;
 	}
 
 	private async fetchAssignedDrivers(
