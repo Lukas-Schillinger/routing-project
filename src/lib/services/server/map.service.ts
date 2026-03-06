@@ -393,22 +393,6 @@ export class MapService {
 		await driverService.getDriverById(driverId, organizationId);
 		await this.getMapById(mapId, organizationId);
 
-		// Check if membership already exists
-		const [existing] = await db
-			.select()
-			.from(driverMapMemberships)
-			.where(
-				and(
-					eq(driverMapMemberships.driver_id, driverId),
-					eq(driverMapMemberships.map_id, mapId)
-				)
-			)
-			.limit(1);
-
-		if (existing) {
-			throw ServiceError.conflict('Driver is already assigned to this map');
-		}
-
 		const [membership] = await db
 			.insert(driverMapMemberships)
 			.values({
@@ -416,7 +400,14 @@ export class MapService {
 				driver_id: driverId,
 				map_id: mapId
 			})
+			.onConflictDoNothing({
+				target: [driverMapMemberships.driver_id, driverMapMemberships.map_id]
+			})
 			.returning();
+
+		if (!membership) {
+			throw ServiceError.conflict('Driver is already assigned to this map');
+		}
 
 		return membership;
 	}
