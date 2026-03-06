@@ -1,10 +1,9 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import { scrollReveal } from '$lib/actions/scroll-reveal';
 	import { Button } from '$lib/components/ui/button';
 	import * as Tabs from '$lib/components/ui/tabs';
 	import Check from '@lucide/svelte/icons/check';
-	import { browser } from '$app/environment';
-	import { inView } from 'motion';
 
 	let billingPeriod = $state<'monthly' | 'annual'>('annual');
 
@@ -67,25 +66,6 @@
 	function getPrice(plan: (typeof plans)[0]) {
 		return billingPeriod === 'annual' ? plan.annualPrice : plan.monthlyPrice;
 	}
-
-	let gridEl = $state<HTMLElement | null>(null);
-
-	$effect(() => {
-		if (!gridEl || !browser) return;
-		return inView(
-			gridEl,
-			() => {
-				const cards = gridEl!.querySelectorAll<HTMLElement>('[data-plan]');
-				cards.forEach((card, i) => {
-					setTimeout(() => {
-						card.style.opacity = '1';
-						card.style.transform = 'translateY(0)';
-					}, i * 100);
-				});
-			},
-			{ amount: 0.2 }
-		);
-	});
 </script>
 
 <section class="py-24 md:py-32">
@@ -132,7 +112,10 @@
 		</div>
 
 		<!-- Pricing Cards -->
-		<div bind:this={gridEl} class="grid grid-cols-1 gap-5 md:grid-cols-3">
+		<div
+			use:scrollReveal={{ stagger: 100, selector: '[data-plan]' }}
+			class="grid grid-cols-1 gap-5 md:grid-cols-3"
+		>
 			{#each plans as plan (plan.name)}
 				<div
 					data-plan
@@ -140,7 +123,6 @@
 						{plan.highlighted
 						? 'border-landing-primary bg-card shadow-lg shadow-landing-primary/5'
 						: 'border-foreground/10 bg-card'}"
-					style="opacity: 0; transform: translateY(20px)"
 				>
 					{#if plan.highlighted}
 						<div

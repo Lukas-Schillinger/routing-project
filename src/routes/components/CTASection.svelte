@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { browser } from '$app/environment';
 	import { resolve } from '$app/paths';
+	import { scrollReveal } from '$lib/actions/scroll-reveal';
 	import { Button } from '$lib/components/ui/button';
 	import {
 		ditheringFragmentShader,
@@ -8,7 +8,6 @@
 		DitheringTypes
 	} from '@paper-design/shaders';
 	import ArrowRight from '@lucide/svelte/icons/arrow-right';
-	import { inView } from 'motion';
 	import ShaderCanvas from './ShaderCanvas.svelte';
 
 	const shaderUniforms = {
@@ -27,20 +26,6 @@
 		u_worldHeight: 0,
 		u_fit: 0
 	};
-
-	let contentEl = $state<HTMLElement | null>(null);
-
-	$effect(() => {
-		if (!contentEl || !browser) return;
-		return inView(
-			contentEl,
-			() => {
-				contentEl!.style.opacity = '1';
-				contentEl!.style.transform = 'translateY(0)';
-			},
-			{ amount: 0.3 }
-		);
-	});
 </script>
 
 <section class="relative overflow-hidden py-28 md:py-36">
@@ -52,9 +37,8 @@
 	<div class="absolute inset-0 bg-forest-900/85"></div>
 
 	<div
-		bind:this={contentEl}
+		use:scrollReveal={{ amount: 0.3 }}
 		class="relative mx-auto max-w-3xl px-2 text-center transition-all duration-700 ease-out sm:px-6 lg:px-8"
-		style="opacity: 0; transform: translateY(20px)"
 	>
 		<p
 			class="mb-4 text-xs font-medium tracking-[0.25em] text-landing-secondary uppercase dark:text-landing-primary"

@@ -1,28 +1,12 @@
 <script lang="ts">
-	import { browser } from '$app/environment';
-	import { inView } from 'motion';
-
-	let containerEl = $state<HTMLDivElement | null>(null);
-
-	$effect(() => {
-		if (!containerEl || !browser) return;
-		return inView(
-			containerEl,
-			() => {
-				containerEl!.style.opacity = '1';
-				containerEl!.style.transform = 'translateY(0)';
-			},
-			{ amount: 0.2 }
-		);
-	});
+	import { scrollReveal } from '$lib/actions/scroll-reveal';
 </script>
 
 <section class="py-20 md:py-28">
 	<div class="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
 		<div
-			bind:this={containerEl}
+			use:scrollReveal={{ y: 30 }}
 			class="mx-auto max-w-2xl text-center transition-all duration-700 ease-out"
-			style="opacity: 0; transform: translateY(30px)"
 		>
 			<p
 				class="mb-3 text-xs font-medium tracking-[0.25em] text-landing-primary uppercase"

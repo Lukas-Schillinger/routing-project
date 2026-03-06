@@ -1,11 +1,10 @@
 <script lang="ts">
-	import { browser } from '$app/environment';
+	import { scrollReveal } from '$lib/actions/scroll-reveal';
 	import {
 		grainGradientFragmentShader,
 		GrainGradientShapes,
 		ShaderFitOptions
 	} from '@paper-design/shaders';
-	import { inView } from 'motion';
 	import ShaderCanvas from './ShaderCanvas.svelte';
 
 	type MetricConfig = {
@@ -89,7 +88,6 @@
 		return 1 - Math.pow(1 - t, 3);
 	}
 
-	let sectionEl = $state<HTMLElement | null>(null);
 	let displayValues = $state<string[]>(
 		metrics.map((m) => `${m.prefix}${m.from}${m.suffix}`)
 	);
@@ -118,33 +116,9 @@
 
 		requestAnimationFrame(tick);
 	}
-
-	$effect(() => {
-		if (!sectionEl || !browser) return;
-		return inView(
-			sectionEl,
-			() => {
-				const cards = sectionEl!.querySelectorAll<HTMLElement>('[data-metric]');
-				cards.forEach((card, i) => {
-					setTimeout(() => {
-						card.style.opacity = '1';
-						card.style.transform = 'translateY(0)';
-					}, i * 80);
-				});
-
-				if (!hasAnimated) {
-					hasAnimated = true;
-					metrics.forEach((_, i) => {
-						setTimeout(() => animateCounter(i), i * STAGGER_DELAY);
-					});
-				}
-			},
-			{ amount: 0.25 }
-		);
-	});
 </script>
 
-<section bind:this={sectionEl} class="relative overflow-hidden py-24 md:py-32">
+<section class="relative overflow-hidden py-24 md:py-32">
 	<ShaderCanvas
 		fragmentShader={grainGradientFragmentShader}
 		uniforms={shaderUniforms}
@@ -168,13 +142,26 @@
 		</div>
 
 		<div
+			use:scrollReveal={{
+				y: 12,
+				stagger: 80,
+				selector: '[data-metric]',
+				amount: 0.25,
+				onEnter: () => {
+					if (!hasAnimated) {
+						hasAnimated = true;
+						metrics.forEach((_, i) => {
+							setTimeout(() => animateCounter(i), i * STAGGER_DELAY);
+						});
+					}
+				}
+			}}
 			class="grid grid-cols-2 gap-px overflow-hidden rounded-sm border border-white/10 bg-white/10 lg:grid-cols-4"
 		>
 			{#each metrics as metric, i (metric.label)}
 				<div
 					data-metric
 					class="bg-forest-900/60 p-6 backdrop-blur-sm transition-all duration-500 ease-out"
-					style="opacity: 0; transform: translateY(12px)"
 				>
 					<p
 						class="font-mono text-4xl font-extralight tracking-tight text-sand-50 md:text-5xl"

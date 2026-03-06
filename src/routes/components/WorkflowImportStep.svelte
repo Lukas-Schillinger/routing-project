@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
+	import { scrollReveal } from '$lib/actions/scroll-reveal';
 	import ChevronDown from '@lucide/svelte/icons/chevron-down';
 	import Settings from '@lucide/svelte/icons/settings';
-	import { inView, scroll } from 'motion';
+	import { scroll } from 'motion';
 
 	// Configurable: rows shown in the card table vs total rows on the paper
 	const TABLE_ROWS = 6;
@@ -115,7 +116,6 @@
 	const importRows = allStops.slice(0, TABLE_ROWS);
 
 	let animationEl = $state<HTMLElement | null>(null);
-	let textEl = $state<HTMLElement | null>(null);
 
 	// Scroll-driven animation state
 	let scrollProgress = $state(0);
@@ -218,25 +218,12 @@
 			}
 		);
 	});
-
-	$effect(() => {
-		if (!textEl || !browser) return;
-		return inView(
-			textEl,
-			() => {
-				textEl!.style.opacity = '1';
-				textEl!.style.transform = 'translateY(0)';
-			},
-			{ amount: 0.2 }
-		);
-	});
 </script>
 
 <div class="grid grid-cols-1 items-center gap-8 md:grid-cols-2 md:gap-12">
 	<div
-		bind:this={textEl}
+		use:scrollReveal={{ y: 30 }}
 		class="transition-all duration-700 ease-out"
-		style="opacity: 0; transform: translateY(30px)"
 	>
 		<span class="font-mono text-xs font-bold text-muted-foreground">01</span>
 		<h3 class="mt-2 font-serif text-3xl leading-tight tracking-tight">

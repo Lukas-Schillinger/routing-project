@@ -1,34 +1,20 @@
 <script lang="ts">
-	import { browser } from '$app/environment';
-	import { inView } from 'motion';
+	import { scrollReveal } from '$lib/actions/scroll-reveal';
 	import { RouteSolver } from './route-solver.svelte';
 	import RouteSolverSvg from './RouteSolverSvg.svelte';
 
 	const solver = new RouteSolver();
-
-	let containerEl = $state<HTMLElement | null>(null);
-
-	$effect(() => {
-		if (!containerEl || !browser) return;
-		return inView(
-			containerEl,
-			() => {
-				containerEl!.style.opacity = '1';
-				containerEl!.style.transform = 'translateY(0)';
-				solver.setVisible(true);
-				return () => {
-					solver.setVisible(false);
-				};
-			},
-			{ amount: 0.2 }
-		);
-	});
 </script>
 
 <div
-	bind:this={containerEl}
+	use:scrollReveal={{
+		y: 30,
+		onEnter: () => {
+			solver.setVisible(true);
+			return () => solver.setVisible(false);
+		}
+	}}
 	class="grid grid-cols-1 items-center gap-8 transition-all duration-700 ease-out md:grid-cols-2 md:gap-12"
-	style="opacity: 0; transform: translateY(30px)"
 >
 	<!-- Right: Text -->
 	<div class="md:order-2">
