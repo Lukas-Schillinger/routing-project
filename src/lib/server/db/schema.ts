@@ -186,7 +186,8 @@ export const invitations = pgTable(
 	},
 	(t) => [
 		index('invitations_org_idx').on(t.organization_id),
-		index('invitations_email_idx').on(t.email)
+		index('invitations_email_idx').on(t.email),
+		index('invitations_token_hash_idx').on(t.token_hash)
 	]
 );
 
@@ -215,7 +216,8 @@ export const loginTokens = pgTable(
 	},
 	(t) => [
 		index('login_tokens_org_idx').on(t.organization_id),
-		index('login_tokens_user_idx').on(t.user_id)
+		index('login_tokens_user_idx').on(t.user_id),
+		index('login_tokens_token_hash_idx').on(t.token_hash)
 	]
 );
 
