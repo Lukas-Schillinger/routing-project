@@ -501,7 +501,7 @@ export const matrices = pgTable('matrices', {
 	map_id: uuid()
 		.references(() => maps.id, { onDelete: 'cascade' })
 		.notNull(),
-	inputsHash: varchar('inputs_hash', { length: 64 }).notNull(),
+	inputs_hash: varchar('inputs_hash', { length: 64 }).notNull(),
 	matrix: doublePrecision('matrix').array().array().notNull(),
 	created_at: ts('created_at'),
 	updated_at: ts('updated_at')

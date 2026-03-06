@@ -115,7 +115,7 @@ async function main() {
 	`;
 	const matrices = matrixRows.map(({ map_id, inputs_hash, matrix }) => ({
 		matrix,
-		inputsHash: inputs_hash,
+		inputs_hash,
 		mapIndex: mapIdToIndex.get(map_id) ?? null
 	}));
 	console.log(`  ${matrices.length} matrices`);

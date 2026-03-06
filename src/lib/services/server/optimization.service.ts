@@ -656,7 +656,7 @@ export class OptimizationService {
 			.where(
 				and(
 					eq(matrices.organization_id, organizationId),
-					eq(matrices.inputsHash, inputHash)
+					eq(matrices.inputs_hash, inputHash)
 				)
 			)
 			.limit(1);
@@ -673,7 +673,7 @@ export class OptimizationService {
 			.values({
 				organization_id: organizationId,
 				map_id: mapId,
-				inputsHash: inputHash,
+				inputs_hash: inputHash,
 				matrix: matrixResult.matrix
 			})
 			.returning();

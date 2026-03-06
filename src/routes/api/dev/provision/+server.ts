@@ -175,7 +175,7 @@ export const POST: RequestHandler = async (event) => {
 			.values({
 				organization_id: orgId,
 				map_id: mapId,
-				inputsHash: m.inputsHash,
+				inputs_hash: m.inputs_hash,
 				matrix: m.matrix as number[][]
 			})
 			.returning({ id: schema.matrices.id });

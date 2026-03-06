@@ -508,7 +508,7 @@ export function createMockMatrix(overrides?: Partial<MockMatrix>): MockMatrix {
 	return {
 		organization_id: '', // Must be provided
 		map_id: '', // Must be provided
-		inputsHash: `matrix-hash-${uniqueId()}`,
+		inputs_hash: `matrix-hash-${uniqueId()}`,
 		matrix: [
 			[0, 100, 200],
 			[100, 0, 150],
