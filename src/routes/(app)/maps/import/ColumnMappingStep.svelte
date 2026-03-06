@@ -20,6 +20,7 @@
 	let addressColumn = $state<string>('');
 	let phoneColumn = $state<string>('');
 	let notesColumn = $state<string>('');
+	let error = $state<string | null>(null);
 
 	const csvHeaders = $derived(importState.file?.headers ?? []);
 	const csvData = $derived(importState.rawRows ?? []);
@@ -68,6 +69,7 @@
 		};
 
 		importState.isProcessing = true;
+		error = null;
 
 		try {
 			// Create records with raw values
@@ -98,10 +100,10 @@
 			// Advance to review step (keep rawRows for back navigation)
 			importState.step = 3;
 			onNext?.();
-		} catch (error) {
-			console.error('Geocoding error:', error);
-			captureClientError(error);
-			alert('Failed to geocode addresses. Please try again.');
+		} catch (err) {
+			console.error('Geocoding error:', err);
+			captureClientError(err);
+			error = 'Failed to geocode addresses. Please try again.';
 		} finally {
 			importState.isProcessing = false;
 		}
@@ -119,6 +121,10 @@
 		bind:notesColumn
 		maxRows={5}
 	/>
+
+	{#if error}
+		<p role="alert" class="text-sm font-medium text-destructive">{error}</p>
+	{/if}
 
 	{#if !canProceed}
 		<div
