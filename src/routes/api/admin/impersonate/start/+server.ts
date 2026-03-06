@@ -15,7 +15,7 @@ const impersonateSchema = z.object({
 
 const IMPERSONATION_COOKIE_NAME = 'admin-original-session';
 
-export const POST: RequestHandler = async ({ request, cookies }) => {
+export const POST: RequestHandler = async ({ request, cookies, locals }) => {
 	const admin = requireAdminApi();
 
 	try {
@@ -49,6 +49,11 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 			{ cookies } as Parameters<typeof setSessionTokenCookie>[0],
 			sessionToken,
 			expiresAt
+		);
+
+		locals.log.info(
+			{ targetUserId: data.userId },
+			'Admin started impersonation'
 		);
 
 		return json({
