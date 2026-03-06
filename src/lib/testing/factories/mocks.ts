@@ -217,6 +217,7 @@ export function createMockMap(overrides?: Partial<MockMap>): MockMap {
 	return {
 		organization_id: '', // Must be provided
 		title: `Test Map ${uniqueId()}`,
+		notes: null,
 		depot_id: null,
 		...overrides
 	};
@@ -227,6 +228,7 @@ export function createMockMapRow(overrides?: Partial<Map>): Map {
 		id: crypto.randomUUID(),
 		organization_id: '',
 		title: `Test Map ${uniqueId()}`,
+		notes: null,
 		depot_id: null,
 		created_at: new Date(),
 		created_by: null,
@@ -454,6 +456,7 @@ export function createMockMailRecordRow(
 		status: 'sent',
 		delivered_at: null,
 		bounced_at: null,
+		error: null,
 		...overrides
 	};
 }

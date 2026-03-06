@@ -211,6 +211,13 @@
       "when": 1772641038248,
       "tag": "0029_stormy_lake",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1772807217783,
+      "tag": "0030_high_korvac",
+      "breakpoints": true
     }
   ]
 }

@@ -143,7 +143,9 @@ export class MapService {
 						);
 						return location.id;
 					}
-					throw new Error('Stop must have either location_id or location');
+					throw ServiceError.validation(
+						'Stop must have either location_id or location'
+					);
 				})
 			);
 		}
@@ -157,6 +159,7 @@ export class MapService {
 					created_by: userId,
 					updated_by: userId,
 					title: data.title,
+					notes: data.notes ?? null,
 					depot_id: depotId
 				})
 				.returning();
@@ -505,6 +508,7 @@ export class MapService {
 				.values({
 					organization_id: organizationId,
 					title: newTitle || `${sourceMap.title} (Copy)`,
+					notes: sourceMap.notes,
 					depot_id: sourceMap.depot_id,
 					created_by: userId,
 					updated_by: userId

@@ -42,7 +42,7 @@ export const driverCreateSchema = driverSchema
 	.extend({
 		// Make phone and notes explicitly optional for creation
 		phone: phoneSchema.optional(),
-		notes: notesSchema.optional(),
+		notes: notesSchema,
 		// Provide defaults for boolean fields
 		active: z.boolean().default(true),
 		temporary: z.boolean().default(false)
@@ -57,7 +57,7 @@ export const driverUpdateSchema = z
 	.object({
 		name: z.string().min(1, 'Name cannot be empty').max(200).optional(),
 		phone: phoneSchema.optional(),
-		notes: notesSchema.optional(),
+		notes: notesSchema,
 		active: z.boolean().optional(),
 		temporary: z.boolean().optional(),
 		color: z

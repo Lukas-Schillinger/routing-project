@@ -4,51 +4,41 @@ import { notesSchema, phoneSchema } from './common';
 import type { Location } from './location';
 import { locationCreateSchema } from './location';
 
-export const createStopSchema = z
-	.object({
-		map_id: z.uuid(),
-		location_id: z.uuid().optional(),
-		location: locationCreateSchema.optional(),
-		driver_id: z.uuid().nullable().optional(),
-		delivery_index: z.number().int().nullable().optional(),
-		contact_name: z.string().max(200).nullable().optional(),
-		contact_phone: phoneSchema.optional(),
-		notes: notesSchema.optional()
-	})
-	.refine((data) => data.location_id || data.location, {
-		message: 'Either location_id or location data must be provided',
-		path: ['location_id']
-	});
+const stopOptionalFields = {
+	driver_id: z.uuid().nullish(),
+	delivery_index: z.number().int().nullish(),
+	contact_name: z.string().max(200).nullish(),
+	contact_phone: phoneSchema.optional(),
+	notes: notesSchema
+};
 
-// Schema for bulk creating stops (map_id comes from URL param)
+const locationFields = {
+	location_id: z.uuid().optional(),
+	location: locationCreateSchema.optional()
+};
+
+const locationRefine = {
+	message: 'Either location_id or location data must be provided',
+	path: ['location_id'] as PropertyKey[]
+};
+
+// Stop without map_id — used for bulk creation and inline map+stops creation
+export const createMaplessStopSchema = z
+	.object({ ...locationFields, ...stopOptionalFields })
+	.refine((data) => data.location_id || data.location, locationRefine);
+
+export const createStopSchema = z
+	.object({ map_id: z.uuid(), ...locationFields, ...stopOptionalFields })
+	.refine((data) => data.location_id || data.location, locationRefine);
+
 export const bulkCreateStopsSchema = z
-	.array(
-		z
-			.object({
-				location_id: z.uuid().optional(),
-				location: locationCreateSchema.optional(),
-				driver_id: z.uuid().nullable().optional(),
-				delivery_index: z.number().int().nullable().optional(),
-				contact_name: z.string().max(200).nullable().optional(),
-				contact_phone: phoneSchema.optional(),
-				notes: notesSchema.optional()
-			})
-			.refine((data) => data.location_id || data.location, {
-				message: 'Either location_id or location data must be provided',
-				path: ['location_id']
-			})
-	)
+	.array(createMaplessStopSchema)
 	.min(1)
 	.max(BULK_LIMITS.MAX_STOPS);
 
 export const updateStopSchema = z.object({
-	location_id: z.uuid().optional(),
-	location: locationCreateSchema.optional(),
-	driver_id: z.uuid().nullable().optional(),
-	delivery_index: z.number().int().nullable().optional(),
-	contact_name: z.string().max(200).nullable().optional(),
-	contact_phone: phoneSchema.optional(),
-	notes: notesSchema.optional()
+	...locationFields,
+	...stopOptionalFields
 });
 
 export const stopSchema = z.object({

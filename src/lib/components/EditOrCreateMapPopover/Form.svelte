@@ -27,7 +27,7 @@
 	// Use empty strings for form inputs - schema transforms to null on submit
 	const getInitialData = () => ({
 		title: mode === 'edit' && map ? map.title : '',
-		description: ''
+		notes: mode === 'edit' && map ? (map.notes ?? '') : ''
 	});
 
 	const form = superForm(defaults(getInitialData(), zod4(createMapSchema)), {
@@ -40,7 +40,7 @@
 				// Convert empty strings to null for API
 				const payload = {
 					...form.data,
-					description: form.data.description || null
+					notes: form.data.notes || null
 				};
 
 				const resultMap =
@@ -104,14 +104,14 @@
 				<Form.FieldErrors />
 			</Form.Field>
 
-			<Form.Field {form} name="description">
+			<Form.Field {form} name="notes">
 				<Form.Control>
 					{#snippet children({ props })}
-						<Form.Label>Description</Form.Label>
+						<Form.Label>Notes</Form.Label>
 						<Textarea
 							{...props}
-							bind:value={$formData.description}
-							placeholder="Optional description…"
+							bind:value={$formData.notes}
+							placeholder="Optional notes…"
 							disabled={$submitting}
 							rows={3}
 							class="resize-none"

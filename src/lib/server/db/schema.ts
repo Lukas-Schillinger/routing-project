@@ -270,6 +270,7 @@ export const maps = pgTable(
 		}),
 
 		title: varchar('title', { length: 200 }).notNull(),
+		notes: text('notes'),
 		depot_id: uuid('depot_id').references(() => depots.id, {
 			onDelete: 'set null'
 		})

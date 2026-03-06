@@ -1,24 +1,8 @@
 import { z } from 'zod';
-import { notesSchema, phoneSchema } from './common';
-import { locationCreateSchema } from './location';
+import { notesSchema } from './common';
+import { createMaplessStopSchema } from './stop';
 
-/** Ugly hack because schemas with `.refine()` don't support `.omit()`.
- * This schema exists so that maps and stops can be created in one API call.
- */
-export const createMaplessStopSchema = z
-	.object({
-		location_id: z.uuid().optional(),
-		location: locationCreateSchema.optional(),
-		driver_id: z.uuid().nullable().optional(),
-		delivery_index: z.number().int().nullable().optional(),
-		contact_name: z.string().max(200).nullable().optional(),
-		contact_phone: phoneSchema.optional(),
-		notes: notesSchema.optional()
-	})
-	.refine((data) => data.location_id || data.location, {
-		message: 'Either location_id or location data must be provided',
-		path: ['location_id']
-	});
+export { createMaplessStopSchema };
 
 /**
  * Map creation schema
@@ -28,9 +12,9 @@ export const createMapSchema = z.object({
 		.string()
 		.min(1, 'Title is required')
 		.max(200, 'Title must be 200 characters or less'),
-	description: z.string().max(1000).nullable().optional(),
-	depot_id: z.uuid().nullable().optional(),
-	stops: z.array(createMaplessStopSchema).optional().nullable() // optionally create stops in the same call as the map
+	notes: notesSchema,
+	depot_id: z.uuid().nullish(),
+	stops: z.array(createMaplessStopSchema).nullish() // optionally create stops in the same call as the map
 });
 
 /**
@@ -38,8 +22,8 @@ export const createMapSchema = z.object({
  */
 export const updateMapSchema = z.object({
 	title: z.string().min(1).max(200).optional(),
-	description: z.string().max(1000).nullable().optional(),
-	depot_id: z.uuid().nullable().optional()
+	notes: notesSchema,
+	depot_id: z.uuid().nullish()
 });
 
 /**
@@ -49,6 +33,7 @@ export const mapSchema = z.object({
 	id: z.uuid(),
 	organization_id: z.uuid(),
 	title: z.string(),
+	notes: notesSchema,
 	depot_id: z.uuid().nullable(),
 	created_at: z.date(),
 	created_by: z.uuid().nullable(),
