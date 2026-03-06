@@ -26,12 +26,16 @@
 		organization = $bindable(),
 		organizationUsers = $bindable(),
 		currentUser,
-		permissions
+		permissions,
+		nameError = $bindable<string | null>(null),
+		roleError = $bindable<string | null>(null)
 	}: {
 		organization: Organization;
 		organizationUsers: PublicUser[];
 		currentUser: PublicUser;
 		permissions: Permission[];
+		nameError?: string | null;
+		roleError?: string | null;
 	} = $props();
 
 	const canDeleteUsers = $derived(checkPermission(permissions, 'users:delete'));
@@ -53,6 +57,7 @@
 		if (!newName || newName === organization.name) return;
 
 		isSavingName = true;
+		nameError = null;
 		try {
 			const updatedOrg = await organizationApi.update(organization.id, {
 				name: newName
@@ -60,10 +65,10 @@
 			organization = updatedOrg;
 			await invalidate(INVALIDATION_KEYS.ACCOUNT);
 			toast.success('Organization updated');
-		} catch (error) {
-			console.error('Failed to update organization:', error);
-			captureClientError(error);
-			toast.error('Failed to update organization');
+		} catch (err) {
+			console.error('Failed to update organization:', err);
+			captureClientError(err);
+			nameError = 'Failed to update organization';
 			nameValue = organization.name;
 		} finally {
 			isSavingName = false;
@@ -88,16 +93,17 @@
 
 	// Update user role
 	async function handleRoleChange(userId: string, newRole: Role) {
+		roleError = null;
 		try {
 			const updatedUser = await usersApi.updateRole(userId, { role: newRole });
 			organizationUsers = organizationUsers.map((u) =>
 				u.id === userId ? updatedUser : u
 			);
 			toast.success('Role updated');
-		} catch (error) {
-			console.error('Failed to update role:', error);
-			captureClientError(error);
-			toast.error('Failed to update role');
+		} catch (err) {
+			console.error('Failed to update role:', err);
+			captureClientError(err);
+			roleError = 'Failed to update role';
 			await invalidate(INVALIDATION_KEYS.ACCOUNT);
 		}
 	}
@@ -118,15 +124,22 @@
 			<div class="shrink-0 md:w-48">
 				<p class="text-sm font-medium">Organization name</p>
 			</div>
-			<Input
-				type="text"
-				bind:value={nameValue}
-				oninput={handleNameInput}
-				onblur={handleNameBlur}
-				placeholder="Enter organization name…"
-				disabled={isSavingName || !canUpdateUsers}
-				class="max-w-xs"
-			/>
+			<div class="flex flex-col gap-1">
+				<Input
+					type="text"
+					bind:value={nameValue}
+					oninput={handleNameInput}
+					onblur={handleNameBlur}
+					placeholder="Enter organization name…"
+					disabled={isSavingName || !canUpdateUsers}
+					class="max-w-xs"
+				/>
+				{#if nameError}
+					<p role="alert" class="text-sm font-medium text-destructive">
+						{nameError}
+					</p>
+				{/if}
+			</div>
 		</div>
 
 		<!-- Created (read-only) -->
@@ -156,6 +169,11 @@
 			<div class="shrink-0">
 				<p class="text-sm font-medium">Members ({organizationUsers.length})</p>
 			</div>
+			{#if roleError}
+				<p role="alert" class="text-sm font-medium text-destructive">
+					{roleError}
+				</p>
+			{/if}
 			<Table.Root class="">
 				<Table.Header>
 					<Table.Row class="p-0">

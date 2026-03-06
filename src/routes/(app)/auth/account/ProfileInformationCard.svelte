@@ -20,9 +20,11 @@
 
 	// Props
 	let {
-		user
+		user,
+		error = $bindable<string | null>(null)
 	}: {
 		user: PublicUser;
+		error?: string | null;
 	} = $props();
 
 	// Form state — $state so bind:value can write to it
@@ -41,14 +43,15 @@
 		if (newName === user.name) return;
 
 		isSavingName = true;
+		error = null;
 		try {
 			await usersApi.updateMe({ name: newName });
 			await invalidate(INVALIDATION_KEYS.ACCOUNT);
 			toast.success('Profile updated');
-		} catch (error) {
-			console.error('Failed to update profile:', error);
-			captureClientError(error);
-			toast.error('Failed to update profile');
+		} catch (err) {
+			console.error('Failed to update profile:', err);
+			captureClientError(err);
+			error = 'Failed to update profile';
 			nameValue = user.name ?? '';
 		} finally {
 			isSavingName = false;
@@ -84,15 +87,22 @@
 			<div class="shrink-0 md:w-48">
 				<p class="text-sm font-medium">Name</p>
 			</div>
-			<Input
-				type="text"
-				bind:value={nameValue}
-				oninput={handleNameInput}
-				onblur={handleNameBlur}
-				placeholder="Enter your name…"
-				disabled={isSavingName}
-				class="max-w-xs"
-			/>
+			<div class="flex flex-col gap-1">
+				<Input
+					type="text"
+					bind:value={nameValue}
+					oninput={handleNameInput}
+					onblur={handleNameBlur}
+					placeholder="Enter your name…"
+					disabled={isSavingName}
+					class="max-w-xs"
+				/>
+				{#if error}
+					<p role="alert" class="text-sm font-medium text-destructive">
+						{error}
+					</p>
+				{/if}
+			</div>
 		</div>
 
 		<!-- Email (read-only) -->

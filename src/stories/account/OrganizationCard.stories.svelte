@@ -35,6 +35,9 @@
 
 <Story name="Default" />
 
-<Story name="Update Error" args={{ error: 'Failed to update organization' }} />
+<Story
+	name="Name Error"
+	args={{ nameError: 'Failed to update organization' }}
+/>
 
-<Story name="Role Error" args={{ error: 'Failed to update role' }} />
+<Story name="Role Error" args={{ roleError: 'Failed to update role' }} />

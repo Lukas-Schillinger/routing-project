@@ -18,7 +18,8 @@
 	let {
 		invitationsWithMailRecord,
 		onCreateInvitation = () => {},
-		onDeleteInvitation = () => {}
+		onDeleteInvitation = () => {},
+		error = $bindable<string | null>(null)
 	}: {
 		invitationsWithMailRecord: {
 			invitation: Invitation;
@@ -26,18 +27,20 @@
 		}[];
 		onCreateInvitation: (invitation: Invitation) => void;
 		onDeleteInvitation: () => void;
+		error?: string | null;
 	} = $props();
 
 	async function handleDeleteInvitation(invitationId: string) {
+		error = null;
 		try {
 			await invitationsApi.deleteInvitation(invitationId);
 			onDeleteInvitation();
 			toast.success('Invitation revoked');
 		} catch (err) {
 			if (err instanceof ServiceError) {
-				toast.error(err.message);
+				error = err.message;
 			} else {
-				toast.error('Failed to revoke invitation');
+				error = 'Failed to revoke invitation';
 			}
 		}
 	}
@@ -100,6 +103,9 @@
 	</Card.Header>
 
 	<Card.Content class="space-y-1">
+		{#if error}
+			<p role="alert" class="text-sm font-medium text-destructive">{error}</p>
+		{/if}
 		{#if sortedInvites.length === 0}
 			<Empty.Root>
 				<Empty.Header>

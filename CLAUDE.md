@@ -60,7 +60,10 @@ Multiple Claude agents can work in parallel, each in its own worktree. Each agen
 - Prefer type over interface. Use string literals instead of enums.
 - All URLs must use `resolve()` from `$app/paths`. Enforced by the linter.
   - `href={resolve('/dashboard')}`, `goto(resolve('/settings'))`
-- Prefer rendering errors inline in the UI. Use `toast` from `svelte-sonner` only for transient confirmations (e.g. "Saved").
+- Render errors inline in the UI. Use `toast` from `svelte-sonner` only for transient confirmations (e.g. "Saved").
+  - Field-level errors: `<p role="alert" class="text-sm font-medium text-destructive">{error}</p>` below the input.
+  - Card/section-level errors: shadcn `<Alert variant="destructive">` component.
+  - Use `role="alert"` so screen readers announce errors dynamically.
 - Server-side logging: `event.locals.log` (Pino logger with request context, userId, orgId).
 - Env vars are validated at startup via `src/lib/server/env.ts` — missing vars crash immediately.
 
