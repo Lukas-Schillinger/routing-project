@@ -25,7 +25,6 @@
 	import MapPin from '@lucide/svelte/icons/map-pin';
 	import Plus from '@lucide/svelte/icons/plus';
 	import Search from '@lucide/svelte/icons/search';
-	import { toast } from 'svelte-sonner';
 	import { MediaQuery } from 'svelte/reactivity';
 	import { useSearchParams } from 'runed/kit';
 	import type { PageData } from './$types';
@@ -38,22 +37,23 @@
 	// New map creation state
 	let isCreatingMap = $state(false);
 	let fileInputRef = $state<HTMLInputElement | null>(null);
+	let pageError = $state<string | null>(null);
 
 	async function handleCreateNewMap() {
+		pageError = null;
 		try {
 			isCreatingMap = true;
 			const { map } = await mapApi.create({
 				title: `Map ${new Date().toLocaleDateString()}`
 			});
 			await goto(resolve(`/maps/${map.id}`));
-		} catch (error) {
-			console.error('Failed to create map:', error);
-			captureClientError(error);
-			const message =
-				error instanceof ServiceError
-					? error.message
+		} catch (err) {
+			console.error('Failed to create map:', err);
+			captureClientError(err);
+			pageError =
+				err instanceof ServiceError
+					? err.message
 					: 'Failed to create map. Please try again.';
-			toast.error(message);
 		} finally {
 			isCreatingMap = false;
 		}
@@ -66,11 +66,12 @@
 	async function handleFileSelect(e: Event) {
 		const input = e.currentTarget as HTMLInputElement;
 		if (!input.files || input.files.length === 0) return;
+		pageError = null;
 
 		const result = await parseCsvFile(input.files[0]);
 
 		if (!result.success) {
-			toast.error(result.error.message);
+			pageError = result.error.message;
 			input.value = '';
 			return;
 		}
@@ -219,6 +220,12 @@
 			</ButtonGroup.Root>
 		</div>
 	</div>
+
+	{#if pageError}
+		<p role="alert" class="mb-3 text-sm font-medium text-destructive">
+			{pageError}
+		</p>
+	{/if}
 
 	<!-- Search and Controls Bar -->
 	<div class="mb-6 flex flex-col gap-3">

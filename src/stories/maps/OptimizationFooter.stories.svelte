@@ -79,6 +79,11 @@
 
 <Story name="Optimizing" args={{ pageState: 'optimizing' }} />
 
-<Story name="Cancel Error" args={{ error: 'Failed to cancel optimization' }} />
+<Story
+	name="Cancel Error"
+	args={{ parentError: 'Failed to cancel optimization' }}
+/>
 
-<Story name="Reset Error" args={{ error: 'Failed to reset routes' }} />
+<Story name="Reset Error" args={{ parentError: 'Failed to reset routes' }} />
+
+<Story name="Parent Error" args={{ parentError: 'Failed to update depot' }} />

@@ -50,15 +50,17 @@
 		}
 	});
 
+	let deleteError = $state<string | null>(null);
+
 	async function handleDeleteAccount() {
+		deleteError = null;
 		try {
 			await usersApi.deleteMe();
 			toast.success('Account deleted');
 			goto(resolve('/auth/login'));
-		} catch (error) {
-			toast.error(
-				error instanceof Error ? error.message : 'Failed to delete account'
-			);
+		} catch (err) {
+			deleteError =
+				err instanceof Error ? err.message : 'Failed to delete account';
 		}
 	}
 </script>
@@ -125,6 +127,11 @@
 						Once you delete your account, there is no going back. Please be
 						certain.
 					</p>
+					{#if deleteError}
+						<p role="alert" class="text-sm font-medium text-destructive">
+							{deleteError}
+						</p>
+					{/if}
 					<div class="mt-2">
 						<ConfirmDeleteDialog
 							title="Delete Account"

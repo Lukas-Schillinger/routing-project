@@ -45,6 +45,7 @@
 		monthlyCredits,
 		onDepotChange,
 		pollerError,
+		parentError,
 		onOptimize,
 		onCancel,
 		onUpgrade
@@ -59,6 +60,7 @@
 		credits?: CreditBalance;
 		monthlyCredits?: number;
 		pollerError?: string | null;
+		parentError?: string | null;
 		onDepotChange: (depotId: string) => Promise<void>;
 		onOptimize: () => void;
 		onCancel: () => void;
@@ -81,7 +83,7 @@
 	const hasRoutes = $derived(routes.length > 0);
 
 	// Combine submission errors and polling errors into a single displayed message
-	const displayError = $derived(error || pollerError || null);
+	const displayError = $derived(error || pollerError || parentError || null);
 
 	// Count unassigned stops
 	const unassignedStopsCount = $derived(
@@ -132,11 +134,10 @@
 			await mapApi.cancelOptimization(map.id);
 			onCancel();
 		} catch (err) {
-			if (err instanceof ServiceError) {
-				toast.error(err.message);
-			} else {
-				toast.error('Failed to cancel optimization');
-			}
+			error =
+				err instanceof ServiceError
+					? err.message
+					: 'Failed to cancel optimization';
 		}
 	}
 
@@ -174,14 +175,13 @@
 
 	async function handleResetRoutes() {
 		isResetting = true;
+		error = null;
 		try {
 			await mapApi.resetOptimization(map.id);
 			await invalidate(INVALIDATION_KEYS.MAP_DATA);
 			toast.success('Routes reset successfully');
 		} catch (err) {
-			toast.error('Failed to reset routes', {
-				description: err instanceof Error ? err.message : 'Unknown error'
-			});
+			error = err instanceof Error ? err.message : 'Failed to reset routes';
 		} finally {
 			isResetting = false;
 		}

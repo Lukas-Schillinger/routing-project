@@ -11,7 +11,6 @@
 	import Check from '@lucide/svelte/icons/check';
 	import Loader2 from '@lucide/svelte/icons/loader-2';
 	import { onMount } from 'svelte';
-	import { toast } from 'svelte-sonner';
 	import type { PageData } from './$types';
 
 	import ColumnMappingStep from './ColumnMappingStep.svelte';
@@ -22,6 +21,7 @@
 
 	let importState = $state<ImportState>(createImportState());
 	let isCreating = $state(false);
+	let createError = $state<string | null>(null);
 
 	// When importing to existing map, skip file upload step (it comes from pending import)
 	const isImportingToExistingMap = $derived(!!data.existingMap);
@@ -52,20 +52,20 @@
 	];
 
 	async function createEmptyMap() {
+		createError = null;
 		try {
 			isCreating = true;
 			const { map } = await mapApi.create({
 				title: `Map ${new Date().toLocaleDateString()}`
 			});
 			await goto(resolve(`/maps/${map.id}`));
-		} catch (error) {
-			console.error('Failed to create map:', error);
-			captureClientError(error);
-			const message =
-				error instanceof ServiceError
-					? error.message
+		} catch (err) {
+			console.error('Failed to create map:', err);
+			captureClientError(err);
+			createError =
+				err instanceof ServiceError
+					? err.message
 					: 'Failed to create map. Please try again.';
-			toast.error(message);
 		} finally {
 			isCreating = false;
 		}
@@ -282,6 +282,11 @@
 				>
 					{isCreating ? 'Creating...' : 'Create empty map'}
 				</Button>
+				{#if createError}
+					<p role="alert" class="text-sm font-medium text-destructive">
+						{createError}
+					</p>
+				{/if}
 			{/if}
 			<FileUploadStep bind:importState />
 		</div>

@@ -41,6 +41,7 @@
 	let isLoading = $state(false);
 	let focusedStopId = $state<string | null>(null);
 	let hiddenDrivers = $state<Driver[]>([]);
+	let pageError = $state<string | null>(null);
 
 	// Optimization polling
 	const poller = createOptimizationPoller(
@@ -83,13 +84,13 @@
 	});
 
 	async function handleDepotChange(depotId: string) {
+		pageError = null;
 		try {
 			await mapApi.update(data.map.id, { depot_id: depotId });
 			await invalidate(INVALIDATION_KEYS.MAP_DATA);
 		} catch (err) {
-			const message =
+			pageError =
 				err instanceof ServiceError ? err.message : 'Failed to update depot';
-			toast.error(message);
 		}
 	}
 
@@ -100,15 +101,15 @@
 	async function removeDriver(driverId: string) {
 		if (isLoading) return;
 		isLoading = true;
+		pageError = null;
 
 		try {
 			await mapApi.removeDriver(data.map.id, driverId);
 			await invalidate(INVALIDATION_KEYS.MAP_DATA);
 			toast.success('Driver removed');
 		} catch (err) {
-			const message =
+			pageError =
 				err instanceof ServiceError ? err.message : 'Failed to remove driver';
-			toast.error(message);
 		} finally {
 			isLoading = false;
 		}
@@ -208,6 +209,7 @@
 				{pageState}
 				onDepotChange={handleDepotChange}
 				pollerError={poller.error}
+				parentError={pageError}
 				onOptimize={() => poller.start()}
 				onCancel={() => poller.stop()}
 			/>

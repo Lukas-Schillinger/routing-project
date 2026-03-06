@@ -7,25 +7,23 @@
 	import Header from '$lib/components/Header.svelte';
 	import { adminApi } from '$lib/services/api';
 	import type { Snippet } from 'svelte';
-	import { toast } from 'svelte-sonner';
 	import type { LayoutData } from './$types';
 
 	let { data, children }: { data: LayoutData; children: Snippet } = $props();
 
 	let isReturning = $state(false);
+	let returnError = $state<string | null>(null);
 
 	async function handleReturnToAdmin() {
 		isReturning = true;
+		returnError = null;
 		try {
 			await adminApi.stopImpersonation();
 			await invalidateAll();
 			goto(resolve('/admin/organizations'));
-		} catch (error) {
-			toast.error(
-				error instanceof ServiceError
-					? error.message
-					: 'Failed to return to admin'
-			);
+		} catch (err) {
+			returnError =
+				err instanceof ServiceError ? err.message : 'Failed to return to admin';
 		} finally {
 			isReturning = false;
 		}
@@ -48,6 +46,9 @@
 		>
 			{isReturning ? 'Returning...' : 'Return to Admin'}
 		</button>
+		{#if returnError}
+			<p role="alert" class="text-amber-950">{returnError}</p>
+		{/if}
 	</div>
 {/if}
 
