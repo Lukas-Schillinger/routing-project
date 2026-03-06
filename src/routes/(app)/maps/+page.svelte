@@ -387,6 +387,7 @@
 									class="text-sm"
 									onclick={() => goToPage(page)}
 									aria-label="Page {page}"
+									aria-current={currentPage === page ? 'page' : undefined}
 								>
 									{page}
 								</Button>
