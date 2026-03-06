@@ -11,7 +11,7 @@
 	let { title, description, children, footer }: Props = $props();
 </script>
 
-<div class="w-full max-w-[380px]">
+<div class="w-full max-w-95">
 	{#if title || description}
 		<div class="mb-6 text-center sm:mb-8">
 			{#if title}

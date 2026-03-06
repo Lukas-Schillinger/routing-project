@@ -3,7 +3,6 @@
 	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 	import Home from '@lucide/svelte/icons/home';
 	import RotateCcw from '@lucide/svelte/icons/rotate-ccw';
-	import Frown from '@lucide/svelte/icons/frown';
 
 	interface Props {
 		status: number;
@@ -49,12 +48,6 @@
 >
 	<!-- Main content -->
 	<div class="relative z-10 flex max-w-lg flex-col items-center text-center">
-		<!-- Giant icon -->
-		<Frown
-			class="mb-4 size-32 text-muted-foreground/30 md:size-48"
-			strokeWidth={1}
-		/>
-
 		<!-- Status code -->
 		<span
 			class="mb-2 font-serif text-7xl font-semibold tracking-tight text-foreground md:text-6xl"
