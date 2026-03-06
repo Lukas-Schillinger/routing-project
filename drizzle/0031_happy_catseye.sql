@@ -1,1 +1,0 @@
-CREATE UNIQUE INDEX "matrices_org_hash_uidx" ON "matrices" USING btree ("organization_id","inputs_hash");
