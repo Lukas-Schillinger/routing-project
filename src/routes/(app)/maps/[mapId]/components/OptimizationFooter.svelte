@@ -22,7 +22,7 @@
 	} from '$lib/schemas';
 	import { mapApi } from '$lib/services/api';
 	import AlertCircle from '@lucide/svelte/icons/alert-circle';
-	import Building2 from '@lucide/svelte/icons/building-2';
+	import Warehouse from '@lucide/svelte/icons/warehouse';
 	import Loader2 from '@lucide/svelte/icons/loader-2';
 	import Plus from '@lucide/svelte/icons/plus';
 	import RotateCcw from '@lucide/svelte/icons/rotate-ccw';
@@ -230,7 +230,7 @@
 									(d) => d.depot.id === selectedDepotId
 								)}
 								<div class="flex items-center gap-1.5 truncate">
-									<Building2
+									<Warehouse
 										class="h-3.5 w-3.5 shrink-0 text-muted-foreground"
 									/>
 									<span class="truncate text-xs"
@@ -245,7 +245,7 @@
 							{#each depots as depot (depot.depot.id)}
 								<Select.Item value={depot.depot.id}>
 									<div class="flex items-center gap-2">
-										<Building2 class="h-3.5 w-3.5" />
+										<Warehouse class="h-3.5 w-3.5" />
 										<span>{depot.depot.name}</span>
 										{#if depot.depot.default_depot}
 											<span class="text-xs text-muted-foreground"

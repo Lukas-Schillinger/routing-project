@@ -7,7 +7,7 @@
 	import type { DepotWithLocationJoin } from '$lib/schemas/depot';
 	import { depotApi } from '$lib/services/api/depots';
 	import * as Empty from '$lib/components/ui/empty';
-	import Building2 from '@lucide/svelte/icons/building-2';
+	import Warehouse from '@lucide/svelte/icons/warehouse';
 	import MapPin from '@lucide/svelte/icons/map-pin';
 	import Plus from '@lucide/svelte/icons/plus';
 	import Star from '@lucide/svelte/icons/star';
@@ -42,7 +42,7 @@
 		class="flex items-center justify-between border-b border-border/50 px-4 py-3"
 	>
 		<div class="flex items-center gap-2">
-			<Building2 class="h-4 w-4 text-muted-foreground" />
+			<Warehouse class="h-4 w-4 text-muted-foreground" />
 			<h3 class="text-sm font-medium">Depots</h3>
 			{#if depots.length > 0}
 				<Badge variant="secondary" class="ml-1 h-5 px-1.5 text-xs">
@@ -67,7 +67,7 @@
 		{#if depots.length === 0}
 			<Empty.Root>
 				<Empty.Header>
-					<Empty.Media variant="icon"><Building2 /></Empty.Media>
+					<Empty.Media variant="icon"><Warehouse /></Empty.Media>
 					<Empty.Title>No depots yet</Empty.Title>
 					<Empty.Description
 						>Create a depot as a starting location for routes</Empty.Description

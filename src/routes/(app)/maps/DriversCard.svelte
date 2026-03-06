@@ -12,7 +12,6 @@
 	import Phone from '@lucide/svelte/icons/phone';
 	import Plus from '@lucide/svelte/icons/plus';
 	import Truck from '@lucide/svelte/icons/truck';
-	import Users from '@lucide/svelte/icons/users';
 	import { toast } from 'svelte-sonner';
 
 	let { drivers = $bindable([]) }: { drivers: Driver[] } = $props();
@@ -62,7 +61,7 @@
 		{#if drivers.length === 0}
 			<Empty.Root>
 				<Empty.Header>
-					<Empty.Media variant="icon"><Users /></Empty.Media>
+					<Empty.Media variant="icon"><Truck /></Empty.Media>
 					<Empty.Title>No drivers yet</Empty.Title>
 					<Empty.Description
 						>Add drivers to assign them to routes</Empty.Description
