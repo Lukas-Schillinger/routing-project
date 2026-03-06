@@ -841,6 +841,7 @@ export const mockStripeState = {
 	customerIdCounter: 0,
 	subscriptionIdCounter: 0,
 	checkoutSessionIdCounter: 0,
+	shouldFailSignatureVerification: false,
 
 	/** Reset all state (call in beforeEach) */
 	clear() {
@@ -856,6 +857,7 @@ export const mockStripeState = {
 		this.customerIdCounter = 0;
 		this.subscriptionIdCounter = 0;
 		this.checkoutSessionIdCounter = 0;
+		this.shouldFailSignatureVerification = false;
 	}
 };
 
@@ -987,6 +989,11 @@ export const mockStripeClient = {
 			signature,
 			secret
 		});
+		if (mockStripeState.shouldFailSignatureVerification) {
+			throw new Error(
+				'No signatures found matching the expected signature for payload.'
+			);
+		}
 		// Parse payload and return as event
 		const data = JSON.parse(payload);
 		return {

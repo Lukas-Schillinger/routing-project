@@ -32,10 +32,22 @@ vi.mock('$lib/services/external/stripe/client', () => ({
 	stripeClient: mockStripeClient
 }));
 
-// Import the services after mocking
+// Mock Sentry
+vi.mock('@sentry/sveltekit', () => ({
+	captureException: vi.fn()
+}));
+
+// Mock mail service (handler imports it but we don't need real emails)
+vi.mock('$lib/services/server/mail.service', () => ({
+	mailService: { sendBillingNotificationEmails: vi.fn() }
+}));
+
+// Import the services and handler after mocking
+import { env } from '$env/dynamic/private';
 import { billingService } from '$lib/services/server/billing.service';
 import { subscriptionService } from '$lib/services/server/subscription.service';
 import { userService } from '$lib/services/server/user.service';
+import { POST } from './+server';
 
 beforeEach(() => {
 	mockStripeState.clear();
@@ -77,29 +89,27 @@ describe('Stripe Webhook - Checkout Events', () => {
 			});
 		});
 
-		it('is idempotent - does not double grant on retry', async () => {
+		it('is idempotent - rejects duplicate payment intent', async () => {
 			await withTestTransaction(async () => {
 				const { organization } = await createTestEnvironment();
 				const paymentIntentId = `pi_test_idempotent_${Date.now()}`;
 
-				// Simulate webhook called twice (retry)
-				await billingService.grantPurchasedCredits(
-					organization.id,
-					100,
-					paymentIntentId
-				);
 				await billingService.grantPurchasedCredits(
 					organization.id,
 					100,
 					paymentIntentId
 				);
 
-				// Should only have one transaction
-				const balance = await billingService.getAvailableCredits(
-					organization.id
-				);
-				expect(balance).toBe(billingConfig.freeMonthlyCredits + 100);
+				// Second call with same payment intent throws conflict
+				await expect(
+					billingService.grantPurchasedCredits(
+						organization.id,
+						100,
+						paymentIntentId
+					)
+				).rejects.toThrow('Duplicate credit grant');
 
+				// Only one transaction exists
 				const transactions = await db
 					.select()
 					.from(creditTransactions)
@@ -364,5 +374,78 @@ describe('Stripe Webhook - Invoice Events', () => {
 
 			expect(metadata?.organization_id).toBe(orgId);
 		});
+	});
+});
+
+// ---------------------------------------------------------------------------
+// Handler-level tests — call POST directly to verify signature verification
+// ---------------------------------------------------------------------------
+
+function createWebhookRequest(body: string, signature?: string) {
+	const headers: Record<string, string> = {
+		'content-type': 'application/json'
+	};
+	if (signature) headers['stripe-signature'] = signature;
+	return new Request('http://localhost/api/webhooks/stripe', {
+		method: 'POST',
+		headers,
+		body
+	});
+}
+
+const mockLog = { info: vi.fn(), warn: vi.fn(), error: vi.fn() };
+
+function callPost(request: Request) {
+	return POST({
+		request,
+		locals: { log: mockLog }
+	} as unknown as Parameters<typeof POST>[0]);
+}
+
+describe('Stripe Webhook - Signature Verification', () => {
+	it('returns 401 when stripe-signature header is missing', async () => {
+		const request = createWebhookRequest('{}');
+		const response = await callPost(request);
+
+		expect(response.status).toBe(401);
+		expect(await response.json()).toEqual({ error: 'Missing signature' });
+	});
+
+	it('returns 401 when signature verification fails', async () => {
+		mockStripeState.shouldFailSignatureVerification = true;
+
+		const request = createWebhookRequest('{}', 'bad_sig');
+		const response = await callPost(request);
+
+		expect(response.status).toBe(401);
+		expect(await response.json()).toEqual({ error: 'Invalid signature' });
+	});
+
+	it('returns 200 for a valid webhook event', async () => {
+		const body = JSON.stringify({
+			type: 'ping.test',
+			object: {}
+		});
+		const request = createWebhookRequest(body, 'valid_sig');
+		const response = await callPost(request);
+
+		expect(response.status).toBe(200);
+		expect(await response.json()).toEqual({ received: true });
+	});
+
+	it('returns 500 when STRIPE_WEBHOOK_SECRET is not configured', async () => {
+		const original = env.STRIPE_WEBHOOK_SECRET;
+		env.STRIPE_WEBHOOK_SECRET = '';
+		try {
+			const request = createWebhookRequest('{}', 'some_sig');
+			const response = await callPost(request);
+
+			expect(response.status).toBe(500);
+			expect(await response.json()).toEqual({
+				error: 'Webhook not configured'
+			});
+		} finally {
+			env.STRIPE_WEBHOOK_SECRET = original;
+		}
 	});
 });
