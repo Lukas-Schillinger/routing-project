@@ -76,7 +76,9 @@
 							disabled={provisioning}
 						>
 							<DatabaseZap />
-							{provisioning ? 'Seeding...' : 'Seed Dev Account'}
+							<span class="hidden sm:inline"
+								>{provisioning ? 'Seeding...' : 'Seed Dev Account'}</span
+							>
 						</Button>
 					{/if}
 					{#if user}
@@ -86,7 +88,7 @@
 							variant={isActive.maps ? 'secondary' : 'ghost'}
 							size="sm"
 						>
-							<Map /> Maps
+							<Map /> <span class="hidden sm:inline">Maps</span>
 						</Button>
 						<Button
 							class="rounded-full"
@@ -94,7 +96,7 @@
 							variant={isActive.auth ? 'secondary' : 'ghost'}
 							size="sm"
 						>
-							<UserIcon /> Account
+							<UserIcon /> <span class="hidden sm:inline">Account</span>
 						</Button>
 					{:else}
 						<Button

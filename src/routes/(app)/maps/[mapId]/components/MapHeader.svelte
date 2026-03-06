@@ -46,9 +46,16 @@
 </script>
 
 <div class="flex items-center justify-between pb-3">
-	<div class="flex items-center gap-3">
-		<h1 class="text-xl font-semibold tracking-tight">{map.title}</h1>
-		<Badge variant="secondary" class={status.class}>
+	<div class="flex min-w-0 items-center gap-3">
+		<div class="min-w-0">
+			<h1 class="truncate text-xl font-semibold tracking-tight">{map.title}</h1>
+			{#if map.notes}
+				<span class="block truncate text-sm text-muted-foreground"
+					>{map.notes}</span
+				>
+			{/if}
+		</div>
+		<Badge variant="secondary" class="{status.class} shrink-0">
 			{status.label}
 		</Badge>
 	</div>

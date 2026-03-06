@@ -305,13 +305,18 @@
 
 		<span class="min-w-0 truncate text-sm font-medium group-hover:text-primary">
 			{map.title}
+			{#if map.notes}
+				<span class="text-xs font-normal text-muted-foreground"
+					>&nbsp;&middot; {map.notes}</span
+				>
+			{/if}
 		</span>
 
 		<div
 			class="ml-auto flex shrink-0 items-center gap-3 text-xs text-muted-foreground"
 		>
 			{#if stopCount > 0}
-				<span class="whitespace-nowrap">
+				<span class="hidden whitespace-nowrap sm:inline">
 					{stopCount} stop{stopCount !== 1 ? 's' : ''}
 					{#if driverCount > 0}
 						<span class="mx-1">·</span>{driverCount} driver{driverCount !== 1
@@ -324,7 +329,7 @@
 				</span>
 			{/if}
 
-			<span class="hidden whitespace-nowrap lg:block">
+			<span class="hidden whitespace-nowrap lg:inline">
 				{formatDate(map.created_at)}
 			</span>
 
