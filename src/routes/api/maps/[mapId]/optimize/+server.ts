@@ -32,11 +32,7 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 
 	try {
 		const body = await request.json();
-		const parsed = optimizationOptionsSchema.safeParse(body);
-
-		if (!parsed.success) {
-			throw parsed.error;
-		}
+		const options = optimizationOptionsSchema.parse(body);
 
 		// Check credit balance covers the number of stops being optimized.
 		// Credits are debited on successful completion (not on queue) to avoid
@@ -60,7 +56,7 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 			mapId,
 			user.organization_id,
 			user.id,
-			parsed.data,
+			options,
 			locals.requestId
 		);
 
