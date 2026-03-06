@@ -1,4 +1,6 @@
 import type { StopWithLocation } from '$lib/schemas';
+import type { Driver } from '$lib/schemas/driver';
+import type { DriverMapMembership } from '$lib/schemas/driverMapMembership';
 import type { CreateMap, Map, UpdateMap } from '$lib/schemas/map';
 import { db } from '$lib/server/db';
 import {
@@ -41,7 +43,7 @@ export class MapService {
 	/**
 	 * Get all maps for an organization
 	 */
-	async getMaps(organizationId: string) {
+	async getMaps(organizationId: string): Promise<Map[]> {
 		return db
 			.select()
 			.from(maps)
@@ -96,7 +98,7 @@ export class MapService {
 	/**
 	 * Get a single map with optional statistics
 	 */
-	async getMapById(mapId: string, organizationId: string) {
+	async getMapById(mapId: string, organizationId: string): Promise<Map> {
 		const [map] = await db
 			.select()
 			.from(maps)
@@ -292,7 +294,10 @@ export class MapService {
 	/**
 	 * Delete a map (cascades to stops and driver memberships)
 	 */
-	async deleteMap(mapId: string, organizationId: string) {
+	async deleteMap(
+		mapId: string,
+		organizationId: string
+	): Promise<{ success: boolean }> {
 		await this.getMapById(mapId, organizationId);
 
 		await db
@@ -309,7 +314,7 @@ export class MapService {
 		mapId: string,
 		organizationId: string,
 		userId: string
-	) {
+	): Promise<{ success: boolean }> {
 		await this.getMapById(mapId, organizationId);
 
 		// Use transaction to ensure both operations succeed or both fail
@@ -342,7 +347,10 @@ export class MapService {
 	/**
 	 * Get all drivers assigned to a map
 	 */
-	async getDriversForMap(mapId: string, organizationId: string) {
+	async getDriversForMap(
+		mapId: string,
+		organizationId: string
+	): Promise<{ membership: DriverMapMembership; driver: Driver }[]> {
 		await this.getMapById(mapId, organizationId);
 
 		const results = await db
@@ -365,7 +373,10 @@ export class MapService {
 	/**
 	 * Get all maps a driver is assigned to
 	 */
-	async getMapsForDriver(driverId: string, organizationId: string) {
+	async getMapsForDriver(
+		driverId: string,
+		organizationId: string
+	): Promise<{ membership: DriverMapMembership; map: Map }[]> {
 		await driverService.getDriverById(driverId, organizationId);
 
 		const results = await db
@@ -392,7 +403,7 @@ export class MapService {
 		driverId: string,
 		mapId: string,
 		organizationId: string
-	) {
+	): Promise<DriverMapMembership> {
 		await driverService.getDriverById(driverId, organizationId);
 		await this.getMapById(mapId, organizationId);
 
@@ -432,7 +443,7 @@ export class MapService {
 		mapId: string,
 		organizationId: string,
 		userId: string
-	) {
+	): Promise<{ success: boolean }> {
 		const driver = await driverService.getDriverById(driverId, organizationId);
 		await this.getMapById(mapId, organizationId);
 
