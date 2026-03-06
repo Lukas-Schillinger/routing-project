@@ -1,6 +1,8 @@
+import { requirePermission } from '$lib/services/server/permissions';
 import type { PageServerLoad, Actions } from './$types';
 
 export const load: PageServerLoad = async ({ url }) => {
+	requirePermission('resources:read');
 	// Trigger server error during load if requested
 	if (url.searchParams.get('error') === 'load') {
 		throw new Error('Test server error during page load');
