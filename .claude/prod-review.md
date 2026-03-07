@@ -1,75 +1,110 @@
-# Production Review — Security & Infrastructure Audit
+# Production Review
 
 Generated: 2026-03-07
 
 ---
 
-## Issues
+## All Issues
 
-### Security Headers
-
-| # | Priority | Area | Type | Issue | Details | Location |
-|---|----------|------|------|-------|---------|----------|
-| 1 | **Urgent** | Backend | Improvement | Missing Content-Security-Policy (CSP) header | No CSP headers configured anywhere. Leaves the app vulnerable to XSS via inline scripts or unauthorized third-party resources. | `src/hooks.server.ts` (add here) |
-| 2 | **High** | Backend | Improvement | Missing HSTS header (`Strict-Transport-Security`) | Without HSTS, browsers may allow HTTP connections on first visit, enabling SSL-stripping attacks. | `src/hooks.server.ts` |
-| 3 | **High** | Backend | Improvement | Missing `X-Frame-Options` header | No clickjacking protection. Attackers can embed the app in an iframe on a malicious site. | `src/hooks.server.ts` |
-| 4 | **High** | Backend | Improvement | Missing `X-Content-Type-Options: nosniff` header | Browsers may MIME-sniff responses, potentially interpreting uploaded content as executable. | `src/hooks.server.ts` |
-
-### Authentication & Session
+### 1. Security
 
 | # | Priority | Area | Type | Issue | Details | Location |
 |---|----------|------|------|-------|---------|----------|
-| 5 | **Urgent** | Backend | Feature | No account lockout after failed login attempts | Rate limiting (10 req/min on auth endpoints) provides some protection, but a determined attacker can rotate IPs. Per-user lockout after N failures is missing. | `src/lib/services/server/auth.ts`, `src/routes/(app)/auth/login/+page.server.ts` |
-| 6 | **High** | Backend | Improvement | CSRF protection relies on SvelteKit defaults — not explicitly verified | No CSRF tokens found in the codebase. SvelteKit has built-in origin checking, but the config (`svelte.config.js`) does not explicitly enable or configure it. Should be verified and documented. | `svelte.config.js`, `src/hooks.server.ts` |
-| 7 | **Med** | Backend | Improvement | Session expiry window is long (30 days) | Sessions last 30 days with auto-renewal at 15 days. For a business app handling route/driver PII, consider shorter sessions or idle timeout. | `src/lib/services/server/auth.ts` |
+| 1 | **Urgent** | Backend | Improvement | Missing Content-Security-Policy (CSP) header | No CSP headers configured. Vulnerable to XSS via inline scripts or unauthorized third-party resources. | `src/hooks.server.ts` |
+| 2 | **High** | Backend | Improvement | Missing HSTS header | Without `Strict-Transport-Security`, browsers may allow HTTP on first visit, enabling SSL-stripping. | `src/hooks.server.ts` |
+| 3 | **High** | Backend | Improvement | Missing `X-Frame-Options` header | No clickjacking protection. App can be embedded in an iframe on a malicious site. | `src/hooks.server.ts` |
+| 4 | **High** | Backend | Improvement | Missing `X-Content-Type-Options: nosniff` | Browsers may MIME-sniff responses, potentially interpreting uploaded content as executable. | `src/hooks.server.ts` |
+| 5 | **Urgent** | Backend | Feature | No account lockout after failed logins | Rate limiting (10 req/min) helps, but attacker can rotate IPs. No per-user lockout after N failures. | `src/lib/services/server/auth.ts`, `src/routes/(app)/auth/login/+page.server.ts` |
+| 6 | **High** | Backend | Improvement | CSRF protection not explicitly verified | No CSRF tokens found. SvelteKit has built-in origin checking, but config doesn't explicitly enable it. | `svelte.config.js`, `src/hooks.server.ts` |
+| 7 | **Med** | Backend | Improvement | Session expiry window is long (30 days) | For a business app with PII, consider shorter sessions or idle timeout. | `src/lib/services/server/auth.ts` |
+| 8 | **Med** | Backend | Improvement | No explicit CORS configuration | Relies on default same-origin. Should be explicit to prevent accidental misconfiguration. | `src/hooks.server.ts` |
+| 9 | **Med** | Backend | Improvement | Timing-safe comparison used inconsistently | Only optimization webhook uses `timingSafeEqual()`. Other secret comparisons may use standard equality. | `src/routes/api/webhooks/complete-optimization/+server.ts` |
+| 10 | **Med** | Backend | Improvement | Rate limiting is IP-only — no per-user limiting | Distributed attackers can bypass IP limits. Per-user limits needed for authenticated endpoints. | `src/lib/server/rate-limit.ts`, `src/hooks.server.ts` |
+| 11 | **Med** | Infra | Feature | No security event alerting | Failed logins, rate limit hits, webhook signature failures logged but not aggregated into alerts. | `src/hooks.server.ts`, `src/lib/server/rate-limit.ts` |
+| 12 | **Low** | Infra | Improvement | No documented key/secret rotation procedure | Long-lived secrets (Stripe, AWS, webhooks) with no rotation schedule or runbook. | `src/lib/server/env.ts` |
+| 13 | **Low** | Backend | Improvement | No app-level encryption at rest for PII | Driver names, phones, addresses in plaintext. Relies on Supabase disk encryption. | `src/lib/server/db/schema.ts` |
+| 14 | **Low** | Backend | Improvement | Custom HMAC verification on optimization webhook | Stripe/Resend use SDK verification; optimization webhook rolls its own Bearer token check. | `src/routes/api/webhooks/complete-optimization/+server.ts` |
+| 15 | **Low** | Backend | Improvement | No explicit HTML sanitization layer | Relies on Svelte escaping. Any `{@html}` usage would be unprotected. | All `.svelte` files |
+| 16 | **Low** | Backend | Improvement | Tenancy enforcement is convention-based | Every query must manually filter by `organization_id`. Missed filter = data leak. Consider RLS. | `src/lib/services/server/*.service.ts` |
 
-### CORS
-
-| # | Priority | Area | Type | Issue | Details | Location |
-|---|----------|------|------|-------|---------|----------|
-| 8 | **Med** | Backend | Improvement | No explicit CORS configuration | Relies entirely on default browser same-origin policy. Should be explicitly configured to document intent and prevent accidental misconfiguration if a reverse proxy is added later. | `src/hooks.server.ts` |
-
-### Cryptography & Secrets
-
-| # | Priority | Area | Type | Issue | Details | Location |
-|---|----------|------|------|-------|---------|----------|
-| 9 | **Med** | Backend | Improvement | Timing-safe comparison used inconsistently | Only the optimization webhook uses `timingSafeEqual()` for secret comparison. Other token/secret comparisons may rely on standard equality, which is vulnerable to timing attacks. | `src/routes/api/webhooks/complete-optimization/+server.ts` |
-| 10 | **Low** | Infra | Improvement | No documented key/secret rotation procedure | Environment variables contain long-lived secrets (Stripe keys, AWS credentials, webhook secrets). No rotation schedule or runbook documented. | `src/lib/server/env.ts` |
-| 11 | **Low** | Backend | Improvement | No application-level encryption at rest for PII | Driver names, phone numbers, and addresses stored in plaintext in the database. Relies entirely on Supabase/PostgreSQL disk encryption. | `src/lib/server/db/schema.ts` |
-
-### Rate Limiting
-
-| # | Priority | Area | Type | Issue | Details | Location |
-|---|----------|------|------|-------|---------|----------|
-| 12 | **Med** | Backend | Improvement | Rate limiting is IP-based only — no per-user rate limiting | Attackers using distributed IPs (botnets, cloud functions) can bypass IP-based limits. Adding per-user limits for authenticated endpoints would provide defense in depth. | `src/lib/server/rate-limit.ts`, `src/hooks.server.ts` |
-
-### Webhook Security
+### 2. Error Handling & Resilience
 
 | # | Priority | Area | Type | Issue | Details | Location |
 |---|----------|------|------|-------|---------|----------|
-| 13 | **Low** | Backend | Improvement | Optimization webhook uses custom HMAC verification | Stripe and Resend webhooks use their respective SDK verification methods. The optimization webhook implements its own Bearer token verification. Consider using a standard HMAC signature scheme for consistency. | `src/routes/api/webhooks/complete-optimization/+server.ts` |
+| 17 | **Urgent** | Backend | Bug | Sentry tunnel silently swallows errors | Empty catch handler returns 400 without logging. Sentry tunnel failures are invisible. | `src/routes/api/sentry-tunnel/+server.ts:30-32` |
+| 18 | **Urgent** | Backend | Bug | Route share email failure orphans share record | `createAndSendEmailShare()` creates share then sends email outside transaction. Email failure = orphaned share. | `src/lib/services/server/route-share.service.ts:285-314` |
+| 19 | **Urgent** | Backend | Bug | Credit recording not transactional with job completion | If `recordUsage()` fails after `completeOptimization()`, optimization marked complete but credits not debited. Revenue leak. | `src/routes/api/webhooks/complete-optimization/+server.ts:42-59` |
+| 20 | **High** | Backend | Bug | Mapbox navigation throws generic `Error` instead of `ServiceError` | Bypasses unified error handling framework and Sentry categorization. | `src/lib/services/external/mapbox/navigation.ts:22-27,56-58` |
+| 21 | **High** | Backend | Bug | Malformed JSON silently defaulted to `{}` | `request.json().catch(() => ({}))` swallows parse failures. Validation passes with defaults, user intent lost. | `src/routes/api/billing/portal/+server.ts:18` |
+| 22 | **High** | Backend | Bug | File delete: R2 deletion before DB — storage leak if DB fails | `deleteFile()` deletes from R2 then DB. DB failure = leaked R2 file. Needs transaction. | `src/lib/services/server/file.service.ts:96-114` |
+| 23 | **High** | Backend | Bug | Billing notifications partially fail silently | `Promise.allSettled()` for admin notifications: individual failures logged but not reported. Some admins may miss payment failure alerts. | `src/lib/services/server/mail.service.ts:222-242` |
+| 24 | **Med** | Backend | Bug | `completeOptimization()` multi-step without transaction | 5 sequential DB operations. Failure after step 1 leaves job stuck in 'completing' state permanently. | `src/lib/services/server/optimization.service.ts:350-446` |
+| 25 | **Med** | Backend | Bug | Duplicate optimization job race condition | Two quick clicks on "Optimize" can queue two jobs, both debiting credits. No active-job check before create. | `src/lib/services/server/optimization.service.ts:216-273` |
+| 26 | **Med** | Backend | Bug | Invitation creation race condition | Separate SELECT then INSERT. Two concurrent requests both see no invite, both create one. Should use `onConflictDoNothing()`. | `src/lib/services/server/invitation.service.ts:105-130` |
+| 27 | **Med** | Backend | Improvement | Batch Mapbox directions fails entirely on partial error | `Promise.all()` with try/catch per route, but throws on any failure. Should use `Promise.allSettled()` for partial success. | `src/lib/services/server/optimization.service.ts:538-577` |
+| 28 | **Med** | Backend | Bug | Mapbox geocoding throws generic `Error` for batch validation | Same issue as #20 — bypasses `ServiceError` framework. | `src/lib/services/external/mapbox/geocoding.ts:87-89` |
+| 29 | **Med** | Backend | Improvement | Non-null assertions on `user.organization_id` | Uses `!` without guaranteed initialization. Runtime error if user object malformed. | `src/lib/services/server/file.service.ts:62-64,79-80` |
+| 30 | **Low** | Backend | Improvement | Empty array returns are ambiguous | `if (updates.length === 0) return []` — client can't distinguish success from no-op. | `src/lib/services/server/stop.service.ts:350`, `route.service.ts:100` |
+| 31 | **Low** | Backend | Improvement | Missing timeouts on SQS and external calls | No timeout on SQS send or Mapbox fetch. Request can hang indefinitely. | `src/lib/services/server/optimization.service.ts:323`, `src/lib/services/external/mapbox/client.ts:49,92` |
+| 32 | **Low** | Backend | Improvement | Route recalculation disabled (TODO) | Drag-and-drop reordering doesn't recalculate routes. Stale data shown until next optimization. | `src/lib/services/server/stop.service.ts:396-404` |
+| 33 | **Low** | Backend | Improvement | Driver deletion UX gap (TODO) | No warning about which maps a driver is assigned to before deletion. | `src/lib/services/server/driver.service.ts:110-113` |
+| 34 | **Low** | Backend | Improvement | Permission check style inconsistency | `requirePermissionApi()` called but return value not stored. Works because it's synchronous, but inconsistent. | `src/routes/api/geocoding/batch/+server.ts:8` |
 
-### Input Validation
+### 3. Database & Performance
 
 | # | Priority | Area | Type | Issue | Details | Location |
 |---|----------|------|------|-------|---------|----------|
-| 14 | **Low** | Backend | Improvement | No explicit HTML sanitization layer | Relies entirely on Svelte's built-in output escaping. This is safe for Svelte-rendered content, but any raw HTML injection point (e.g. `{@html}`) would be unprotected. Audit for `{@html}` usage. | `src/lib/schemas/common.ts`, all `.svelte` files |
+| 35 | **Urgent** | DB | Improvement | Missing indexes on `stops` table | `driver_id`, `location_id` unindexed. 7+ queries filter on `driver_id`. Full table scans on assignment ops. | `src/lib/server/db/schema.ts:342-376` |
+| 36 | **Urgent** | DB | Improvement | Missing indexes on `optimizationJobs` table | Zero indexes despite frequent queries on `map_id`, `organization_id`, `status`. Full scans on job lookups. | `src/lib/server/db/schema.ts:550-583` |
+| 37 | **High** | Backend | Bug | N+1 query in `bulkCreateStops()` | Each stop triggers 5 queries (verify map, create location, verify location, insert, join-fetch). 100 stops = 300+ queries. Code comment acknowledges this. | `src/lib/services/server/stop.service.ts:414-436` |
+| 38 | **High** | Backend | Improvement | Loop-based sequential inserts in dev provision | 8 for-loops with 30+ sequential inserts instead of batch operations. | `src/routes/api/dev/provision/+server.ts:52-204` |
+| 39 | **High** | Backend | Improvement | Unbounded `getAllOrganizations()` — no pagination | Returns ALL organizations with user counts. 10k orgs = memory bloat. | `src/lib/services/server/admin.service.ts:43-66` |
+| 40 | **High** | Backend | Feature | No pagination on list endpoints | `getMaps()`, `getDrivers()`, `getStops()`, `getLocations()`, `getRoutes()` all return unbounded result sets. | `src/routes/api/maps/+server.ts`, `drivers/+server.ts`, `stop.service.ts`, `location.service.ts`, `route.service.ts` |
+| 41 | **High** | Backend | Improvement | Large response payloads — no field projection | API responses include all columns (JSONB, notes, audit fields) even in list views where only id/title needed. | API routes generally |
+| 42 | **Med** | Backend | Improvement | Extra join query after every stop update | `updateStop()` calls `getStopById()` after update. The insert/update already returned the data. | `src/lib/services/server/stop.service.ts:286-304` |
+| 43 | **Med** | Backend | Bug | `bulkCreateStops()` not wrapped in transaction | `Promise.all()` without transaction. Partial failures leave orphaned records. | `src/lib/services/server/stop.service.ts:414-436` |
+| 44 | **Med** | DB | Improvement | Missing composite index `(map_id, location_id)` | Used in `applyOptimizedRoutes()` SELECT. Full scan on large maps. | `src/lib/server/db/schema.ts` |
+| 45 | **Med** | DB | Improvement | Large JSONB `geometry` column fetched in list queries | Routes table stores full GeoJSON LineString. List of 1000 routes serializes expensive JSONB. Should lazy-load. | `src/lib/server/db/schema.ts:434-467` |
+| 46 | **Med** | Infra | Improvement | No explicit connection pool configuration | Default Postgres pool may not suit serverless + SQS workers under high concurrency. | DB config |
+| 47 | **Med** | DB | Improvement | Orphaned records possible — `maps.depot_id` on delete | `onDelete: 'set null'` may leave maps pointing to deleted depot. Unclear if valid state. | `src/lib/server/db/schema.ts` |
+| 48 | **Low** | DB | Improvement | `geocode_place_id` varchar has no length limit | Defaults to unlimited `character varying`. Should specify max length. | `src/lib/server/db/schema.ts:333` |
+| 49 | **Low** | Backend | Improvement | Existence check fetches full row instead of count | `deleteDriver()` does `SELECT id FROM stops` + `.limit(1)` to check existence. Use `COUNT()`. | `src/lib/services/server/driver.service.ts:114-118` |
 
-### Monitoring & Observability
+### 4. Frontend Quality & Accessibility
 
 | # | Priority | Area | Type | Issue | Details | Location |
 |---|----------|------|------|-------|---------|----------|
-| 15 | **Med** | Infra | Feature | No security event alerting | Failed login attempts, rate limit hits, and webhook signature failures are logged but not aggregated into alerts. Consider adding Sentry alerts or a dedicated security monitoring channel. | `src/hooks.server.ts`, `src/lib/server/rate-limit.ts` |
+| 50 | **Urgent** | Frontend | Bug | Empty `alt=""` on logo images | Marks logos as decorative for screen readers, but they're semantically meaningful. WCAG 1.1.1 violation. | `src/lib/components/Header.svelte:57,63`, `Footer.svelte:18,24` |
+| 51 | **Urgent** | Frontend | Bug | AddressAutocomplete missing `id` for label association | `<Label for="stop-address">` but input has no matching `id`. Screen readers can't correlate. WCAG 1.3.1. | `src/lib/components/AddressAutocomplete.svelte:213-225` |
+| 52 | **High** | Frontend | Improvement | Loading buttons missing `aria-busy` | Buttons with `<LoaderCircle class="animate-spin">` don't set `aria-busy="true"` to announce state. | Multiple components |
+| 53 | **High** | Frontend | Improvement | Icon-only buttons missing `aria-label` | DebugToolbar minimize/close buttons and others lack labels for assistive tech. | `src/lib/components/DebugToolbar.svelte:65,77` |
+| 54 | **High** | Frontend | Bug | `console.log` statements in production components | AddressAutocomplete has 6 console.log/warn calls for geolocation debugging in production. | `src/lib/components/AddressAutocomplete.svelte:52,102,116,119,125,141` |
+| 55 | **High** | Frontend | Bug | `console.log` in demo pages | DnD demo (5 calls) and billing demo (2 calls) have debug logging. | `src/routes/(app)/demo/dnd/+page.svelte:131-143`, `demo/billing/+page.svelte` |
+| 56 | **High** | Frontend | Improvement | Forms with `novalidate` lack real-time client validation | `RequestMagicLogin` validates only on submit via `use:enhance`, not on input. No feedback until submission. WCAG 3.3.1. | `src/routes/(app)/auth/login/RequestMagicLogin.svelte:72-78,96` |
+| 57 | **Med** | Frontend | Improvement | Most pages missing meta descriptions | Only 2 of 19+ pages have `<meta name="description">`. Poor SEO and no preview text in search results. | Most `+page.svelte` files |
+| 58 | **Med** | Frontend | Improvement | Admin pages not marked `noindex` | No `<meta name="robots" content="noindex">` on admin pages. Could appear in search results. | `src/routes/admin/**/*.svelte` |
+| 59 | **Med** | Frontend | Improvement | AddressAutocomplete required field has no visual indicator | No asterisk or required marker on address label. Form prevents empty submit server-side but no visual cue. | `src/lib/components/EditOrCreateStopPopover/Form.svelte:205` |
+| 60 | **Low** | Frontend | Improvement | AddressAutocomplete search race condition | 100ms debounce, but multiple in-flight requests not keyed to order. Could show stale results. | `src/lib/components/AddressAutocomplete.svelte:159-167` |
+| 61 | **Low** | Frontend | Improvement | Route detail "Toggle Details" hidden on mobile with no equivalent | Desktop-only button with `hidden md:flex`. Mobile users scroll through RouteTimeline instead. | `src/routes/(app)/routes/[routeId]/+page.svelte:208` |
 
-### Multi-Tenancy
+### 5. Code Quality & Maintainability
 
 | # | Priority | Area | Type | Issue | Details | Location |
 |---|----------|------|------|-------|---------|----------|
-| 16 | **Low** | Backend | Improvement | Tenancy enforcement is convention-based, not structural | Every query must manually filter by `organization_id`. A missed filter is a data leak. Consider a database-level RLS policy or middleware that injects the tenant filter automatically. | `src/lib/services/server/*.service.ts` |
+| 62 | **Med** | Backend | Refactor | `optimization.service.ts` is 788 lines | Complex orchestration, SQS integration, and route calculation in one file. Should split. | `src/lib/services/server/optimization.service.ts` |
+| 63 | **Med** | Frontend | Refactor | DriversTab.svelte is 668 lines | Large component. Should split into smaller sub-components. | `src/routes/(app)/maps/[mapId]/components/tabs/DriversTab.svelte` |
+| 64 | **Med** | Frontend | Refactor | EditStopsDataTable is 663 lines | Data table with inline editing. Could be modularized. | `src/routes/(app)/maps/[mapId]/components/EditStopsDataTable/data-table.svelte` |
+| 65 | **Med** | Frontend | Bug | `console.error` in client hooks — should use Sentry only | `console.error('Client error:', error, event)` in production. Redundant with Sentry. | `src/hooks.client.ts:16` |
+| 66 | **Med** | Frontend | Bug | `console.error` in optimization poller | Debug error logging in production component. Redundant with Sentry. | `src/routes/(app)/maps/[mapId]/optimization-poller.svelte.ts:97` |
+| 67 | **Med** | Backend | Improvement | `Math.random()` used for temp username generation | Not cryptographically secure. Should use `crypto.getRandomValues()` for consistency. | `src/lib/services/server/user.service.ts:204` |
+| 68 | **Low** | Backend | Improvement | 8 `as unknown as` type assertions | Mostly in test/mock code. Indicates tight coupling in test fixtures. | `src/lib/testing/mocks.ts`, `src/lib/server/db/index.ts:71-72`, test files |
+| 69 | **Low** | Backend | Improvement | 17 eslint-disable comments | Concentrated in data-table components. All justified with comments, but volume is notable. | `src/lib/components/ui/data-table/`, map components |
+| 70 | **Low** | Backend | Improvement | Deep relative import for package.json | `import packageJson from '../../../../package.json'` — brittle path. | `src/routes/api/health/+server.ts:3` |
+| 71 | **Low** | Backend | Improvement | Time conversion multipliers scattered | `DAY_IN_MS`, `* 1000`, `hours * 60 * 60 * 1000` repeated. Could extract to shared constants. | `auth.ts`, `subscription.service.ts`, `token.utils.ts` |
 
 ---
 
-## Strengths (no action needed — documented for reference)
+## Strengths (no action needed)
 
 | Area | Detail | Location |
 |------|--------|----------|
@@ -87,6 +122,13 @@ Generated: 2026-03-07
 | Error reporting | Sentry captures unexpected errors only; expected errors (4xx) suppressed | `src/lib/errors.ts` |
 | Env validation | Zod schema crashes on missing vars at startup | `src/lib/server/env.ts` |
 | Tenant isolation | All queries filter by `organization_id`; never trusted from request body | All server services |
+| Svelte 5 compliance | No deprecated Svelte 4 patterns found. All `$props()`, `$derived`, `$effect` | All `.svelte` files |
+| Navigation | All links use `resolve()` from `$app/paths`. No hardcoded paths. | All routes |
+| Idempotent billing | `onConflictDoNothing()` on `stripe_payment_intent_id` prevents double credits | `src/lib/services/server/billing.service.ts:155-173` |
+| Health check timeouts | `withTimeout()` on all external service checks | `src/routes/api/health/+server.ts` |
+| TypeScript config | `strict: true`, `noUnusedLocals`, `forceConsistentCasingInFileNames` | `tsconfig.json` |
+| Test coverage | 35 test files; service layer well covered | `src/lib/services/server/*.test.ts` |
+| Icon imports | All tree-shakeable individual imports from `@lucide/svelte` | All components |
 
 ---
 
@@ -94,8 +136,8 @@ Generated: 2026-03-07
 
 | Priority | Count |
 |----------|-------|
-| Urgent   | 2     |
-| High     | 3     |
-| Med      | 4     |
-| Low      | 5     |
-| **Total** | **16** |
+| Urgent   | 6     |
+| High     | 15    |
+| Med      | 20    |
+| Low      | 13    |
+| **Total** | **71** |
