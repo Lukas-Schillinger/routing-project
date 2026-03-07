@@ -1,16 +1,13 @@
-import { handleApiError, ServiceError } from '$lib/errors';
+import { handleApiError } from '$lib/errors';
 import { updateStopSchema } from '$lib/schemas/stop';
 import { stopService } from '$lib/services/server';
 import { requirePermissionApi } from '$lib/services/server/permissions';
-import { json, type RequestHandler } from '@sveltejs/kit';
+import { json } from '@sveltejs/kit';
+import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ params }) => {
 	const user = requirePermissionApi('resources:read');
 	const { stopId } = params;
-
-	if (!stopId) {
-		throw ServiceError.badRequest('Stop ID is required');
-	}
 
 	try {
 		const stop = await stopService.getStopById(stopId, user.organization_id);
@@ -24,10 +21,6 @@ export const PATCH: RequestHandler = async ({ params, request }) => {
 	const user = requirePermissionApi('resources:update');
 
 	const { stopId } = params;
-
-	if (!stopId) {
-		throw ServiceError.badRequest('Stop ID is required');
-	}
 
 	try {
 		const body = await request.json();
@@ -48,10 +41,6 @@ export const DELETE: RequestHandler = async ({ params }) => {
 	const user = requirePermissionApi('resources:delete');
 
 	const { stopId } = params;
-
-	if (!stopId) {
-		throw ServiceError.badRequest('Stop ID is required');
-	}
 
 	try {
 		await stopService.deleteStop(stopId, user.organization_id);

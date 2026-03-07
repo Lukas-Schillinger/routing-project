@@ -1,8 +1,9 @@
-import { handleApiError, ServiceError } from '$lib/errors';
+import { handleApiError } from '$lib/errors';
 import { reorderStopsSchema } from '$lib/schemas/stop';
 import { stopService } from '$lib/services/server';
 import { requirePermissionApi } from '$lib/services/server/permissions';
-import { json, type RequestHandler } from '@sveltejs/kit';
+import { json } from '@sveltejs/kit';
+import type { RequestHandler } from './$types';
 
 /**
  * POST /api/maps/[mapId]/stops/reorder
@@ -12,9 +13,6 @@ export const POST: RequestHandler = async ({ request, params }) => {
 	const user = requirePermissionApi('resources:update');
 
 	const mapId = params.mapId;
-	if (!mapId) {
-		throw ServiceError.badRequest('Map ID is required');
-	}
 
 	try {
 		const body = await request.json();

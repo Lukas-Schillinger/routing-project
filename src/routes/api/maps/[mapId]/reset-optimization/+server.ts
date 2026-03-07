@@ -9,10 +9,6 @@ export const POST: RequestHandler = async ({ params }) => {
 
 	const { mapId } = params;
 
-	if (!mapId) {
-		return json({ error: 'Map ID is required' }, { status: 400 });
-	}
-
 	try {
 		// Reset optimization using the map service
 		await mapService.resetOptimization(mapId, user.organization_id, user.id);

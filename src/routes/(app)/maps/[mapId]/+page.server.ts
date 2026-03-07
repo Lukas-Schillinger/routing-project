@@ -19,10 +19,6 @@ export const load: PageServerLoad = async ({ params, depends }) => {
 
 	const { mapId } = params;
 
-	if (!mapId) {
-		throw error(400, { code: 'BAD_REQUEST', message: 'Map ID is required' });
-	}
-
 	try {
 		// Fetch all data in parallel since they're independent
 		const [

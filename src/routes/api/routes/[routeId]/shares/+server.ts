@@ -1,7 +1,7 @@
 // GET /api/routes/[routeId]/shares - Get all shares for a route
 // POST /api/routes/[routeId]/shares - Create a new email share
 
-import { handleApiError, ServiceError } from '$lib/errors';
+import { handleApiError } from '$lib/errors';
 import { createEmailShareSchema } from '$lib/schemas/route-share';
 import { routeShareService } from '$lib/services/server';
 import { requirePermissionApi } from '$lib/services/server/permissions';
@@ -12,9 +12,6 @@ export const GET: RequestHandler = async ({ params }) => {
 	const user = requirePermissionApi('resources:read');
 
 	const { routeId } = params;
-	if (!routeId) {
-		throw ServiceError.badRequest('Route ID is required');
-	}
 
 	try {
 		const shares = await routeShareService.getSharesForRoute(
@@ -31,9 +28,6 @@ export const POST: RequestHandler = async ({ params, request, url }) => {
 	const user = requirePermissionApi('resources:create');
 
 	const { routeId } = params;
-	if (!routeId) {
-		throw ServiceError.badRequest('Route ID is required');
-	}
 
 	try {
 		const body = await request.json();

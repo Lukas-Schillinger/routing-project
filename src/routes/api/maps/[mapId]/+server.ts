@@ -1,16 +1,14 @@
-import { handleApiError, ServiceError } from '$lib/errors';
+import { handleApiError } from '$lib/errors';
 import { updateMapSchema } from '$lib/schemas/map';
 import { mapService } from '$lib/services/server';
 import { requirePermissionApi } from '$lib/services/server/permissions';
-import { json, type RequestHandler } from '@sveltejs/kit';
+import { json } from '@sveltejs/kit';
+import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ params }) => {
 	const user = requirePermissionApi('resources:read');
 
 	const mapId = params.mapId;
-	if (!mapId) {
-		throw ServiceError.badRequest('Map ID is required');
-	}
 
 	try {
 		const map = await mapService.getMapById(mapId, user.organization_id);
@@ -25,9 +23,6 @@ export const PATCH: RequestHandler = async ({ request, params }) => {
 	const user = requirePermissionApi('resources:update');
 
 	const mapId = params.mapId;
-	if (!mapId) {
-		throw ServiceError.badRequest('Map ID is required');
-	}
 
 	try {
 		const body = await request.json();
@@ -50,9 +45,6 @@ export const DELETE: RequestHandler = async ({ params }) => {
 	const user = requirePermissionApi('resources:delete');
 
 	const mapId = params.mapId;
-	if (!mapId) {
-		throw ServiceError.badRequest('Map ID is required');
-	}
 
 	try {
 		await mapService.deleteMap(mapId, user.organization_id);
