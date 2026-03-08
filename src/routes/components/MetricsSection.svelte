@@ -156,7 +156,7 @@
 					}
 				}
 			}}
-			class="grid grid-cols-2 gap-px overflow-hidden rounded-sm border border-white/10 bg-white/10 lg:grid-cols-4"
+			class="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-white/10 bg-white/10 lg:grid-cols-4"
 		>
 			{#each metrics as metric, i (metric.label)}
 				<div

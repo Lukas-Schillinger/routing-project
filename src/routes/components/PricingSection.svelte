@@ -89,7 +89,7 @@
 		<div class="mb-10 flex items-center justify-center">
 			<Tabs.Root bind:value={billingPeriod}>
 				<Tabs.List
-					class="h-auto gap-0 overflow-hidden rounded-sm border border-foreground/10 bg-card p-0"
+					class="h-auto gap-0 overflow-hidden rounded-lg border border-foreground/10 bg-card p-0"
 				>
 					<Tabs.Trigger
 						value="monthly"
@@ -119,7 +119,7 @@
 			{#each plans as plan (plan.name)}
 				<div
 					data-plan
-					class="relative flex flex-col rounded-sm border p-7 transition-all duration-500 ease-out
+					class="relative flex flex-col rounded-lg border p-7 transition-all duration-500 ease-out
 						{plan.highlighted
 						? 'border-landing-primary bg-card shadow-lg shadow-landing-primary/5'
 						: 'border-foreground/10 bg-card'}"

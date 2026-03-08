@@ -32,13 +32,13 @@
 	<div class="flex flex-col gap-4 md:order-1 md:flex-row md:items-center">
 		<!-- Route solver animation -->
 		<div
-			class=" min-w-0 flex-1 overflow-hidden rounded-sm border border-foreground/10 bg-card shadow-md ring-1 shadow-foreground/5 ring-foreground/[0.03]"
+			class=" min-w-0 flex-1 overflow-hidden rounded-lg border border-foreground/10 bg-card shadow-md ring-1 shadow-foreground/5 ring-foreground/[0.03]"
 		>
 			<RouteSolverSvg {solver} />
 		</div>
 		<!-- Stats: horizontal row on mobile, vertical stack on desktop -->
 		<div
-			class="grid grid-cols-4 gap-3 rounded-sm border border-foreground/10 bg-foreground/[0.02] p-3 md:grid-cols-1 md:gap-4 md:border-0 md:bg-transparent md:p-0"
+			class="grid grid-cols-4 gap-3 rounded-lg border border-foreground/10 bg-foreground/[0.02] p-3 md:grid-cols-1 md:gap-4 md:border-0 md:bg-transparent md:p-0"
 		>
 			<div>
 				<p
