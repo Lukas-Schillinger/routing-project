@@ -15,13 +15,13 @@
 						{#if mode.current == 'light'}
 							<img
 								src="https://storage-public.wend-routing.com/cdn-cgi/image/width=100,height=100,fit=cover,format=webp,quality=100/logo/logo_black.png"
-								alt=""
+								alt="Wend logo"
 							/>
 						{:else}
 							<img
 								class=""
 								src="https://pub-7210daee28ba4cac82595c41b998d12f.r2.dev/logo/logo_white.png"
-								alt=""
+								alt="Wend logo"
 							/>
 						{/if}
 					</div>
