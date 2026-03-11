@@ -1,18 +1,19 @@
 import type { RequestHandler } from '@sveltejs/kit';
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, locals }) => {
 	try {
 		const envelope = await request.text();
 		const firstLine = envelope.split('\n')[0];
 
 		if (!firstLine) {
+			locals.log.warn('Received empty Sentry envelope');
 			return new Response(null, { status: 200 });
 		}
 
 		const header = JSON.parse(firstLine);
 		const dsn = new URL(header.dsn);
 
-		if (!dsn.hostname.endsWith('sentry.io')) {
+		if (dsn.hostname !== 'sentry.io' && !dsn.hostname.endsWith('.sentry.io')) {
 			return new Response('Invalid host', { status: 400 });
 		}
 
@@ -26,8 +27,13 @@ export const POST: RequestHandler = async ({ request }) => {
 			}
 		);
 
+		if (!response.ok) {
+			locals.log.error({ status: response.status }, 'Sentry upstream error');
+		}
+
 		return new Response(response.body, { status: response.status });
-	} catch {
+	} catch (error) {
+		locals.log.error({ error }, 'Sentry tunnel error');
 		return new Response('Tunnel error', { status: 400 });
 	}
 };
