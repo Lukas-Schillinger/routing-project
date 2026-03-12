@@ -179,7 +179,10 @@ export class DepotService {
 	/**
 	 * Delete a depot
 	 */
-	async deleteDepot(depotId: string, organizationId: string) {
+	async deleteDepot(
+		depotId: string,
+		organizationId: string
+	): Promise<{ success: true }> {
 		await this.getDepotById(depotId, organizationId);
 
 		const [usedInRoute] = await db

@@ -232,6 +232,13 @@
       "when": 1772836826109,
       "tag": "0032_hesitant_victor_mancha",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1773327990026,
+      "tag": "0033_cool_nightshade",
+      "breakpoints": true
     }
   ]
 }

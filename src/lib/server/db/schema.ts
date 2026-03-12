@@ -136,7 +136,7 @@ export const users = pgTable(
 		updated_by: uuid('updated_by'),
 
 		name: varchar('name', { length: 200 }),
-		email: text('email').notNull().unique(),
+		email: text('email').notNull(),
 		passwordHash: text('password_hash'),
 		role: varchar('role', { length: 32 })
 			.$type<'admin' | 'member' | 'viewer' | 'driver'>()
@@ -146,6 +146,7 @@ export const users = pgTable(
 	},
 	(t) => [
 		uniqueIndex('users_user_org_uidx').on(t.organization_id, t.id),
+		uniqueIndex('users_email_uidx').on(t.email),
 		index('users_org_idx').on(t.organization_id)
 	]
 );

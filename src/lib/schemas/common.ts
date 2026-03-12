@@ -3,15 +3,9 @@ import { z } from 'zod';
 
 // Common field schemas that can be reused
 export const emailSchema = z
-	.string()
-	.min(3, 'Email must be at least 3 characters')
-	.max(255, 'Email must be less than 255 characters')
 	.email('Please enter a valid email address')
-	.refine(
-		(email) => !email.includes('..'),
-		'Email cannot contain consecutive dots'
-	)
-	.refine((email) => !/\s/.test(email), 'Email cannot contain spaces');
+	.max(255, 'Email must be less than 255 characters')
+	.transform((email) => email.toLowerCase());
 
 export const passwordSchema = z
 	.string()

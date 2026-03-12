@@ -53,7 +53,10 @@ export class InvitationService {
 		return results as { invitation: Invitation; mailRecord: MailRecord }[];
 	}
 
-	async deleteInvitation(invitationId: string, organizationId: string) {
+	async deleteInvitation(
+		invitationId: string,
+		organizationId: string
+	): Promise<{ success: true }> {
 		await this.getInvitationById(invitationId, organizationId);
 
 		await db
