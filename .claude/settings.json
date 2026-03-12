@@ -20,14 +20,17 @@
 			"Bash(npm run test:*)",
 			"Bash(npm run test:unit:*)",
 
-			"mcp__plugin_linear_linear__get_issue",
-			"mcp__plugin_linear_linear__list_issues",
-			"mcp__plugin_linear_linear__update_issue",
+			"mcp__claude_ai_Notion__notion-search",
+			"mcp__claude_ai_Notion__notion-fetch",
+			"mcp__claude_ai_Notion__notion-update-page",
+			"mcp__claude_ai_Notion__notion-create-pages",
+			"mcp__claude_ai_Notion__notion-get-comments",
+			"mcp__claude_ai_Notion__notion-create-comment",
 
 			"mcp__plugin_svelte_svelte__svelte-autofixer",
 
 			"Skill(frontend-design)",
-			"Skill(linear-skills)",
+			"Skill(notion-issues)",
 
 			"WebFetch(domain:docs.stripe.com)",
 			"WebFetch(domain:shadcn-svelte.com)",

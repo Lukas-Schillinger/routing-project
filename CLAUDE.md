@@ -22,17 +22,21 @@ npm run db:migrate   # Apply Drizzle migration
   - shadcn-svelte: always pass component names directly and use `--yes` to skip confirmation (e.g., `npx shadcn-svelte@latest add button card --yes`).
 - Never use `git -C` — the working directory is already the project root.
 
-### Linear Issue Workflow
+### Issue Workflow
 
-Multiple Claude agents can work in parallel, each in its own worktree. Each agent is assigned a Linear area label (e.g. "Backend", "Frontend", "TSP Solver") at launch.
+Issues are tracked in Notion: https://www.notion.so/321bf27e4b4d8012bcd1c368e7ddf383
 
-**Use `/linear-workflow` when working on Linear issues.** It enforces the full lifecycle: claim → plan → implement → complete.
+Issues use Notion's built-in auto-incrementing ID field with the `ISS-` prefix (e.g. `ISS-19`). When referencing an issue by ID, search the Notion issues database for that ID.
+
+Multiple Claude agents can work in parallel, each in its own worktree. Each agent is assigned an Area (e.g. "Backend", "Frontend", "TSP Service") at launch.
+
+**Use `/notion-workflow` when working on issues.** It enforces the full lifecycle: claim → plan → implement → complete.
 
 Key rules (enforced by the skill):
 
-- Set status to `In Progress` **before** any planning or exploration
+- Set status to `In progress` **before** any planning or exploration
 - **Always plan first** — enter plan mode before editing any files
-- Set status to `Done` or `Canceled` when finished — never leave an issue hanging
+- Set status to `Done` or `Cancelled` when finished — never leave an issue hanging
 - One commit per issue. Don't push or create PRs — branches are reconciled by the user
 
 > **Source:** `.claude/review.md` and `.claude/best-practices-audit.md` contain full context for review items (Review ID in issue description).
