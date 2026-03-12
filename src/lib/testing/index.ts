@@ -1,7 +1,7 @@
 /**
  * Test Utilities
  *
- * Shared utilities for testing the routing-project application.
+ * Shared utilities for testing the Wend application.
  *
  * @example
  * ```ts
