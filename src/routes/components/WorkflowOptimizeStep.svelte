@@ -14,7 +14,7 @@
 			return () => solver.setVisible(false);
 		}
 	}}
-	class="grid grid-cols-1 items-center gap-8 transition-all duration-700 ease-out md:grid-cols-2 md:gap-12"
+	class="grid grid-cols-1 items-center gap-8 md:grid-cols-2 md:gap-12"
 >
 	<!-- Right: Text -->
 	<div class="md:order-2">

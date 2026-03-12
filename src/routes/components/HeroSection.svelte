@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { browser } from '$app/environment';
 	import { resolve } from '$app/paths';
+	import { scrollReveal } from '$lib/actions/scroll-reveal';
 	import { Button } from '$lib/components/ui/button';
 	import {
 		ditheringFragmentShader,
@@ -10,8 +10,6 @@
 	import ArrowRight from '@lucide/svelte/icons/arrow-right';
 	import { mode } from 'mode-watcher';
 	import ShaderCanvas from './ShaderCanvas.svelte';
-
-	let sectionEl = $state<HTMLElement | null>(null);
 
 	const shaderUniforms = $derived({
 		u_colorBack:
@@ -35,64 +33,47 @@
 		u_worldHeight: 0,
 		u_fit: 0
 	});
-
-	$effect(() => {
-		if (!sectionEl || !browser) return;
-
-		const targets = sectionEl.querySelectorAll<HTMLElement>('[data-animate]');
-		targets.forEach((el, i) => {
-			setTimeout(
-				() => {
-					el.style.opacity = '1';
-					el.style.transform = 'translateY(0)';
-				},
-				200 + i * 120
-			);
-		});
-	});
 </script>
 
-<section
-	bind:this={sectionEl}
-	class="relative -mt-14 overflow-hidden pt-44 pb-44 md:pt-60 md:pb-60"
->
+<section class="relative -mt-14 overflow-hidden pt-44 pb-44 md:pt-60 md:pb-60">
 	<ShaderCanvas
 		fragmentShader={ditheringFragmentShader}
 		uniforms={shaderUniforms}
 		speed={0.2}
 	/>
 
-	<div class="relative mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
+	<div
+		use:scrollReveal={{
+			stagger: 120,
+			delay: 200,
+			selector: '[data-animate]',
+			duration: 600
+		}}
+		class="relative mx-auto max-w-7xl px-2 sm:px-6 lg:px-8"
+	>
 		<p
 			data-animate
-			class="mb-5 text-xs font-medium tracking-[0.25em] text-landing-primary uppercase transition-all duration-600 ease-out"
-			style="opacity: 0; transform: translateY(20px)"
+			class="mb-5 text-xs font-medium tracking-[0.25em] text-landing-primary uppercase"
 		>
 			Route Optimization
 		</p>
 
 		<h1
 			data-animate
-			class="max-w-5xl font-serif text-6xl leading-[1.05] tracking-tight text-foreground transition-all duration-600 ease-out md:text-8xl lg:text-9xl"
-			style="opacity: 0; transform: translateY(20px)"
+			class="max-w-5xl font-serif text-6xl leading-[1.05] tracking-tight text-foreground md:text-8xl lg:text-9xl"
 		>
 			Effortless routing<br />from start to finish
 		</h1>
 
 		<p
 			data-animate
-			class="mt-7 max-w-xl text-base leading-relaxed text-muted-foreground transition-all duration-600 ease-out md:text-lg"
-			style="opacity: 0; transform: translateY(20px)"
+			class="mt-7 max-w-xl text-base leading-relaxed text-muted-foreground md:text-lg"
 		>
 			Plan, optimize, and dispatch routes for your entire fleet in seconds.
 			Fewer miles. Faster deliveries. Less wasted time.
 		</p>
 
-		<div
-			data-animate
-			class="mt-10 flex items-center gap-4 transition-all duration-600 ease-out"
-			style="opacity: 0; transform: translateY(20px)"
-		>
+		<div data-animate class="mt-10 flex items-center gap-4">
 			<Button
 				href={resolve('/auth/register')}
 				variant="landing"

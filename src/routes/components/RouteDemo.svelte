@@ -4,10 +4,7 @@
 
 <section class="py-20 md:py-28">
 	<div class="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
-		<div
-			use:scrollReveal={{ y: 30 }}
-			class="mx-auto max-w-2xl text-center transition-all duration-700 ease-out"
-		>
+		<div use:scrollReveal={{ y: 30 }} class="mx-auto max-w-2xl text-center">
 			<p
 				class="mb-3 text-xs font-medium tracking-[0.25em] text-landing-primary uppercase"
 			>

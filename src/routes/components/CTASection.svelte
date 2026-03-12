@@ -38,7 +38,7 @@
 
 	<div
 		use:scrollReveal={{ amount: 0.3 }}
-		class="relative mx-auto max-w-3xl px-2 text-center transition-all duration-700 ease-out sm:px-6 lg:px-8"
+		class="relative mx-auto max-w-3xl px-2 text-center sm:px-6 lg:px-8"
 	>
 		<p
 			class="mb-4 text-xs font-medium tracking-[0.25em] text-landing-secondary uppercase dark:text-landing-primary"

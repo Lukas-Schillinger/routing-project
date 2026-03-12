@@ -145,6 +145,7 @@
 			use:scrollReveal={{
 				y: 12,
 				stagger: 80,
+				duration: 500,
 				selector: '[data-metric]',
 				amount: 0.25,
 				onEnter: () => {
@@ -159,10 +160,7 @@
 			class="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-white/10 bg-white/10 lg:grid-cols-4"
 		>
 			{#each metrics as metric, i (metric.label)}
-				<div
-					data-metric
-					class="bg-forest-900/60 p-6 backdrop-blur-sm transition-all duration-500 ease-out"
-				>
+				<div data-metric class="bg-forest-900/60 p-6 backdrop-blur-sm">
 					<p
 						class="font-mono text-4xl font-extralight tracking-tight text-sand-50 md:text-5xl"
 					>

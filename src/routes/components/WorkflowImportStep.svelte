@@ -221,10 +221,7 @@
 </script>
 
 <div class="grid grid-cols-1 items-center gap-8 md:grid-cols-2 md:gap-12">
-	<div
-		use:scrollReveal={{ y: 30 }}
-		class="transition-all duration-700 ease-out"
-	>
+	<div use:scrollReveal={{ y: 30 }}>
 		<span class="font-mono text-xs font-bold text-muted-foreground">01</span>
 		<h3 class="mt-2 font-serif text-3xl leading-tight tracking-tight">
 			Import your stops

@@ -53,7 +53,7 @@
 
 <div
 	use:scrollReveal={{ y: 30 }}
-	class="grid grid-cols-1 items-center gap-8 transition-all duration-700 ease-out md:grid-cols-2 md:gap-12"
+	class="grid grid-cols-1 items-center gap-8 md:grid-cols-2 md:gap-12"
 >
 	<div>
 		<span class="font-mono text-xs font-bold text-muted-foreground">03</span>

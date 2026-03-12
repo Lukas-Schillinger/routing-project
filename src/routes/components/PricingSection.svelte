@@ -113,13 +113,17 @@
 
 		<!-- Pricing Cards -->
 		<div
-			use:scrollReveal={{ stagger: 100, selector: '[data-plan]' }}
+			use:scrollReveal={{
+				stagger: 100,
+				duration: 500,
+				selector: '[data-plan]'
+			}}
 			class="grid grid-cols-1 gap-5 md:grid-cols-3"
 		>
 			{#each plans as plan (plan.name)}
 				<div
 					data-plan
-					class="relative flex flex-col rounded-lg border p-7 transition-all duration-500 ease-out
+					class="relative flex flex-col rounded-lg border p-7
 						{plan.highlighted
 						? 'border-landing-primary bg-card shadow-lg shadow-landing-primary/5'
 						: 'border-foreground/10 bg-card'}"
