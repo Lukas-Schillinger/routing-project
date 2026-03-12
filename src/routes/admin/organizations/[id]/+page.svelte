@@ -8,6 +8,9 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
+	import * as Empty from '$lib/components/ui/empty';
+	import Receipt from '@lucide/svelte/icons/receipt';
+	import Users from '@lucide/svelte/icons/users';
 	import * as Form from '$lib/components/ui/form';
 	import { ServiceError } from '$lib/errors';
 	import { Input } from '$lib/components/ui/input';
@@ -303,9 +306,12 @@
 					</Table.Body>
 				</Table.Root>
 			{:else}
-				<p class="py-8 text-center text-sm text-muted-foreground">
-					No users found
-				</p>
+				<Empty.Root>
+					<Empty.Header>
+						<Empty.Media variant="icon"><Users /></Empty.Media>
+						<Empty.Title>No users found</Empty.Title>
+					</Empty.Header>
+				</Empty.Root>
 			{/if}
 		</Card.Content>
 	</Card.Root>
@@ -438,9 +444,12 @@
 					</Table.Body>
 				</Table.Root>
 			{:else}
-				<p class="py-8 text-center text-sm text-muted-foreground">
-					No transactions found
-				</p>
+				<Empty.Root>
+					<Empty.Header>
+						<Empty.Media variant="icon"><Receipt /></Empty.Media>
+						<Empty.Title>No transactions found</Empty.Title>
+					</Empty.Header>
+				</Empty.Root>
 			{/if}
 		</Card.Content>
 	</Card.Root>

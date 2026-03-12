@@ -3,6 +3,8 @@
 	import { resolve } from '$app/paths';
 	import { Badge } from '$lib/components/ui/badge';
 	import * as Card from '$lib/components/ui/card';
+	import * as Empty from '$lib/components/ui/empty';
+	import Building2 from '@lucide/svelte/icons/building-2';
 	import * as Table from '$lib/components/ui/table';
 	import { formatDate } from '$lib/utils';
 	import type { PageData } from './$types';
@@ -112,9 +114,12 @@
 					</Table.Body>
 				</Table.Root>
 			{:else}
-				<p class="py-8 text-center text-sm text-muted-foreground">
-					No organizations found
-				</p>
+				<Empty.Root>
+					<Empty.Header>
+						<Empty.Media variant="icon"><Building2 /></Empty.Media>
+						<Empty.Title>No organizations found</Empty.Title>
+					</Empty.Header>
+				</Empty.Root>
 			{/if}
 		</Card.Content>
 	</Card.Root>

@@ -7,6 +7,8 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
+	import * as Empty from '$lib/components/ui/empty';
+	import Building2 from '@lucide/svelte/icons/building-2';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import * as Form from '$lib/components/ui/form';
 	import { Input } from '$lib/components/ui/input';
@@ -257,9 +259,12 @@
 					</Table.Body>
 				</Table.Root>
 			{:else}
-				<p class="py-8 text-center text-sm text-muted-foreground">
-					No organizations found
-				</p>
+				<Empty.Root>
+					<Empty.Header>
+						<Empty.Media variant="icon"><Building2 /></Empty.Media>
+						<Empty.Title>No organizations found</Empty.Title>
+					</Empty.Header>
+				</Empty.Root>
 			{/if}
 		</Card.Content>
 	</Card.Root>
