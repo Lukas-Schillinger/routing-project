@@ -372,7 +372,9 @@ export const stops = pgTable(
 	},
 	(t) => [
 		index('stops_org_idx').on(t.organization_id),
-		index('stops_map_idx').on(t.map_id)
+		index('stops_map_idx').on(t.map_id),
+		index('stops_driver_idx').on(t.driver_id),
+		index('stops_location_idx').on(t.location_id)
 	]
 );
 

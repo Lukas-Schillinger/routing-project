@@ -239,6 +239,13 @@
       "when": 1773327990026,
       "tag": "0033_cool_nightshade",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1773445586257,
+      "tag": "0034_yummy_nico_minoru",
+      "breakpoints": true
     }
   ]
 }
