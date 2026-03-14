@@ -13,5 +13,4 @@ export * from './organization.js';
 export * from './route.js';
 export * from './route-share.js';
 export * from './stop.js';
-export * from './permissions.js';
 export * from './user.js';

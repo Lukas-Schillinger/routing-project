@@ -1,4 +1,4 @@
-import { ARGON2_OPTIONS, TOKEN_EXPIRY } from '$lib/config';
+import { ARGON2_OPTIONS, TOKEN_EXPIRY } from '$lib/config/constants';
 import { ServiceError } from '$lib/errors';
 import { registerSchema } from '$lib/schemas/auth';
 import { loginTokenService } from '$lib/services/server/login-token.service';

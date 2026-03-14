@@ -1,5 +1,5 @@
 import { getRequestEvent } from '$app/server';
-import { hasPermission, type Permission } from '$lib/schemas/permissions';
+import { hasPermission, type Permission } from '$lib/config/permissions';
 import type { PublicUser } from '$lib/schemas/user';
 import { error, redirect } from '@sveltejs/kit';
 

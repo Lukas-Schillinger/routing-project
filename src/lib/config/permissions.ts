@@ -1,4 +1,4 @@
-import type { Role } from './user';
+import type { Role } from '$lib/schemas/user';
 
 export type Permission =
 	| 'users:read'

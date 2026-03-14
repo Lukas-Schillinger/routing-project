@@ -1,4 +1,4 @@
-import { TOKEN_EXPIRY } from '$lib/config';
+import { TOKEN_EXPIRY } from '$lib/config/constants';
 import type { LoginToken, PublicUser } from '$lib/schemas';
 import { createLoginTokenSchema } from '$lib/schemas';
 import type { z } from 'zod';

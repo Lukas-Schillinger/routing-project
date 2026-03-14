@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { BULK_LIMITS } from '$lib/config';
+import { BULK_LIMITS } from '$lib/config/constants';
 import { notesSchema, phoneSchema } from './common';
 import type { Location } from './location';
 import { locationCreateSchema } from './location';

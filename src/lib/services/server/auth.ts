@@ -1,4 +1,4 @@
-import { SESSION } from '$lib/config';
+import { SESSION } from '$lib/config/constants';
 import type { PublicUser } from '$lib/schemas';
 import { db } from '$lib/server/db';
 import * as table from '$lib/server/db/schema';

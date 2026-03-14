@@ -9,13 +9,8 @@
 	import * as Select from '$lib/components/ui/select';
 	import * as Table from '$lib/components/ui/table';
 	import { captureClientError } from '$lib/errors';
-	import type {
-		Organization,
-		Permission,
-		PublicUser,
-		Role
-	} from '$lib/schemas';
-	import { roleDescriptions } from '$lib/schemas/permissions';
+	import type { Organization, PublicUser, Role } from '$lib/schemas';
+	import { roleDescriptions, type Permission } from '$lib/config/permissions';
 	import { organizationApi, usersApi } from '$lib/services/api/auth';
 	import { checkPermission, formatDate } from '$lib/utils';
 	import Trash2 from '@lucide/svelte/icons/trash-2';

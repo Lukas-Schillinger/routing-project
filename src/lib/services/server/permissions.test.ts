@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { PublicUser, Role } from '$lib/schemas/user';
-import { hasPermission, type Permission } from '$lib/schemas/permissions';
+import { hasPermission, type Permission } from '$lib/config/permissions';
 import {
 	requireAuth,
 	requirePermission,

@@ -1,6 +1,5 @@
 /**
  * Client-side API services
- * Centralized exports for all API service modules
  */
 
 export * from './admin';

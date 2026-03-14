@@ -1,6 +1,6 @@
 import { billingService } from '$lib/services/server/billing.service';
 import { invitationService } from '$lib/services/server/invitation.service';
-import { hasPermission } from '$lib/schemas/permissions';
+import { hasPermission } from '$lib/config/permissions';
 import { requireAuth } from '$lib/services/server/permissions';
 import {
 	organizationService,

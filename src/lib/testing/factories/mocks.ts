@@ -17,9 +17,9 @@ import type {
 	Stop,
 	Route,
 	Map,
-	Depot,
-	Permission
+	Depot
 } from '$lib/schemas';
+import type { Permission } from '$lib/config/permissions';
 import type { Location } from '$lib/schemas/location';
 import { generateRandomColor } from '$lib/utils';
 import locationsData from '../data/locations.json';

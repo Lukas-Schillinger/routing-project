@@ -7,7 +7,7 @@
 	import { createInvitationSchema, type Invitation } from '$lib/schemas';
 	import type { Role } from '$lib/schemas/user';
 	import { invitationsApi } from '$lib/services/api/auth';
-	import { roleDescriptions } from '$lib/schemas/permissions';
+	import { roleDescriptions } from '$lib/config/permissions';
 	import Check from '@lucide/svelte/icons/check';
 	import LoaderCircle from '@lucide/svelte/icons/loader-circle';
 	import Mail from '@lucide/svelte/icons/mail';

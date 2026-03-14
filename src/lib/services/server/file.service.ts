@@ -1,4 +1,4 @@
-import { FILE_LIMITS } from '$lib/config';
+import { FILE_LIMITS } from '$lib/config/constants';
 import type { File as FileSchema } from '$lib/schemas/file';
 import type { User } from '$lib/schemas/user';
 import { db } from '$lib/server/db';

@@ -1,4 +1,4 @@
-import { FILE_LIMITS } from '$lib/config';
+import { FILE_LIMITS } from '$lib/config/constants';
 import { createMockR2Service } from '$lib/testing/mocks';
 import { createTestEnvironment, withTestTransaction } from '$lib/testing';
 import { db } from '$lib/testing/db';

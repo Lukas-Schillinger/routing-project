@@ -1,4 +1,4 @@
-import { TOKEN_EXPIRY } from '$lib/config';
+import { TOKEN_EXPIRY } from '$lib/config/constants';
 import { z } from 'zod';
 import { emailSchema, passwordSchema } from './common.js';
 import { roleEnum } from './user.js';

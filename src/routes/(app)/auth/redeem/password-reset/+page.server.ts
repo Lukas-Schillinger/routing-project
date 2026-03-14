@@ -1,4 +1,4 @@
-import { ARGON2_OPTIONS } from '$lib/config';
+import { ARGON2_OPTIONS } from '$lib/config/constants';
 import { ServiceError } from '$lib/errors';
 import { resetPasswordSchema } from '$lib/schemas';
 import {
